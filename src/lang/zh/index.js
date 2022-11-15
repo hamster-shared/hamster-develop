@@ -1,3 +1,4 @@
 import home from "./home.js";
+import template from "./template.js";
 
-export default { home };
+export default { home, template };
