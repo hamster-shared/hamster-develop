@@ -3,6 +3,7 @@ import HomeView from "../views/home/HomeView.vue";
 import PipelineIndex from "../views/pipeline/index/index.vue";
 import Process from "../views/pipeline/process/index.vue";
 import Stage from "../views/pipeline/stage/index.vue";
+import Template from "../views/pipeline/template/index.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +31,11 @@ const router = createRouter({
       path: "/stage",
       name: "stage",
       component: Stage,
+    },
+    {
+      path: "/template",
+      name: "template",
+      component: Template,
     },
   ],
 });
