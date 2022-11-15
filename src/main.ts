@@ -5,7 +5,7 @@ import i18n from "./lang/index";
 
 import App from "./App.vue";
 import router from "./router";
-import "./assets/main.css";
+import "./design/main.css";
 import "ant-design-vue/dist/antd.css";
 
 const app = createApp(App);
