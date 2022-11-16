@@ -3,7 +3,8 @@ import HomeView from "../views/home/HomeView.vue";
 import PipelineIndex from "../views/pipeline/index/index.vue";
 import Process from "../views/pipeline/process/index.vue";
 import Stage from "../views/pipeline/stage/index.vue";
-import Template from "../views/pipeline/template/index.vue";
+import Create from "../views/pipeline/create/index.vue";
+import Edit from "../views/pipeline/edit/index.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,19 +24,24 @@ const router = createRouter({
       component: PipelineIndex,
     },
     {
-      path: "/process",
-      name: "process",
-      component: Process,
-    },
-    {
-      path: "/stage",
+      path: "/pipeline/:id",
       name: "stage",
       component: Stage,
     },
     {
-      path: "/template",
-      name: "template",
-      component: Template,
+      path: "/pipeline/:id/:id",
+      name: "process",
+      component: Process,
+    },
+    {
+      path: "/create",
+      name: "create",
+      component: Create,
+    },
+    {
+      path: "/edit",
+      name: "edit",
+      component: Edit,
     },
   ],
 });
