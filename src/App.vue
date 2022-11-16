@@ -12,7 +12,7 @@
 import { computed } from "vue";
 import { RouterView, useRoute } from "vue-router";
 const routes = useRoute()
-const layout = computed(() => { return "layout-" + (routes.meta.layout || "null").toLowerCase() })
+const layout = computed(() => { return "layout-" + (routes.meta.layout || "default").toLowerCase() })
 
 </script>
 

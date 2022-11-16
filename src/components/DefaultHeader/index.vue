@@ -17,5 +17,6 @@
   width: 100%;
   height: 64px;
   background-color: #ffffff;
+  border: 1px solid #F8F8F8;
 }
 </style>
