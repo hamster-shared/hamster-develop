@@ -10,8 +10,8 @@ interface PipelineInfoParam {
 // 获取模板列表
 export function apiGetTemplates() {
   return httpRequest({
-    // url: "/pipeline/templates",
-    url: "https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/pipeline/templates?apipost_id=1b2afa",
+    url: "/pipeline/templates",
+    // url: "https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/pipeline/templates?apipost_id=1b2afa",
     method: "get",
   });
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-[#FFFFFF] rounded-[12px] m-5 leading-[24px]">
+  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px]">
     <div class="bg-[#121211] p-4 rounded-tl-[12px] rounded-tr-[12px]">
       <div class="flex justify-between">
         <div class="text-[24px] font-semibold text-[#FFFFFF]">{{ $t("template.title") }}</div>
