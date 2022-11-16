@@ -1,5 +1,5 @@
 <template>
-  <div class="h-8 bg-red-700">
+  <div>
     <span>Aline</span>
   </div>
 </template>
