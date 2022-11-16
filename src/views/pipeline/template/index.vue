@@ -14,7 +14,7 @@
           <div class="card-div">
             <div class="card-item" v-for="(item, index) in allTemplatesList" :key="index">
               <div class="card-img-div">
-                <Image src="https://seopic.699pic.com/photo/50110/9774.jpg_wh1200.jpg" />
+                <Image src="item.image" />
               </div>
               <div class="col-span-5">
                 <div class="card-title">{{ item.name }}</div>
