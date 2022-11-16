@@ -3,6 +3,8 @@ import HomeView from "../views/home/HomeView.vue";
 import PipelineIndex from "../views/pipeline/index/index.vue";
 import Process from "../views/pipeline/process/index.vue";
 import Stage from "../views/pipeline/stage/index.vue";
+import Create from "../views/pipeline/create/index.vue";
+import Edit from "../views/pipeline/edit/index.vue";
 import AllLogs from "../views/pipeline/allLogs/index.vue";
 
 const router = createRouter({
@@ -23,12 +25,16 @@ const router = createRouter({
       component: PipelineIndex,
     },
     {
-      path: "/process",
+      path: "/pipeline/:id",
+      name: "stage",
+      component: Stage,
+    },
+    {
+      path: "/pipeline/:id/:id",
       name: "process",
       component: Process,
       meta: {
-        title: '详情',
-        layout: "default",
+        layout: 'default',
       }
     },
     {
