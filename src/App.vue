@@ -1,7 +1,21 @@
+<template>
+  <div id="app">
+    <a-config-provider>
+      <component :is="layout">
+        <router-view />
+      </component>
+    </a-config-provider>
+  </div>
+</template>
+
 <script setup lang="ts">
-import { RouterView } from "vue-router";
+import { computed } from "vue";
+import { RouterView, useRoute } from "vue-router";
+const routes = useRoute()
+const layout = computed(() => { return "layout-" + (routes.meta.layout || "null").toLowerCase() })
+
 </script>
 
-<template>
+<!-- <template>
   <RouterView />
-</template>
+</template> -->
