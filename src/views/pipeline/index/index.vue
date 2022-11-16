@@ -7,13 +7,15 @@
         placeholder="input search text"
         style="width: 200px"
       />
-      <a-button type="primary">创建</a-button>
+      <a-button type="primary"> 创建 </a-button>
     </div>
 
     <a-card v-for="(data, index) in dataList" :key="index">
       <div class="flex justify-between">
         <div>
-          <div>{{ data.title }}</div>
+          <router-link to="/stage">
+            <div>{{ data.title }}</div>
+          </router-link>
           <div>{{ data.description }}</div>
           <div>{{ data.status }}</div>
         </div>
@@ -29,14 +31,15 @@
       v-model:current="pagination.current"
       :total="pagination.total"
       @change="pagination.onChange"
-      show-less-items
       class="block float-right"
+      show-quick-jumper
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from "vue";
+import { reactive, onMounted } from "vue";
+import { apiGetPipelines } from "@/apis/pipeline";
 import Header from "../../Header.vue";
 
 const dataList = reactive([
@@ -74,19 +77,17 @@ const pagination = reactive({
   total: 10, // 总数
   hideOnSinglePage: false, // 只有一页时是否隐藏分页器
   showQuickJumper: true, // 是否可以快速跳转至某页
-  showSizeChanger: true, // 是否可以改变 pageSize
-  pageSizeOptions: ["10", "20", "30"], // 指定每页可以显示多少条
-  onShowSizeChange: (current, pagesize) => {
-    // 改变 pageSize时的回调
-    pagination.current = current;
-    pagination.pageSize = pagesize;
-  },
   onChange: (current) => {
     // 切换分页时的回调，
     pagination.current = current;
     // handlHQSJ(current);
   },
   // showTotal: total => `总数：${total}人`, // 可以展示总数
+});
+
+onMounted(async () => {
+  const data = await apiGetPipelines({ page: 1, size: 2 });
+  console.log("apiGetPipelines", data);
 });
 </script>
 
