@@ -1,5 +1,4 @@
 <template>
-  <Header />
   <div class="bg-[#FFFFFF] rounded-[12px] m-5 leading-[24px]">
     <div class="bg-[#121211] p-4 rounded-tl-[12px] rounded-tr-[12px]">
       <div class="flex justify-between">
@@ -47,7 +46,6 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted } from "vue";
-import Header from "../../Header.vue";
 import { apiGetTemplates } from "@/apis/template";
 import { Tabs, TabPane, Image, Button } from 'ant-design-vue';
 
