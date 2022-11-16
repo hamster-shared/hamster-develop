@@ -3,17 +3,19 @@
   <div class="w-[80%] mx-auto">
     <div class="flex justify-between mt-6 mb-2">
       <a-input-search
-        v-model:value="value"
+        v-model:value="searchValue"
         placeholder="input search text"
         style="width: 200px"
       />
-      <a-button type="primary"> 创建 </a-button>
+      <a-button type="primary">
+        <router-link to="/create">创建</router-link>
+      </a-button>
     </div>
 
     <a-card v-for="(data, index) in dataList" :key="index">
       <div class="flex justify-between">
         <div>
-          <router-link to="/stage">
+          <router-link to="/pipeline/1">
             <div>{{ data.title }}</div>
           </router-link>
           <div>{{ data.description }}</div>
@@ -38,9 +40,11 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { apiGetPipelines } from "@/apis/pipeline";
 import Header from "../../Header.vue";
+
+const searchValue = ref("");
 
 const dataList = reactive([
   {
@@ -64,11 +68,6 @@ const dataList = reactive([
     status: "fail",
   },
 ]);
-
-// const handlHQSJ = async (page) => {
-//   const {total, pipelines} = await HQSU(page)
-//   ...
-// }
 
 const pagination = reactive({
   // 分页配置器
