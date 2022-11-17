@@ -7,7 +7,7 @@
       </div>
       <div class="text-[#979797] text-[14px] mt-2">{{ $t("template.titleDesc") }}</div>
     </div>
-    <div class=" p-4">
+    <div class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border">
       <Tabs :defaultActiveKey="activeKey">
         <TabPane key="0" tab="全部">
           <div class="card-div">
@@ -134,6 +134,8 @@ const getTemplates = async () => {
 :deep(.ant-btn-primary){
   border-color: @baseColor;
   background: @baseColor;
+  width: 120px;
+  height: 40px;
 }
 :deep(.ant-btn-background-ghost.ant-btn-primary){
   border-color: @baseColor;
