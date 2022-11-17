@@ -9,7 +9,11 @@
       </div>
     </div>
 
-    <a-table :columns="columns" :data-source="data" :pagination="pagination">
+    <a-table
+      :columns="columns"
+      :data-source="pipelineInfo"
+      :pagination="pagination"
+    >
       <template #headerCell="{ column }">
         <template v-if="column.key === 'status'">
           <span> Status </span>
@@ -18,29 +22,21 @@
 
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
-          {{ record.status }}
+          <span v-if="record.status == 1">running</span>
+          <span v-if="record.status == 2">passed</span>
+          <span v-if="record.status == 3">failed</span>
+          <span v-if="record.status == 4">stop</span>
         </template>
-        <template v-else-if="column.key === 'stage'">
-          <span>
-            <a-tag
-              v-for="tag in record.tags"
-              :key="tag"
-              :color="
-                tag === 'loser'
-                  ? 'volcano'
-                  : tag.length > 5
-                  ? 'geekblue'
-                  : 'green'
-              "
-            >
-              {{ tag.toUpperCase() }}
-            </a-tag>
-          </span>
+        <template v-else-if="column.key === 'execution_process'">
+          <span> {{ record.execution_process[0].status }} </span>
         </template>
         <template v-else-if="column.key === 'action'">
-          <span>
-            <a>Delete</a>
-          </span>
+          <div v-if="record.status == 1">
+            <a>终止</a>
+          </div>
+          <div v-else>
+            <a>删除</a>
+          </div>
         </template>
       </template>
     </a-table>
@@ -48,8 +44,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from "vue";
+import { reactive, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import Header from "../../Header.vue";
+import { apiGetPipelineInfo } from "@/apis/pipeline";
+
+const router = useRouter();
 
 const columns = reactive([
   {
@@ -64,18 +64,18 @@ const columns = reactive([
   },
   {
     title: "Trigger Info",
-    dataIndex: "info",
-    key: "info",
+    dataIndex: "trigger_info",
+    key: "trigger_info",
   },
   {
     title: "Stage",
-    key: "stage",
-    dataIndex: "stage",
+    key: "execution_process",
+    dataIndex: "execution_process",
   },
   {
     title: "Time",
-    key: "time",
-    dataIndex: "time",
+    key: "time_consuming",
+    dataIndex: "time_consuming",
   },
   {
     title: "Action",
@@ -83,32 +83,44 @@ const columns = reactive([
   },
 ]);
 
-const data = reactive([
+const pipelineInfo = reactive([
   {
     key: "1",
-    status: "running",
+    status: "1",
     id: "#1",
-    info: "Linda手动触发master|b4a0d99",
-    tags: ["nice", "developer"],
-    time: "1小时前执行",
+    last_execution_time: "Linda手动触发master|b4a0d99",
+    execution_process: ["nice", "developer"],
+    time_consuming: "1小时前执行",
+    trigger_info: "111",
   },
   {
     key: "2",
-    status: "passed",
+    status: "2",
     id: "#2",
-    info: "Linda手动触发master|b4a0d99",
-    tags: ["loser"],
-    time: "1小时前执行,耗时6分钟",
+    last_execution_time: "Linda手动触发master|b4a0d99",
+    execution_process: ["loser"],
+    time_consuming: "1小时前执行,耗时6分钟",
+    trigger_info: "222",
   },
   {
     key: "3",
-    status: "failed",
+    status: "3",
     id: "#3",
     info: "Linda手动触发master|b4a0d99",
-    tags: ["cool", "teacher"],
-    time: "1小时前执行",
+    execution_process: ["cool", "teacher"],
+    time_consuming: "1小时前执行",
+    trigger_info: "333",
   },
 ]);
+
+const getPipelineInfo = async () => {
+  console.log(router.currentRoute.value.params.id);
+  const data = await apiGetPipelineInfo(":name", {});
+  console.log("apiGetPipelineInfo", data);
+  Object.assign(pipelineInfo, data.pipeline.jobs);
+  pagination.pageSize = data.pagination.size;
+  pagination.total = data.pagination.total;
+};
 
 const pagination = reactive({
   // 分页配置器
@@ -127,8 +139,12 @@ const pagination = reactive({
   onChange: (current) => {
     // 切换分页时的回调，
     pagination.current = current;
-    // handlHQSJ(current);
+    getPipelineInfo(current);
   },
   // showTotal: total => `总数：${total}人`, // 可以展示总数
+});
+
+onMounted(() => {
+  getPipelineInfo();
 });
 </script>

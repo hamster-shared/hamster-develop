@@ -51,6 +51,11 @@ const router = createRouter({
         layout: "null",
       }
     },
+    {
+      path: "/create",
+      name: "create",
+      component: Create,
+    },
   ],
 });
 
