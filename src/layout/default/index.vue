@@ -38,8 +38,9 @@ const layoutClass = computed(() => { return routes.meta.layoutClass })
 .layout-default-content {
   width: 100%;
   padding: 24px;
-  // max-width: 1280px;
-  // margin: 24px auto;
+  max-width: 1440px;
+  min-width: 1080px;
+  margin: 24px auto;
   background-color: #ffffff;
   border-radius: 12px;
   border: 1px solid transparent;
