@@ -2,24 +2,37 @@
   <Header />
   <div class="w-[80%] mx-auto">
     <div class="flex justify-between mt-6 mb-2">
-      <a-input-search
+      <a-input
         v-model:value="searchValue"
-        placeholder="input search text"
+        placeholder="search here..."
         style="width: 200px"
-      />
+      >
+        <template #prefix>
+          <img :src="searchSVG" />
+        </template>
+      </a-input>
       <a-button type="primary">
         <router-link to="/create">创建</router-link>
       </a-button>
     </div>
 
-    <a-card v-for="(data, index) in dataList" :key="index">
+    <a-card v-for="(data, index) in PipelineList" :key="index">
       <div class="flex justify-between">
         <div>
-          <router-link to="/pipeline/1">
-            <div>{{ data.title }}</div>
-          </router-link>
+          <div @click="$router.push(`/pipeline/${data.id}`)">
+            {{ data.name }}
+          </div>
           <div>{{ data.description }}</div>
-          <div>{{ data.status }}</div>
+          <div>
+            <div v-if="data.status == 0">暂无执行数据</div>
+            <div v-if="data.status == 1">执行中</div>
+            <div v-if="data.status == 2">成功</div>
+            <div v-if="data.status == 3">失败</div>
+            <div v-if="data.status == 4">用户终止</div>
+          </div>
+        </div>
+        <div>
+          {{ data.last_execution_time }}
         </div>
         <div>
           <a-button type="primary">立即执行</a-button>
@@ -43,10 +56,11 @@
 import { ref, reactive, onMounted } from "vue";
 import { apiGetPipelines } from "@/apis/pipeline";
 import Header from "../../Header.vue";
+import searchSVG from "@/assets/search.svg";
 
 const searchValue = ref("");
 
-const dataList = reactive([
+const PipelineList = reactive([
   {
     title: "Hamster-pipeline-1",
     description: "11111",
@@ -69,6 +83,14 @@ const dataList = reactive([
   },
 ]);
 
+const getPipelineInfo = async () => {
+  const data = await apiGetPipelines({ page: 1, size: 2 });
+  console.log("apiGetPipelines", data);
+  Object.assign(PipelineList, data.pipelines);
+  pagination.pageSize = data.pagination.size;
+  pagination.total = data.pagination.total;
+};
+
 const pagination = reactive({
   // 分页配置器
   pageSize: 10, // 一页的数据限制
@@ -79,14 +101,13 @@ const pagination = reactive({
   onChange: (current) => {
     // 切换分页时的回调，
     pagination.current = current;
-    // handlHQSJ(current);
+    getPipelineInfo(current);
   },
   // showTotal: total => `总数：${total}人`, // 可以展示总数
 });
 
-onMounted(async () => {
-  const data = await apiGetPipelines({ page: 1, size: 2 });
-  console.log("apiGetPipelines", data);
+onMounted(() => {
+  getPipelineInfo();
 });
 </script>
 
