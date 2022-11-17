@@ -64,10 +64,10 @@
     </div>
 
   </div>
-  <ProcessModal ref="processModalRef" :title="title" />
+  <ProcessModal ref="processModalRef" :text="title" />
 </template>
 <script lang="ts" setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, reactive } from "vue";
 import BScroll from '@better-scroll/core'
 import ProcessModal from "./components/ProcessModal.vue";
 const processModalRef = ref()
@@ -140,14 +140,10 @@ onMounted(() => {
   }
 
   .process-scroll-box {
-
-    // width: 100%;
-    // overflow-x: scroll;
     white-space: nowrap;
     overflow: hidden;
 
     .process-scroll {
-      // max-width: 100%;
       display: inline-block;
     }
   }
