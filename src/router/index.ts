@@ -3,7 +3,9 @@ import HomeView from "../views/home/HomeView.vue";
 import PipelineIndex from "../views/pipeline/index/index.vue";
 import Process from "../views/pipeline/process/index.vue";
 import Stage from "../views/pipeline/stage/index.vue";
-import Template from "../views/pipeline/template/index.vue";
+import Create from "../views/pipeline/create/index.vue";
+import Edit from "../views/pipeline/edit/index.vue";
+import AllLogs from "../views/pipeline/allLogs/index.vue";
 import CreatePipeline from "../views/pipeline/create/config/index.vue";
 
 const router = createRouter({
@@ -24,9 +26,17 @@ const router = createRouter({
       component: PipelineIndex,
     },
     {
-      path: "/process",
+      path: "/pipeline/:id",
+      name: "stage",
+      component: Stage,
+    },
+    {
+      path: "/pipeline/:id/:id",
       name: "process",
       component: Process,
+      meta: {
+        layout: 'default',
+      }
     },
     {
       path: "/stage",
@@ -34,9 +44,18 @@ const router = createRouter({
       component: Stage,
     },
     {
-      path: "/template",
-      name: "template",
-      component: Template,
+      path: "/allLogs",
+      name: "allLogs",
+      component: AllLogs,
+      meta: {
+        title: '全部日志',
+        layout: "null",
+      }
+    },
+    {
+      path: "/create",
+      name: "create",
+      component: Create,
     },
     {
       path: "/create/config",
