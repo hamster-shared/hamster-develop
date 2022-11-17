@@ -4,6 +4,7 @@ import PipelineIndex from "../views/pipeline/index/index.vue";
 import Process from "../views/pipeline/process/index.vue";
 import Stage from "../views/pipeline/stage/index.vue";
 import Template from "../views/pipeline/template/index.vue";
+import CreatePipeline from "../views/pipeline/create/config/index.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,6 +37,11 @@ const router = createRouter({
       path: "/template",
       name: "template",
       component: Template,
+    },
+    {
+      path: "/create/config",
+      name: "CreateConfig",
+      component: CreatePipeline,
     },
   ],
 });
