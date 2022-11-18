@@ -34,22 +34,17 @@ const router = createRouter({
       name: "process",
       component: Process,
       meta: {
-        layout: 'default',
-      }
-    },
-    {
-      path: "/stage",
-      name: "stage",
-      component: Stage,
+        layout: "default",
+      },
     },
     {
       path: "/allLogs",
       name: "allLogs",
       component: AllLogs,
       meta: {
-        title: '全部日志',
+        title: "全部日志",
         layout: "null",
-      }
+      },
     },
     {
       path: "/create",
