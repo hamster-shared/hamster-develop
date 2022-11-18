@@ -1977,11 +1977,12 @@
   "resolved" "https://registry.npmmirror.com/minimist/-/minimist-1.2.7.tgz"
   "version" "1.2.7"
 
+
 "monaco-editor@^0.34.1":
   "integrity" "sha512-FKc80TyiMaruhJKKPz5SpJPIjL+dflGvz4CpuThaPMc94AyN7SeC9HQ8hrvaxX7EyHdJcUY5i4D0gNyJj1vSZQ=="
   "resolved" "https://registry.npmmirror.com/monaco-editor/-/monaco-editor-0.34.1.tgz"
   "version" "0.34.1"
-
+  
 "ms@^2.1.1", "ms@2.1.2":
   "integrity" "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="
   "resolved" "https://registry.npmmirror.com/ms/-/ms-2.1.2.tgz"

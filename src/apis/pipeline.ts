@@ -12,6 +12,11 @@ interface GetPipelineInfoParams {
   size?: number;
 }
 
+interface GetPipelineDetailParams {
+  name?: string;
+  id?: number|string;
+}
+
 export function apiGetPipelines(params: GetPipelinesParams) {
   return httpRequest({
     url: "/pipeline",
@@ -43,5 +48,16 @@ export function apiOperationStopPipeline(name: string) {
     url: `/pipeline/exec/${name}`,
     method: "post",
     data: name,
+  });
+}
+
+
+// /pipeline/:name/detail/:id
+export function apiGetPipelineDetail(params:GetPipelineDetailParams) {
+  return httpRequest({
+    // url: `/pipeline/${params.name}/detail/${params.id}`,
+    url:"https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/pipeline/:name/detail/:id?apipost_id=6bbbe6",
+    method: "get",
+    params: params,
   });
 }

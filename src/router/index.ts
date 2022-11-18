@@ -31,15 +31,17 @@ const router = createRouter({
       component: Stage,
     },
     {
-      path: "/pipeline/:id/:id",
+      path: "/pipeline/:id/:name",
       name: "process",
       component: Process,
-      meta: {
-        layout: "default",
-      },
     },
     {
-      path: "/allLogs",
+      path: "/stage",
+      name: "stage",
+      component: Stage,
+    },
+    {
+      path: "/allLogs/:id/:name",
       name: "allLogs",
       component: AllLogs,
       meta: {
