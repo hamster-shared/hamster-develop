@@ -2,7 +2,6 @@
   <div>
     <!-- Default Layout -->
     <a-layout class="layout-default" id="layout-default" :class="layoutClass">
-
       <!-- Layout Header's Conditionally Fixed Wrapper -->
       <DefaultHeader />
       <!-- / Layout Header's Conditionally Fixed Wrapper -->
@@ -24,15 +23,17 @@
   </div>
 </template>
 <script lang="ts" setup>
-import DefaultHeader from "../../components/DefaultHeader/index.vue"
+import DefaultHeader from "../../components/DefaultHeader/index.vue";
 import { RouterView, useRoute } from "vue-router";
-import { computed } from "vue"
-const routes = useRoute()
-const layoutClass = computed(() => { return routes.meta.layoutClass })
+import { computed } from "vue";
+const routes = useRoute();
+const layoutClass = computed(() => {
+  return routes.meta.layoutClass;
+});
 </script>
 <style lang="less" scoped>
 .ant-layout {
-  background: #F9F9F9;
+  background: #f9f9f9;
 }
 
 .layout-default-content {
@@ -40,7 +41,7 @@ const layoutClass = computed(() => { return routes.meta.layoutClass })
   padding: 24px;
   // max-width: 1280px;
   // margin: 24px auto;
-  background-color: #ffffff;
+  background-color: #f5f5f5;
   border-radius: 12px;
   border: 1px solid transparent;
 }

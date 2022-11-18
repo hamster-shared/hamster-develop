@@ -30,3 +30,18 @@ export function apiGetPipelineInfo(
     params: params,
   });
 }
+
+export function apiDeletePipelineInfo(name: string) {
+  return httpRequest({
+    url: `/pipeline/${name}`,
+    method: "delete",
+  });
+}
+
+export function apiOperationStopPipeline(name: string) {
+  return httpRequest({
+    url: `/pipeline/exec/${name}`,
+    method: "post",
+    data: name,
+  });
+}

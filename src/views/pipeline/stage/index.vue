@@ -1,8 +1,7 @@
 <template>
-  <Header />
   <div class="w-[80%] mx-auto">
-    <div class="flex justify-between mt-6 mb-2">
-      <span>hamster-pipeline</span>
+    <div class="flex justify-between mb-6">
+      <span class="text-3xl font-semibold">hamster-pipeline</span>
       <div>
         <a-button class="mr-2">设置</a-button>
         <a-button type="primary">立即执行</a-button>
@@ -22,20 +21,35 @@
 
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
+          <span v-if="record.status == 0">no data</span>
           <span v-if="record.status == 1">running</span>
           <span v-if="record.status == 2">passed</span>
           <span v-if="record.status == 3">failed</span>
           <span v-if="record.status == 4">stop</span>
         </template>
         <template v-else-if="column.key === 'execution_process'">
-          <span> {{ record.execution_process[0].status }} </span>
+          <div v-if="record.execution_process[0].status == 0">
+            <img :src="nodataSVG" />
+          </div>
+          <div v-if="record.execution_process[0].status == 1">
+            <img :src="runnngSVG" />
+          </div>
+          <div v-if="record.execution_process[0].status == 2">
+            <img :src="successSVG" />
+          </div>
+          <div v-if="record.execution_process[0].status == 3">
+            <img :src="failedSVG" />
+          </div>
+          <div v-if="record.execution_process[0].status == 4">
+            <img :src="stopSVG" />
+          </div>
         </template>
         <template v-else-if="column.key === 'action'">
           <div v-if="record.status == 1">
-            <a>终止</a>
+            <a @click="handleStop(record.id)">终止</a>
           </div>
           <div v-else>
-            <a>删除</a>
+            <a @click="handleDelete(record.id)">删除</a>
           </div>
         </template>
       </template>
@@ -46,8 +60,16 @@
 <script setup lang="ts">
 import { reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import Header from "../../Header.vue";
-import { apiGetPipelineInfo } from "@/apis/pipeline";
+import {
+  apiGetPipelineInfo,
+  apiDeletePipelineInfo,
+  apiOperationStopPipeline,
+} from "@/apis/pipeline";
+import runnngSVG from "@/assets/icons/pipeline-running.svg";
+import successSVG from "@/assets/icons/pipeline-success.svg";
+import failedSVG from "@/assets/icons/pipeline-failed.svg";
+import stopSVG from "@/assets/icons/pipeline-stop.svg";
+import nodataSVG from "@/assets/icons/pipeline-no-data.svg";
 
 const router = useRouter();
 
@@ -113,15 +135,6 @@ const pipelineInfo = reactive([
   },
 ]);
 
-const getPipelineInfo = async () => {
-  console.log(router.currentRoute.value.params.id);
-  const data = await apiGetPipelineInfo(":name", {});
-  console.log("apiGetPipelineInfo", data);
-  Object.assign(pipelineInfo, data.pipeline.jobs);
-  pagination.pageSize = data.pagination.size;
-  pagination.total = data.pagination.total;
-};
-
 const pagination = reactive({
   // 分页配置器
   pageSize: 10, // 一页的数据限制
@@ -144,7 +157,55 @@ const pagination = reactive({
   // showTotal: total => `总数：${total}人`, // 可以展示总数
 });
 
+const getPipelineInfo = async () => {
+  console.log(router.currentRoute.value.params.id);
+  const data = await apiGetPipelineInfo(":name", {});
+  console.log("apiGetPipelineInfo", data);
+  Object.assign(pipelineInfo, data.pipeline.jobs);
+  pagination.pageSize = data.pagination.size;
+  pagination.total = data.pagination.total;
+};
+
+const handleDelete = async (id) => {
+  await apiDeletePipelineInfo(id);
+  console.log("id", id);
+};
+
+const handleStop = async (id) => {
+  await apiOperationStopPipeline(id);
+  console.log("id", id);
+};
+
 onMounted(() => {
   getPipelineInfo();
 });
 </script>
+
+<style lang="less" scoped>
+.ant-btn {
+  font-size: 16px;
+  border-radius: 3px;
+  width: 200px;
+  height: 48px;
+}
+.ant-btn-primary {
+  background: #6481dc;
+  &:hover,
+  &:focus {
+    border-color: #6481dc;
+    background: #6481dc;
+  }
+}
+:deep(.ant-table-thead > tr > th) {
+  background: #808692;
+  height: 48px;
+  text-align: center;
+  color: #ffffff;
+}
+:deep(.ant-table table) {
+  text-align: center;
+}
+:deep(.ant-pagination-options-quick-jumper input) {
+  margin: 0px 0px 0px 8px !important;
+}
+</style>
