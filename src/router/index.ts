@@ -6,6 +6,7 @@ import Stage from "../views/pipeline/stage/index.vue";
 import Create from "../views/pipeline/create/index.vue";
 import Edit from "../views/pipeline/edit/index.vue";
 import AllLogs from "../views/pipeline/allLogs/index.vue";
+import CreatePipeline from "../views/pipeline/create/config/index.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,14 +45,19 @@ const router = createRouter({
       name: "allLogs",
       component: AllLogs,
       meta: {
-        title: '全部日志',
+        title: "全部日志",
         layout: "null",
-      }
+      },
     },
     {
       path: "/create",
       name: "create",
       component: Create,
+    },
+    {
+      path: "/create/config",
+      name: "CreateConfig",
+      component: CreatePipeline,
     },
   ],
 });

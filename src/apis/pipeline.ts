@@ -36,6 +36,21 @@ export function apiGetPipelineInfo(
   });
 }
 
+export function apiDeletePipelineInfo(name: string) {
+  return httpRequest({
+    url: `/pipeline/${name}`,
+    method: "delete",
+  });
+}
+
+export function apiOperationStopPipeline(name: string) {
+  return httpRequest({
+    url: `/pipeline/exec/${name}`,
+    method: "post",
+    data: name,
+  });
+}
+
 
 // /pipeline/:name/detail/:id
 export function apiGetPipelineDetail(params:GetPipelineDetailParams) {
