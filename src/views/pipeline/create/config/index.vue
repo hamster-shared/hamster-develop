@@ -1,84 +1,126 @@
 <template>
-  <a-row class="create">
-    <a-col :span="8">
-      <div class="title"><label>Pipeline Process</label></div>
-      <div>
-        <a-form
-            :wrapper-col="{ xs: { span: 24 }, sm: { span: 12 }, md: { span: 10 } }"
-            :label-col="{ xs: { span: 24 }, sm: { span: 7 } }"
-        >
-          <a-form-item label="标题：" v-bind="validateInfos.title">
-            <a-input v-model:value="modelRef.title" placeholder="请输入" />
-          </a-form-item>
-          <a-form-item label="起止日期" v-bind="validateInfos.date">
-            <a-range-picker v-model:value="modelRef.date" style="width: 100%" />
-          </a-form-item>
-
-          <a-form-item label="下拉选择" v-bind="validateInfos.select">
-            <a-select
-                v-model:value="modelRef.select"
-                placeholder="请选择"
-                allowClear
-            >
-              <a-select-option value="1">select1</a-select-option>
-              <a-select-option value="2">select2</a-select-option>
-              <a-select-option value="3">select3</a-select-option>
-            </a-select>
-          </a-form-item>
-
-          <a-form-item label="单选按钮1">
-            <a-radio-group v-model:value="modelRef.radio1">
-              <a-radio value="1">item 1</a-radio>
-              <a-radio value="2">item 2</a-radio>
-              <a-radio value="3">item 3</a-radio>
-            </a-radio-group>
-          </a-form-item>
-
-          <a-form-item label="单选按钮2" v-bind="validateInfos.radio2">
-            <a-radio-group v-model:value="modelRef.radio2">
-              <a-radio-button value="1">item 1</a-radio-button>
-              <a-radio-button value="2">item 2</a-radio-button>
-              <a-radio-button value="2">item 3</a-radio-button>
-            </a-radio-group>
-          </a-form-item>
-
-          <a-form-item label="复选框" v-bind="validateInfos.checkbox">
-            <a-checkbox-group v-model:value="modelRef.checkbox">
-              <a-checkbox value="1" name="type"> Online </a-checkbox>
-              <a-checkbox value="2" name="type"> Promotion </a-checkbox>
-              <a-checkbox value="3" name="type"> Offline </a-checkbox>
-            </a-checkbox-group>
-          </a-form-item>
-
-          <a-form-item label="备注" v-bind="validateInfos.remark">
-            <a-textarea v-model:value="modelRef.remark" />
-          </a-form-item>
-
-          <a-form-item
-              :wrapper-col="{
-            xs: { span: 24, offset: 0 },
-            sm: { span: 10, offset: 7 },
-          }"
-          >
-            <a-button
-                type="primary"
-                @click="handleSubmit"
-                :loading="submitLoading"
-            >
-              提交
-            </a-button>
-            <a-button @click="resetFields" style="margin-left: 10px">
-              重置
-            </a-button>
-          </a-form-item>
-        </a-form>
+  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px]">
+    <div class="bg-[#121211] p-4 rounded-tl-[12px] rounded-tr-[12px]">
+      <div class="flex justify-between">
+        <div class="text-[24px] font-semibold text-[#FFFFFF]">
+          Substact + 智能合约
+        </div>
       </div>
+      <div class="text-[#979797] text-[14px] mt-2">
+        该模版用于基于Substact框架编写的智能合约，实现全自动检出代码 ->
+        检查合约质量 -> 编译合约 -> 测试合约->部署合约
+      </div>
+    </div>
+    <div
+      class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border"
+    >
+      <a-row class="create" :gutter="24">
+        <a-col :span="8">
+          <div class="bg-[#EFEFEF] p-4 rounded-tl-[12px] rounded-tr-[12px]">
+            <div class="flex justify-between">
+              <div class="text-[16px] font-semibold text-[#121211]">
+                Pipeline Process
+              </div>
+            </div>
+          </div>
+          <div
+            class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border"
+          >
+            <a-form
+              :wrapper-col="{
+                xs: { span: 24 },
+                sm: { span: 12 },
+                md: { span: 10 },
+              }"
+              :label-col="{ xs: { span: 24 }, sm: { span: 7 } }"
+            >
+              <a-form-item label="标题：" v-bind="validateInfos.title">
+                <a-input v-model:value="modelRef.title" placeholder="请输入" />
+              </a-form-item>
+              <a-form-item label="起止日期" v-bind="validateInfos.date">
+                <a-range-picker
+                  v-model:value="modelRef.date"
+                  style="width: 100%"
+                />
+              </a-form-item>
 
-    </a-col>
-    <a-col :span="16">
-      <CodeEditor :value="codeValue"></CodeEditor>
-    </a-col>
-  </a-row>
+              <a-form-item label="下拉选择" v-bind="validateInfos.select">
+                <a-select
+                  v-model:value="modelRef.select"
+                  placeholder="请选择"
+                  allowClear
+                >
+                  <a-select-option value="1">select1</a-select-option>
+                  <a-select-option value="2">select2</a-select-option>
+                  <a-select-option value="3">select3</a-select-option>
+                </a-select>
+              </a-form-item>
+
+              <a-form-item label="单选按钮1">
+                <a-radio-group v-model:value="modelRef.radio1">
+                  <a-radio value="1">item 1</a-radio>
+                  <a-radio value="2">item 2</a-radio>
+                  <a-radio value="3">item 3</a-radio>
+                </a-radio-group>
+              </a-form-item>
+
+              <a-form-item label="单选按钮2" v-bind="validateInfos.radio2">
+                <a-radio-group v-model:value="modelRef.radio2">
+                  <a-radio-button value="1">item 1</a-radio-button>
+                  <a-radio-button value="2">item 2</a-radio-button>
+                  <a-radio-button value="2">item 3</a-radio-button>
+                </a-radio-group>
+              </a-form-item>
+
+              <a-form-item label="复选框" v-bind="validateInfos.checkbox">
+                <a-checkbox-group v-model:value="modelRef.checkbox">
+                  <a-checkbox value="1" name="type"> Online </a-checkbox>
+                  <a-checkbox value="2" name="type"> Promotion </a-checkbox>
+                  <a-checkbox value="3" name="type"> Offline </a-checkbox>
+                </a-checkbox-group>
+              </a-form-item>
+
+              <a-form-item label="备注" v-bind="validateInfos.remark">
+                <a-textarea v-model:value="modelRef.remark" />
+              </a-form-item>
+
+              <a-form-item
+                :wrapper-col="{
+                  xs: { span: 24, offset: 0 },
+                  sm: { span: 10, offset: 7 },
+                }"
+              >
+                <a-button
+                  type="primary"
+                  @click="handleSubmit"
+                  :loading="submitLoading"
+                >
+                  提交
+                </a-button>
+                <a-button
+                  type="primary"
+                  ghost
+                  @click="resetFields"
+                  style="margin-left: 10px"
+                >
+                  重置
+                </a-button>
+              </a-form-item>
+            </a-form>
+          </div>
+        </a-col>
+        <a-col :span="16">
+          <CodeEditor :value="codeValue"></CodeEditor>
+        </a-col>
+      </a-row>
+      <div class="text-center mt-8">
+        <a-button type="primary" ghost>{{ $t("template.cancelBtn") }}</a-button>
+        <a-button type="primary" class="ml-4">{{
+          $t("template.nextBtn")
+        }}</a-button>
+      </div>
+    </div>
+  </div>
 </template>
 <script lang="ts">
 import { defineComponent, reactive, ref } from "vue";
@@ -216,25 +258,18 @@ export default defineComponent({
 .create {
   height: 100%;
 }
-.title {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  padding: 16px;
-  gap: 10px;
-  height: 56px;
-  background: #121211;
-
-  label {
-    height: 24px;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 24px;
-    /* identical to box height, or 150% */
-    display: flex;
-    align-items: flex-end;
-    color: #ffffff;
-  }
+@baseColor: #28c57c;
+:deep(.ant-btn) {
+  border-radius: 6px;
+}
+:deep(.ant-btn-primary) {
+  border-color: @baseColor;
+  background: @baseColor;
+  width: 120px;
+  height: 40px;
+}
+:deep(.ant-btn-background-ghost.ant-btn-primary) {
+  border-color: @baseColor;
+  color: @baseColor;
 }
 </style>

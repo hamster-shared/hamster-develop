@@ -1,6 +1,15 @@
 <template>
-  <div class="title"><label>Pipelinefile Preview</label></div>
-  <div ref="editContainer" class="code-editor"></div>
+  <div class="bg-[#EFEFEF] p-4 rounded-tl-[12px] rounded-tr-[12px]">
+    <div class="flex justify-between">
+      <div class="text-[16px] font-semibold text-[#121211]">
+        Pipelinefile Preview
+      </div>
+    </div>
+  </div>
+  <div
+    ref="editContainer"
+    class="code-editor rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border"
+  />
 </template>
 <script>
 import { getCurrentInstance, onMounted, watch } from "vue";
@@ -23,7 +32,7 @@ export default {
     watch(
       () => props.value,
       (value) => {
-        // 防止改变编辑器内容时光标重定向
+        // Prevent cursor redirection when changing editor content
         if (value !== monacoEditor?.getValue()) {
           monacoEditor.setValue(value);
         }
@@ -36,7 +45,7 @@ export default {
         inherit: true,
         rules: [{ background: "#F7F8F9" }],
         colors: {
-          // 相关颜色属性配置
+          // Related color attribute configuration
           // 'editor.foreground': '#000000',
           "editor.background": "#F7F8F9", //背景色
           // 'editorCursor.foreground': '#8B0000',
@@ -46,7 +55,7 @@ export default {
           // 'editor.inactiveSelectionBackground': '#88000015'
         },
       });
-      //设置自定义主题
+      //Set custom theme
       monaco.editor.setTheme("custom");
       monacoEditor = monaco.editor.create(proxy.$refs.editContainer, {
         value: props.value,
@@ -55,16 +64,15 @@ export default {
         theme: "custom",
         automaticLayout: true,
         selectOnLineNumbers: false,
-        renderSideBySide: false,
         minimap: {
           enabled: false,
         },
         fontSize: 16,
-        fontWeight: "400",
         scrollBeyondLastLine: false,
         overviewRulerBorder: false,
+        fixedOverflowWidgets: true,
       });
-      // 监听值变化
+      // Monitoring value change
       monacoEditor.onDidChangeModelContent(() => {
         const currenValue = monacoEditor?.getValue();
         emit("update:value", currenValue);
@@ -75,30 +83,8 @@ export default {
 };
 </script>
 <style scoped lang="less">
-.title {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  padding: 16px;
-  gap: 10px;
-  height: 56px;
-  background: #121211;
-
-  label {
-    height: 24px;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 24px;
-    /* identical to box height, or 150% */
-    display: flex;
-    align-items: flex-end;
-    color: #FFFFFF;
-  }
-}
 .code-editor {
   width: 100%;
-  height: 100vh;
+  height: 92%;
 }
-
 </style>
