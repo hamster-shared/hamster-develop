@@ -137,7 +137,15 @@ const getTemplates = async () => {
   width: 120px;
   height: 40px;
 }
+:deep(.ant-btn-primary:hover){
+  border-color: @baseColor;
+  background: @baseColor;
+}
 :deep(.ant-btn-background-ghost.ant-btn-primary){
+  border-color: @baseColor;
+  color: @baseColor;
+}
+:deep(.ant-btn-background-ghost.ant-btn-primary:hover){
   border-color: @baseColor;
   color: @baseColor;
 }
