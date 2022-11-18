@@ -53,7 +53,7 @@ const router = createRouter({
       component: Create,
     },
     {
-      path: "/create/config",
+      path: "/create/config/:id",
       name: "CreateConfig",
       component: CreatePipeline,
     },
