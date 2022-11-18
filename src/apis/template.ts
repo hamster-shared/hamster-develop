@@ -15,3 +15,11 @@ export function apiGetTemplates() {
     method: "get",
   });
 }
+
+export function apiGetTemplatesById(id: String) {
+  return httpRequest({
+    url: `/pipeline/templates/${id}`,
+    // url: "https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/pipeline/templates?apipost_id=1b2afa",
+    method: "get",
+  });
+}
