@@ -11,19 +11,19 @@
         <a-col :span="6">
           <div class="process-detail-item">
             <div class="process-detail-title">status</div>
-            <div class="process-detail-info">Passed</div>
+            <div class="process-detail-info">{{ jobData.Status }}</div>
           </div>
         </a-col>
         <a-col :span="6">
           <div class="process-detail-item">
             <div class="process-detail-title">Execution Time</div>
-            <div class="process-detail-info">7m 57s</div>
+            <div class="process-detail-info">{{ jobData.StartTime }}</div>
           </div>
         </a-col>
         <a-col :span="6">
           <div>
             <div class="process-detail-title">Total duration</div>
-            <div class="process-detail-info">7m 57s</div>
+            <div class="process-detail-info">{{ jobData.Duration }}</div>
           </div>
         </a-col>
       </a-row>
@@ -36,14 +36,24 @@
           <span class="text-[14px] text-[#28C57C] cursor-pointer" @click="checkAllLogs">查看完整日志</span>
         </div>
         <div class="process-scroll-box wrapper" ref="wrapper">
+          <!-- <a-button @click="checkProcess({ name: 'hh' })">modal</a-button> -->
           <div class="process-scroll content">
-            <div v-for="item in data.execution_process" :key="item.id" class="inline-block execution_process_item ">
-              <div class="inline-block border border-solid border-[#28C57C] p-[12px] cursor-pointer rounded-[5px]"
-                @click="checkProcess(item)">
-                <img src="@/assets/images/pro-1.jpg" class="w-[28px] mr-[24px] align-middle" />
+            <div class="inline-block execution_process_item ">
+              <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]">
+                <img src="@/assets/icons/Frame 625774 (1).svg" class="w-[28px] mr-[24px] align-middle" />
                 <span class="align-middle">
-                  <span class="text-[16px] text-[#28C57C] font-semibold mr-[24px]">{{ item.name }}</span>
-                  <span class="text-[16px] text-[#28C57C]">{{ item.time_consuming }}</span>
+                  <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">开始</span>
+                </span>
+              </div>
+              <img src="@/assets/images/arrow-green.jpg" class="w-[28px] space-mark ml-[20px] mr-[20px]" />
+            </div>
+            <div v-for="item in jobData.Stages" :key="item.Name" class="inline-block execution_process_item ">
+              <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] cursor-pointer rounded-[5px]"
+                @click="checkProcess(item)">
+                <img src="@/assets/icons/Status0.svg" class="w-[28px] mr-[24px] align-middle" />
+                <span class="align-middle">
+                  <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">{{ item.Name }}</span>
+                  <span class="text-[16px] text-[#7B7D7B]">{{ item.Duration }}</span>
                 </span>
               </div>
               <img src="@/assets/images/arrow-green.jpg" class="w-[28px] space-mark ml-[20px] mr-[20px]" />
@@ -55,55 +65,78 @@
       </div>
       <div class="process-content">
         <div class="process-content-title">Artifats</div>
-        <div class="text-[#7B7D7B]">{{ data.artifacts[0] }}</div>
+        <div class="text-[#7B7D7B]">
+          <div v-for="it in jobData.ActionResult.Artifactorys" :key="it.id">{{ it.Url }}</div>
+        </div>
       </div>
       <div class="process-content">
         <div class="process-content-title">Report</div>
-        <div class="text-[#7B7D7B]">{{ data.report[0] }}</div>
+        <div class="text-[#7B7D7B]">
+          <div v-for="it in jobData.ActionResult.Reports" :key="it.id">{{ it.Url }}</div>
+        </div>
       </div>
     </div>
-
   </div>
-  <ProcessModal ref="processModalRef" :text="title" />
+
+  <ProcessModal ref="processModalRef" :text="title" :content="content" />
 </template>
 <script lang="ts" setup>
 import { ref, onMounted, reactive } from "vue";
-import BScroll from '@better-scroll/core'
-import ProcessModal from "./components/ProcessModal.vue";
+import { useRouter } from "vue-router";
+import { apiGetJobStageLogs } from "@/apis/jobs";
+import { apiGetPipelineDetail } from '@/apis/pipeline'
+import BScroll from '@better-scroll/core';
+import ProcessModal from "./components/ProcessModal1.vue";
+const router = useRouter()
 const processModalRef = ref()
 const title = ref('')
+const content = ref('')
 const wrapper = ref()
-const data = ref({
-  id: 1,
-  status: '啥啥啥',
-  trigger_info: '@trigger_info',
-  execution_process: [
-    { status: 8888888, name: '开始', time_consuming: '5min' },
-    { status: 8888888, name: '检出', time_consuming: '5min' },
-    { status: 8888888, name: '合约检查', time_consuming: '5min' },
-    { status: 8888888, name: '部署合约', time_consuming: '5min' },
-    { status: 8888888, name: '部署合约', time_consuming: '5min' },
-    { status: 8888888, name: '部署合约', time_consuming: '5min' },
-    { status: 8888888, name: '部署合约', time_consuming: '5min' },
-    { status: 8888888, name: '部署合约', time_consuming: '5min' }
-  ],
-  last_execution_time: '1小时前',
-  time_consuming: '耗时3分钟',
-  artifacts: ['龙年员阶接自率些又斯听低便从统置题属思值出因前开为几意采'],
-  report: ['装工边克思办须确太']
-});
-// console.log(data);
+const jobData = reactive({
+  id: undefined,
+  Stages: [],
+  ActionResult: {
+    Artifactorys: [],
+    Reports: [],
+  }
+})
+
+const queryJson = reactive({
+  name: router.currentRoute.value.params.name,
+  id: router.currentRoute.value.params.id,
+})
+
+const getPipelineDetail = async () => {
+  const data = await apiGetPipelineDetail(queryJson)
+  Object.assign(jobData, data.data);
+  // jobData.Stages.map(item => {
+  //   // item.statusImg = new URL(`@/assets/icons/Status${item.Status}.svg`, import.meta.url).href
+  // })
+  // console.log(jobData.Stages, '9090')
+}
 
 const checkAllLogs = () => {
-  window.open('/allLogs')
+  // window.open(`/allLogs/${queryJson.id}/${queryJson.name}}`)
+  window.open(`/allLogs/1/张三`)
 }
 
 const checkProcess = (item) => {
-  title.value = item.name
+  title.value = item.Name
   processModalRef.value.showVisible()
+  getStageLogsData(item)
+}
+
+const getStageLogsData = async (item) => {
+  const query = Object.assign(queryJson, { stagename: item.Name })
+  const data = await apiGetJobStageLogs(query)
+  content.value = data.data.Content
+
+  // console.log(data.data, '9999')
 }
 
 onMounted(() => {
+  getPipelineDetail()
+
   let scroll = new BScroll(wrapper.value, {
     startX: 0,
     scrollX: true,
