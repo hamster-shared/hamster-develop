@@ -25,7 +25,7 @@ export function apiGetPipelineInfo(
   params: GetPipelineInfoParams
 ) {
   return httpRequest({
-    url: `/pipeline/${name}`,
+    url: `/pipeline/${name}/details`,
     method: "get",
     params: params,
   });
