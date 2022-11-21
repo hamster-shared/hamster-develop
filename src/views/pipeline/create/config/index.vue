@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px]">
+  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px] mx-20">
     <div class="bg-[#121211] p-4 rounded-tl-[12px] rounded-tr-[12px]">
       <div class="flex justify-between">
         <div class="text-[24px] font-semibold text-[#FFFFFF]">
@@ -29,271 +29,156 @@
               :label-col="{ xs: { span: 24 }, sm: { span: 7 } }"
               layout="vertical"
             >
-              <div v-for="(data, index) in yamlList" :key="index" class="flex mb-4">
-                <div class="text-[#FFFFFF] bg-[#121211] rounded-[50%] h-[20px] w-[20px] text-center leading-[20px] text-[14px]">{{ index + 1 }}</div>
-                <div class="ml-2 text-[#121211] font-semibold">{{ data.stage }}Code Repository</div>
-              </div>
-
-              <a-form-item label="标题：" v-bind="validateInfos.title">
-                <a-input v-model:value="modelRef.title" placeholder="请输入" />
-              </a-form-item>
-              <a-form-item label="起止日期" v-bind="validateInfos.date">
-                <a-range-picker
-                  v-model:value="modelRef.date"
-                  style="width: 100%"
-                />
-              </a-form-item>
-
-              <a-form-item label="下拉选择" v-bind="validateInfos.select">
-                <a-select
-                  v-model:value="modelRef.select"
-                  placeholder="请选择"
-                  allowClear
-                >
-                  <a-select-option value="1">select1</a-select-option>
-                  <a-select-option value="2">select2</a-select-option>
-                  <a-select-option value="3">select3</a-select-option>
-                </a-select>
-              </a-form-item>
-
-              <a-form-item label="单选按钮1">
-                <a-radio-group v-model:value="modelRef.radio1">
-                  <a-radio value="1">item 1</a-radio>
-                  <a-radio value="2">item 2</a-radio>
-                  <a-radio value="3">item 3</a-radio>
-                </a-radio-group>
-              </a-form-item>
-
-              <a-form-item label="单选按钮2" v-bind="validateInfos.radio2">
-                <a-radio-group v-model:value="modelRef.radio2">
-                  <a-radio-button value="1">item 1</a-radio-button>
-                  <a-radio-button value="2">item 2</a-radio-button>
-                  <a-radio-button value="2">item 3</a-radio-button>
-                </a-radio-group>
-              </a-form-item>
-
-              <a-form-item label="复选框" v-bind="validateInfos.checkbox">
-                <a-checkbox-group v-model:value="modelRef.checkbox">
-                  <a-checkbox value="1" name="type"> Online </a-checkbox>
-                  <a-checkbox value="2" name="type"> Promotion </a-checkbox>
-                  <a-checkbox value="3" name="type"> Offline </a-checkbox>
-                </a-checkbox-group>
-              </a-form-item>
-
-              <a-form-item label="备注" v-bind="validateInfos.remark">
-                <a-textarea v-model:value="modelRef.remark" />
-              </a-form-item>
-
-              <div class="text-center">
-                <a-button
-                  type="primary"
-                  @click="handleSubmit"
-                  :loading="submitLoading"
-                >
-                  提交
-                </a-button>
-                <a-button
-                  type="primary"
-                  ghost
-                  @click="resetFields"
-                  style="margin-left: 10px"
-                >
-                  重置
-                </a-button>
+              <div v-for="(data, key) in yamlList" :key="key">
+                <div class="flex mb-4">
+                  <div class="text-[#FFFFFF] bg-[#121211] rounded-[50%] h-[20px] w-[20px] text-center leading-[20px] text-[14px]">{{ key + 1 }}</div>
+                  <div class="ml-2 text-[#121211] font-semibold">{{ data.stage }}</div>
+                </div>
+                <div v-for="(item, index) in data.steps" :key="index">
+                  <div v-if="item.eleName === 'git-checkout'">
+                    <GitCheckout :stage="data.stage" :index="index" :url="item.eleValues.url" :branch="item.eleValues.branch" @setYamlCode="setYamlCode"></GitCheckout>
+                  </div>
+                  <div v-else-if="item.eleName === 'artifactory'">
+                    <Artifactory :stage="data.stage" :index="index" :name="item.eleValues.name" :path="item.eleValues.path" @setYamlCode="setYamlCode"></Artifactory>
+                  </div>
+                  <div v-else-if="item.eleName === 'shell'">
+                    <Shell :stage="data.stage" :index="index" :run="item.eleValues.run" :runsOn="item.eleValues.runsOn" @setYamlCode="setYamlCode"></Shell>
+                  </div>
+                </div>
               </div>
             </a-form>
           </div>
         </a-col>
-        <a-col :span="16">
-          <CodeEditor :value="templateInfo.yaml"></CodeEditor>
+        <a-col :span="16"><!-- templateInfo.yaml @todo 临时数据-->
+          <CodeEditor :value="codeValue"></CodeEditor>
         </a-col>
       </a-row>
       <div class="text-center mt-8">
-        <a-button type="primary" ghost>{{ $t("template.cancelBtn") }}</a-button>
+        <a-button type="primary" @click="lastStep" ghost>{{ $t("template.lastBtn") }}</a-button>
         <a-button type="primary" class="ml-4">{{
-          $t("template.nextBtn")
+          $t("template.submitBtn")
         }}</a-button>
       </div>
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent, reactive, ref, onMounted, unref } from "vue";
+<script lang="ts" setup>
+import { reactive, ref, onMounted } from "vue";
 import YAML from "yaml";
-import type { Ref } from "vue";
-import type { Props, validateInfos } from "ant-design-vue/lib/form/useForm";
-import type { FormDataType } from "./data";
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { apiGetTemplatesById } from "@/apis/template";
 import CodeEditor from "./components/CodeEditor.vue";
-import { message, Form } from "ant-design-vue";
+import GitCheckout from "./components/GitCheckout.vue";
+import Artifactory from "./components/Artifactory.vue";
+import Shell from "./components/Shell.vue";
 
-const useForm = Form.useForm;
+  const codeValue = ref<String>(
+    "version: 1.0\n" +
+      "name: my-test\n" +
+      "stages:\n" +
+      "  git-clone:\n" +
+      "    steps:\n" +
+      "      - name: git-clone\n" +
+      "        code: 1\n" +
+      "        uses: git-checkout\n" +
+      "        with:\n" +
+      "          url: https://gitee.com/mohaijiang/spring-boot-example.git\n" +
+      "          branch: master\n" +
+      "  code-compile:\n" +
+      "    needs:\n" +
+      "      - git-clone\n" +
+      "    steps:\n" +
+      "      - name: code-compile\n" +
+      "        code: 2\n" +
+      "        runs-on: maven:3.5-jdk-8\n" +
+      "        run: |\n" +
+      "          mvn clean package -Dmaven.test.skip=true\n" +
+      "      - name: save artifactory\n" +
+      "        code: 2\n" +
+      "        uses: hamster/artifactory\n" +
+      "        with:\n" +
+      "          name: some.zip\n" +
+      "          path: contracts/*.sol\n" +
+      "\n" +
+      "  build-image:\n" +
+      "    needs:\n" +
+      "      - code-compile\n" +
+      "    steps:\n" +
+      "      - name: shell\n" +
+      "        code: 3\n" +
+      "        run: |\n" +
+      "          docker build -t mohaijiang/spring-boot-example:20221109 ."
+  );
 
-interface FormBasicPageSetupData {
-  resetFields: (newValues?: Props) => void;
-  validateInfos: validateInfos;
-  modelRef: FormDataType;
-  submitLoading: Ref<boolean>;
-  handleSubmit: (e: MouseEvent) => void;
-}
+  const router = useRouter();
+  const { params } = useRoute();
+  const templateId = ref(params.id);
+  const templateInfo = reactive({});
+  const yamlList = ref([]);
 
-export default defineComponent({
-  name: "CreatePipeline",
-  components: {
-    CodeEditor,
-  },
-  setup(): FormBasicPageSetupData {
+  onMounted(async () => {
+    getTemplatesById(templateId.value.toString());
+  });
+  
+  const getTemplatesById = async (templateId: String) => {
 
-    // 表单值
-    const modelRef = reactive<FormDataType>({
-      title: "",
-      date: [],
-      select: "",
-      radio1: "",
-      radio2: "",
-      checkbox: [],
-      remark: "",
-    });
-    // 表单验证
-    const rulesRef = reactive({
-      title: [
-        {
-          required: true,
-          message: "必填",
-        },
-      ],
-      date: [
-        {
-          required: true,
-          message: "必填",
-          trigger: "change",
-          type: "array",
-        },
-      ],
-      select: [
-        {
-          required: true,
-          message: "请选择",
-        },
-      ],
-      radio1: [],
-      radio2: [
-        {
-          required: true,
-          message: "请选择",
-        },
-      ],
-      checkbox: [],
-      remark: [],
-    });
-    // 获取表单内容
-    const { resetFields, validate, validateInfos } = useForm(
-      modelRef,
-      rulesRef
-    );
-    // 重置 validateInfos 如果用到国际化需要此步骤
-    //const validateInfosNew = useI18nAntdFormVaildateInfos(validateInfos);
-
-    // 登录loading
-    const submitLoading = ref<boolean>(false);
-    // 登录
-    const handleSubmit = async (e: MouseEvent) => {
-      e.preventDefault();
-      submitLoading.value = true;
-      try {
-        const fieldsValue = await validate<FormDataType>();
-        message.success("提交成功");
-        resetFields();
-      } catch (error) {
-        // console.log('error', error);
-      }
-      submitLoading.value = false;
-    };
-
-    const codeValue = ref<String>(
-      "version: 1.0\n" +
-        "name: my-test\n" +
-        "stages:\n" +
-        "  git-clone:\n" +
-        "    steps:\n" +
-        "      - name: git-clone\n" +
-        "        code: 1\n" +
-        "        uses: git-checkout\n" +
-        "        with:\n" +
-        "          url: https://gitee.com/mohaijiang/spring-boot-example.git\n" +
-        "          branch: master\n" +
-        "  code-compile:\n" +
-        "    needs:\n" +
-        "      - git-clone\n" +
-        "    steps:\n" +
-        "      - name: code-compile\n" +
-        "        code: 2\n" +
-        "        runs-on: maven:3.5-jdk-8\n" +
-        "        run: |\n" +
-        "          mvn clean package -Dmaven.test.skip=true\n" +
-        "\n" +
-        "  build-image:\n" +
-        "    needs:\n" +
-        "      - code-compile\n" +
-        "    steps:\n" +
-        "      - name: shell\n" +
-        "        code: 3\n" +
-        "        run: |\n" +
-        "          docker build -t mohaijiang/spring-boot-example:20221109 ."
-    );
-
-
-
-    const { params } = useRoute();
-    const templateId = ref(params.id);
-    const templateInfo = reactive({});
-    const yamlList = ref([]);
-
-    onMounted(async () => {
-      getTemplatesById(templateId.value.toString());
-    });
-    
-    const getTemplatesById = async (templateId: String) => {
-
-      try {
-        const data = await apiGetTemplatesById(templateId);
-        Object.assign(templateInfo, data.template); //赋值
-
-        const config = YAML.parse(codeValue.value);
-        for (let key in config["stages"]){
-          let obj = config["stages"][key];
-          if (obj["needs"]){
-              console.log("needs:",obj["needs"])
-          }
-          if (obj["steps"]){
-              console.log("steps:",obj["steps"])
-          }
-
-          const yaml = {
-            stage: key,
-          }
-          yamlList.value.push(yaml);
-          console.log("yamlList:",yamlList);
+    try {
+      const data = await apiGetTemplatesById(templateId);
+      Object.assign(templateInfo, data.template); //赋值
+      
+      // const config = YAML.parse(templateInfo.yaml);
+      const config  = YAML.parse(codeValue.value);
+      for (let key in config["stages"]){
+        let obj = config["stages"][key];
+        let steps: { eleName: string; eleValues: {}; }[] = [];
+        if (obj["steps"]){
+          obj["steps"].forEach((item: { [x: string]: any; }) => {
+            let eleName = '';
+            let eleValues = {};
+            if (item["uses"]) {
+              if (item["uses"] === 'hamster/artifactory') {
+                eleName = 'artifactory';
+              } else {
+                eleName = item["uses"];
+              }
+              eleValues = item["with"];
+            } else {
+              eleName = 'shell';
+              eleValues = {
+                run: item["run"],
+                runsOn: item["runs-on"],
+              };
+            }
+            steps.push({
+              eleName: eleName,
+              eleValues: eleValues,
+            });
+          });
         }
-      } catch (error: any) {
-        console.log("erro:",error)
+        const yaml = {
+          stage: key,
+          steps: steps,
+        }
+        yamlList.value.push(yaml);
       }
-    };
-    
+    } catch (error: any) {
+      console.log("erro:",error)
+    }
+  };
+  const lastStep = async () => {
+    router.push({ path: '/create' });
+  }
 
-    return {
-      resetFields,
-      validateInfos,
-      modelRef,
-      submitLoading,
-      handleSubmit,
-      codeValue,
-      templateInfo,
-      yamlList
-    };
-  },
-});
+  const setYamlCode = async (isUsers: any, key: string, index: number, item: string, val: any) => {
+    const config = YAML.parse(codeValue.value);
+    if (isUsers) {
+      config["stages"][key]["steps"][index]["with"][item] = val;
+    } else {
+      config["stages"][key]["steps"][index][item] = val;
+    }
+
+    codeValue.value = YAML.stringify(config)
+  }
 </script>
 <style scoped lang="less">
 .create {
@@ -315,7 +200,7 @@ export default defineComponent({
   border-color: @baseColor;
   color: @baseColor;
 }
-:deep(.ant-input){
+:deep(.ant-input),:deep(.ant-input-affix-wrapper){
   border-color: #EFEFEF;
   border-radius: 6px;
 }
