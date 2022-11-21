@@ -13,6 +13,12 @@
     <div
       class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border"
     >
+      <div class="mb-4 w-1/4">
+        <div class="mb-2">
+          Pipeline Name
+        </div>
+        <a-input v-model:value="PipelineName" placeholder="Pipeline Name" allow-clear />
+      </div>
       <a-row class="create" :gutter="24">
         <a-col :span="8">
           <div class="bg-[#EFEFEF] p-4 rounded-tl-[12px] rounded-tr-[12px]">
@@ -49,13 +55,13 @@
             </a-form>
           </div>
         </a-col>
-        <a-col :span="16"><!-- templateInfo.yaml @todo 临时数据-->
+        <a-col :span="16">
           <CodeEditor :value="codeValue"></CodeEditor>
         </a-col>
       </a-row>
       <div class="text-center mt-8">
         <a-button type="primary" @click="lastStep" ghost>{{ $t("template.lastBtn") }}</a-button>
-        <a-button type="primary" class="ml-4">{{
+        <a-button type="primary" @click="submitData" class="ml-4">{{
           $t("template.submitBtn")
         }}</a-button>
       </div>
@@ -66,11 +72,12 @@
 import { reactive, ref, onMounted } from "vue";
 import YAML from "yaml";
 import { useRoute, useRouter } from 'vue-router';
-import { apiGetTemplatesById } from "@/apis/template";
+import { apiGetTemplatesById, apiAddPipeline } from "@/apis/template";
 import CodeEditor from "./components/CodeEditor.vue";
 import GitCheckout from "./components/GitCheckout.vue";
 import Artifactory from "./components/Artifactory.vue";
 import Shell from "./components/Shell.vue";
+import { message } from "ant-design-vue";
 
   const codeValue = ref<String>(
     "version: 1.0\n" +
@@ -108,13 +115,14 @@ import Shell from "./components/Shell.vue";
       "        code: 3\n" +
       "        run: |\n" +
       "          docker build -t mohaijiang/spring-boot-example:20221109 ."
-  );
+    );
 
   const router = useRouter();
   const { params } = useRoute();
   const templateId = ref(params.id);
   const templateInfo = reactive({});
   const yamlList = ref([]);
+  const PipelineName = ref('');
 
   onMounted(async () => {
     getTemplatesById(templateId.value.toString());
@@ -125,8 +133,9 @@ import Shell from "./components/Shell.vue";
     try {
       const data = await apiGetTemplatesById(templateId);
       Object.assign(templateInfo, data.template); //赋值
+      PipelineName.value = templateInfo.name;
+      // codeValue.value = templateInfo.yaml; //@todo mock数据显示有问题，暂时用临时数据
       
-      // const config = YAML.parse(templateInfo.yaml);
       const config  = YAML.parse(codeValue.value);
       for (let key in config["stages"]){
         let obj = config["stages"][key];
@@ -167,6 +176,25 @@ import Shell from "./components/Shell.vue";
   };
   const lastStep = async () => {
     router.push({ path: '/create' });
+  }
+
+  const submitData = async () => {
+    try {
+      if (PipelineName.value === "" || PipelineName.value === null) {
+        message.error("Please input Pipeline Name");
+        return false;
+      }
+      //@todo 添加PipelineName.value判重
+      const result = await apiAddPipeline(PipelineName.value, codeValue.value);
+      console.log("result:", result)
+      if (result.code === 200) {
+        message.success(result.message);
+        router.push({ path: '/pipeline' });
+      }
+    } catch (error: any) {
+      console.log("erro:", error);
+      message.error("Failed");
+    }
   }
 
   const setYamlCode = async (isUsers: any, key: string, index: number, item: string, val: any) => {
