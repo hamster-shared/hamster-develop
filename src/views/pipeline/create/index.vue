@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px]">
+  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px] mx-20">
     <div class="bg-[#121211] p-4 rounded-tl-[12px] rounded-tr-[12px]">
       <div class="flex justify-between">
         <div class="text-[24px] font-semibold text-[#FFFFFF]">{{ $t("template.title") }}</div>
@@ -25,7 +25,7 @@
         <TabPane v-for="(data, index1) in templatesList.groups" :key="index1+1" :tab="data.name">
           <div class="card-div">
             <div class="card-item" @click="setCurrId(item.id)" :class="{'check-border':checkCurrId === item.id }" v-for="(item, index2) in data.items" :key="index2">
-              <div>{{ checkCurrId}}=={{ item.id }}
+              <div>
                 <Image :src="item.image" />
               </div>
               <div class="col-span-5">
