@@ -1,3 +1,4 @@
 import home from "./home.js";
-
-export default { home };
+import template from "./template.js";
+import log from "./log.js";
+export default { home, template, log };
