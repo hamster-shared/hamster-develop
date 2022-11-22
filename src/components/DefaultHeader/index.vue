@@ -1,7 +1,7 @@
 <template>
   <div class="default-header h-[64px] bg-[#ccc] flex justify-between">
     <div>
-      <img src="@/assets/images/logo.jpg" class="h-[28px] mt-[18px] mb-[18px]" />
+      <img src="@/assets/images/logo.jpg" class="h-[28px] mt-[18px] mb-[18px] cursor-pointer" @click="goHome" />
     </div>
     <div>
       <img src="@/assets/icons/fill.svg" class="mt-[16px] mb-[16px] mr-[32px]" />
@@ -10,6 +10,11 @@
   </div>
 </template>
 <script lang='ts' setup>
+import { useRouter } from 'vue-router';
+const router = useRouter()
+const goHome = () => {
+  router.push('/pipeline')
+}
 </script>
 <style lang='less' scoped>
 .default-header {
