@@ -36,11 +36,6 @@ const router = createRouter({
       component: Process,
     },
     {
-      path: "/stage",
-      name: "stage",
-      component: Stage,
-    },
-    {
       path: "/allLogs/:id/:name",
       name: "allLogs",
       component: AllLogs,
@@ -55,7 +50,7 @@ const router = createRouter({
       component: Create,
     },
     {
-      path: "/create/config",
+      path: "/create/config/:id",
       name: "CreateConfig",
       component: CreatePipeline,
     },

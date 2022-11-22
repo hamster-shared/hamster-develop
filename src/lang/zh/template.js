@@ -5,4 +5,6 @@ export default {
   helpDoc: "查看帮助文档",
   cancelBtn: "取消",
   nextBtn: "下一步",
+  lastBtn: '上一步',
+  submitBtn: '创建',
 };

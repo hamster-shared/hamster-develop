@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px]">
+  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px] mx-20">
     <div class="bg-[#121211] p-4 rounded-tl-[12px] rounded-tr-[12px]">
       <div class="flex justify-between">
         <div class="text-[24px] font-semibold text-[#FFFFFF]">{{ $t("template.title") }}</div>
@@ -11,7 +11,7 @@
       <Tabs :defaultActiveKey="activeKey">
         <TabPane key="0" tab="全部">
           <div class="card-div">
-            <div class="card-item" v-for="(item, index) in allTemplatesList" :key="index">
+            <div class="card-item" @click="setCurrId(item.id)" :class="{'check-border':checkCurrId === item.id }" v-for="(item, index) in allTemplatesList" :key="index">
               <div class="card-img-div">
                 <Image src="item.image" />
               </div>
@@ -24,7 +24,7 @@
         </TabPane>
         <TabPane v-for="(data, index1) in templatesList.groups" :key="index1+1" :tab="data.name">
           <div class="card-div">
-            <div class="card-item" v-for="(item, index2) in data.items" :key="index2">
+            <div class="card-item" @click="setCurrId(item.id)" :class="{'check-border':checkCurrId === item.id }" v-for="(item, index2) in data.items" :key="index2">
               <div>
                 <Image :src="item.image" />
               </div>
@@ -38,7 +38,7 @@
       </Tabs>
       <div class="text-center mt-8">
         <Button type="primary" ghost>{{ $t("template.cancelBtn") }}</Button>
-        <Button type="primary" class="ml-4">{{ $t("template.nextBtn") }}</Button>
+        <Button type="primary" class="ml-4" @click="nextStep">{{ $t("template.nextBtn") }}</Button>
       </div>
     </div>
   </div>
@@ -46,10 +46,13 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted } from "vue";
+import { useRouter } from 'vue-router';
 import { apiGetTemplates } from "@/apis/template";
 import { Tabs, TabPane, Image, Button } from 'ant-design-vue';
 
+const router = useRouter();
 const activeKey = ref('0');
+const checkCurrId = ref(0);
 
 const templatesList = reactive([]);
 const allTemplatesList = ref([]);
@@ -73,6 +76,12 @@ const getTemplates = async () => {
     console.log("erro:",error)
   }
 };
+const setCurrId = async (id) => {
+  checkCurrId.value = id;
+}
+const nextStep = async () => {
+  router.push({ path: '/create/config/'+ checkCurrId.value });
+}
 </script>
 
 <style scoped lang="less">
@@ -98,7 +107,7 @@ const getTemplates = async () => {
   @apply grid grid-cols-2 gap-4;
 }
 .card-item{
-  @apply p-4 grid grid-cols-6 gap-4;
+  @apply p-4 grid grid-cols-6 gap-4 cursor-pointer;
   border: 1px solid #EFEFEF;
   /* 投影 */
   box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.1);
@@ -132,21 +141,19 @@ const getTemplates = async () => {
   border-radius: 6px;
 }
 :deep(.ant-btn-primary){
-  border-color: @baseColor;
-  background: @baseColor;
   width: 120px;
   height: 40px;
 }
-:deep(.ant-btn-primary:hover){
+:deep(.ant-btn-primary), :deep(.ant-btn-primary:hover), :deep(.ant-btn-primary:focus){
   border-color: @baseColor;
   background: @baseColor;
 }
-:deep(.ant-btn-background-ghost.ant-btn-primary){
+
+:deep(.ant-btn-background-ghost.ant-btn-primary), :deep(.ant-btn-background-ghost.ant-btn-primary:hover), :deep(.ant-btn-background-ghost.ant-btn-primary:focus){
   border-color: @baseColor;
   color: @baseColor;
 }
-:deep(.ant-btn-background-ghost.ant-btn-primary:hover){
-  border-color: @baseColor;
-  color: @baseColor;
+.check-border{
+   border-color: @baseColor;
 }
 </style>
