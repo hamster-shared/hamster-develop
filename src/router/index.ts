@@ -18,7 +18,7 @@ const router = createRouter({
     },
     {
       path: "/",
-      redirect: "/home",
+      redirect: "/pipeline",
     },
     {
       path: "/pipeline",
@@ -26,17 +26,17 @@ const router = createRouter({
       component: PipelineIndex,
     },
     {
-      path: "/pipeline/:id",
+      path: "/pipeline/:name",
       name: "stage",
       component: Stage,
     },
     {
-      path: "/pipeline/:id/:name",
+      path: "/pipeline/:name/:id",
       name: "process",
       component: Process,
     },
     {
-      path: "/allLogs/:id/:name",
+      path: "/allLogs/:name/:id",
       name: "allLogs",
       component: AllLogs,
       meta: {

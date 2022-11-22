@@ -39,7 +39,7 @@ const layoutClass = computed(() => {
 .layout-default-content {
   width: 100%;
   // padding: 24px;
-  background-color: #f5f5f5;
+  background-color: #ffffff;
   max-width: 1440px;
   min-width: 1080px;
   margin: 24px auto;

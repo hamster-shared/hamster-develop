@@ -27,8 +27,10 @@ const changeLang = () => {
 
 <style lang="less" scoped>
 @baseColoe: orange;
+
 .test-less {
   background: red;
+
   .less-child {
     background: @baseColoe;
   }
