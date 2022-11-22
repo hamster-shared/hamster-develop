@@ -2,11 +2,13 @@
   <div class="w-[80%] mx-auto bg-white py-[32px] px-[24px] rounded-xl">
     <div class="flex justify-between mb-6">
       <span class="text-2xl font-semibold text-[#121211]"
-        >Hamster-pipeline</span
-      >
+        >Hamster-pipeline
+      </span>
       <div>
-        <a-button class="mr-2">设置</a-button>
-        <a-button type="primary">立即执行</a-button>
+        <a-button class="mr-2">{{ $t("pipeline.stage.set") }}</a-button>
+        <a-button type="primary">
+          {{ $t("pipeline.stage.immediateImplementation") }}</a-button
+        >
       </div>
     </div>
 
@@ -23,32 +25,64 @@
 
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
-          <span v-if="record.status == 0">no data</span>
-          <span v-if="record.status == 1">running</span>
-          <span v-if="record.status == 2">passed</span>
-          <span v-if="record.status == 3">failed</span>
-          <span v-if="record.status == 4">stop</span>
+          <span
+            v-if="record.status == 0"
+            @click="handleToNextPage(record.id)"
+            class="cursor-pointer"
+            >no data</span
+          >
+          <span
+            v-if="record.status == 1"
+            @click="handleToNextPage(record.id)"
+            class="cursor-pointer"
+            >running</span
+          >
+          <span
+            v-if="record.status == 2"
+            @click="handleToNextPage(record.id)"
+            class="cursor-pointer"
+            >passed</span
+          >
+          <span
+            v-if="record.status == 3"
+            @click="handleToNextPage(record.id)"
+            class="cursor-pointer"
+            >failed</span
+          >
+          <span
+            v-if="record.status == 4"
+            @click="handleToNextPage(record.id)"
+            class="cursor-pointer"
+            >stop</span
+          >
         </template>
-        <template v-else-if="column.key === 'execution_process'">
-          <div v-if="record.execution_process[0].status == 0">
-            <img :src="nodataSVG" class="w-[20px] h-[20px]" />
-          </div>
-          <div v-if="record.execution_process[0].status == 1">
-            <img :src="runnngSVG" class="w-[20px] h-[20px]" />
-          </div>
-          <div v-if="record.execution_process[0].status == 2">
-            <img :src="successSVG" class="w-[20px] h-[20px]" />
-          </div>
-          <div v-if="record.execution_process[0].status == 3">
-            <img :src="failedSVG" class="w-[20px] h-[20px]" />
-          </div>
-          <div v-if="record.execution_process[0].status == 4">
-            <img :src="stopSVG" class="w-[20px] h-[20px]" />
+        <template v-else-if="column.key === 'stages'">
+          <div v-for="(item, index) in record.stages" :key="index" class="flex">
+            <div>
+              <div v-if="item?.status == 0" class="inline-block">
+                <img :src="nodataSVG" class="w-[20px] h-[20px]" />
+              </div>
+              <div v-if="item?.status == 1" class="inline-block">
+                <img :src="runnngSVG" class="w-[20px] h-[20px]" />
+              </div>
+              <div v-if="item?.status == 2" class="inline-block">
+                <img :src="successSVG" class="w-[20px] h-[20px]" />
+              </div>
+              <div v-if="item?.status == 3" class="inline-block">
+                <img :src="failedSVG" class="w-[20px] h-[20px]" />
+              </div>
+              <div v-if="item?.status == 4" class="inline-block">
+                <img :src="stopSVG" class="w-[20px] h-[20px]" />
+              </div>
+            </div>
+            <div v-if="index !== record.stages.length - 1">
+              <img :src="greyArrowSVG" />
+            </div>
           </div>
         </template>
-        <template v-else-if="column.key === 'time_consuming'">
-          <span class="block">{{ record.last_execution_time }}</span>
-          <span>{{ record.time_consuming }}</span>
+        <template v-else-if="column.key === 'duration'">
+          <span class="block">{{ executionTime(record.startTime) }}</span>
+          <span>{{ formatDurationTime(record.duration) }}</span>
         </template>
         <template v-else-if="column.key === 'action'">
           <div v-if="record.status == 1">
@@ -56,7 +90,7 @@
             <a
               @click="handleStop(record.id)"
               class="text-[#FF842C] hover:text-[#FF842C]"
-              >终止</a
+              >{{ $t("pipeline.stage.stop") }}</a
             >
           </div>
           <div v-else>
@@ -64,8 +98,8 @@
             <a
               @click="handleDelete(record.id)"
               class="text-[#F52222] hover:text-[#F52222]"
-              >删除</a
-            >
+              >{{ $t("pipeline.stage.delete") }}
+            </a>
           </div>
         </template>
       </template>
@@ -88,9 +122,14 @@ import stopSVG from "@/assets/icons/pipeline-stop.svg";
 import nodataSVG from "@/assets/icons/pipeline-no-data.svg";
 import stopButtonSVG from "@/assets/icons/pipeline-stop-button.svg";
 import deleteButtonSVG from "@/assets/icons/pipeline-delete-button.svg";
+import greyArrowSVG from "@/assets/icons/grey-arrow.svg";
 import { message } from "ant-design-vue";
+import formatDurationTime from "@/utils/time/consumTime.js";
+import executionTime from "@/utils/time/dateUtils.js";
 
 const router = useRouter();
+
+const pathName = router.currentRoute.value.params.name;
 
 const columns = reactive([
   {
@@ -105,18 +144,18 @@ const columns = reactive([
   },
   {
     title: "Trigger Info",
-    dataIndex: "trigger_info",
-    key: "trigger_info",
+    dataIndex: "triggerMode",
+    key: "triggerMode",
   },
   {
     title: "Stage",
-    key: "execution_process",
-    dataIndex: "execution_process",
+    key: "stages",
+    dataIndex: "stages",
   },
   {
     title: "Time",
-    key: "time_consuming",
-    dataIndex: "time_consuming",
+    key: "duration",
+    dataIndex: "duration",
   },
   {
     title: "Action",
@@ -126,31 +165,13 @@ const columns = reactive([
 
 const pipelineInfo = reactive([
   {
-    key: "1",
-    status: "1",
-    id: "#1",
-    last_execution_time: "Linda手动触发master|b4a0d99",
-    execution_process: ["nice", "developer"],
-    time_consuming: "1小时前执行",
-    trigger_info: "111",
-  },
-  {
-    key: "2",
-    status: "2",
-    id: "#2",
-    last_execution_time: "Linda手动触发master|b4a0d99",
-    execution_process: ["loser"],
-    time_consuming: "1小时前执行,耗时6分钟",
-    trigger_info: "222",
-  },
-  {
-    key: "3",
-    status: "3",
-    id: "#3",
-    last_execution_time: "Linda手动触发master|b4a0d99",
-    execution_process: ["cool", "teacher"],
-    time_consuming: "1小时前执行",
-    trigger_info: "333",
+    key: "0",
+    id: 0,
+    status: 3,
+    triggerMode: "Manual trigger",
+    startTime: "2022-11-21T17:46:26.041337+08:00",
+    duration: 1109625375,
+    stages: [],
   },
 ]);
 
@@ -177,18 +198,26 @@ const pagination = reactive({
   // showTotal: total => `总数：${total}人`, // 可以展示总数
 });
 
+const handleToNextPage = (id) => {
+  router.push(`/pipeline/${pathName}/${id}`);
+};
+
 const getPipelineInfo = async () => {
-  console.log(router.currentRoute.value.params.id);
-  const data = await apiGetPipelineInfo(":name", {});
+  console.log(
+    "router.currentRoute.value.params",
+    router.currentRoute.value.params,
+    pathName
+  );
+  const { data } = await apiGetPipelineInfo(pathName, {});
   console.log("apiGetPipelineInfo", data);
-  Object.assign(pipelineInfo, data.pipeline.jobs);
-  pagination.pageSize = data.pagination.size;
-  pagination.total = data.pagination.total;
+  Object.assign(pipelineInfo, data.data);
+  pagination.pageSize = data.pageSize;
+  pagination.total = data.total;
 };
 
 const handleDelete = async (id) => {
   try {
-    await apiDeletePipelineInfo(id);
+    await apiDeletePipelineInfo(pathName, id);
     console.log("id", id);
     const newJobs = pipelineInfo.filter((x) => x.id !== id);
     Object.assign(pipelineInfo, newJobs);
@@ -294,5 +323,13 @@ dl {
 }
 :deep(.ant-pagination-item-active:hover a) {
   color: white !important;
+}
+
+:deep(.ant-table-tbody > tr > td:nth-child(4)) {
+  display: flex;
+  border-bottom: unset;
+  justify-content: center;
+  align-items: center;
+  height: 70.7px;
 }
 </style>
