@@ -12,15 +12,17 @@
         </template>
       </a-input>
       <a-button type="primary">
-        <router-link to="/create">创建pipeline</router-link>
+        <router-link to="/create">
+          {{ $t("pipeline.createPipeline") }}
+        </router-link>
       </a-button>
     </div>
 
-    <a-card v-for="(data, index) in PipelineList" :key="index">
+    <a-card v-for="(data, index) in pipelineList" :key="index">
       <div class="flex justify-between">
         <div class="self-center">
           <div
-            @click="$router.push(`/pipeline/${data.id}`)"
+            @click="$router.push(`/pipeline/${data.name}`)"
             class="mb-3 text-xl font-semibold cursor-pointer text-[#121211]"
           >
             {{ data.name }}
@@ -33,54 +35,56 @@
               v-if="data.status == 0"
               class="text-sm font-normal text-[#7B7D7B]"
             >
-              暂无执行数据
+              {{ $t("pipeline.noData") }}
             </div>
             <div
               v-if="data.status == 1"
               class="text-sm font-normal text-[#2C5AFF]"
             >
               <img :src="runnngSVG" />
-              执行中
+              {{ $t("pipeline.running") }}
             </div>
             <div
               v-if="data.status == 2"
               class="text-sm font-normal text-[#2DCE83]"
             >
               <img :src="successSVG" />
-              执行成功
+              {{ $t("pipeline.successfulImplementation") }}
             </div>
             <div
               v-if="data.status == 3"
               class="text-sm font-normal text-[#F52222]"
             >
               <img :src="failedSVG" />
-              推送到制品库失败
+              {{ $t("pipeline.pushFailed") }}
             </div>
             <div
               v-if="data.status == 4"
               class="text-sm font-normal text-[#FF842C]"
             >
               <img :src="stopSVG" />
-              用户终止
+              {{ $t("pipeline.userTermination") }}
             </div>
           </div>
         </div>
         <div class="self-center text-center">
           <span
             class="text-sm font-normal bg-[#F8F8F8] py-2 px-3 rounded text-[#3F4641] block mb-3"
-            >{{ data.last_execution_time }}</span
+            >{{ executionTime(data.startTime) }}</span
           >
           <span class="text-xs">
             <img :src="wasteTimeSVG" />
-            {{ data.time_consuming }}
+            {{ formatDurationTime(data.duration) }}
           </span>
         </div>
         <div class="self-center">
-          <a-button type="primary" v-if="data.status !== 1">立即执行</a-button>
-          <a-button type="primary" danger v-if="data.status === 1"
-            >终止执行</a-button
-          >
-          <a-button>设置</a-button>
+          <a-button type="primary" v-if="data.status !== 1">
+            {{ $t("pipeline.immediateImplementation") }}
+          </a-button>
+          <a-button type="primary" danger v-if="data.status === 1">
+            {{ $t("pipeline.stop") }}
+          </a-button>
+          <a-button>{{ $t("pipeline.set") }}</a-button>
         </div>
       </div>
     </a-card>
@@ -98,38 +102,36 @@ import successSVG from "@/assets/icons/pipeline-success.svg";
 import failedSVG from "@/assets/icons/pipeline-failed.svg";
 import stopSVG from "@/assets/icons/pipeline-stop.svg";
 import wasteTimeSVG from "@/assets/icons/pipeline-waste-time.svg";
+import formatDurationTime from "@/utils/time/consumTime.js";
+import executionTime from "@/utils/time/dateUtils.js";
 
 const searchValue = ref("");
 
-const PipelineList = reactive([
+const pipelineList = reactive([
   {
-    title: "Hamster-pipeline-1",
+    name: "Hamster-pipeline-1",
     description: "11111",
     status: "success",
   },
   {
-    title: "Hamster-pipeline-2",
+    name: "Hamster-pipeline-2",
     description: "222222",
-    status: "fail",
-  },
-  {
-    title: "Hamster-pipeline-3",
-    description: "333333",
-    status: "success",
-  },
-  {
-    title: "Hamster-pipeline-4",
-    description: "44444",
     status: "fail",
   },
 ]);
 
 const getPipelineInfo = async () => {
-  const data = await apiGetPipelines({ page: 1, size: 2 });
+  // const data = await apiGetPipelines({ page: 1, size: 2 });
+  // console.log("apiGetPipelines", data);
+  // Object.assign(PipelineList, data.pipelines);
+  // pagination.pageSize = data.pagination.size;
+  // pagination.total = data.pagination.total;
+
+  const { data } = await apiGetPipelines({ page: 1, size: 10 });
   console.log("apiGetPipelines", data);
-  Object.assign(PipelineList, data.pipelines);
-  pagination.pageSize = data.pagination.size;
-  pagination.total = data.pagination.total;
+  Object.assign(pipelineList, data.data);
+  pagination.pageSize = data.pageSize;
+  pagination.total = data.total;
 };
 
 const pagination = reactive({
