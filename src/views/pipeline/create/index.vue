@@ -37,7 +37,7 @@
         </TabPane>
       </Tabs>
       <div class="text-center mt-8">
-        <Button type="primary" ghost>{{ $t("template.cancelBtn") }}</Button>
+        <Button type="primary" ghost @click="backStep">{{ $t("template.cancelBtn") }}</Button>
         <Button type="primary" class="ml-4" @click="nextStep">{{ $t("template.nextBtn") }}</Button>
       </div>
     </div>
@@ -78,6 +78,9 @@ const getTemplates = async () => {
 };
 const setCurrId = async (id) => {
   checkCurrId.value = id;
+}
+const backStep = async () => {
+  router.push({ path: '/pipeline' });
 }
 const nextStep = async () => {
   router.push({ path: '/create/config/'+ checkCurrId.value });

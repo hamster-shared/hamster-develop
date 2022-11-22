@@ -1,4 +1,11 @@
 import axios from "axios";
+
+declare module 'axios' {
+  interface AxiosInstance {
+    (config: AxiosRequestConfig): Promise<any>
+  }
+}
+
 // 创建一个 axios 实例
 const service = axios.create({
   baseURL: "/api", // 所有的请求地址前缀部分

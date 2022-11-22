@@ -54,6 +54,11 @@ const router = createRouter({
       name: "CreateConfig",
       component: CreatePipeline,
     },
+    {
+      path: "/edit/:id",
+      name: "Edit",
+      component: Edit,
+    },
   ],
 });
 
