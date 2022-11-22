@@ -56,7 +56,12 @@
           </div>
         </a-col>
         <a-col :span="16">
-          <CodeEditor :value="codeValue"></CodeEditor>
+          <div class="bg-[#EFEFEF] p-4 rounded-tl-[12px] rounded-tr-[12px]">
+            <div class="text-[16px] font-semibold text-[#121211]">
+              Pipelinefile Preview
+            </div>
+          </div>
+          <CodeEditor :readOnly="true" :value="codeValue"></CodeEditor>
         </a-col>
       </a-row>
       <div class="text-center mt-8">
@@ -120,8 +125,20 @@ import { message } from "ant-design-vue";
   const router = useRouter();
   const { params } = useRoute();
   const templateId = ref(params.id);
-  const templateInfo = reactive({});
-  const yamlList = ref([]);
+  const templateInfo = reactive({
+    name: '',
+    description: '',
+    yaml: '',
+  });
+  const yamlList = ref([
+    {
+      stage: '',
+      steps: [{
+        eleName: '',
+        eleValues: {},
+      }]
+    }
+  ]);
   const PipelineName = ref('');
 
   onMounted(async () => {
@@ -136,7 +153,8 @@ import { message } from "ant-design-vue";
       PipelineName.value = templateInfo.name;
       // codeValue.value = templateInfo.yaml; //@todo mock数据显示有问题，暂时用临时数据
       
-      const config  = YAML.parse(codeValue.value);
+      const config = YAML.parse(codeValue.value.toString());
+      yamlList.value = []
       for (let key in config["stages"]){
         let obj = config["stages"][key];
         let steps: { eleName: string; eleValues: {}; }[] = [];
@@ -198,7 +216,7 @@ import { message } from "ant-design-vue";
   }
 
   const setYamlCode = async (isUsers: any, key: string, index: number, item: string, val: any) => {
-    const config = YAML.parse(codeValue.value);
+    const config = YAML.parse(codeValue.value.toString());
     if (isUsers) {
       config["stages"][key]["steps"][index]["with"][item] = val;
     } else {

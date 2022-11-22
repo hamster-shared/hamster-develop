@@ -1,11 +1,4 @@
 <template>
-  <div class="bg-[#EFEFEF] p-4 rounded-tl-[12px] rounded-tr-[12px]">
-    <div class="flex justify-between">
-      <div class="text-[16px] font-semibold text-[#121211]">
-        Pipelinefile Preview
-      </div>
-    </div>
-  </div>
   <div
     ref="editContainer"
     class="code-editor rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border"
@@ -24,6 +17,7 @@ export default {
   name: "CodeEditor",
   props: {
     value: String,
+    readOnly: String,
   },
   setup(props, { emit }) {
     let monacoEditor = null;
@@ -59,7 +53,7 @@ export default {
       monaco.editor.setTheme("custom");
       monacoEditor = monaco.editor.create(proxy.$refs.editContainer, {
         value: props.value,
-        readOnly: true,
+        readOnly: props.readOnly,
         language: "yaml",
         theme: "custom",
         automaticLayout: true,
@@ -76,9 +70,10 @@ export default {
       monacoEditor.onDidChangeModelContent(() => {
         const currenValue = monacoEditor?.getValue();
         emit("update:value", currenValue);
+        emit("getYamlValue", currenValue);
       });
     });
-    return {};
+    return { };
   },
 };
 </script>
@@ -86,5 +81,10 @@ export default {
 .code-editor {
   width: 100%;
   height: 92%;
+}
+:deep(.monaco-editor),
+:deep(.overflow-guard){
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 </style>

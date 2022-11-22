@@ -60,3 +60,10 @@ export function apiGetPipelineDetail(params: GetPipelineDetailParams) {
     params: params,
   });
 }
+
+export function apiGetPipeline(name: String) {
+  return httpRequest({
+    url: `/pipeline/${name}`,
+    method: "get",
+  });
+}
