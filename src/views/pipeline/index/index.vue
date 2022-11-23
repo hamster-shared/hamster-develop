@@ -11,11 +11,9 @@
           <img :src="searchSVG" />
         </template>
       </a-input>
-      <a-button type="primary">
-        <router-link to="/create">
-          {{ $t("pipeline.createPipeline") }}
-        </router-link>
-      </a-button>
+      <router-link to="/create">
+        <a-button type="primary">{{ $t("pipeline.createPipeline") }}</a-button>
+      </router-link>
     </div>
 
     <a-card v-for="(data, index) in pipelineList" :key="index">
@@ -84,9 +82,9 @@
           <a-button type="primary" danger v-if="data.status === 1">
             {{ $t("pipeline.stop") }}
           </a-button>
-          <a-button>
-            <router-link :to="`/edit/${data.id}`">{{ $t("pipeline.set") }}</router-link>
-          </a-button>
+          <router-link :to="`/edit/${data.id}`">
+            <a-button>{{ $t("pipeline.set") }}</a-button>
+          </router-link>
         </div>
       </div>
     </a-card>
