@@ -7,7 +7,7 @@
       <!-- / Layout Header's Conditionally Fixed Wrapper -->
 
       <!-- Layout Content -->
-      <a-layout>
+      <a-layout class="pt-[64px]">
         <!-- Page Content -->
         <a-layout-content class="layout-default-content">
           <keep-alive>
