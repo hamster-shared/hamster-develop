@@ -24,7 +24,10 @@ type IJobService interface {
 	SaveJob(name string, job *model.Job) error
 
 	// GetJob 获取 Job
-	GetJob(name string) *model.Job
+	GetJob(name string) string
+
+	// GetJobObject get job object
+	GetJobObject(name string) *model.Job
 
 	JobList(keyword string, page, size int) *model.JobPage
 
@@ -106,8 +109,7 @@ func (svc *JobService) SaveJob(name string, job *model.Job) error {
 }
 
 // GetJob get job
-func (svc *JobService) GetJob(name string) *model.Job {
-	var jobData model.Job
+func (svc *JobService) GetJob(name string) string {
 	//job file path
 	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+name+".yml")
 	//judge whether the job file exists
@@ -115,21 +117,15 @@ func (svc *JobService) GetJob(name string) *model.Job {
 	//not exist
 	if os.IsNotExist(err) {
 		log.Println("get job failed,job file not exist", err.Error())
-		return &jobData
+		return ""
 	}
 	//exist
 	fileContent, err := os.ReadFile(src)
 	if err != nil {
 		log.Println("get job read file failed", err.Error())
-		return &jobData
+		return ""
 	}
-	//deserialization job yml file
-	err = yaml.Unmarshal(fileContent, &jobData)
-	if err != nil {
-		log.Println("get job,deserialization job file failed", err.Error())
-		return &jobData
-	}
-	return &jobData
+	return string(fileContent)
 }
 
 // UpdateJob update job
@@ -421,7 +417,7 @@ func (svc *JobService) DeleteJobDetail(name string, pipelineDetailId int) error 
 // ExecuteJob exec pipeline job
 func (svc *JobService) ExecuteJob(name string) (*model.JobDetail, error) {
 	//get job data
-	jobData := svc.GetJob(name)
+	jobData := svc.GetJobObject(name)
 	log.Println(jobData)
 	//create job detail
 	var jobDetail model.JobDetail
@@ -563,4 +559,31 @@ func (svc *JobService) getJobInfo(jobData *model.JobVo) {
 		jobData.TriggerMode = jobDetail.TriggerMode
 		jobData.PipelineDetailId = jobDetail.Id
 	}
+}
+
+// GetJob get job
+func (svc *JobService) GetJobObject(name string) *model.Job {
+	var jobData model.Job
+	//job file path
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+name+".yml")
+	//judge whether the job file exists
+	_, err := os.Stat(src)
+	//not exist
+	if os.IsNotExist(err) {
+		log.Println("get job failed,job file not exist", err.Error())
+		return &jobData
+	}
+	//exist
+	fileContent, err := os.ReadFile(src)
+	if err != nil {
+		log.Println("get job read file failed", err.Error())
+		return &jobData
+	}
+	//deserialization job yml file
+	err = yaml.Unmarshal(fileContent, &jobData)
+	if err != nil {
+		log.Println("get job,deserialization job file failed", err.Error())
+		return &jobData
+	}
+	return &jobData
 }

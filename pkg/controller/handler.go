@@ -158,7 +158,7 @@ func (h *HandlerServer) getPipelineDetailList(gin *gin.Context) {
 // execPipeline exec pipeline job
 func (h *HandlerServer) execPipeline(gin *gin.Context) {
 	name := gin.Param("name")
-	job := h.jobService.GetJob(name)
+	job := h.jobService.GetJobObject(name)
 	jobDetail, err := h.jobService.ExecuteJob(name)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -183,7 +183,7 @@ func (h *HandlerServer) reExecuteJob(gin *gin.Context) {
 		return
 	}
 	err = h.jobService.ReExecuteJob(name, id)
-	job := h.jobService.GetJob(name)
+	job := h.jobService.GetJobObject(name)
 	jobDetail := h.jobService.GetJobDetail(name, id)
 	node := h.dispatch.DispatchNode(job)
 	h.dispatch.SendJob(jobDetail, node)
@@ -209,7 +209,7 @@ func (h *HandlerServer) stopJobDetail(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	job := h.jobService.GetJob(name)
+	job := h.jobService.GetJobObject(name)
 	jobDetail := h.jobService.GetJobDetail(name, id)
 	node := h.dispatch.DispatchNode(job)
 	h.dispatch.CancelJob(jobDetail, node)
