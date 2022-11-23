@@ -159,7 +159,8 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 		} else {
 			stageWapper.Status = model.STATUS_SUCCESS
 		}
-		stageWapper.Duration = time.Now().Sub(stageWapper.StartTime)
+		dataTime := time.Now().Sub(stageWapper.StartTime)
+		stageWapper.Duration = dataTime.Milliseconds()
 		jobWrapper.Stages[index] = stageWapper
 		e.jobService.SaveJobDetail(jobWrapper.Name, jobWrapper)
 		logger.Info("}")

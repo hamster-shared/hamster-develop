@@ -11,11 +11,11 @@ type Stage struct {
 }
 
 type StageDetail struct {
-	Name      string        `json:"name"`
-	Stage     Stage         `json:"stage"`
-	Status    Status        `json:"status"`
-	StartTime time.Time     `json:"startTime"`
-	Duration  time.Duration `json:"duration"`
+	Name      string    `json:"name"`
+	Stage     Stage     `json:"stage"`
+	Status    Status    `json:"status"`
+	StartTime time.Time `json:"startTime"`
+	Duration  int64     `json:"duration"`
 }
 
 func NewStageDetail(name string, stage Stage) StageDetail {
