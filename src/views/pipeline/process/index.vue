@@ -11,7 +11,7 @@
         </a-col>
         <a-col :span="6">
           <div class="process-detail-item">
-            <div class="process-detail-title">status</div>
+            <div class="process-detail-title">{{ $t("log.status") }}</div>
             <div class="process-detail-info">
               {{ StatusEnum[jobData.status] }}
             </div>
@@ -19,13 +19,17 @@
         </a-col>
         <a-col :span="6">
           <div class="process-detail-item">
-            <div class="process-detail-title">Execution Time</div>
+            <div class="process-detail-title">
+              {{ $t("log.executionTime") }}
+            </div>
             <div class="process-detail-info">{{ jobData.startTimeText }}</div>
           </div>
         </a-col>
         <a-col :span="6">
           <div>
-            <div class="process-detail-title">Total duration</div>
+            <div class="process-detail-title">
+              {{ $t("log.totalDuration") }}
+            </div>
             <div class="process-detail-info">
               {{ formatDuring(jobData.duration) }}
             </div>
@@ -36,7 +40,9 @@
     <div class="p-[24px] border border-solid border-[#EFEFEF] rounded-b-[12px]">
       <div class="process-content">
         <div class="flex justify-between">
-          <span class="process-content-title">Execution Process</span>
+          <span class="process-content-title">{{
+            $t("log.executionProcess")
+          }}</span>
           <span
             class="text-[14px] text-[#28C57C] cursor-pointer"
             @click="checkAllLogs"
@@ -127,7 +133,7 @@ import { apiGetPipelineDetail } from "@/apis/pipeline";
 import { formatDuring } from "@/common/common";
 import dayjs from "dayjs";
 import BScroll from "@better-scroll/core";
-import ProcessModal from "./components/ProcessModal1.vue";
+import ProcessModal from "./components/ProcessModal.vue";
 const router = useRouter();
 const processModalRef = ref();
 const title = ref("");
@@ -165,11 +171,11 @@ const getImageUrl = (status) => {
     .href;
 };
 
-const getStarTime = (data) => {
+const getStarTime = (data: any) => {
   // 当前时间
   let date = dayjs(new Date()).valueOf();
   // 开始时间
-  let startTime = dayjs(data.StartTime).valueOf();
+  let startTime = dayjs(data.startTime).valueOf();
   let t = date - startTime;
   data.startTimeText = formatDuring(t);
 };
@@ -187,8 +193,7 @@ const checkProcess = (item) => {
 const getStageLogsData = async (item) => {
   const query = Object.assign(queryJson, { stagename: item.name });
   const data = await apiGetJobStageLogs(query);
-  content.value = data.data.content;
-
+  content.value = data.data || "我暂时还没有值";
   // console.log(data.data, '9999')
 };
 
