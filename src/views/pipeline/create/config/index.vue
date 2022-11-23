@@ -107,7 +107,7 @@ import { message } from "ant-design-vue";
       "          mvn clean package -Dmaven.test.skip=true\n" +
       "      - name: save artifactory\n" +
       "        code: 2\n" +
-      "        uses: hamster/artifactory\n" +
+      "        uses: hamster-artifactory\n" +
       "        with:\n" +
       "          name: some.zip\n" +
       "          path: contracts/*.sol\n" +
@@ -163,7 +163,7 @@ import { message } from "ant-design-vue";
             let eleName = '';
             let eleValues = {};
             if (item["uses"]) {
-              if (item["uses"] === 'hamster/artifactory') {
+              if (item["uses"] === 'hamster-artifactory') {
                 eleName = 'artifactory';
               } else {
                 eleName = item["uses"];

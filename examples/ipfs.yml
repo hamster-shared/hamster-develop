@@ -13,6 +13,6 @@ stages:
       - git-clone
     steps:
       - name: update ipfs
-        uses: hamster/ipfs
+        uses: hamster-ipfs
         with:
           path: src

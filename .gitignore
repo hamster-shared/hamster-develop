@@ -30,3 +30,5 @@ coverage
 /a-line
 /a-line.exe
 /aline
+
+go.sum

@@ -70,7 +70,7 @@ import { message } from "ant-design-vue";
       "          mvn clean package -Dmaven.test.skip=true\n" +
       "      - name: save artifactory\n" +
       "        code: 2\n" +
-      "        uses: hamster/artifactory\n" +
+      "        uses: hamster-artifactory\n" +
       "        with:\n" +
       "          name: some.zip\n" +
       "          path: contracts/*.sol\n" +
