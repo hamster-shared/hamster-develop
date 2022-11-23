@@ -11,4 +11,8 @@ export default {
   saveBtn: "Save",
   modalTitle: "Modify PipeLineName",
   discardChange: "Give up",
+  GENERAL_TEMPLATE: "GENERAL_TEMPLATE",
+  SMART_CONTRACT_TEMPLATE: "SMART_CONTRACT_TEMPLATE",
+  DAPP_TEMPLATE: "DAPP_TEMPLATE",
+  DAPP_TEMPLATE_Frontend: "DAPP_TEMPLATE(Frontend)",
 };

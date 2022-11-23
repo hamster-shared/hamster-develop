@@ -11,4 +11,13 @@ export default {
   saveBtn: "保存",
   modalTitle: "修改 PipeLineName",
   discardChange: "放弃修改",
+  GENERAL_TEMPLATE: "通用模版",
+  SMART_CONTRACT_TEMPLATE: "智能合约模版",
+  DAPP_TEMPLATE: "DApp模版",
+  DAPP_TEMPLATE_Frontend: "DApp模版(仅前端)",
+
+  // GENERAL_TEMPLATE //通用模版
+  // SMART_CONTRACT_TEMPLATE //智能合约模版
+  // DAPP_TEMPLATE    //DApp模版
+  // DAPP_TEMPLATE(Frontend) //DApp模版(仅前端)
 };

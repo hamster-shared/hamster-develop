@@ -24,7 +24,7 @@
             </div>
           </div>
         </TabPane>
-        <TabPane v-for="(data, index) in templatesList" :key="index+1" :tab="data.tag">
+        <TabPane v-for="(data, index) in templatesList" :key="index+1" :tab="$t(`template.${data.tag}`)">
           <div class="card-div">
             <div class="card-item" @click="setCurrId(item.id)" :class="{'check-border':checkCurrId === item.id }" v-for="(item, index2) in data.items" :key="index2">
               <div>
@@ -155,22 +155,27 @@ onMounted(async () => {
 const getTemplates = async () => {
 
   try {
-    const { data } = await apiGetTemplates();
-    Object.assign(allTemplatesList, data); //赋值
+    // const { data } = await apiGetTemplates();
+    // Object.assign(allTemplatesList, data); //赋值
     //拆分相同 tabs 下的数据
     const templates: string | any[] = [];
     const templateTabs: any[] = [];
-    data.forEach((item: any) => {
+    allTemplatesList.forEach((item: any) => {
+      let tagVal = item.tag;
+      if (tagVal === 'DAPP_TEMPLATE(Frontend)') {
+        tagVal = 'DAPP_TEMPLATE_Frontend';
+      }
       
-      if (templateTabs.includes(item.tag)) {
+      if (templateTabs.includes(tagVal)) {
         templates.forEach((subItem, index) => {
-          if (subItem.tag === item.tag) {
+          if (subItem.tag === tagVal) {
             templates[index]['items'].push(item);
           }
         })
       } else {
-        templateTabs.push(item.tag);
-        templates.push({ tag: item.tag, items: [item] });
+
+        templateTabs.push(tagVal);
+        templates.push({ tag: tagVal, items: [item] });
       }
     });
     Object.assign(templatesList, templates); //赋值
