@@ -82,7 +82,7 @@
           <a-button type="primary" danger v-if="data.status === 1">
             {{ $t("pipeline.stop") }}
           </a-button>
-          <router-link :to="`/edit/${data.id}`">
+          <router-link :to="`/edit/${data.name}`">
             <a-button>{{ $t("pipeline.set") }}</a-button>
           </router-link>
         </div>

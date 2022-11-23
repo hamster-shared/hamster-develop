@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px] mx-20">
+  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px]">
     <div class="bg-[#121211] p-4 rounded-tl-[12px] rounded-tr-[12px]">
       <div class="flex justify-between">
         <div class="text-[24px] font-semibold text-[#FFFFFF]">
@@ -84,43 +84,7 @@ import Artifactory from "./components/Artifactory.vue";
 import Shell from "./components/Shell.vue";
 import { message } from "ant-design-vue";
 
-  const codeValue = ref<String>(
-    "version: 1.0\n" +
-      "name: my-test\n" +
-      "stages:\n" +
-      "  git-clone:\n" +
-      "    steps:\n" +
-      "      - name: git-clone\n" +
-      "        code: 1\n" +
-      "        uses: git-checkout\n" +
-      "        with:\n" +
-      "          url: https://gitee.com/mohaijiang/spring-boot-example.git\n" +
-      "          branch: master\n" +
-      "  code-compile:\n" +
-      "    needs:\n" +
-      "      - git-clone\n" +
-      "    steps:\n" +
-      "      - name: code-compile\n" +
-      "        code: 2\n" +
-      "        runs-on: maven:3.5-jdk-8\n" +
-      "        run: |\n" +
-      "          mvn clean package -Dmaven.test.skip=true\n" +
-      "      - name: save artifactory\n" +
-      "        code: 2\n" +
-      "        uses: hamster/artifactory\n" +
-      "        with:\n" +
-      "          name: some.zip\n" +
-      "          path: contracts/*.sol\n" +
-      "\n" +
-      "  build-image:\n" +
-      "    needs:\n" +
-      "      - code-compile\n" +
-      "    steps:\n" +
-      "      - name: shell\n" +
-      "        code: 3\n" +
-      "        run: |\n" +
-      "          docker build -t mohaijiang/spring-boot-example:20221109 ."
-    );
+  const codeValue = ref<String>();
 
   const router = useRouter();
   const { params } = useRoute();
@@ -148,10 +112,10 @@ import { message } from "ant-design-vue";
   const getTemplatesById = async (templateId: String) => {
 
     try {
-      const data = await apiGetTemplatesById(templateId);
-      Object.assign(templateInfo, data.template); //赋值
+      const { data } = await apiGetTemplatesById(templateId);
+      Object.assign(templateInfo, data); //赋值
       PipelineName.value = templateInfo.name;
-      // codeValue.value = templateInfo.yaml; //@todo mock数据显示有问题，暂时用临时数据
+      codeValue.value = templateInfo.yaml; 
       
       const config = YAML.parse(codeValue.value.toString());
       yamlList.value = []
@@ -162,12 +126,11 @@ import { message } from "ant-design-vue";
           obj["steps"].forEach((item: { [x: string]: any; }) => {
             let eleName = '';
             let eleValues = {};
-            if (item["uses"]) {
-              if (item["uses"] === 'hamster/artifactory') {
-                eleName = 'artifactory';
-              } else {
-                eleName = item["uses"];
-              }
+            if (item["uses"] && item["uses"] === "git-checkout") {
+              eleName = item["uses"];
+              eleValues = item["with"];
+            } else if(item["use"] && item["use"] === "hamster/artifactory") {
+              eleName = 'artifactory';
               eleValues = item["with"];
             } else {
               eleName = 'shell';
@@ -204,7 +167,6 @@ import { message } from "ant-design-vue";
       }
       //@todo 添加PipelineName.value判重
       const result = await apiAddPipeline(PipelineName.value, codeValue.value);
-      console.log("result:", result)
       if (result.code === 200) {
         message.success(result.message);
         router.push({ path: '/pipeline' });
@@ -216,7 +178,7 @@ import { message } from "ant-design-vue";
   }
 
   const setYamlCode = async (isUsers: any, key: string, index: number, item: string, val: any) => {
-    const config = YAML.parse(codeValue.value.toString());
+    const config = YAML.parse(codeValue.value);
     if (isUsers) {
       config["stages"][key]["steps"][index]["with"][item] = val;
     } else {
