@@ -9,7 +9,7 @@
     <div class="mb-2">
       path<span class="text-[#FD0505] ml-1">*</span>
     </div>
-    <a-input @change="setYamlValue('path', formData.path)" v-model:value="formData.path" placeholder="请输入" allow-clear />
+    <a-textarea @change="setYamlValue('path', formData.path)" v-model:value="formData.path" placeholder="请输入" :auto-size="{ minRows: 3, maxRows: 6 }" allow-clear />
   </div>
 </template>
 
