@@ -11,8 +11,8 @@
           </div>
         </div>
         <div>
-          <a-button type="primary" @click="backStep" ghost>放弃修改</a-button>
-          <a-button type="primary" class="ml-4" @click="showModal">保存</a-button>
+          <a-button type="primary" @click="backStep" ghost>{{ $t("template.discardChange") }}</a-button>
+          <a-button type="primary" class="ml-4" @click="showModal">{{ $t("template.saveBtn") }}</a-button>
         </div>
       </div>
     </div>
@@ -25,7 +25,7 @@
 
   <a-modal :getContainer = "false"
     v-model:visible="visible"
-    title="修改 PipeLineName"
+    :title="$t('template.modalTitle')"
     :footer="null"
   >
     <div class="mb-8">
@@ -35,8 +35,8 @@
       <a-input v-model:value="pipelineName" placeholder="Pipeline Name" allow-clear />
     </div>
     <div class="text-center">
-      <a-button type="primary" @click="visible = false" ghost>取消</a-button>
-      <a-button type="primary" :loading="confirmLoading" class="ml-4" @click="handleOk">保存</a-button>
+      <a-button type="primary" @click="visible = false" ghost>{{ $t("template.cancelBtn") }}</a-button>
+      <a-button type="primary" :loading="confirmLoading" class="ml-4" @click="handleOk">{{ $t("template.saveBtn") }}</a-button>
     </div>
   </a-modal>
 </template>

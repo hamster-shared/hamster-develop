@@ -1,4 +1,5 @@
 import { createI18n } from "vue-i18n";
+import { changeDayJsLocale } from "../utils/time/dateUtils";
 import en from "./en/index";
 import zh from "./zh/index";
 
@@ -11,9 +12,11 @@ const messages = {
   },
 };
 
+const currentLocale = window.localStorage.getItem("language") || "en";
+changeDayJsLocale(currentLocale);
 const i18n = new createI18n({
   globalInjection: true,
-  locale: window.localStorage.getItem("language") || "en",
+  locale: currentLocale,
   messages,
   legacy: false,
 });
