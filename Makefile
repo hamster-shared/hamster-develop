@@ -11,4 +11,4 @@ linux:
 windows:
 	yarn && yarn build
 	go mod tidy
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64  go build -o aline
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64  go build -o aline.exe

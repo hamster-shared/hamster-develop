@@ -1,4 +1,4 @@
-name: "wails build"
+name: "aline build"
 on:
   push:
     branches:
@@ -9,7 +9,7 @@ jobs:
   package:
     strategy:
       matrix:
-        platform: [ ubuntu-latest ]
+        platform: [ ubuntu-latest,windows-latest,macos-latest ]
         node-version: [18]
     runs-on: ${{ matrix.platform }}
     steps:
@@ -36,15 +36,15 @@ jobs:
         if: matrix.platform == 'windows-latest'
         uses: actions/upload-artifact@v2
         with:
-          name: aline-linux-amd64.zip
-          path: aline
+          name: aline-windows-amd64.zip
+          path: aline.exe
 
       - name: build
         if: matrix.platform == 'macos-latest'
         run:  make macos
       - name: upload artifacts
-        if: matrix.platform == 'ubuntu-latest'
+        if: matrix.platform == 'macos-latest'
         uses: actions/upload-artifact@v2
         with:
-          name: aline-linux-amd64.zip
+          name: aline-darwin-amd64.zip
           path: aline
