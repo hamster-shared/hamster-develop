@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px] mx-20">
+  <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px]">
     <div class="p-4 rounded-tl-[12px] rounded-tr-[12px]">
       <div class="flex justify-between">
         <div>
@@ -43,61 +43,19 @@
 <script lang="ts" setup>
 import { reactive, ref, onMounted } from "vue";
 import { useRoute, useRouter } from 'vue-router';
-import { apiGetTemplatesById, apiEditPipeline } from "@/apis/template";
+import { apiGetPipelineByName, apiEditPipeline } from "@/apis/template";
 import CodeEditor from "../create/config/components/CodeEditor.vue";
 import { message } from "ant-design-vue";
 
-  const codeValue = ref<String>(
-    "version: 1.0\n" +
-      "name: my-test\n" +
-      "stages:\n" +
-      "  git-clone:\n" +
-      "    steps:\n" +
-      "      - name: git-clone\n" +
-      "        code: 1\n" +
-      "        uses: git-checkout\n" +
-      "        with:\n" +
-      "          url: https://gitee.com/mohaijiang/spring-boot-example.git\n" +
-      "          branch: master\n" +
-      "  code-compile:\n" +
-      "    needs:\n" +
-      "      - git-clone\n" +
-      "    steps:\n" +
-      "      - name: code-compile\n" +
-      "        code: 2\n" +
-      "        runs-on: maven:3.5-jdk-8\n" +
-      "        run: |\n" +
-      "          mvn clean package -Dmaven.test.skip=true\n" +
-      "      - name: save artifactory\n" +
-      "        code: 2\n" +
-      "        uses: hamster-artifactory\n" +
-      "        with:\n" +
-      "          name: some.zip\n" +
-      "          path: contracts/*.sol\n" +
-      "\n" +
-      "  build-image:\n" +
-      "    needs:\n" +
-      "      - code-compile\n" +
-      "    steps:\n" +
-      "      - name: shell\n" +
-      "        code: 3\n" +
-      "        run: |\n" +
-      "          docker build -t mohaijiang/spring-boot-example:20221109 ."
-    );
+  const codeValue = ref<String>();
 
   const router = useRouter();
   const { params } = useRoute();
-  const templateId = ref(params.id);
+  const templateName = ref(params.id);
 
   const confirmLoading = ref<boolean>(false);
   const visible = ref<boolean>(false);
   const pipelineName = ref('');
-  
-  const templateInfo = reactive({
-    name: '',
-    description: '',
-    yaml: '',
-  });
 
   const showModal = async () => {
     visible.value = true;
@@ -110,8 +68,7 @@ import { message } from "ant-design-vue";
   const handleOk = async () => {
     confirmLoading.value = true;
     try {
-      const result = await apiEditPipeline(templateInfo.name, pipelineName.value ,codeValue.value);
-      console.log("result:", result)
+      const result = await apiEditPipeline(templateName.value.toString(), pipelineName.value ,codeValue.value);
       if (result.code === 200) {
         confirmLoading.value = false;
         visible.value = false;
@@ -125,16 +82,14 @@ import { message } from "ant-design-vue";
 };
   
   onMounted(async () => {
-    getTemplatesById(templateId.value.toString());
+    getTemplatesById(templateName.value.toString());
   });
   
-  const getTemplatesById = async (templateId: String) => {
+  const getTemplatesById = async (templateName: String) => {
 
     try {
-      const data = await apiGetTemplatesById(templateId);
-      Object.assign(templateInfo, data.template); //赋值
-      pipelineName.value = templateInfo.name;
-      // codeValue.value = templateInfo.yaml; //@todo mock数据显示有问题，暂时用临时数据
+      const { data } = await apiGetPipelineByName(templateName);
+      codeValue.value = data;
       
     } catch (error: any) {
       console.log("erro:",error)
