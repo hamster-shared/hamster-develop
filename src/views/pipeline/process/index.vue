@@ -20,7 +20,7 @@
         <a-col :span="6">
           <div class="process-detail-item">
             <div class="process-detail-title">{{ $t("log.executionTime") }}</div>
-            <div class="process-detail-info">{{ jobData.startTimeText }}</div>
+            <div class="process-detail-info">{{ jobData.startTimeText + $t("log.ago") }}</div>
           </div>
         </a-col>
         <a-col :span="6">
@@ -70,7 +70,7 @@
         </div>
       </div>
       <div class="process-content">
-        <div class="process-content-title">Artifats</div>
+        <div class="process-content-title">{{ $t("log.artifats") }}</div>
         <div class="text-[#7B7D7B]">
           <div v-for="it in jobData.artifactorys" :key="it.id">
             {{ it.url }}
@@ -79,7 +79,7 @@
         </div>
       </div>
       <div class="process-content">
-        <div class="process-content-title">Report</div>
+        <div class="process-content-title">{{ $t("log.report") }}</div>
         <div class="text-[#7B7D7B]">
           <div v-for="it in jobData.reports" :key="it.id">{{ it.url }}</div>
           <a-empty v-if="jobData.reports.length <= 0" />
@@ -145,7 +145,7 @@ const getStarTime = (data: any) => {
 };
 
 const checkAllLogs = () => {
-  window.open(`/allLogs/${queryJson.id}/${queryJson.name}}`);
+  window.open(`/allLogs/${queryJson.id}/${queryJson.name}`);
 };
 
 const checkProcess = (item) => {
@@ -157,7 +157,7 @@ const checkProcess = (item) => {
 const getStageLogsData = async (item) => {
   const query = Object.assign(queryJson, { stagename: item.name });
   const data = await apiGetJobStageLogs(query);
-  content.value = data.data || '我暂时还没有值';
+  content.value = data.data?.content || '我暂时还没有值';
   // console.log(data.data, '9999')
 };
 

@@ -7,4 +7,7 @@ export default {
   executionTime: "Execution Time",
   totalDuration: "Total duration",
   executionProcess: "Execution Process",
+  ago: "ago",
+  artifats: "Artifats",
+  report: "Report",
 };

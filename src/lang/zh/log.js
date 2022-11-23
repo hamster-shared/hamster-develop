@@ -7,4 +7,7 @@ export default {
   executionTime: "执行时间",
   totalDuration: "总时长",
   executionProcess: "实施步骤",
+  ago: "前",
+  artifats: "制品库",
+  report: "报告",
 };
