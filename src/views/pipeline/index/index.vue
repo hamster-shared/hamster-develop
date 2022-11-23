@@ -84,7 +84,9 @@
           <a-button type="primary" danger v-if="data.status === 1">
             {{ $t("pipeline.stop") }}
           </a-button>
-          <a-button>{{ $t("pipeline.set") }}</a-button>
+          <a-button>
+            <router-link :to="`/edit/${data.id}`">{{ $t("pipeline.set") }}</router-link>
+          </a-button>
         </div>
       </div>
     </a-card>
@@ -112,11 +114,13 @@ const pipelineList = reactive([
     name: "Hamster-pipeline-1",
     description: "11111",
     status: "success",
+    id: 1,
   },
   {
     name: "Hamster-pipeline-2",
     description: "222222",
     status: "fail",
+    id: 2,
   },
 ]);
 
