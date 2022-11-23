@@ -36,9 +36,9 @@ export function apiGetPipelineInfo(
   });
 }
 
-export function apiDeletePipelineInfo(name: string) {
+export function apiDeletePipelineInfo(name: string, id: number) {
   return httpRequest({
-    url: `/pipeline/${name}`,
+    url: `/pipeline/${name}/detail/${id}`,
     method: "delete",
   });
 }
@@ -51,12 +51,16 @@ export function apiOperationStopPipeline(name: string) {
   });
 }
 
-
 // /pipeline/:name/detail/:id
 export function apiGetPipelineDetail(params: GetPipelineDetailParams) {
   return httpRequest({
+<<<<<<< HEAD
     // url: `/pipeline/${params.name}/detail/${params.id}`,
     url: "https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/pipeline/:name/detail/:id?apipost_id=6bbbe6",
+=======
+    url: `/pipeline/${params.name}/detail/${params.id}`,
+    // url:"https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/pipeline/:name/detail/:id?apipost_id=6bbbe6",
+>>>>>>> 5dbb2b8aa6011fbc29c26c301b485c8611588fd9
     method: "get",
     params: params,
   });
