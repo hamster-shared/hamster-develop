@@ -159,7 +159,7 @@ const checkProcess = (item) => {
 const getStageLogsData = async (item) => {
   const query = Object.assign(queryJson, { stagename: item.name });
   const data = await apiGetJobStageLogs(query);
-  content.value = data.data?.content?.split('\n') || ['哈哈'];
+  content.value = data.data?.content?.split('\n');
   // console.log(data.data, '9999')
 };
 
