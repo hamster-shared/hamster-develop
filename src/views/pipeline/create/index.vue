@@ -9,11 +9,13 @@
     </div>
     <div class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border">
       <Tabs :defaultActiveKey="activeKey">
-        <TabPane key="0" tab="全部">
+        <TabPane key="0" :tab="$t('template.allText')">
           <div class="card-div">
             <div class="card-item" @click="setCurrId(item.id)" :class="{'check-border':checkCurrId === item.id }" v-for="(item, index) in allTemplatesList" :key="index">
               <div class="card-img-div">
-                <Image src="item.image" />
+                <img
+                  :src="getImageURL(`${item.imageName}.png`)"
+                />
               </div>
               <div class="col-span-5">
                 <div class="card-title">{{ item.name }}</div>
@@ -22,11 +24,13 @@
             </div>
           </div>
         </TabPane>
-        <TabPane v-for="(data, index1) in templatesList.groups" :key="index1+1" :tab="data.name">
+        <TabPane v-for="(data, index) in templatesList" :key="index+1" :tab="data.tag">
           <div class="card-div">
             <div class="card-item" @click="setCurrId(item.id)" :class="{'check-border':checkCurrId === item.id }" v-for="(item, index2) in data.items" :key="index2">
               <div>
-                <Image :src="item.image" />
+                <img
+                  :src="getImageURL(`${item.imageName}.png`)"
+                />
               </div>
               <div class="col-span-5">
                 <div class="card-title">{{ item.name }}</div>
@@ -48,14 +52,101 @@
 import { reactive, ref, onMounted } from "vue";
 import { useRouter } from 'vue-router';
 import { apiGetTemplates } from "@/apis/template";
-import { Tabs, TabPane, Image, Button } from 'ant-design-vue';
-
+import { Tabs, TabPane, Button } from 'ant-design-vue';
+import useAssets from "@/stores/useAssets";
+const { getImageURL } = useAssets()
+ 
 const router = useRouter();
 const activeKey = ref('0');
 const checkCurrId = ref(0);
 
 const templatesList = reactive([]);
-const allTemplatesList = ref([]);
+const allTemplatesList = reactive([
+{
+"id": 10, //模版ID
+"name": "Smart Contract Quality Check", //模版名称
+"description": "Perform quality checks on a smart contract and output relevant reports.", //模版描述
+"tag": "GENERAL_TEMPLATE", //模版类型，用于分组
+"imageName": "contract_check" //图片名
+},
+{
+"id": 12, //模版ID
+"name": "Smart Contract Deployment", //模版名称
+"description": "Deployment operation for a smart contract.", //模版描述
+"tag": "GENERAL_TEMPLATE", //模版类型，用于分组
+"imageName": "contract_deploy" //图片名
+},
+{
+"id": 11, //模版ID
+"name": "Smart Contract Test", //模版名称
+"description": "Perform quality checks on a smart contract and output relevant reports.", //模版描述
+"tag": "GENERAL_TEMPLATE", //模版类型，用于分组
+"imageName": "contract_test" //图片名
+},
+{
+"id": 1, //模版ID
+"name": "Substrate + Smart Contracts", //模版名称
+"description": "This template is used for smart contracts written based on the Substact framework, enabling fully automated code checkout -> check contract quality -> compile contract -> test contract -> deploy contract.", //模版描述
+"tag": "SMART_CONTRACT_TEMPLATE", //模版类型，用于分组
+"imageName": "substrate" //图片名
+},
+{
+"id": 2, //模版ID
+"name": "Hardhat + Smart Contracts", //模版名称
+"description": "This template is used for smart contracts written based on Hardhat framework to fully automate code checkout -> check contract quality -> compile contract -> test contract -> deploy contract.", //模版描述
+"tag": "SMART_CONTRACT_TEMPLATE", //模版类型，用于分组
+"imageName": "hardhat" //图片名
+},
+{
+"id": 3, //模版ID
+"name": "Truffle + Smart Contracts", //模版名称
+"description": "This template is used for smart contracts written based on Truffle framework, enabling fully automated code checkout -> check contract quality -> compile contract -> test contract -> deploy contract.", //模版描述
+"tag": "SMART_CONTRACT_TEMPLATE", //模版类型，用于分组
+"imageName": "truffle" //图片名
+},
+{
+"id": 4, //模版ID
+"name": "Substrate + DApp", //模版名称
+"description": "This template is used for DApps written on Substact framework to fully automate code checkout -> check contract quality -> compile contract -> test contract -> deploy contract -> check front-end code quality -> edit front-end...", //模版描述
+"tag": "DAPP_TEMPLATE", //模版类型，用于分组
+"imageName": "substrate" //图片名
+},
+{
+"id": 5, //模版ID
+"name": "Hardhat + Smart Contracts", //模版名称
+"description": "This template is used for DApps written on Hardhat framework to fully automate code checkout -> check contract quality -> compile contract -> test contract -> deploy contract -> check front-end code quality -> edit front-end...", //模版描述
+"tag": "DAPP_TEMPLATE", //模版类型，用于分组
+"imageName": "hardhat" //图片名
+},
+{
+"id": 6, //模版ID
+"name": "Truffle + DApp", //模版名称
+"description": "This template is used for DApps written based on Truffle framework to fully automate code checkout -> check contract quality -> compile contract -> test contract -> deploy contract -> check front-end code quality -> edit front-end...", //模版描述
+"tag": "DAPP_TEMPLATE", //模版类型，用于分组
+"imageName": "truffle" //图片名
+},
+{
+"id": 7, //模版ID
+"name": "Substrate + DApp (front end only)", //模版名称
+"description": "This template is used for DApps written based on Substact framework to fully automate code checkout -> check front-end code quality -> edit front-end code -> deploy front-end code.", //模版描述
+"tag": "DAPP_TEMPLATE(Frontend)", //模版类型，用于分组
+"imageName": "substrate" //图片名
+},
+{
+"id": 8, //模版ID
+"name": "Hardhat + DApp (front end only)", //模版名称
+"description": "This template is used for DApps written on Hardhat framework to fully automate code checkout -> check front-end code quality -> edit front-end code -> deploy front-end code.", //模版描述
+"tag": "DAPP_TEMPLATE(Frontend)", //模版类型，用于分组
+"imageName": "hardhat" //图片名
+},
+{
+"id": 9, //模版ID
+"name": "Truffle + DApp (front end only)", //模版名称
+"description": "This template is used for DApps written on Truffle framework to fully automate code checkout -> check front-end code quality -> edit front-end code -> deploy front-end code.", //模版描述
+"tag": "DAPP_TEMPLATE(Frontend)", //模版类型，用于分组
+"imageName": "truffle" //图片名
+}
+]);
 
 onMounted(async () => {
   getTemplates();
@@ -64,19 +155,32 @@ onMounted(async () => {
 const getTemplates = async () => {
 
   try {
-    const data = await apiGetTemplates();
-    Object.assign(templatesList, data.templates); //赋值
-    //全部 tabs 下的数据
-    templatesList.groups.forEach(data => {
-      data.items.forEach((item) => {
-        allTemplatesList.value.push(item);
-      });
+    const { data } = await apiGetTemplates();
+    Object.assign(allTemplatesList, data); //赋值
+    //拆分相同 tabs 下的数据
+    const templates: string | any[] = [];
+    const templateTabs: any[] = [];
+    data.forEach((item: any) => {
+      
+      if (templateTabs.includes(item.tag)) {
+        templates.forEach((subItem, index) => {
+          if (subItem.tag === item.tag) {
+            templates[index]['items'].push(item);
+          }
+        })
+      } else {
+        templateTabs.push(item.tag);
+        templates.push({ tag: item.tag, items: [item] });
+      }
     });
+    Object.assign(templatesList, templates); //赋值
+    console.log("templateTabs:",templateTabs)
+    console.log("templates:",templates)
   } catch (error: any) {
     console.log("erro:",error)
   }
 };
-const setCurrId = async (id) => {
+const setCurrId = async (id: number) => {
   checkCurrId.value = id;
 }
 const backStep = async () => {
@@ -119,7 +223,7 @@ const nextStep = async () => {
 .card-img-div{
   @apply flex justify-center;
 }
-.card-item :deep(.ant-image-img){
+.card-item img{
   width: 64px;
   height: 64px;
   border-radius: 12px;

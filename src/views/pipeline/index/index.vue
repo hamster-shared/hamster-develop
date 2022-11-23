@@ -1,5 +1,5 @@
 <template>
-  <div class="w-[80%] mx-auto bg-white py-[32px] px-[24px] rounded-xl">
+  <div class="mx-auto bg-white py-[32px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-4">
       <a-input
         v-model:value="searchValue"
@@ -84,7 +84,9 @@
           <a-button type="primary" danger v-if="data.status === 1">
             {{ $t("pipeline.stop") }}
           </a-button>
-          <a-button>{{ $t("pipeline.set") }}</a-button>
+          <a-button>
+            <router-link :to="`/edit/${data.id}`">{{ $t("pipeline.set") }}</router-link>
+          </a-button>
         </div>
       </div>
     </a-card>
@@ -112,11 +114,13 @@ const pipelineList = reactive([
     name: "Hamster-pipeline-1",
     description: "11111",
     status: "success",
+    id: 1,
   },
   {
     name: "Hamster-pipeline-2",
     description: "222222",
     status: "fail",
+    id: 2,
   },
 ]);
 

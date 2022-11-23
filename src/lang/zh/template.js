@@ -5,6 +5,10 @@ export default {
   helpDoc: "查看帮助文档",
   cancelBtn: "取消",
   nextBtn: "下一步",
-  lastBtn: '上一步',
-  submitBtn: '创建',
+  lastBtn: "上一步",
+  submitBtn: "创建",
+  allText: "全部",
+  saveBtn: "保存",
+  modalTitle: "修改 PipeLineName",
+  discardChange: "放弃修改",
 };
