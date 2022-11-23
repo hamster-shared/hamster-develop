@@ -1,0 +1,27 @@
+name: "wails build"
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  package:
+    strategy:
+      matrix:
+        platform: [ ubuntu-latest ]
+        node-version: [18]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      # You may need to manually build you frontend manually here, unless you have configured frontend build and install commands in wails.json.
+      - name: install
+        run:  npm install && npm run build
+      - name: upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist.zip
+          path: dist
