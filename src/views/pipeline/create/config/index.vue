@@ -129,7 +129,7 @@ import { message } from "ant-design-vue";
             if (item["uses"] && item["uses"] === "git-checkout") {
               eleName = item["uses"];
               eleValues = item["with"];
-            } else if(item["use"] && item["use"] === "hamster/artifactory") {
+            } else if(item["use"] && item["use"] === "hamster-artifactory") {
               eleName = 'artifactory';
               eleValues = item["with"];
             } else {
