@@ -72,17 +72,17 @@
       <div class="process-content">
         <div class="process-content-title">{{ $t("log.artifats") }}</div>
         <div class="text-[#7B7D7B]">
-          <div v-for="it in jobData.artifactorys" :key="it.id">
+          <div v-for="it in jobData.actionResult.Artifactorys" :key="it.id">
             {{ it.url }}
           </div>
-          <a-empty v-if="jobData.artifactorys.length <= 0" />
+          <a-empty v-if="jobData.actionResult.Artifactorys.length <= 0" />
         </div>
       </div>
       <div class="process-content">
         <div class="process-content-title">{{ $t("log.report") }}</div>
         <div class="text-[#7B7D7B]">
-          <div v-for="it in jobData.reports" :key="it.id">{{ it.url }}</div>
-          <a-empty v-if="jobData.reports.length <= 0" />
+          <div v-for="it in jobData.actionResult.Reports" :key="it.id">{{ it.url }}</div>
+          <a-empty v-if="jobData.actionResult.Reports.length <= 0" />
         </div>
       </div>
     </div>
@@ -102,13 +102,15 @@ import ProcessModal from "./components/ProcessModal.vue";
 const router = useRouter();
 const processModalRef = ref();
 const title = ref("");
-const content = ref("");
+const content = ref([]);
 const wrapper = ref();
 const jobData = reactive({
   id: undefined,
   stages: [],
-  artifactorys: [],
-  reports: [],
+  actionResult: {
+    Artifactorys: [],
+    Reports: [],
+  }
 });
 
 const enum StatusEnum {
@@ -157,7 +159,7 @@ const checkProcess = (item) => {
 const getStageLogsData = async (item) => {
   const query = Object.assign(queryJson, { stagename: item.name });
   const data = await apiGetJobStageLogs(query);
-  content.value = data.data?.content || '我暂时还没有值';
+  content.value = data.data?.content?.split('\n') || ['哈哈'];
   // console.log(data.data, '9999')
 };
 
