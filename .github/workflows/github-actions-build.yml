@@ -19,10 +19,32 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       # You may need to manually build you frontend manually here, unless you have configured frontend build and install commands in wails.json.
-      - name: install
-        run:  npm install && npm run build
+      - name: build
+        if: matrix.platform == 'ubuntu-latest'
+        run:  make linux
       - name: upload artifacts
+        if: matrix.platform == 'ubuntu-latest'
         uses: actions/upload-artifact@v2
         with:
-          name: dist.zip
-          path: dist
+          name: aline-linux-amd64.zip
+          path: aline
+
+      - name: build
+        if: matrix.platform == 'windows-latest'
+        run:  make windows
+      - name: upload artifacts
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v2
+        with:
+          name: aline-linux-amd64.zip
+          path: aline
+
+      - name: build
+        if: matrix.platform == 'macos-latest'
+        run:  make macos
+      - name: upload artifacts
+        if: matrix.platform == 'ubuntu-latest'
+        uses: actions/upload-artifact@v2
+        with:
+          name: aline-linux-amd64.zip
+          path: aline

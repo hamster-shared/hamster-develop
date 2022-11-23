@@ -5,15 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hamster-shared/a-line/pkg/logger"
 	"github.com/hamster-shared/a-line/pkg/model"
+	"github.com/hamster-shared/a-line/pkg/output"
+	"github.com/hamster-shared/a-line/pkg/utils"
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
-
-	"github.com/hamster-shared/a-line/pkg/logger"
-	"github.com/hamster-shared/a-line/pkg/output"
-	"github.com/hamster-shared/a-line/pkg/utils"
 )
 
 // ShellAction 命令工作
@@ -114,7 +112,7 @@ func (a *ShellAction) Hook() (*model.ActionResult, error) {
 				// Kill by negative PID to kill the process group, which includes
 				// the top-level process we spawned as well as any subprocesses
 				// it spawned.
-				_ = syscall.Kill(-p.Pid, syscall.SIGKILL)
+				//_ = syscall.Kill(-p.Pid, syscall.SIGKILL)
 				logger.Info("shell command killed")
 				return
 			}

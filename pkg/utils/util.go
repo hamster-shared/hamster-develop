@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
-	"syscall"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -45,10 +44,10 @@ func NewCommand(ctx context.Context, command string, args ...string) *Cmd {
 func (c *Cmd) Start() error {
 	// Force-enable setpgid bit so that we can kill child processes when the
 	// context times out or is canceled.
-	if c.Cmd.SysProcAttr == nil {
-		c.Cmd.SysProcAttr = &syscall.SysProcAttr{}
-	}
-	c.Cmd.SysProcAttr.Setpgid = true
+	//if c.Cmd.SysProcAttr == nil {
+	//	c.Cmd.SysProcAttr = &syscall.SysProcAttr{}
+	//}
+	//c.Cmd.SysProcAttr.Setpgid = true
 	err := c.Cmd.Start()
 	if err != nil {
 		return err
@@ -62,7 +61,7 @@ func (c *Cmd) Start() error {
 		// Kill by negative PID to kill the process group, which includes
 		// the top-level process we spawned as well as any subprocesses
 		// it spawned.
-		_ = syscall.Kill(-p.Pid, syscall.SIGKILL)
+		//_ = syscall.Kill(-p.Pid, syscall.SIGKILL)
 	}()
 	return nil
 }

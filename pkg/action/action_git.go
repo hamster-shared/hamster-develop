@@ -4,15 +4,13 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/hamster-shared/a-line/pkg/logger"
 	"github.com/hamster-shared/a-line/pkg/model"
+	"github.com/hamster-shared/a-line/pkg/output"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
-	"syscall"
-
-	"github.com/hamster-shared/a-line/pkg/logger"
-	"github.com/hamster-shared/a-line/pkg/output"
 )
 
 // GitAction git clone
@@ -85,7 +83,7 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 				// Kill by negative PID to kill the process group, which includes
 				// the top-level process we spawned as well as any subprocesses
 				// it spawned.
-				_ = syscall.Kill(-p.Pid, syscall.SIGKILL)
+				//_ = syscall.Kill(-p.Pid, syscall.SIGKILL)
 				logger.Info("git clone process killed")
 				return
 			}
