@@ -2,7 +2,8 @@ name: "wails build"
 on:
   push:
     branches:
-      - main
+      - master
+      - develop
 
 jobs:
   package:
