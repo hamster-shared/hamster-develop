@@ -26,3 +26,4 @@ coverage
 *.sw?
 
 /dist
+/pkg/controller/dist/
