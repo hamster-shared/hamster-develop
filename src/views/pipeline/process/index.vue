@@ -51,7 +51,7 @@
                 class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]"
               >
                 <img
-                  src="@/assets/icons/Frame 625774 (1).svg"
+                  src="@/assets/icons/Frame.svg"
                   class="w-[28px] mr-[24px] align-middle"
                 />
                 <span class="align-middle">
