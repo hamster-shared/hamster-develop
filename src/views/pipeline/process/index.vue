@@ -39,65 +39,36 @@
       <div class="process-content">
         <div class="flex justify-between">
           <span class="process-content-title">{{
-            $t("log.executionProcess")
+              $t("log.executionProcess")
           }}</span>
-          <span
-            class="text-[14px] text-[#28C57C] cursor-pointer"
-            @click="checkAllLogs"
-            >{{ $t("log.viewAllLogs") }}</span
-          >
+          <span class="text-[14px] text-[#28C57C] cursor-pointer" @click="checkAllLogs">{{ $t("log.viewAllLogs")
+          }}</span>
         </div>
         <div class="process-scroll-box wrapper" ref="wrapper">
           <!-- <a-button @click="checkProcess({ name: 'hh' })">modal</a-button> -->
           <div class="process-scroll content">
             <div class="inline-block execution_process_item">
-              <div
-                class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]"
-              >
-                <img
-                  src="@/assets/icons/Frame.svg"
-                  class="w-[28px] mr-[24px] align-middle"
-                />
+              <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]">
+                <img src="@/assets/icons/Frame.svg" class="w-[28px] mr-[24px] align-middle" />
                 <span class="align-middle">
-                  <span
-                    class="text-[16px] text-[#121211] font-semibold mr-[24px]"
-                    >{{ $t("log.start") }}</span
-                  >
+                  <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">{{ $t("log.start") }}</span>
                 </span>
               </div>
-              <img
-                src="@/assets/images/arrow-green.jpg"
-                class="w-[28px] space-mark ml-[20px] mr-[20px]"
-              />
+              <img src="@/assets/images/arrow-green.jpg" class="w-[28px] space-mark ml-[20px] mr-[20px]" />
             </div>
-            <div
-              v-for="item in jobData.stages"
-              :key="item.name"
-              class="inline-block execution_process_item"
-            >
-              <div
-                class="inline-block border border-solid border-[#EFEFEF] p-[12px] cursor-pointer rounded-[5px]"
-                @click="checkProcess(item)"
-              >
+            <div v-for="item in jobData.stages" :key="item.name" class="inline-block execution_process_item">
+              <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] cursor-pointer rounded-[5px]"
+                @click="checkProcess(item)">
                 <!-- <img src="@/assets/icons/Status0.svg" class="w-[28px] mr-[24px] align-middle" /> -->
-                <img
-                  :src="getImageUrl(item.status)"
-                  class="w-[28px] mr-[24px] align-middle"
-                />
+                <img :src="getImageUrl(item.status)" class="w-[28px] mr-[24px] align-middle" />
                 <span class="align-middle">
-                  <span
-                    class="text-[16px] text-[#121211] font-semibold mr-[24px]"
-                    >{{ item.name }}</span
-                  >
+                  <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">{{ item.name }}</span>
                   <span class="text-[16px] text-[#7B7D7B]">{{
-                    formatDuring(item.duration)
+                      formatDuring(item.duration)
                   }}</span>
                 </span>
               </div>
-              <img
-                src="@/assets/images/arrow-green.jpg"
-                class="w-[28px] space-mark ml-[20px] mr-[20px]"
-              />
+              <img src="@/assets/images/arrow-green.jpg" class="w-[28px] space-mark ml-[20px] mr-[20px]" />
             </div>
           </div>
         </div>
@@ -181,7 +152,7 @@ const getStarTime = (data: any) => {
 };
 
 const checkAllLogs = () => {
-  window.open(`/allLogs/${queryJson.id}/${queryJson.name}`);
+  window.open(`#/allLogs/${queryJson.name}/${queryJson.id}`);
 };
 
 const checkProcess = (item) => {
