@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 import HomeView from "../views/home/HomeView.vue";
 import PipelineIndex from "../views/pipeline/index/index.vue";
 import Process from "../views/pipeline/process/index.vue";
@@ -9,7 +9,7 @@ import AllLogs from "../views/pipeline/allLogs/index.vue";
 import CreatePipeline from "../views/pipeline/create/config/index.vue";
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(),
   routes: [
     {
       path: "/home",

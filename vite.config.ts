@@ -15,7 +15,8 @@ export default defineConfig({
     proxy: {
       "/api": {
         target:
-          "https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/", //接口域名 //接口域名
+          //"https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/", //接口域名 //接口域名
+          "http://172.16.10.27:8080",
         changeOrigin: true, //是否跨域
         rewrite: (path) => path.replace(/^\/api/, ""),
       },

@@ -1,5 +1,5 @@
 <template>
-  <div class="w-[80%] mx-auto bg-white py-[32px] px-[24px] rounded-xl">
+  <div class="mx-auto bg-white py-[32px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-4">
       <a-input
         v-model:value="searchValue"
