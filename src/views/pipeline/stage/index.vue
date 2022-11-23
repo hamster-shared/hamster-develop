@@ -81,7 +81,9 @@
           </div>
         </template>
         <template v-else-if="column.key === 'duration'">
-          <span class="block">{{ executionTime(record.startTime) }}</span>
+          <span class="block">
+            {{ fromNowexecutionTime(record.startTime) }}
+          </span>
           <span>{{ formatDurationTime(record.duration) }}</span>
         </template>
         <template v-else-if="column.key === 'action'">
@@ -124,8 +126,8 @@ import stopButtonSVG from "@/assets/icons/pipeline-stop-button.svg";
 import deleteButtonSVG from "@/assets/icons/pipeline-delete-button.svg";
 import greyArrowSVG from "@/assets/icons/grey-arrow.svg";
 import { message } from "ant-design-vue";
-import formatDurationTime from "@/utils/time/consumTime.js";
-import executionTime from "@/utils/time/dateUtils.js";
+import { formatDurationTime } from "@/utils/time/dateUtils.js";
+import { fromNowexecutionTime } from "@/utils/time/dateUtils.js";
 
 const router = useRouter();
 

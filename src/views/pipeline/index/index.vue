@@ -68,7 +68,7 @@
         <div class="self-center text-center">
           <span
             class="text-sm font-normal bg-[#F8F8F8] py-2 px-3 rounded text-[#3F4641] block mb-3"
-            >{{ executionTime(data.startTime) }}</span
+            >{{ fromNowexecutionTime(data.startTime) }}</span
           >
           <span class="text-xs">
             <img :src="wasteTimeSVG" />
@@ -102,8 +102,8 @@ import successSVG from "@/assets/icons/pipeline-success.svg";
 import failedSVG from "@/assets/icons/pipeline-failed.svg";
 import stopSVG from "@/assets/icons/pipeline-stop.svg";
 import wasteTimeSVG from "@/assets/icons/pipeline-waste-time.svg";
-import formatDurationTime from "@/utils/time/consumTime.js";
-import executionTime from "@/utils/time/dateUtils.js";
+import { formatDurationTime } from "@/utils/time/dateUtils.js";
+import { fromNowexecutionTime } from "@/utils/time/dateUtils.js";
 
 const searchValue = ref("");
 
