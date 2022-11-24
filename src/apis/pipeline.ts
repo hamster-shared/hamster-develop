@@ -51,6 +51,14 @@ export function apiOperationStopPipeline(name: string) {
   });
 }
 
+export function apiImmediatelyExec(name: string) {
+  return httpRequest({
+    url: `/pipeline/${name}/exec`,
+    method: "post",
+    data: name,
+  });
+}
+
 // /pipeline/:name/detail/:id
 export function apiGetPipelineDetail(params: GetPipelineDetailParams) {
   return httpRequest({

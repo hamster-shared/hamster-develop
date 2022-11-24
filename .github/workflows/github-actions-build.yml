@@ -1,4 +1,4 @@
-name: "wails build"
+name: "aline build"
 on:
   push:
     branches:
@@ -9,20 +9,47 @@ jobs:
   package:
     strategy:
       matrix:
-        platform: [ ubuntu-latest ]
+        platform: [ ubuntu-latest,windows-latest,macos-latest ]
+        go-version: [ 1.19 ]
         node-version: [18]
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
       - name: setup node
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
       # You may need to manually build you frontend manually here, unless you have configured frontend build and install commands in wails.json.
-      - name: install
-        run:  npm install && npm run build
+      - name: build
+        if: matrix.platform == 'ubuntu-latest'
+        run:  make linux
       - name: upload artifacts
+        if: matrix.platform == 'ubuntu-latest'
         uses: actions/upload-artifact@v2
         with:
-          name: dist.zip
-          path: dist
+          name: aline-linux-amd64.zip
+          path: aline
+
+      - name: build
+        if: matrix.platform == 'windows-latest'
+        run:  make windows
+      - name: upload artifacts
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v2
+        with:
+          name: aline-windows-amd64.zip
+          path: aline.exe
+
+      - name: build
+        if: matrix.platform == 'macos-latest'
+        run:  make macos
+      - name: upload artifacts
+        if: matrix.platform == 'macos-latest'
+        uses: actions/upload-artifact@v2
+        with:
+          name: aline-darwin-amd64.zip
+          path: aline

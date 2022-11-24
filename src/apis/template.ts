@@ -11,8 +11,7 @@ export function apiGetTemplates() {
 
 export function apiGetTemplatesById(id: String) {
   return httpRequest({
-    // url: `/pipeline/templates/${id}`,
-    url: "https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/pipeline/template/:id?apipost_id=c60d54",
+    url: `/pipeline/template/${id}`,
     method: "get",
   });
 }
@@ -26,6 +25,14 @@ export function apiAddPipeline(name: String, yaml: String) {
       name: name,
       yaml: yaml,
     },
+  });
+}
+
+//获取修改信息
+export function apiGetPipelineByName(name: String) {
+  return httpRequest({
+    url: `/pipeline/${name}`,
+    method: "get",
   });
 }
 

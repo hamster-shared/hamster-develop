@@ -26,3 +26,9 @@ coverage
 *.sw?
 
 /dist
+/pkg/controller/dist/
+/a-line
+/a-line.exe
+/aline
+
+go.sum

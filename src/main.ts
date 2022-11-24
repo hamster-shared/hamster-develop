@@ -8,8 +8,8 @@ import router from "./router";
 import "./design/main.css";
 import "ant-design-vue/dist/antd.css";
 
-import DefaultLayout from './layout/default/index.vue'
-import Null from './layout/null/index.vue'
+import DefaultLayout from "./layout/default/index.vue";
+import Null from "./layout/null/index.vue";
 
 const app = createApp(App);
 
@@ -17,7 +17,6 @@ app.use(createPinia());
 app.use(router);
 app.use(Antd);
 app.use(i18n);
-
 
 app.component("layout-default", DefaultLayout);
 app.component("layout-null", Null);

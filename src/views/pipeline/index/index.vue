@@ -11,132 +11,131 @@
           <img :src="searchSVG" />
         </template>
       </a-input>
-      <a-button type="primary">
-        <router-link to="/create">
-          {{ $t("pipeline.createPipeline") }}
-        </router-link>
-      </a-button>
+      <router-link to="/create">
+        <a-button type="primary">{{ $t("pipeline.createPipeline") }}</a-button>
+      </router-link>
     </div>
 
-    <a-card v-for="(data, index) in pipelineList" :key="index">
-      <div class="flex justify-between">
-        <div class="self-center">
+    <div class="example" v-if="isLoading">
+      <a-spin :spinning="isLoading" />
+    </div>
+    <template v-else-if="pipelineList.length > 0">
+      <a-card
+        v-for="(data, index) in pipelineList"
+        :key="index"
+        @click="$router.push(`/pipeline/${data.name}`)"
+      >
+        <div class="flex justify-between cursor-pointer">
+          <div class="self-center">
+            <div class="mb-3 text-xl font-semibold text-[#121211]">
+              {{ data.name }}
+            </div>
+            <div class="mb-3 text-sm font-normal text-[#7B7D7B]">
+              {{ data.description }}
+            </div>
+            <div>
+              <div
+                v-if="data.status == 0"
+                class="text-sm font-normal text-[#7B7D7B]"
+              >
+                {{ $t("pipeline.noData") }}
+              </div>
+              <div
+                v-if="data.status == 1"
+                class="text-sm font-normal text-[#2C5AFF]"
+              >
+                <img :src="runnngSVG" />
+                {{ $t("pipeline.running") }}
+              </div>
+              <div
+                v-if="data.status == 3"
+                class="text-sm font-normal text-[#2DCE83]"
+              >
+                <img :src="successSVG" />
+                {{ $t("pipeline.successfulImplementation") }}
+              </div>
+              <div
+                v-if="data.status == 2"
+                class="text-sm font-normal text-[#F52222]"
+              >
+                <img :src="failedSVG" />
+                {{ $t("pipeline.pushFailed") }}
+              </div>
+              <div
+                v-if="data.status == 4"
+                class="text-sm font-normal text-[#FF842C]"
+              >
+                <img :src="stopSVG" />
+                {{ $t("pipeline.userTermination") }}
+              </div>
+            </div>
+          </div>
           <div
+            class="self-center text-center cursor-pointer"
             @click="$router.push(`/pipeline/${data.name}`)"
-            class="mb-3 text-xl font-semibold cursor-pointer text-[#121211]"
           >
-            {{ data.name }}
+            <span
+              class="text-sm font-normal bg-[#F8F8F8] py-2 px-3 rounded text-[#3F4641] block mb-3"
+              v-if="
+                data?.startTime && data?.startTime != '0001-01-01T00:00:00Z'
+              "
+              >{{ fromNowexecutionTime(data.startTime) }}</span
+            >
+            <span class="text-xs" v-if="data?.duration && data?.duration != 0">
+              <img :src="wasteTimeSVG" />
+              {{ formatDurationTime(data.duration) }}
+            </span>
           </div>
-          <div class="mb-3 text-sm font-normal text-[#7B7D7B]">
-            {{ data.description }}
-          </div>
-          <div>
-            <div
-              v-if="data.status == 0"
-              class="text-sm font-normal text-[#7B7D7B]"
+          <div class="self-center">
+            <a-button
+              type="primary"
+              v-if="data.status !== 1"
+              @click.stop="handleImmediateImplementation(data.name)"
             >
-              {{ $t("pipeline.noData") }}
-            </div>
-            <div
-              v-if="data.status == 1"
-              class="text-sm font-normal text-[#2C5AFF]"
-            >
-              <img :src="runnngSVG" />
-              {{ $t("pipeline.running") }}
-            </div>
-            <div
-              v-if="data.status == 2"
-              class="text-sm font-normal text-[#2DCE83]"
-            >
-              <img :src="successSVG" />
-              {{ $t("pipeline.successfulImplementation") }}
-            </div>
-            <div
-              v-if="data.status == 3"
-              class="text-sm font-normal text-[#F52222]"
-            >
-              <img :src="failedSVG" />
-              {{ $t("pipeline.pushFailed") }}
-            </div>
-            <div
-              v-if="data.status == 4"
-              class="text-sm font-normal text-[#FF842C]"
-            >
-              <img :src="stopSVG" />
-              {{ $t("pipeline.userTermination") }}
-            </div>
+              {{ $t("pipeline.immediateImplementation") }}
+            </a-button>
+            <a-button type="primary" danger v-if="data.status === 1">
+              {{ $t("pipeline.stop") }}
+            </a-button>
+            <router-link :to="`/edit/${data.id}`">
+              <a-button>{{ $t("pipeline.set") }}</a-button>
+            </router-link>
           </div>
         </div>
-        <div class="self-center text-center">
-          <span
-            class="text-sm font-normal bg-[#F8F8F8] py-2 px-3 rounded text-[#3F4641] block mb-3"
-            >{{ executionTime(data.startTime) }}</span
-          >
-          <span class="text-xs">
-            <img :src="wasteTimeSVG" />
-            {{ formatDurationTime(data.duration) }}
-          </span>
-        </div>
-        <div class="self-center">
-          <a-button type="primary" v-if="data.status !== 1">
-            {{ $t("pipeline.immediateImplementation") }}
-          </a-button>
-          <a-button type="primary" danger v-if="data.status === 1">
-            {{ $t("pipeline.stop") }}
-          </a-button>
-          <a-button>
-            <router-link :to="`/edit/${data.id}`">{{ $t("pipeline.set") }}</router-link>
-          </a-button>
-        </div>
-      </div>
-    </a-card>
+      </a-card>
 
-    <a-pagination class="block float-right" v-bind="pagination" />
+      <a-pagination class="block float-right" v-bind="pagination" />
+    </template>
+    <a-empty v-else />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
-import { apiGetPipelines } from "@/apis/pipeline";
+import { apiGetPipelines, apiImmediatelyExec } from "@/apis/pipeline";
 import searchSVG from "@/assets/icons/search.svg";
 import runnngSVG from "@/assets/icons/pipeline-running.svg";
 import successSVG from "@/assets/icons/pipeline-success.svg";
 import failedSVG from "@/assets/icons/pipeline-failed.svg";
 import stopSVG from "@/assets/icons/pipeline-stop.svg";
 import wasteTimeSVG from "@/assets/icons/pipeline-waste-time.svg";
-import formatDurationTime from "@/utils/time/consumTime.js";
-import executionTime from "@/utils/time/dateUtils.js";
+import { formatDurationTime } from "@/utils/time/dateUtils.js";
+import { fromNowexecutionTime } from "@/utils/time/dateUtils.js";
 
 const searchValue = ref("");
 
-const pipelineList = reactive([
-  {
-    name: "Hamster-pipeline-1",
-    description: "11111",
-    status: "success",
-    id: 1,
-  },
-  {
-    name: "Hamster-pipeline-2",
-    description: "222222",
-    status: "fail",
-    id: 2,
-  },
-]);
+const isLoading = ref(false);
 
-const getPipelineInfo = async () => {
-  // const data = await apiGetPipelines({ page: 1, size: 2 });
-  // console.log("apiGetPipelines", data);
-  // Object.assign(PipelineList, data.pipelines);
-  // pagination.pageSize = data.pagination.size;
-  // pagination.total = data.pagination.total;
-
-  const { data } = await apiGetPipelines({ page: 1, size: 10 });
-  console.log("apiGetPipelines", data);
-  Object.assign(pipelineList, data.data);
-  pagination.pageSize = data.pageSize;
-  pagination.total = data.total;
-};
+const pipelineList = reactive<
+  {
+    name?: string;
+    description?: string;
+    status?: number;
+    id?: number;
+    duration?: number;
+    startTime?: string;
+  }[]
+>([]);
 
 const pagination = reactive({
   // 分页配置器
@@ -154,6 +153,22 @@ const pagination = reactive({
   },
   // showTotal: total => `总数：${total}人`, // 可以展示总数
 });
+
+const getPipelineInfo = async () => {
+  const { data } = await apiGetPipelines({ page: 1, size: 10 });
+  console.log("apiGetPipelines", data);
+  Object.assign(pipelineList, data.data);
+  pagination.pageSize = data.pageSize;
+  pagination.total = data.total;
+};
+
+const handleImmediateImplementation = async (name) => {
+  try {
+    await apiImmediatelyExec(name);
+  } catch (err) {
+    console.log("err", err);
+  }
+};
 
 onMounted(() => {
   getPipelineInfo();
