@@ -31,4 +31,6 @@ coverage
 /a-line.exe
 /aline
 
+/.vscode
+
 go.sum
