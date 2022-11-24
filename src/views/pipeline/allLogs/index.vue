@@ -20,7 +20,7 @@ const getjobLogsData = async () => {
   const data = await apiGetAllJobLogs(queryJson)
   Object.assign(jobLogsData, data.data)
   // jobLogsData.value = data.data
-  jobLogsData.contentList = jobLogsData.content?.split('\n')
+  jobLogsData.contentList = jobLogsData.content?.split('\r')
 }
 
 onMounted(() => {

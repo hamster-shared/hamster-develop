@@ -9,6 +9,8 @@ interface GegJobStagelogsParams {
   id: number | string;
   name: string;
   stagename: string,
+  start: number,
+  lastLine: number,
 }
 
 

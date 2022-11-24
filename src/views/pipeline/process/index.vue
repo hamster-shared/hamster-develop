@@ -55,12 +55,13 @@
               <img src="@/assets/images/arrow-green.jpg" class="w-[28px] space-mark ml-[20px] mr-[20px]" />
             </div>
             <div v-for="item in jobData.stages" :key="item.name" class="inline-block execution_process_item">
-              <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] cursor-pointer rounded-[5px]"
-                @click="checkProcess(item)">
-                <img :src="getImageUrl(item.status)" class="w-[28px] mr-[24px] align-middle" />
+              <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]"
+                :class="item.status === 0 ? '' : 'cursorP'" @click="checkProcess(item, $event)">
+                <img :src="getImageUrl(item.status)" class="w-[28px] mr-[24px] align-middle" v-if="item.status !== 1" />
+                <img src="@/assets/images/run.gif" class="w-[28px]" v-else />
                 <span class="align-middle">
                   <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">{{ item.name }}</span>
-                  <span class="text-[16px] text-[#7B7D7B]">{{
+                  <span class="text-[16px] text-[#7B7D7B]" v-if="item.status !== 0">{{
                       formatDurationTime(item.duration, 'noThing')
                   }}</span>
                 </span>
@@ -73,17 +74,17 @@
       <div class="process-content">
         <div class="process-content-title">{{ $t("log.artifats") }}</div>
         <div class="text-[#7B7D7B]">
-          <div v-for="it in jobData.actionResult.Artifactorys" :key="it.id">
+          <div v-for="it in jobData.actionResult.artifactorys" :key="it.id">
             {{ it.url }}
           </div>
-          <a-empty v-if="jobData.actionResult.Artifactorys.length <= 0" />
+          <a-empty v-if="jobData.actionResult.artifactorys.length <= 0" />
         </div>
       </div>
       <div class="process-content">
         <div class="process-content-title">{{ $t("log.report") }}</div>
         <div class="text-[#7B7D7B]">
-          <div v-for="it in jobData.actionResult.Reports" :key="it.id">{{ it.url }}</div>
-          <a-empty v-if="jobData.actionResult.Reports.length <= 0" />
+          <div v-for="it in jobData.actionResult.reports" :key="it.id">{{ it.url }}</div>
+          <a-empty v-if="jobData.actionResult.reports.length <= 0" />
         </div>
       </div>
     </div>
@@ -103,13 +104,19 @@ const router = useRouter();
 const processModalRef = ref();
 const title = ref("");
 const content = ref([]);
+// const state = reactive({
+//   timer: null,
+//   running: true,
+// })
+// const timer = ref(null)
 const wrapper = ref();
+const count = ref(0)
 const jobData = reactive({
   id: undefined,
   stages: [],
   actionResult: {
-    Artifactorys: [],
-    Reports: [],
+    artifactorys: [],
+    reports: [],
   }
 });
 
@@ -140,17 +147,21 @@ const checkAllLogs = () => {
   window.open(`#/allLogs/${queryJson.name}/${queryJson.id}`);
 };
 
-const checkProcess = (item: any) => {
-  title.value = item.name;
-  processModalRef.value.showVisible();
-  getStageLogsData(item);
+const checkProcess = async (item: any, e: Event) => {
+  if (item.status === 0) {
+    e.stopPropagation()
+  } else {
+    title.value = item.name;
+    await getStageLogsData(item);
+    processModalRef.value.showVisible();
+  }
+
 };
 
-const getStageLogsData = async (item: any) => {
-  const query = Object.assign(queryJson, { stagename: item.name });
+const getStageLogsData = async (item: any, start = 0, lastLine = 0) => {
+  const query = Object.assign(queryJson, { stagename: item.name, start: start, lastLine: lastLine });
   const data = await apiGetJobStageLogs(query);
-  content.value = data.data?.content?.split('\n');
-  // console.log(data.data, '9999')
+  content.value = data.data?.content?.split('\r');
 };
 
 
@@ -196,6 +207,10 @@ onMounted(async () => {
 
     .process-scroll {
       display: inline-block;
+
+      .cursorP {
+        cursor: pointer;
+      }
     }
   }
 
