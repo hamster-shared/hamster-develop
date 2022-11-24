@@ -70,12 +70,13 @@ import { message } from "ant-design-vue";
     try {
       const result = await apiEditPipeline(templateName.value.toString(), pipelineName.value ,codeValue.value);
       if (result.code === 200) {
-        confirmLoading.value = false;
         visible.value = false;
         message.success(result.message);
         router.push({ path: '/pipeline' });
       }
+      confirmLoading.value = false;
     } catch (error: any) {
+      confirmLoading.value = false;
       console.log("erro:", error);
       message.error("Failed");
     }

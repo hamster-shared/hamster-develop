@@ -59,6 +59,7 @@ import { reactive, ref, onMounted, onBeforeMount, nextTick } from "vue";
 import { useRouter } from 'vue-router';
 import { apiGetTemplates } from "@/apis/template";
 import { Tabs, TabPane, Button } from 'ant-design-vue';
+import { message } from "ant-design-vue";
 import useAssets from "@/stores/useAssets";
 const { getImageURL } = useAssets()
  
@@ -112,7 +113,11 @@ const backStep = async () => {
   router.push({ path: '/pipeline' });
 }
 const nextStep = async () => {
-  router.push({ path: '/create/config/'+ checkCurrId.value });
+  if (checkCurrId.value === 0) {
+    message.info('Please select the pipeline template');
+  } else {
+    router.push({ path: '/create/config/'+ checkCurrId.value });
+  }
 }
 const checkDivHeight = (className: string) => {
   var targetDiv = document.getElementsByClassName(className);
