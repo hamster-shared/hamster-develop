@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/hamster-shared/a-line/pkg/logger"
 	"github.com/hamster-shared/a-line/pkg/output"
@@ -54,7 +55,7 @@ func (e *DockerEnv) Pre() error {
 	//user := fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid())
 	// "-u", user,
 
-	commands := []string{"docker", "run", "--name", fmt.Sprintf("%s_%s", jobName, jobId), "-t", "-d", "-v", workdir + ":" + workdir, "-v", workdirTmp + ":" + workdirTmp, "-w", workdir, e.Image, "cat"}
+	commands := []string{"docker", "run", "--name", fmt.Sprintf("%s_%s_%d", jobName, jobId, time.Now().Minute()), "-t", "-d", "-v", workdir + ":" + workdir, "-v", workdirTmp + ":" + workdirTmp, "-w", workdir, e.Image, "cat"}
 	logger.Debugf("execute docker command: %s", strings.Join(commands, " "))
 	e.output.WriteCommandLine(strings.Join(commands, " "))
 	c := exec.Command(commands[0], commands[1:]...)

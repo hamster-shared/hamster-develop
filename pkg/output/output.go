@@ -182,13 +182,14 @@ func (o *Output) NewStage(name string) {
 			v.Done = true
 			o.stageTimeConsuming[k] = v
 			o.WriteLine(fmt.Sprintf("[TimeConsuming] EndTime: %s, Duration: %s", v.EndTime.Format("2006-01-02 15:04:05"), v.Duration))
+			o.WriteLine("} ")
 		}
 	}
 
 	o.WriteLine("\n")
-	o.WriteLine("\n")
-	o.WriteLine("\n")
 	o.WriteLine("[Pipeline] Stage: " + name)
+	o.WriteLine("{ ")
+
 	startTime := time.Now().Local()
 	o.WriteLine("[TimeConsuming] StartTime: " + startTime.Format("2006-01-02 15:04:05"))
 	o.stageTimeConsuming[name] = TimeConsuming{
@@ -213,7 +214,7 @@ func (o *Output) NewStep(name string) {
 	o.WriteLine("\n")
 	o.WriteLine("\n")
 	o.WriteLine("\n")
-	o.WriteLine("[Pipeline] Step: " + name)
+	o.WriteLine("[Pipeline]     Step: " + name)
 	startTime := time.Now().Local()
 	o.WriteLine("[TimeConsuming] StartTime: " + startTime.Format("2006-01-02 15:04:05"))
 	o.stepTimeConsuming[name] = TimeConsuming{

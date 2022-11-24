@@ -58,6 +58,10 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 		Job:    *job,
 		Status: model.STATUS_NOTRUN,
 		Stages: stages,
+		ActionResult: model.ActionResult{
+			Artifactorys: make([]model.Artifactory, 0),
+			Reports:      make([]model.Report, 0),
+		},
 	}
 
 	if err != nil {
@@ -100,7 +104,13 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 			return err
 		}
 		stack.Push(ah)
-		_, err = ah.Hook()
+		actionResult, err := ah.Hook()
+		if actionResult != nil && len(actionResult.Artifactorys) > 0 {
+			jobWrapper.Artifactorys = append(jobWrapper.Artifactorys, actionResult.Artifactorys...)
+		}
+		if actionResult != nil && len(actionResult.Reports) > 0 {
+			jobWrapper.Reports = append(jobWrapper.Reports, actionResult.Reports...)
+		}
 		if err != nil {
 			job.Status = model.STATUS_FAIL
 			return err
@@ -119,11 +129,15 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 		jobWrapper.Stages[index] = stageWapper
 		jobWrapper.Output.NewStage(stageWapper.Name)
 		e.jobService.SaveJobDetail(jobWrapper.Name, jobWrapper)
+
 		for _, step := range stageWapper.Stage.Steps {
 			var ah action2.ActionHandler
 			if step.RunsOn != "" {
 				ah = action2.NewDockerEnv(step, ctx, jobWrapper.Output)
 				err = executeAction(ah, jobWrapper)
+				if err != nil {
+					break
+				}
 			}
 
 			if step.Uses == "" || step.Uses == "shell" {
@@ -140,7 +154,11 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 				ah = action2.NewRemoteAction(step, ctx)
 			}
 			err = executeAction(ah, jobWrapper)
+			if err != nil {
+				break
+			}
 		}
+
 		for !stack.IsEmpty() {
 			ah, _ := stack.Pop()
 			_ = ah.Post()

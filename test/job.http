@@ -21,7 +21,7 @@ POST http://183.66.65.207:38080/api/pipeline/test2/exec
 Content-Type: application/json
 
 ### re exec job
-POST http://localhost:8080/pipeline/test2/0/re-exec
+POST http://localhost:8080/api/pipeline/maven/7/re-exec
 
 ### get pipeline job
 GET http://localhost:8080/pipeline/test3

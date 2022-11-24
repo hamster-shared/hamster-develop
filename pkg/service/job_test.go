@@ -167,7 +167,7 @@ func TestGetJobLog(t *testing.T) {
 
 func TestGetStageLog(t *testing.T) {
 	jobService := NewJobService()
-	log := jobService.GetJobStageLog("maven", 0, "git-clone")
+	log := jobService.GetJobStageLog("maven", 11, "code-compile", 0)
 	if log == nil {
 		t.Error("log is nil")
 	}

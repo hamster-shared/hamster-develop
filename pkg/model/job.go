@@ -33,9 +33,9 @@ type JobVo struct {
 	Name             string           `yaml:"name" json:"name"`
 	Stages           map[string]Stage `yaml:"stages" json:"stages"`
 	Status           Status           `json:"status"`
-	StartTime        time.Time        `yaml:"startTime"json:"startTime"`
+	StartTime        time.Time        `yaml:"startTime" json:"startTime"`
 	Duration         int64            `json:"duration"`
-	TriggerMode      string           `yaml:"triggerMode"json:"triggerMode"`
+	TriggerMode      string           `yaml:"triggerMode" json:"triggerMode"`
 	PipelineDetailId int              `json:"pipelineDetailId"`
 }
 
@@ -43,9 +43,9 @@ type JobDetail struct {
 	Id int `json:"id"`
 	Job
 	Status       Status        `json:"status"`
-	TriggerMode  string        `yaml:"triggerMode"json:"triggerMode"`
+	TriggerMode  string        `yaml:"triggerMode" json:"triggerMode"`
 	Stages       []StageDetail `json:"stages"`
-	StartTime    time.Time     `yaml:"startTime"json:"startTime"`
+	StartTime    time.Time     `yaml:"startTime" json:"startTime"`
 	Duration     int64         `json:"duration"`
 	ActionResult `yaml:"actionResult" json:"actionResult"`
 	Output       *output.Output `json:"output"`
@@ -148,6 +148,9 @@ type JobStageLog struct {
 
 	//最后一行 行号
 	LastLine int `json:"lastLine"`
+
+	//是否结束
+	End bool `yaml:"end" json:"end"`
 }
 
 type JobPage struct {

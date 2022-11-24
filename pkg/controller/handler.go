@@ -234,12 +234,14 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 	name := gin.Param("name")
 	idStr := gin.Param("id")
 	stageName := gin.Param("stagename")
+	startStr := gin.DefaultQuery("start", "0")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
-	data := h.jobService.GetJobStageLog(name, id, stageName)
+	start, _ := strconv.Atoi(startStr)
+	data := h.jobService.GetJobStageLog(name, id, stageName, start)
 	Success(data, gin)
 }
 

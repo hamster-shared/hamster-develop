@@ -63,7 +63,7 @@ type IJobService interface {
 	// GetJobLog 获取 job 日志
 	GetJobLog(name string, pipelineDetailId int) *model.JobLog
 	// GetJobStageLog 获取 job 的 stage 日志
-	GetJobStageLog(name string, pipelineDetailId int, stageName string) *model.JobStageLog
+	GetJobStageLog(name string, pipelineDetailId int, stageName string, start int) *model.JobStageLog
 }
 
 type JobService struct {
@@ -283,6 +283,13 @@ func (svc *JobService) GetJobDetail(name string, id int) *model.JobDetail {
 		log.Println("get job,deserialization job detail file failed", err.Error())
 		return &jobDetailData
 	}
+
+	for _, stage := range jobDetailData.Stages {
+		if stage.Status == model.STATUS_RUNNING {
+			stage.Duration = time.Now().Sub(stage.StartTime).Milliseconds()
+		}
+	}
+
 	return &jobDetailData
 }
 
@@ -504,21 +511,42 @@ func (svc *JobService) GetJobLog(name string, pipelineDetailId int) *model.JobLo
 }
 
 // GetJobStageLog 获取 job 的 stage 日志
-func (svc *JobService) GetJobStageLog(name string, pipelineDetailId int, stageName string) *model.JobStageLog {
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_LOG_DIR_NAME, strconv.Itoa(pipelineDetailId)+".log")
+func (svc *JobService) GetJobStageLog(name string, execId int, stageName string, start int) *model.JobStageLog {
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_LOG_DIR_NAME, strconv.Itoa(execId)+".log")
 
 	fileLog, err := output.ParseLogFile(src)
 	if err != nil {
 		logger.Errorf("parse log file failed, %v", err)
 		return nil
 	}
+
+	detail := svc.GetJobDetail(name, execId)
+
+	var stageDetail model.StageDetail
+
+	for _, stage := range detail.Stages {
+		if stage.Name == stageName {
+			stageDetail = stage
+		}
+	}
+
+	if &stageDetail == nil {
+		return &model.JobStageLog{}
+	}
+
 	for _, stage := range fileLog.Stages {
 		if stage.Name == stageName {
+			var content string
+			if start >= 0 && start <= len(stage.Lines) {
+				content = strings.Join(stage.Lines[start:], "\r")
+			}
+
 			return &model.JobStageLog{
 				StartTime: stage.StartTime,
 				Duration:  stage.Duration,
-				Content:   strings.Join(stage.Lines, "\n"),
+				Content:   content,
 				LastLine:  len(stage.Lines),
+				End:       stageDetail.Status == model.STATUS_SUCCESS || stageDetail.Status == model.STATUS_FAIL,
 			}
 		}
 	}
