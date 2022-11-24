@@ -5,7 +5,7 @@ id: 4
 name: "Substrate + DApp"
 
 #Template Description
-description: "This template is used for DApps written on Substact framework to fully automate code checkout -> check contract quality -> compile contract -> test contract -> deploy contract -> check front-end code quality -> edit front-end..."
+description: "This template is used for DApps written on Substact framework to fully automate code checkout -> check contract quality -> compile contract -> test contract -> deploy contract -> check front-end code quality -> edit front-end code -> deploy front-end code."
 
 #Template classification
 tag: "DAPP_TEMPLATE"
