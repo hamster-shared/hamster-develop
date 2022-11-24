@@ -17,7 +17,7 @@ stages:
         run: |
           mvn clean package -Dmaven.test.skip=true
       - name: save artifactory
-        use: hamster/artifactory
+        use: hamster-artifactory
         with:
           name: some.zip
           path:
