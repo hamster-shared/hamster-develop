@@ -1,3 +1,5 @@
+web:
+	yarn && yarn build
 macos:
 	yarn && yarn build
 	go mod tidy
