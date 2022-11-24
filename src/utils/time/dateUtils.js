@@ -28,7 +28,7 @@ export function formatDurationTime(ms) {
     ["days", duration.days],
     ["hours", duration.hours],
     ["minutes", duration.minutes],
-    ["seconds", duration.year],
+    ["seconds", duration.seconds],
   ];
   const validCollection = collection.filter(([_unit, value]) => value > 0);
   const durationText = validCollection
