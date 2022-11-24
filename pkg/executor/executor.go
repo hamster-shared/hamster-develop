@@ -16,7 +16,6 @@ import (
 	"github.com/hamster-shared/a-line/pkg/output"
 	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/utils"
-	"gopkg.in/yaml.v2"
 )
 
 type IExecutor interface {
@@ -46,8 +45,7 @@ func (e *Executor) FetchJob(name string) (io.Reader, error) {
 
 	//TODO... 根据 name 从 rpc 或 直接内部调用获取 job 的 pipeline 文件
 	job := e.jobService.GetJob(name)
-	data, err := yaml.Marshal(job)
-	return strings.NewReader(string(data)), err
+	return strings.NewReader(job), nil
 }
 
 // Execute 执行任务
