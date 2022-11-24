@@ -116,7 +116,7 @@ import { message } from "ant-design-vue";
       Object.assign(templateInfo, data); //赋值
       codeValue.value = templateInfo.yaml; 
       
-      const config = YAML.parse(codeValue.value.toString()); console.log(config)
+      const config = YAML.parse(codeValue.value.toString()); 
       pipelineName.value = config.name;
       yamlList.value = []
       for (let key in config["stages"]){
