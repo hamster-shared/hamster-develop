@@ -93,26 +93,17 @@
             </div>
           </template>
           <template v-else-if="column.key === 'duration'">
-            <<<<<<< HEAD
             <span
               class="block"
               v-if="
                 record?.startTime && record?.startTime != '0001-01-01T00:00:00Z'
               "
             >
-              {{ fromNowexecutionTime(record.startTime) }}
-            </span>
-            <span v-if="record?.duration && record?.duration != 0">{{
-              formatDurationTime(record.duration)
-            }}</span>
-            =======
-            <span class="block">
               {{ fromNowexecutionTime(record.startTime, "operation") }}
             </span>
-            <span>{{
+            <span v-if="record?.duration && record?.duration != 0">{{
               formatDurationTime(record.duration, "elapsedTime")
             }}</span>
-            >>>>>>> develop
           </template>
           <template v-else-if="column.key === 'action'">
             <div v-if="record.status == 1">
