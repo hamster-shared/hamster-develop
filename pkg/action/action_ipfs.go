@@ -28,7 +28,7 @@ func NewIpfsAction(step model.Step, ctx context.Context, output *output.Output) 
 }
 
 func (a *IpfsAction) Pre() error {
-	a.output.NewStage("ipfs")
+	a.output.NewStep("ipfs")
 	newShell := shell.NewShell(consts.IPFS_SHELL)
 	version, s, err := newShell.Version()
 	if err != nil {
@@ -39,7 +39,6 @@ func (a *IpfsAction) Pre() error {
 }
 
 func (a *IpfsAction) Hook() (*model.ActionResult, error) {
-	a.output.NewStage("ipfs")
 
 	stack := a.ctx.Value(STACK).(map[string]interface{})
 
