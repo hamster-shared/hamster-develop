@@ -19,7 +19,13 @@
               </div>
               <div class="col-span-5">
                 <div class="card-title">{{ item.name }}</div>
-                <div class="card-desc show-line">{{ item.description }}</div>
+                <a-popover :visible="hovered">
+                  <template #content>
+                    <div class="card-desc-popover">{{ item.description }}</div>
+                  </template>
+                  <div @mouseover="checkDivHeight(`descDiv${index}`)" :class="`descDiv${index}`" class="card-desc show-line">{{ item.description }}</div>
+                </a-popover>
+                
               </div>
             </div>
           </div>
@@ -49,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, onMounted, onBeforeMount, nextTick } from "vue";
 import { useRouter } from 'vue-router';
 import { apiGetTemplates } from "@/apis/template";
 import { Tabs, TabPane, Button } from 'ant-design-vue';
@@ -59,6 +65,7 @@ const { getImageURL } = useAssets()
 const router = useRouter();
 const activeKey = ref('0');
 const checkCurrId = ref(0);
+const hovered = ref(false);
 
 const templatesList = reactive([]);
 const allTemplatesList = reactive([]);
@@ -107,6 +114,15 @@ const backStep = async () => {
 const nextStep = async () => {
   router.push({ path: '/create/config/'+ checkCurrId.value });
 }
+const checkDivHeight = (className: string) => {
+  var targetDiv = document.getElementsByClassName(className);
+  var scrollHeight = targetDiv[0].scrollHeight;
+  if (scrollHeight < 40) {
+    hovered.value = false;
+  } else {
+    hovered.value = undefined;
+  }
+}
 </script>
 
 <style scoped lang="less">
@@ -134,9 +150,11 @@ const nextStep = async () => {
 .card-item{
   @apply p-4 grid grid-cols-6 gap-4 cursor-pointer;
   border: 1px solid #EFEFEF;
-  /* 投影 */
-  box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.1);
   border-radius: 12px;
+}
+.card-item:hover{
+  /* 投影 */
+  box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.2);
 }
 .card-img-div{
   @apply flex justify-center;
@@ -155,6 +173,11 @@ const nextStep = async () => {
   font-size: 12px;
   color: #7B7D7B;
   margin-top: 4px;
+}
+.card-desc-popover{
+  font-size: 12px;
+  color: #7B7D7B;
+  max-width: 500px;
 }
 .show-line{
   display: -webkit-box;
@@ -180,5 +203,6 @@ const nextStep = async () => {
 }
 .check-border{
    border-color: @baseColor;
+   background: #F3FFFA;
 }
 </style>
