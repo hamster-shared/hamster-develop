@@ -58,7 +58,7 @@ func (a *ShellAction) Pre() error {
 
 func (a *ShellAction) Hook() (*model.ActionResult, error) {
 
-	a.output.NewStage("shell")
+	a.output.NewStep("shell")
 
 	stack := a.ctx.Value(STACK).(map[string]interface{})
 

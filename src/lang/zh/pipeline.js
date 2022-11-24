@@ -13,5 +13,6 @@ export default {
     set: "设置",
     delete: "删除",
     stop: "终止",
+    fail: "失败",
   },
 };

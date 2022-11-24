@@ -90,8 +90,8 @@ func (h *HandlerServer) deletePipeline(gin *gin.Context) {
 // pipelineList get pipeline job list
 func (h *HandlerServer) pipelineList(gin *gin.Context) {
 	query := gin.Query("query")
-	pageStr := gin.Query("page")
-	sizeStr := gin.Query("size")
+	pageStr := gin.DefaultQuery("page", "1")
+	sizeStr := gin.DefaultQuery("size", "10")
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		Fail(err.Error(), gin)

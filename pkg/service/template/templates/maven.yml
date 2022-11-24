@@ -1,4 +1,4 @@
-version: 1.0
+version: "1.0"
 name: my-test2
 stages:
   git-clone:
@@ -17,7 +17,7 @@ stages:
         run: |
           mvn clean package -Dmaven.test.skip=true
       - name: save artifactory
-        use: hamster-artifactory
+        uses: hamster-artifactory
         with:
           name: some.zip
           path: target/*.jar
