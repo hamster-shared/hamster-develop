@@ -17,7 +17,7 @@ stages:
         run: |
           mvn clean package -Dmaven.test.skip=true
       - name: save artifactory
-        uses: hamster/artifactory
+        uses: hamster-artifactory
         with:
           name: some.zip
           path: |
@@ -32,7 +32,7 @@ stages:
 #  code-compile:
 #    steps:
 #      - name: save artifactory
-#        uses: hamster/artifactory
+#        uses: hamster-artifactory
 #        with:
 #          name: some.zip
 #          path: |
