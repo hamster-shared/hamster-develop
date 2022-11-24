@@ -165,7 +165,11 @@ const pagination = reactive({
   onChange: async (current) => {
     // 切换分页时的回调，
     isLoading.value = true;
-    const { data } = await apiGetPipelines({ page: current, size: 10 });
+    const { data } = await apiGetPipelines({
+      query: searchValue.value,
+      page: current,
+      size: 10,
+    });
     pipelineList.value = data.data;
     pagination.pageSize = data.pageSize;
     pagination.total = data.total;
@@ -178,7 +182,11 @@ const pagination = reactive({
 const getPipelineInfo = async () => {
   isLoading.value = true;
   try {
-    const { data } = await apiGetPipelines({ page: 1, size: 10 });
+    const { data } = await apiGetPipelines({
+      query: searchValue.value,
+      page: 1,
+      size: 10,
+    });
     console.log("data:", data.data);
     pipelineList.value = data.data;
     pagination.pageSize = data.pageSize;
@@ -193,7 +201,11 @@ const getPipelineInfo = async () => {
 const handleSearch = async () => {
   isLoading.value = true;
   try {
-    const { data } = await apiGetPipelines({ query: searchValue.value });
+    const { data } = await apiGetPipelines({
+      query: searchValue.value,
+      page: 1,
+      size: 10,
+    });
     pipelineList.value = data.data;
     pagination.pageSize = data.pageSize;
     pagination.total = data.total;
