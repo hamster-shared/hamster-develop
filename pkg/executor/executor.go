@@ -127,27 +127,21 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 				ah = action2.NewDockerEnv(step, ctx, jobWrapper.Output)
 				err = executeAction(ah, jobWrapper)
 			}
-			if step.Uses == "" {
-				ah = action2.NewShellAction(step, ctx, jobWrapper.Output)
-				err = executeAction(ah, jobWrapper)
-			}
-			if step.Uses == "git-checkout" {
-				ah = action2.NewGitAction(step, ctx, jobWrapper.Output)
-				err = executeAction(ah, jobWrapper)
-			}
-			if step.Uses == "hamster-ipfs" {
-				ah = action2.NewIpfsAction(step, ctx, jobWrapper.Output)
-				err = executeAction(ah, jobWrapper)
-			}
-			if step.Uses == "hamster-artifactory" {
-				ah = action2.NewArtifactoryAction(step, ctx, jobWrapper.Output)
-				err = executeAction(ah, jobWrapper)
-			}
-			if strings.Contains(step.Uses, "/") {
-				ah = action2.NewRemoteAction(step, ctx)
-				err = executeAction(ah, jobWrapper)
-			}
 
+			if step.Uses == "" || step.Uses == "shell" {
+				ah = action2.NewShellAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "git-checkout" {
+				ah = action2.NewGitAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "hamster-ipfs" {
+				ah = action2.NewIpfsAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "hamster-artifactory" {
+				ah = action2.NewArtifactoryAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "workdir" {
+				ah = action2.NewWorkdirAction(step, ctx, jobWrapper.Output)
+			} else if strings.Contains(step.Uses, "/") {
+				ah = action2.NewRemoteAction(step, ctx)
+			}
+			err = executeAction(ah, jobWrapper)
 		}
 		for !stack.IsEmpty() {
 			ah, _ := stack.Pop()
@@ -185,7 +179,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 
 	//TODO ... 发送结果到队列
 	e.SendResultToQueue(nil)
-	_ = os.RemoveAll(path.Join(engineContext["hamsterRoot"].(string), job.Name))
+	//_ = os.RemoveAll(path.Join(engineContext["hamsterRoot"].(string), job.Name))
 
 	return err
 
