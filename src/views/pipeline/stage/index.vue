@@ -267,7 +267,7 @@ const handleDelete = async (id) => {
   try {
     await apiDeletePipelineInfo(pathName, id);
     const newJobs = pipelineInfo.value.filter((x) => x.id !== id);
-    Object.assign(pipelineInfo, newJobs);
+    Object.assign(pipelineInfo.value, newJobs);
     message.success("Delete success");
   } catch {
     message.error("Delete failed");
