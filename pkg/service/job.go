@@ -387,6 +387,7 @@ func (svc *JobService) JobDetailList(name string, page, pageSize int) *model.Job
 		}
 		jobDetails = append(jobDetails, jobDetailData)
 	}
+	sort.Sort(model.JobDetailDecrement(jobDetails))
 	pageNum, size, start, end := utils.SlicePage(page, pageSize, len(jobDetails))
 	jobDetailPage.Page = pageNum
 	jobDetailPage.PageSize = size

@@ -16,7 +16,6 @@ import (
 	"github.com/hamster-shared/a-line/pkg/output"
 	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/utils"
-	"gopkg.in/yaml.v2"
 )
 
 type IExecutor interface {
@@ -46,8 +45,7 @@ func (e *Executor) FetchJob(name string) (io.Reader, error) {
 
 	//TODO... 根据 name 从 rpc 或 直接内部调用获取 job 的 pipeline 文件
 	job := e.jobService.GetJob(name)
-	data, err := yaml.Marshal(job)
-	return strings.NewReader(string(data)), err
+	return strings.NewReader(job), nil
 }
 
 // Execute 执行任务
@@ -127,27 +125,21 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 				ah = action2.NewDockerEnv(step, ctx, jobWrapper.Output)
 				err = executeAction(ah, jobWrapper)
 			}
-			if step.Uses == "" {
-				ah = action2.NewShellAction(step, ctx, jobWrapper.Output)
-				err = executeAction(ah, jobWrapper)
-			}
-			if step.Uses == "git-checkout" {
-				ah = action2.NewGitAction(step, ctx, jobWrapper.Output)
-				err = executeAction(ah, jobWrapper)
-			}
-			if step.Uses == "hamster-ipfs" {
-				ah = action2.NewIpfsAction(step, ctx, jobWrapper.Output)
-				err = executeAction(ah, jobWrapper)
-			}
-			if step.Uses == "hamster-artifactory" {
-				ah = action2.NewArtifactoryAction(step, ctx, jobWrapper.Output)
-				err = executeAction(ah, jobWrapper)
-			}
-			if strings.Contains(step.Uses, "/") {
-				ah = action2.NewRemoteAction(step, ctx)
-				err = executeAction(ah, jobWrapper)
-			}
 
+			if step.Uses == "" || step.Uses == "shell" {
+				ah = action2.NewShellAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "git-checkout" {
+				ah = action2.NewGitAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "hamster-ipfs" {
+				ah = action2.NewIpfsAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "hamster-artifactory" {
+				ah = action2.NewArtifactoryAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "workdir" {
+				ah = action2.NewWorkdirAction(step, ctx, jobWrapper.Output)
+			} else if strings.Contains(step.Uses, "/") {
+				ah = action2.NewRemoteAction(step, ctx)
+			}
+			err = executeAction(ah, jobWrapper)
 		}
 		for !stack.IsEmpty() {
 			ah, _ := stack.Pop()
@@ -185,7 +177,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 
 	//TODO ... 发送结果到队列
 	e.SendResultToQueue(nil)
-	_ = os.RemoveAll(path.Join(engineContext["hamsterRoot"].(string), job.Name))
+	//_ = os.RemoveAll(path.Join(engineContext["hamsterRoot"].(string), job.Name))
 
 	return err
 

@@ -17,7 +17,7 @@
         <div class="mb-2">
           Pipeline Name
         </div>
-        <a-input v-model:value="PipelineName" placeholder="Pipeline Name" allow-clear />
+        <a-input v-model:value="pipelineName"  @change="setYamlName()" placeholder="Pipeline Name" allow-clear />
       </div>
       <a-row class="create" :gutter="24">
         <a-col :span="8">
@@ -103,7 +103,7 @@ import { message } from "ant-design-vue";
       }]
     }
   ]);
-  const PipelineName = ref('');
+  const pipelineName = ref('');
 
   onMounted(async () => {
     getTemplatesById(templateId.value.toString());
@@ -114,10 +114,10 @@ import { message } from "ant-design-vue";
     try {
       const { data } = await apiGetTemplatesById(templateId);
       Object.assign(templateInfo, data); //赋值
-      PipelineName.value = templateInfo.name;
       codeValue.value = templateInfo.yaml; 
       
-      const config = YAML.parse(codeValue.value.toString());
+      const config = YAML.parse(codeValue.value.toString()); 
+      pipelineName.value = config.name;
       yamlList.value = []
       for (let key in config["stages"]){
         let obj = config["stages"][key];
@@ -161,13 +161,14 @@ import { message } from "ant-design-vue";
 
   const submitData = async () => {
     try {
-      if (PipelineName.value === "" || PipelineName.value === null) {
+      if (pipelineName.value === "" || pipelineName.value === null) {
         message.error("Please input Pipeline Name");
         return false;
       }
-      //@todo 添加PipelineName.value判重
-      const result = await apiAddPipeline(PipelineName.value, codeValue.value);
-      if (result.code === 200) {
+      const result = await apiAddPipeline(pipelineName.value, codeValue.value);
+      if (result.code === 400) {
+         message.error(result.message);
+      } else {
         message.success(result.message);
         router.push({ path: '/pipeline' });
       }
@@ -185,6 +186,12 @@ import { message } from "ant-design-vue";
       config["stages"][key]["steps"][index][item] = val;
     }
 
+    codeValue.value = YAML.stringify(config)
+  }
+
+  const setYamlName = async () => {
+    const config = YAML.parse(codeValue.value);
+    config["name"] = pipelineName.value
     codeValue.value = YAML.stringify(config)
   }
 </script>
