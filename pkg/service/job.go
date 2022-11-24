@@ -363,9 +363,7 @@ func (svc *JobService) JobDetailList(name string, page, pageSize int) *model.Job
 		return &jobDetailPage
 	}
 	for _, file := range files {
-		log.Println(file.Name())
 		ymlPath := filepath.Join(src, file.Name())
-		log.Println(ymlPath)
 		//judge whether the job detail file exists
 		_, err := os.Stat(ymlPath)
 		//not exist
@@ -419,7 +417,6 @@ func (svc *JobService) DeleteJobDetail(name string, pipelineDetailId int) error 
 func (svc *JobService) ExecuteJob(name string) (*model.JobDetail, error) {
 	//get job data
 	jobData := svc.GetJobObject(name)
-	log.Println(jobData)
 	//create job detail
 	var jobDetail model.JobDetail
 	var ids []int
@@ -462,7 +459,6 @@ func (svc *JobService) ExecuteJob(name string) (*model.JobDetail, error) {
 	jobDetail.StartTime = time.Now()
 	jobDetail.Stages = stageDetail
 	jobDetail.TriggerMode = consts.TRIGGER_MODE
-	log.Println(jobDetail)
 	//TODO... 执行 pipeline job
 
 	//create and save job detail
