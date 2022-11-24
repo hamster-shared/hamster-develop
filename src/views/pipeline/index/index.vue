@@ -1,12 +1,7 @@
 <template>
   <div class="mx-auto bg-white py-[32px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-4">
-      <a-input
-        v-model:value="searchValue"
-        placeholder="search here..."
-        style="width: 370px"
-        class="w-[340px] h-[40px]"
-      >
+      <a-input v-model:value="searchValue" placeholder="search here..." style="width: 370px" class="w-[340px] h-[40px]">
         <template #prefix>
           <img :src="searchSVG" />
         </template>
@@ -20,11 +15,7 @@
       <a-spin :spinning="isLoading" />
     </div>
     <template v-else-if="pipelineList.length > 0">
-      <a-card
-        v-for="(data, index) in pipelineList"
-        :key="index"
-        @click="$router.push(`/pipeline/${data.name}`)"
-      >
+      <a-card v-for="(data, index) in pipelineList" :key="index" @click="$router.push(`/pipeline/${data.name}`)">
         <div class="flex justify-between cursor-pointer">
           <div class="self-center">
             <div class="mb-3 text-xl font-semibold text-[#121211]">
@@ -34,64 +25,38 @@
               {{ data.description }}
             </div>
             <div>
-              <div
-                v-if="data.status == 0"
-                class="text-sm font-normal text-[#7B7D7B]"
-              >
+              <div v-if="data.status == 0" class="text-sm font-normal text-[#7B7D7B]">
                 {{ $t("pipeline.noData") }}
               </div>
-              <div
-                v-if="data.status == 1"
-                class="text-sm font-normal text-[#2C5AFF]"
-              >
+              <div v-if="data.status == 1" class="text-sm font-normal text-[#2C5AFF]">
                 <img :src="runnngSVG" />
                 {{ $t("pipeline.running") }}
               </div>
-              <div
-                v-if="data.status == 3"
-                class="text-sm font-normal text-[#2DCE83]"
-              >
+              <div v-if="data.status == 3" class="text-sm font-normal text-[#2DCE83]">
                 <img :src="successSVG" />
                 {{ $t("pipeline.successfulImplementation") }}
               </div>
-              <div
-                v-if="data.status == 2"
-                class="text-sm font-normal text-[#F52222]"
-              >
+              <div v-if="data.status == 2" class="text-sm font-normal text-[#F52222]">
                 <img :src="failedSVG" />
                 {{ $t("pipeline.pushFailed") }}
               </div>
-              <div
-                v-if="data.status == 4"
-                class="text-sm font-normal text-[#FF842C]"
-              >
+              <div v-if="data.status == 4" class="text-sm font-normal text-[#FF842C]">
                 <img :src="stopSVG" />
                 {{ $t("pipeline.userTermination") }}
               </div>
             </div>
           </div>
-          <div
-            class="self-center text-center cursor-pointer"
-            @click="$router.push(`/pipeline/${data.name}`)"
-          >
-            <span
-              class="text-sm font-normal bg-[#F8F8F8] py-2 px-3 rounded text-[#3F4641] block mb-3"
-              v-if="
-                data?.startTime && data?.startTime != '0001-01-01T00:00:00Z'
-              "
-              >{{ fromNowexecutionTime(data.startTime) }}</span
-            >
+          <div class="self-center text-center cursor-pointer" @click="$router.push(`/pipeline/${data.name}`)">
+            <span class="text-sm font-normal bg-[#F8F8F8] py-2 px-3 rounded text-[#3F4641] block mb-3" v-if="
+              data?.startTime && data?.startTime != '0001-01-01T00:00:00Z'
+            ">{{ fromNowexecutionTime(data.startTime, 'operation') }}</span>
             <span class="text-xs" v-if="data?.duration && data?.duration != 0">
               <img :src="wasteTimeSVG" />
-              {{ formatDurationTime(data.duration) }}
+              {{ formatDurationTime(data.duration, 'elapsedTime') }}
             </span>
           </div>
           <div class="self-center">
-            <a-button
-              type="primary"
-              v-if="data.status !== 1"
-              @click.stop="handleImmediateImplementation(data.name)"
-            >
+            <a-button type="primary" v-if="data.status !== 1" @click.stop="handleImmediateImplementation(data.name)">
               {{ $t("pipeline.immediateImplementation") }}
             </a-button>
             <a-button type="primary" danger v-if="data.status === 1">
@@ -179,34 +144,40 @@ onMounted(() => {
 .ant-input-affix-wrapper {
   border: 1px solid #efefef;
   border-radius: 6px;
+
   &:not(.ant-input-affix-wrapper-disabled):hover {
     border-color: #6481dc;
   }
 }
+
 .ant-card-bordered {
   margin-bottom: 20px;
   box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.1);
   border-radius: 12px;
   border: 1px solid #efefef;
 }
+
 .ant-btn {
   display: block;
   width: 120px;
   height: 40px;
   border-radius: 6px;
   font-size: 12px;
+
   &:hover,
   &:focus {
     color: #28c57c;
     border-color: #28c57c;
   }
 }
+
 .ant-btn-primary {
   margin-bottom: 10px;
   border-radius: 6px;
   width: 120px;
   height: 40px;
   background: #28c57c;
+
   &:hover,
   &:focus {
     border-color: #28c57c;
@@ -214,9 +185,11 @@ onMounted(() => {
     color: white;
   }
 }
+
 .ant-btn-dangerous.ant-btn-primary {
   border-color: #ff842c;
   background: #ff842c;
+
   &:hover,
   &:focus {
     border-color: #ff842c;
@@ -227,39 +200,48 @@ onMounted(() => {
 .ant-card-bordered {
   border: 1px solid #dedddc;
 }
+
 ol,
 ul,
 dl {
   margin-bottom: 0px;
 }
+
 .float-right {
   float: unset;
 }
+
 .ant-pagination {
   text-align: center;
 }
+
 :deep(.ant-pagination-item-active) {
   background: #28c57c;
   border-color: #28c57c;
+
   & a {
     color: white;
   }
 }
+
 :deep(.ant-pagination-item:hover a) {
   color: #28c57c;
 }
+
 :deep(.ant-pagination-prev:hover),
 :deep(.ant-pagination-next:hover) {
   .ant-pagination-item-link {
     color: #28c57c;
   }
 }
+
 :deep(.ant-pagination-jump-prev),
 :deep(.ant-pagination-jump-next) {
   .ant-pagination-item-container .ant-pagination-item-link-icon {
     color: #28c57c;
   }
 }
+
 :deep(.ant-pagination-item-active:hover a) {
   color: white !important;
 }

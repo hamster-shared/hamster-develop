@@ -14,12 +14,12 @@ export function changeDayJsLocale(language) {
   }
 }
 
-export function fromNowexecutionTime(time) {
+export function fromNowexecutionTime(time, timeText) {
   const { t } = useI18n();
-  return dayJs(time).fromNow() + " " + t("datetime.operation");
+  return dayJs(time).fromNow() + " " + t(`datetime.${timeText}`);
 }
 
-export function formatDurationTime(ms) {
+export function formatDurationTime(ms,timeText) {
   const { t } = useI18n();
   const duration = dayJs.duration(ms).$d;
   const collection = [
@@ -35,7 +35,12 @@ export function formatDurationTime(ms) {
     .map(([unit, value]) => value + t(`datetime.${unit}`))
     .join(" ");
 
-  return t("datetime.elapsedTime") + " " + durationText;
+    if(ms < 1000) {
+      return '<1'+ t(`datetime.seconds`)
+    } else {
+      return t(`datetime.${timeText}`) + " " + durationText;
+    }
+  // return t("datetime.elapsedTime") + " " + durationText;
 }
 
 export default dayJs;

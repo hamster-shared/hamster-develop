@@ -1,14 +1,12 @@
 <template>
   <div class="mx-auto bg-white py-[32px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-6">
-      <span class="text-2xl font-semibold text-[#121211]"
-        >Hamster-pipeline
+      <span class="text-2xl font-semibold text-[#121211]">Hamster-pipeline
       </span>
       <div>
         <a-button class="mr-2">{{ $t("pipeline.stage.set") }}</a-button>
         <a-button type="primary" @click="handleImmediateImplementation">
-          {{ $t("pipeline.stage.immediateImplementation") }}</a-button
-        >
+          {{ $t("pipeline.stage.immediateImplementation") }}</a-button>
       </div>
     </div>
 
@@ -17,12 +15,7 @@
     </div>
 
     <template v-else-if="pipelineInfo.length > 0">
-      <a-table
-        :columns="columns"
-        :data-source="pipelineInfo"
-        v-bind:pagination="pagination"
-        v-if="pipelineInfo"
-      >
+      <a-table :columns="columns" :data-source="pipelineInfo" v-bind:pagination="pagination" v-if="pipelineInfo">
         <template #headerCell="{ column }">
           <template v-if="column.key === 'status'">
             <span> Status </span>
@@ -31,43 +24,14 @@
 
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <span
-              v-if="record.status == 0"
-              @click="handleToNextPage(record.id)"
-              class="cursor-pointer"
-              >no data</span
-            >
-            <span
-              v-if="record.status == 1"
-              @click="handleToNextPage(record.id)"
-              class="cursor-pointer"
-              >running</span
-            >
-            <span
-              v-if="record.status == 3"
-              @click="handleToNextPage(record.id)"
-              class="cursor-pointer"
-              >passed</span
-            >
-            <span
-              v-if="record.status == 2"
-              @click="handleToNextPage(record.id)"
-              class="cursor-pointer"
-              >failed</span
-            >
-            <span
-              v-if="record.status == 4"
-              @click="handleToNextPage(record.id)"
-              class="cursor-pointer"
-              >stop</span
-            >
+            <span v-if="record.status == 0" @click="handleToNextPage(record.id)" class="cursor-pointer">no data</span>
+            <span v-if="record.status == 1" @click="handleToNextPage(record.id)" class="cursor-pointer">running</span>
+            <span v-if="record.status == 3" @click="handleToNextPage(record.id)" class="cursor-pointer">passed</span>
+            <span v-if="record.status == 2" @click="handleToNextPage(record.id)" class="cursor-pointer">failed</span>
+            <span v-if="record.status == 4" @click="handleToNextPage(record.id)" class="cursor-pointer">stop</span>
           </template>
           <template v-else-if="column.key === 'stages'">
-            <div
-              v-for="(item, index) in record.stages"
-              :key="index"
-              class="flex"
-            >
+            <div v-for="(item, index) in record.stages" :key="index" class="flex">
               <div>
                 <div v-if="item?.status == 0" class="inline-block">
                   <img :src="nodataSVG" class="w-[20px] h-[20px]" />
@@ -92,25 +56,21 @@
           </template>
           <template v-else-if="column.key === 'duration'">
             <span class="block">
-              {{ fromNowexecutionTime(record.startTime) }}
+              {{ fromNowexecutionTime(record.startTime, 'operation') }}
             </span>
-            <span>{{ formatDurationTime(record.duration) }}</span>
+            <span>{{ formatDurationTime(record.duration, 'elapsedTime') }}</span>
           </template>
           <template v-else-if="column.key === 'action'">
             <div v-if="record.status == 1">
               <img :src="stopButtonSVG" class="mr-2 align-text-bottom" />
-              <a
-                @click="handleStop(record.id)"
-                class="text-[#FF842C] hover:text-[#FF842C]"
-                >{{ $t("pipeline.stage.stop") }}</a
-              >
+              <a @click="handleStop(record.id)" class="text-[#FF842C] hover:text-[#FF842C]">{{ $t("pipeline.stage.stop")
+              }}</a>
             </div>
             <div v-else>
               <img :src="deleteButtonSVG" class="mr-1 align-text-bottom" />
-              <a
-                @click="handleDelete(record.id)"
-                class="text-[#F52222] hover:text-[#F52222]"
-                >{{ $t("pipeline.stage.delete") }}
+              <a @click="handleDelete(record.id)" class="text-[#F52222] hover:text-[#F52222]">{{
+                  $t("pipeline.stage.delete")
+              }}
               </a>
             </div>
           </template>
@@ -262,14 +222,17 @@ onMounted(() => {
   border-radius: 6px;
   width: 120px;
   height: 40px;
+
   &:hover,
   &:focus {
     color: #28c57c;
     border-color: #28c57c;
   }
 }
+
 .ant-btn-primary {
   background: #28c57c;
+
   &:hover,
   &:focus {
     border-color: #28c57c;
@@ -277,6 +240,7 @@ onMounted(() => {
     color: white;
   }
 }
+
 :deep(.ant-table-thead > tr > th) {
   background: #121211;
   height: 48px;
@@ -284,15 +248,18 @@ onMounted(() => {
   color: #ffffff;
   border-top: 12px;
 }
+
 :deep(.ant-table table) {
   text-align: center;
   border: 1px solid #f8f8f8;
   box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.1);
   border-radius: 12px;
 }
+
 :deep(.ant-table-container table > thead > tr:first-child th:first-child) {
   border-top-left-radius: 12px;
 }
+
 :deep(.ant-table-container table > thead > tr:first-child th:last-child) {
   border-top-right-radius: 12px;
 }
@@ -307,39 +274,48 @@ ul,
 dl {
   margin-bottom: 0px;
 }
+
 :deep(.ant-table-pagination-right) {
   justify-content: unset !important;
 }
+
 :deep(.ant-table-pagination) {
   display: block;
   text-align: center;
 }
+
 :deep(.ant-table-pagination.ant-pagination) {
   margin-top: 20px;
   margin-bottom: 0px;
 }
+
 :deep(.ant-pagination-item-active) {
   background: #28c57c;
   border-color: #28c57c;
+
   & a {
     color: white;
   }
 }
+
 :deep(.ant-pagination-item:hover a) {
   color: #28c57c !important;
 }
+
 :deep(.ant-pagination-prev:hover),
 :deep(.ant-pagination-next:hover) {
   .ant-pagination-item-link {
     color: #28c57c;
   }
 }
+
 :deep(.ant-pagination-jump-prev),
 :deep(.ant-pagination-jump-next) {
   .ant-pagination-item-container .ant-pagination-item-link-icon {
     color: #28c57c;
   }
 }
+
 :deep(.ant-pagination-item-active:hover a) {
   color: white !important;
 }
