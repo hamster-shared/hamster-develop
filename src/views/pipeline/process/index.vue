@@ -5,7 +5,6 @@
         <a-col :span="6">
           <div class="process-detail-item">
             <div class="process-detail-title">{{ jobData.name }}</div>
-            <!-- <div class="process-detail-info">master | b4a0d99</div> -->
             <div class="process-detail-info">{{ jobData.triggerMode }}</div>
           </div>
         </a-col>
@@ -20,7 +19,7 @@
         <a-col :span="6">
           <div class="process-detail-item">
             <div class="process-detail-title">{{ $t("log.executionTime") }}</div>
-            <div class="process-detail-info">{{ jobData.startTimeText + $t("log.ago") }}</div>
+            <div class="process-detail-info">{{ fromNowexecutionTime(jobData.startTime, 'noThing') }}</div>
           </div>
         </a-col>
         <a-col :span="6">
@@ -29,7 +28,7 @@
               {{ $t("log.totalDuration") }}
             </div>
             <div class="process-detail-info">
-              {{ formatDuring(jobData.duration) }}
+              {{ formatDurationTime(jobData.duration, 'noThing') }}
             </div>
           </div>
         </a-col>
@@ -45,7 +44,6 @@
           }}</span>
         </div>
         <div class="process-scroll-box wrapper" ref="wrapper">
-          <!-- <a-button @click="checkProcess({ name: 'hh' })">modal</a-button> -->
           <div class="process-scroll content">
             <div class="inline-block execution_process_item">
               <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]">
@@ -59,12 +57,11 @@
             <div v-for="item in jobData.stages" :key="item.name" class="inline-block execution_process_item">
               <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] cursor-pointer rounded-[5px]"
                 @click="checkProcess(item)">
-                <!-- <img src="@/assets/icons/Status0.svg" class="w-[28px] mr-[24px] align-middle" /> -->
                 <img :src="getImageUrl(item.status)" class="w-[28px] mr-[24px] align-middle" />
                 <span class="align-middle">
                   <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">{{ item.name }}</span>
                   <span class="text-[16px] text-[#7B7D7B]">{{
-                      formatDuring(item.duration)
+                      formatDurationTime(item.duration, 'noThing')
                   }}</span>
                 </span>
               </div>
@@ -99,8 +96,7 @@ import { ref, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { apiGetJobStageLogs } from "@/apis/jobs";
 import { apiGetPipelineDetail } from "@/apis/pipeline";
-import { formatDuring } from "@/common/common";
-import dayjs from "dayjs";
+import { fromNowexecutionTime, formatDurationTime } from '@/utils/time/dateUtils.js';
 import BScroll from "@better-scroll/core";
 import ProcessModal from "./components/ProcessModal.vue";
 const router = useRouter();
@@ -133,44 +129,33 @@ const queryJson = reactive({
 const getPipelineDetail = async () => {
   const data = await apiGetPipelineDetail(queryJson);
   Object.assign(jobData, data.data);
-  // 计算开始时间
-  getStarTime(jobData);
 };
 
-const getImageUrl = (status) => {
+const getImageUrl = (status: any) => {
   return new URL(`../../../assets/icons/Status${status}.svg`, import.meta.url)
     .href;
-};
-
-const getStarTime = (data: any) => {
-  // 当前时间
-  let date = dayjs(new Date()).valueOf();
-  // 开始时间
-  let startTime = dayjs(data.startTime).valueOf();
-  let t = date - startTime;
-  data.startTimeText = formatDuring(t);
 };
 
 const checkAllLogs = () => {
   window.open(`#/allLogs/${queryJson.name}/${queryJson.id}`);
 };
 
-const checkProcess = (item) => {
+const checkProcess = (item: any) => {
   title.value = item.name;
   processModalRef.value.showVisible();
   getStageLogsData(item);
 };
 
-const getStageLogsData = async (item) => {
+const getStageLogsData = async (item: any) => {
   const query = Object.assign(queryJson, { stagename: item.name });
   const data = await apiGetJobStageLogs(query);
   content.value = data.data?.content?.split('\n');
   // console.log(data.data, '9999')
 };
 
-onMounted(() => {
-  getPipelineDetail();
 
+onMounted(async () => {
+  await getPipelineDetail();
   let scroll = new BScroll(wrapper.value, {
     startX: 0,
     scrollX: true,

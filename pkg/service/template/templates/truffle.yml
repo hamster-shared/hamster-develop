@@ -13,10 +13,8 @@ stages:
       - git-clone
     steps:
       - name: code-compile
-        runs-on: node:16
         run: |
           npm install -g truffle
-          npm install
           truffle compile
 
   solidity-lint:
@@ -24,9 +22,23 @@ stages:
       - code-compile
     steps:
       - name: solidity-check
-        runs-on: node:16
         run: |
           npm install -g ethlint
           solium --init
-          solium -d contracts/
+          solium --rule 'indentation: ["error", "tab"]' -d contracts/
 
+  contract-test:
+    needs:
+      - code-compile
+    steps:
+      - name: deploy
+        run: |
+          truffle test
+
+  deploy-contract:
+    needs:
+      - contract-test
+    steps:
+      - name: deploy
+        run: |
+          truffle migrate

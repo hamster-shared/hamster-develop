@@ -93,6 +93,7 @@
             </div>
           </template>
           <template v-else-if="column.key === 'duration'">
+            <<<<<<< HEAD
             <span
               class="block"
               v-if="
@@ -104,6 +105,14 @@
             <span v-if="record?.duration && record?.duration != 0">{{
               formatDurationTime(record.duration)
             }}</span>
+            =======
+            <span class="block">
+              {{ fromNowexecutionTime(record.startTime, "operation") }}
+            </span>
+            <span>{{
+              formatDurationTime(record.duration, "elapsedTime")
+            }}</span>
+            >>>>>>> develop
           </template>
           <template v-else-if="column.key === 'action'">
             <div v-if="record.status == 1">
@@ -295,6 +304,7 @@ onMounted(() => {
   border-radius: 6px;
   width: 120px;
   height: 40px;
+
   &:hover,
   &:focus {
     color: #28c57c;
@@ -307,6 +317,7 @@ onMounted(() => {
 }
 .ant-btn-primary {
   background: #28c57c;
+
   &:hover,
   &:focus {
     border-color: #28c57c;
@@ -324,15 +335,18 @@ onMounted(() => {
   color: #ffffff;
   border-top: 12px;
 }
+
 :deep(.ant-table table) {
   text-align: center;
   border: 1px solid #f8f8f8;
   box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.1);
   border-radius: 12px;
 }
+
 :deep(.ant-table-container table > thead > tr:first-child th:first-child) {
   border-top-left-radius: 12px;
 }
+
 :deep(.ant-table-container table > thead > tr:first-child th:last-child) {
   border-top-right-radius: 12px;
 }
@@ -347,39 +361,48 @@ ul,
 dl {
   margin-bottom: 0px;
 }
+
 :deep(.ant-table-pagination-right) {
   justify-content: unset !important;
 }
+
 :deep(.ant-table-pagination) {
   display: block;
   text-align: center;
 }
+
 :deep(.ant-table-pagination.ant-pagination) {
   margin-top: 20px;
   margin-bottom: 0px;
 }
+
 :deep(.ant-pagination-item-active) {
   background: #28c57c;
   border-color: #28c57c;
+
   & a {
     color: white;
   }
 }
+
 :deep(.ant-pagination-item:hover a) {
   color: #28c57c !important;
 }
+
 :deep(.ant-pagination-prev:hover),
 :deep(.ant-pagination-next:hover) {
   .ant-pagination-item-link {
     color: #28c57c;
   }
 }
+
 :deep(.ant-pagination-jump-prev),
 :deep(.ant-pagination-jump-next) {
   .ant-pagination-item-container .ant-pagination-item-link-icon {
     color: #28c57c;
   }
 }
+
 :deep(.ant-pagination-item-active:hover a) {
   color: white !important;
 }

@@ -24,6 +24,7 @@ type Output struct {
 	fileCursor         int
 	bufferCursor       int
 	stageTimeConsuming map[string]TimeConsuming
+	stepTimeConsuming  map[string]TimeConsuming
 	timeConsuming      TimeConsuming
 }
 
@@ -60,6 +61,7 @@ func New(name string, id int) *Output {
 			StartTime: time.Now().Local(),
 		},
 		stageTimeConsuming: make(map[string]TimeConsuming),
+		stepTimeConsuming:  make(map[string]TimeConsuming),
 	}
 
 	err := o.initFile()
@@ -190,6 +192,31 @@ func (o *Output) NewStage(name string) {
 	startTime := time.Now().Local()
 	o.WriteLine("[TimeConsuming] StartTime: " + startTime.Format("2006-01-02 15:04:05"))
 	o.stageTimeConsuming[name] = TimeConsuming{
+		StartTime: startTime,
+	}
+}
+
+// NewStage 会写入以 [Pipeline] Stage: 开头的一行，表示一个新的 Stage 开始
+func (o *Output) NewStep(name string) {
+
+	// 将之前的 Stage 标记为完成
+	for k, v := range o.stepTimeConsuming {
+		if !v.Done {
+			v.EndTime = time.Now().Local()
+			v.Duration = v.EndTime.Sub(v.StartTime)
+			v.Done = true
+			o.stepTimeConsuming[k] = v
+			o.WriteLine(fmt.Sprintf("[TimeConsuming] EndTime: %s, Duration: %s", v.EndTime.Format("2006-01-02 15:04:05"), v.Duration))
+		}
+	}
+
+	o.WriteLine("\n")
+	o.WriteLine("\n")
+	o.WriteLine("\n")
+	o.WriteLine("[Pipeline] Step: " + name)
+	startTime := time.Now().Local()
+	o.WriteLine("[TimeConsuming] StartTime: " + startTime.Format("2006-01-02 15:04:05"))
+	o.stepTimeConsuming[name] = TimeConsuming{
 		StartTime: startTime,
 	}
 }

@@ -3,8 +3,8 @@ POST http://183.66.65.207:38080/api/pipeline
 Content-Type: application/json
 
 {
-  "name": "test2",
-  "yaml": "version: \"1.0\"\nname: my-test2\nstages:\n  git-clone:\n    steps:\n      - name: git-clone\n        uses: git-checkout\n        with:\n          url: https://gitee.com/mohaijiang/spring-boot-example.git\n          branch: master\n  code-compile:\n    needs:\n      - git-clone\n    steps:\n      - name: code-compile\n        runs-on: maven:3.5-jdk-8\n        run: |\n          mvn clean package -Dmaven.test.skip=true"
+  "name": "test6",
+  "yaml": "version: 1.0\nname: my-test2\nstages:\n  git-clone:\n    steps:\n      - name: git-clone\n        uses: git-checkout\n        with:\n          url: https://gitee.com/mohaijiang/spring-boot-example.git\n          branch: master\n  code-compile:\n    needs:\n      - git-clone\n    steps:\n      - name: code-compile\n        runs-on: maven:3.5-jdk-8\n        run: |\n          mvn clean package -Dmaven.test.skip=true\n      - name: save artifactory\n        use: hamster-artifactory\n        with:\n          name: some.zip\n          path: target/*.jar\n  build-image:\n    needs:\n      - code-compile\n    steps:\n      - run: |\n          docker build -t mohaijiang/spring-boot-example:latest .\n"
 }
 
 ### update pipeline job

@@ -163,3 +163,11 @@ type JobDetailPage struct {
 	Page     int         `json:"page"`
 	PageSize int         `json:"pageSize"`
 }
+
+type JobDetailDecrement []JobDetail
+
+func (s JobDetailDecrement) Len() int { return len(s) }
+
+func (s JobDetailDecrement) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+func (s JobDetailDecrement) Less(i, j int) bool { return s[i].Id > s[j].Id }

@@ -7,4 +7,5 @@ export default {
   hours: "h",
   minutes: "m",
   seconds: "s",
+  noThing: "",
 };
