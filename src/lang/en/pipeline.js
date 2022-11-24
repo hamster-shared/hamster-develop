@@ -13,5 +13,6 @@ export default {
     set: "Set",
     delete: "Delete",
     stop: "Stop",
+    fail: "Fail",
   },
 };

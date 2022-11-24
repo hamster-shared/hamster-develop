@@ -1,21 +1,30 @@
 <template>
   <div class="mx-auto bg-white py-[32px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-6">
-      <span class="text-2xl font-semibold text-[#121211]">Hamster-pipeline
+      <span class="text-2xl font-semibold text-[#121211]"
+        >Hamster-pipeline
       </span>
       <div>
-        <a-button class="mr-2">{{ $t("pipeline.stage.set") }}</a-button>
+        <a-button class="mr-2 normal-button" @click="handleToEditPage()">{{
+          $t("pipeline.stage.set")
+        }}</a-button>
         <a-button type="primary" @click="handleImmediateImplementation">
-          {{ $t("pipeline.stage.immediateImplementation") }}</a-button>
+          {{ $t("pipeline.stage.immediateImplementation") }}</a-button
+        >
       </div>
     </div>
 
-    <div class="example" v-if="isLoading">
+    <div class="loading-page" v-if="isLoading">
       <a-spin :spinning="isLoading" />
     </div>
 
     <template v-else-if="pipelineInfo.length > 0">
-      <a-table :columns="columns" :data-source="pipelineInfo" v-bind:pagination="pagination" v-if="pipelineInfo">
+      <a-table
+        :columns="columns"
+        :data-source="pipelineInfo"
+        v-bind:pagination="pagination"
+        v-if="pipelineInfo"
+      >
         <template #headerCell="{ column }">
           <template v-if="column.key === 'status'">
             <span> Status </span>
@@ -24,14 +33,43 @@
 
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <span v-if="record.status == 0" @click="handleToNextPage(record.id)" class="cursor-pointer">no data</span>
-            <span v-if="record.status == 1" @click="handleToNextPage(record.id)" class="cursor-pointer">running</span>
-            <span v-if="record.status == 3" @click="handleToNextPage(record.id)" class="cursor-pointer">passed</span>
-            <span v-if="record.status == 2" @click="handleToNextPage(record.id)" class="cursor-pointer">failed</span>
-            <span v-if="record.status == 4" @click="handleToNextPage(record.id)" class="cursor-pointer">stop</span>
+            <span
+              v-if="record.status == 0"
+              @click="handleToNextPage(record.id)"
+              class="cursor-pointer"
+              >{{ $t("pipeline.noData") }}</span
+            >
+            <span
+              v-if="record.status == 1"
+              @click="handleToNextPage(record.id)"
+              class="cursor-pointer"
+              >{{ $t("pipeline.running") }}</span
+            >
+            <span
+              v-if="record.status == 3"
+              @click="handleToNextPage(record.id)"
+              class="cursor-pointer"
+              >{{ $t("pipeline.successfulImplementation") }}</span
+            >
+            <span
+              v-if="record.status == 2"
+              @click="handleToNextPage(record.id)"
+              class="cursor-pointer"
+              >{{ $t("pipeline.stage.fail") }}</span
+            >
+            <span
+              v-if="record.status == 4"
+              @click="handleToNextPage(record.id)"
+              class="cursor-pointer"
+              >{{ $t("pipeline.userTermination") }}</span
+            >
           </template>
           <template v-else-if="column.key === 'stages'">
-            <div v-for="(item, index) in record.stages" :key="index" class="flex">
+            <div
+              v-for="(item, index) in record.stages"
+              :key="index"
+              class="flex"
+            >
               <div>
                 <div v-if="item?.status == 0" class="inline-block">
                   <img :src="nodataSVG" class="w-[20px] h-[20px]" />
@@ -55,22 +93,42 @@
             </div>
           </template>
           <template v-else-if="column.key === 'duration'">
-            <span class="block">
-              {{ fromNowexecutionTime(record.startTime, 'operation') }}
+            <<<<<<< HEAD
+            <span
+              class="block"
+              v-if="
+                record?.startTime && record?.startTime != '0001-01-01T00:00:00Z'
+              "
+            >
+              {{ fromNowexecutionTime(record.startTime) }}
             </span>
-            <span>{{ formatDurationTime(record.duration, 'elapsedTime') }}</span>
+            <span v-if="record?.duration && record?.duration != 0">{{
+              formatDurationTime(record.duration)
+            }}</span>
+            =======
+            <span class="block">
+              {{ fromNowexecutionTime(record.startTime, "operation") }}
+            </span>
+            <span>{{
+              formatDurationTime(record.duration, "elapsedTime")
+            }}</span>
+            >>>>>>> develop
           </template>
           <template v-else-if="column.key === 'action'">
             <div v-if="record.status == 1">
               <img :src="stopButtonSVG" class="mr-2 align-text-bottom" />
-              <a @click="handleStop(record.id)" class="text-[#FF842C] hover:text-[#FF842C]">{{ $t("pipeline.stage.stop")
-              }}</a>
+              <a
+                @click="handleStop(record.id)"
+                class="text-[#FF842C] hover:text-[#FF842C]"
+                >{{ $t("pipeline.stage.stop") }}</a
+              >
             </div>
             <div v-else>
               <img :src="deleteButtonSVG" class="mr-1 align-text-bottom" />
-              <a @click="handleDelete(record.id)" class="text-[#F52222] hover:text-[#F52222]">{{
-                  $t("pipeline.stage.delete")
-              }}
+              <a
+                @click="handleDelete(record.id)"
+                class="text-[#F52222] hover:text-[#F52222]"
+                >{{ $t("pipeline.stage.delete") }}
               </a>
             </div>
           </template>
@@ -87,8 +145,8 @@ import { useRouter } from "vue-router";
 import {
   apiGetPipelineInfo,
   apiDeletePipelineInfo,
-  apiOperationStopPipeline,
   apiImmediatelyExec,
+  apiStopPipeline,
 } from "@/apis/pipeline";
 import runnngSVG from "@/assets/icons/pipeline-running.svg";
 import successSVG from "@/assets/icons/pipeline-success.svg";
@@ -140,7 +198,7 @@ const columns = reactive([
   },
 ]);
 
-const pipelineInfo = reactive<
+const pipelineInfo = ref<
   {
     key?: string;
     id?: number;
@@ -161,10 +219,18 @@ const pagination = reactive({
   hideOnSinglePage: false, // 只有一页时是否隐藏分页器
   showQuickJumper: false, // 是否可以快速跳转至某页
   showSizeChanger: false, // 是否可以改变 pageSize
-  onChange: (current) => {
+  onChange: async (current) => {
     // 切换分页时的回调，
+    isLoading.value = true;
+    const { data } = await apiGetPipelineInfo(pathName, {
+      page: current,
+      size: 10,
+    });
+    pipelineInfo.value = data.data;
+    pagination.pageSize = data.pageSize;
+    pagination.total = data.total;
     pagination.current = current;
-    getPipelineInfo(current);
+    isLoading.value = false;
   },
   // showTotal: total => `总数：${total}人`, // 可以展示总数
 });
@@ -172,23 +238,35 @@ const pagination = reactive({
 const handleToNextPage = (id) => {
   router.push(`/pipeline/${pathName}/${id}`);
 };
-
-const getPipelineInfo = async () => {
-  console.log(
-    "router.currentRoute.value.params",
-    router.currentRoute.value.params,
-    pathName
-  );
-  const { data } = await apiGetPipelineInfo(pathName, {});
-  console.log("apiGetPipelineInfo", data);
-  Object.assign(pipelineInfo, data.data);
-  pagination.pageSize = data.pageSize;
-  pagination.total = data.total;
+const handleToEditPage = () => {
+  router.push(`/edit/${pathName}`);
 };
 
-const handleImmediateImplementation = async (pathName) => {
+const getPipelineInfo = async () => {
+  isLoading.value = true;
+  try {
+    const { data } = await apiGetPipelineInfo(pathName, { page: 1, size: 10 });
+    console.log("data.data:", data.data);
+    pipelineInfo.value = data.data;
+    pagination.pageSize = data.pageSize;
+    pagination.total = data.total;
+    // const findRuning = pipelineInfo.filter((item) => {
+    //   console.log("item:", item);
+    //   item.status == 1;
+    // });
+
+    // console.log("findRuning:", findRuning);
+  } catch (err) {
+    console.log("err", err);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const handleImmediateImplementation = async () => {
   try {
     await apiImmediatelyExec(pathName);
+    location.reload();
   } catch (err) {
     console.log("err", err);
   }
@@ -197,18 +275,22 @@ const handleImmediateImplementation = async (pathName) => {
 const handleDelete = async (id) => {
   try {
     await apiDeletePipelineInfo(pathName, id);
-    console.log("id", id);
-    const newJobs = pipelineInfo.filter((x) => x.id !== id);
+    const newJobs = pipelineInfo.value.filter((x) => x.id !== id);
     Object.assign(pipelineInfo, newJobs);
-    message.success("This is a success message");
+    message.success("Delete success");
   } catch {
-    message.error("This is an error message");
+    message.error("Delete failed");
   }
 };
 
 const handleStop = async (id) => {
-  await apiOperationStopPipeline(id);
-  console.log("id", id);
+  const params = { name: pathName, id };
+  console.log("params:", params);
+  try {
+    await apiStopPipeline(params);
+  } catch (err) {
+    console.log("err", err);
+  }
 };
 
 onMounted(() => {
@@ -229,7 +311,10 @@ onMounted(() => {
     border-color: #28c57c;
   }
 }
-
+.normal-button {
+  color: #28c57c;
+  border-color: #28c57c;
+}
 .ant-btn-primary {
   background: #28c57c;
 
@@ -240,7 +325,9 @@ onMounted(() => {
     color: white;
   }
 }
-
+.loading-page {
+  text-align: center;
+}
 :deep(.ant-table-thead > tr > th) {
   background: #121211;
   height: 48px;
