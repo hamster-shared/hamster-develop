@@ -3,7 +3,7 @@ web:
 
 macos:
 	go mod tidy
-    CGO_ENABLED=0 GOOS=darwin GOARCH=amd64  go build -o aline
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64  go build -o aline
 
 linux:
 	go mod tidy
