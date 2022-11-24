@@ -18,7 +18,7 @@
       <a-spin :spinning="isLoading" />
     </div>
 
-    <template v-else-if="pipelineInfo.length > 0">
+    <template v-else-if="pipelineInfo && pipelineInfo.length > 0">
       <a-table
         :columns="columns"
         :data-source="pipelineInfo"
@@ -249,6 +249,7 @@ const getPipelineInfo = async () => {
     // console.log("findRuning:", findRuning);
   } catch (err) {
     console.log("err", err);
+    isLoading.value = true;
   } finally {
     isLoading.value = false;
   }

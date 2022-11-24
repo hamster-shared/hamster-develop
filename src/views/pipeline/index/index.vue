@@ -21,7 +21,7 @@
     <div class="loading-page" v-if="isLoading">
       <a-spin :spinning="isLoading" />
     </div>
-    <template v-else-if="pipelineList.length > 0">
+    <template v-else-if="pipelineList && pipelineList.length > 0">
       <a-card
         v-for="(data, index) in pipelineList"
         :key="index"
@@ -193,6 +193,7 @@ const getPipelineInfo = async () => {
     pagination.total = data.total;
   } catch (err) {
     console.log("err", err);
+    isLoading.value = true;
   } finally {
     isLoading.value = false;
   }
