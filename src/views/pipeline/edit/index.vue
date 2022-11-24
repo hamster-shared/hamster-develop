@@ -4,7 +4,7 @@
       <div class="flex justify-between">
         <div>
           <div class="text-[24px] font-semibold">
-            Hamster - pipeline
+            {{ templateName }}
           </div>
           <div class="text-[#979797] text-[14px] mt-2">
             Pipelinefile
@@ -41,7 +41,7 @@
   </a-modal>
 </template>
 <script lang="ts" setup>
-import { reactive, ref, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from 'vue-router';
 import { apiGetPipelineByName, apiEditPipeline } from "@/apis/template";
 import CodeEditor from "../create/config/components/CodeEditor.vue";
