@@ -8,7 +8,9 @@
         class="w-[340px] h-[40px]"
       >
         <template #prefix>
-          <img :src="searchSVG" />
+          <div @click="handleSearch">
+            <img :src="searchSVG" />
+          </div>
         </template>
       </a-input>
       <router-link to="/create">
@@ -16,7 +18,7 @@
       </router-link>
     </div>
 
-    <div class="example" v-if="isLoading">
+    <div class="loading-page" v-if="isLoading">
       <a-spin :spinning="isLoading" />
     </div>
     <template v-else-if="pipelineList.length > 0">
@@ -25,8 +27,8 @@
         :key="index"
         @click="$router.push(`/pipeline/${data.name}`)"
       >
-        <div class="flex justify-between cursor-pointer">
-          <div class="self-center">
+        <div class="grid grid-cols-3 cursor-pointer">
+          <div>
             <div class="mb-3 text-xl font-semibold text-[#121211]">
               {{ data.name }}
             </div>
@@ -71,7 +73,7 @@
             </div>
           </div>
           <div
-            class="self-center text-center cursor-pointer"
+            class="text-center cursor-pointer place-self-center"
             @click="$router.push(`/pipeline/${data.name}`)"
           >
             <span
@@ -86,7 +88,7 @@
               {{ formatDurationTime(data.duration) }}
             </span>
           </div>
-          <div class="self-center">
+          <div class="set-exec-btn">
             <a-button
               type="primary"
               v-if="data.status !== 1"
@@ -94,12 +96,19 @@
             >
               {{ $t("pipeline.immediateImplementation") }}
             </a-button>
-            <a-button type="primary" danger v-if="data.status === 1">
+            <a-button
+              type="primary"
+              danger
+              v-if="data.status === 1"
+              @click.stop="handleStopExec(data.name, data.pipelineDetailId)"
+            >
               {{ $t("pipeline.stop") }}
             </a-button>
-            <router-link :to="`/edit/${data.id}`">
-              <a-button>{{ $t("pipeline.set") }}</a-button>
-            </router-link>
+            <a-button
+              class="normal-button"
+              @click.stop="handleToEditPage(data.name)"
+              >{{ $t("pipeline.set") }}</a-button
+            >
           </div>
         </div>
       </a-card>
@@ -112,7 +121,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
-import { apiGetPipelines, apiImmediatelyExec } from "@/apis/pipeline";
+import { useRouter } from "vue-router";
+import {
+  apiGetPipelines,
+  apiImmediatelyExec,
+  apiStopPipeline,
+} from "@/apis/pipeline";
 import searchSVG from "@/assets/icons/search.svg";
 import runnngSVG from "@/assets/icons/pipeline-running.svg";
 import successSVG from "@/assets/icons/pipeline-success.svg";
@@ -122,11 +136,13 @@ import wasteTimeSVG from "@/assets/icons/pipeline-waste-time.svg";
 import { formatDurationTime } from "@/utils/time/dateUtils.js";
 import { fromNowexecutionTime } from "@/utils/time/dateUtils.js";
 
+const router = useRouter();
+
 const searchValue = ref("");
 
 const isLoading = ref(false);
 
-const pipelineList = reactive<
+const pipelineList = ref<
   {
     name?: string;
     description?: string;
@@ -146,25 +162,66 @@ const pagination = reactive({
   hideOnSinglePage: false, // 只有一页时是否隐藏分页器
   showQuickJumper: false, // 是否可以快速跳转至某页
   showSizeChanger: false,
-  onChange: (current) => {
+  onChange: async (current) => {
     // 切换分页时的回调，
+    isLoading.value = true;
+    const { data } = await apiGetPipelines({ page: current, size: 10 });
+    pipelineList.value = data.data;
+    pagination.pageSize = data.pageSize;
+    pagination.total = data.total;
     pagination.current = current;
-    getPipelineInfo(current);
+    isLoading.value = false;
   },
   // showTotal: total => `总数：${total}人`, // 可以展示总数
 });
 
 const getPipelineInfo = async () => {
-  const { data } = await apiGetPipelines({ page: 1, size: 10 });
-  console.log("apiGetPipelines", data);
-  Object.assign(pipelineList, data.data);
-  pagination.pageSize = data.pageSize;
-  pagination.total = data.total;
+  isLoading.value = true;
+  try {
+    const { data } = await apiGetPipelines({ page: 1, size: 10 });
+    console.log("data:", data.data);
+    pipelineList.value = data.data;
+    pagination.pageSize = data.pageSize;
+    pagination.total = data.total;
+  } catch (err) {
+    console.log("err", err);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const handleSearch = async () => {
+  isLoading.value = true;
+  try {
+    const { data } = await apiGetPipelines({ query: searchValue.value });
+    pipelineList.value = data.data;
+    pagination.pageSize = data.pageSize;
+    pagination.total = data.total;
+  } catch (err) {
+    console.log("err", err);
+  } finally {
+    isLoading.value = false;
+    searchValue.value = "";
+  }
+};
+
+const handleToEditPage = (name) => {
+  router.push(`/edit/${name}`);
 };
 
 const handleImmediateImplementation = async (name) => {
   try {
     await apiImmediatelyExec(name);
+  } catch (err) {
+    console.log("err", err);
+  }
+};
+
+const handleStopExec = async (name, id) => {
+  const params = { name, id };
+  console.log("params:", params);
+  try {
+    await apiStopPipeline(params);
   } catch (err) {
     console.log("err", err);
   }
@@ -185,9 +242,11 @@ onMounted(() => {
 }
 .ant-card-bordered {
   margin-bottom: 20px;
-  box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.1);
   border-radius: 12px;
   border: 1px solid #efefef;
+}
+.ant-card-bordered:hover {
+  box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.1);
 }
 .ant-btn {
   display: block;
@@ -200,6 +259,10 @@ onMounted(() => {
     color: #28c57c;
     border-color: #28c57c;
   }
+}
+.normal-button {
+  color: #28c57c;
+  border-color: #28c57c;
 }
 .ant-btn-primary {
   margin-bottom: 10px;
@@ -223,7 +286,12 @@ onMounted(() => {
     background: #ff842c;
   }
 }
-
+.set-exec-btn {
+  text-align: -webkit-right;
+}
+.loading-page {
+  text-align: center;
+}
 .ant-card-bordered {
   border: 1px solid #dedddc;
 }

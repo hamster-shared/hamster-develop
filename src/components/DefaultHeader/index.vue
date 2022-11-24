@@ -1,11 +1,20 @@
 <template>
   <div class="default-header h-[64px] bg-[#ccc] flex justify-between">
     <div>
-      <img src="@/assets/images/logo.jpg" class="h-[28px] mt-[18px] mb-[18px] cursor-pointer" @click="goHome" />
+      <img
+        src="@/assets/images/logo.jpg"
+        class="h-[28px] mt-[18px] mb-[18px] cursor-pointer"
+        @click="goHome"
+      />
     </div>
     <div>
-      <a-button @click="changeLang" class="align-middle mr-[32px]">中/En</a-button>
-      <img src="@/assets/icons/fill.svg" class="mt-[16px] mb-[16px] mr-[32px]" />
+      <a-button @click="changeLang" class="align-middle mr-[32px] normal-button"
+        >中/En</a-button
+      >
+      <img
+        src="@/assets/icons/fill.svg"
+        class="mt-[16px] mb-[16px] mr-[32px]"
+      />
       <img src="@/assets/icons/git.svg" class="mt-[16px] mb-[16px]" />
     </div>
   </div>
@@ -55,5 +64,9 @@ const changeLang = () => {
     color: #28c57c;
     border-color: #28c57c;
   }
+}
+.normal-button {
+  color: #28c57c;
+  border-color: #28c57c;
 }
 </style>
