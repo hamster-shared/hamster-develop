@@ -64,7 +64,7 @@
                 <span class="align-middle">
                   <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">{{ item.name }}</span>
                   <span class="text-[16px] text-[#7B7D7B]">{{
-                      formatDuring(item.duration)
+                      formatDuring(item.duration, false)
                   }}</span>
                 </span>
               </div>
@@ -125,6 +125,22 @@ const enum StatusEnum {
   "Stop",
 }
 
+const enum Enum_en {
+  ElapsedTime = "Elapsed time",
+  Day = "day",
+  Hours = "hours",
+  Minutes = "minutes",
+  Seconds = "seconds",
+}
+
+const enum Enum_zh {
+  ElapsedTime = "耗时",
+  Day = "天",
+  Hours = "小时",
+  Minutes = "分钟",
+  Seconds = "秒",
+}
+
 const queryJson = reactive({
   name: router.currentRoute.value.params.name,
   id: router.currentRoute.value.params.id,
@@ -168,9 +184,9 @@ const getStageLogsData = async (item) => {
   // console.log(data.data, '9999')
 };
 
+
 onMounted(() => {
   getPipelineDetail();
-
   let scroll = new BScroll(wrapper.value, {
     startX: 0,
     scrollX: true,

@@ -40,7 +40,7 @@
           </div>
         </TabPane>
       </Tabs>
-      <div class="text-center mt-8">
+      <div class="mt-8 text-center">
         <Button type="primary" ghost @click="backStep">{{ $t("template.cancelBtn") }}</Button>
         <Button type="primary" class="ml-4" @click="nextStep">{{ $t("template.nextBtn") }}</Button>
       </div>
