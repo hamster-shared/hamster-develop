@@ -25,8 +25,8 @@
           <div class="main text-white bg-black bg-[#000000] break-all" :style="{
             height: bodyHeight,
           }">
-            <div ref="scrollDom" class="scrollDom  pb-[24px]">
-              <div class="" v-for="it in props.content" :key="it">{{ it }}
+            <div ref="scrollDom" class="scrollDom pb-[24px]">
+              <div class="" v-for="(it, idx) in props.content" :key="idx">{{ it }}
 
                 <!-- {{ props.content }} -->
                 <!-- hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
@@ -54,12 +54,12 @@
   </a-modal>
 </template>
 <script lang="ts">
-import { ref, defineComponent, toRefs, reactive, onMounted, nextTick } from "vue";
+import { ref, defineComponent, toRefs, reactive, onMounted, nextTick, watch } from "vue";
 import { api as fullscreen } from "vue-fullscreen";
 export default defineComponent({
   props: {
     text: { type: String, default: "" },
-    content: { type: String, default: "" },
+    content: { type: Array, default: () => { return [] } },
   },
   setup(props, context) {
     const root = ref();
@@ -72,6 +72,11 @@ export default defineComponent({
       bodyHeight: document.body.clientHeight - 162 + "px",
     });
 
+    const queryJson = reactive({
+      start: 0,
+      lastLine: 0,
+    })
+
     async function toggle() {
       await fullscreen.toggle(root.value.querySelector(".fullscreen-wrapper"), {
         teleport: state.teleport,
@@ -79,7 +84,6 @@ export default defineComponent({
         callback: (isFullscreen) => {
           state.fullscreen = isFullscreen;
           fullscreenWrapper.value.scrollTop = scrollDom.value.scrollHeight
-          // console.log(fullscreenWrapper.value.scrollTop, scrollDom.value.scrollHeight, scrollDom.value.scrollTop, '全屏')
         },
       });
       state.fullscreen = fullscreen.isFullscreen;
@@ -88,12 +92,20 @@ export default defineComponent({
 
     const showVisible = () => {
       state.visible = true;
-
       nextTick(() => {
         fullscreenWrapper.value.scrollTop = scrollDom.value.scrollHeight
-        // console.log(fullscreenWrapper.value.scrollTop, scrollDom.value.scrollHeight, '0099')
       })
     };
+
+    watch(() => props.content,
+      (oldV, newV) => {
+        if (newV && scrollDom.value) {
+          nextTick(() => {
+            // console.log(scrollDom.value, '00000')
+            fullscreenWrapper.value.scrollTop = scrollDom.value.scrollHeight
+          })
+        }
+      }, { deep: true, immediate: false })
 
     return {
       root,
@@ -120,7 +132,7 @@ export default defineComponent({
   position: fixed;
   padding-top: 12px;
   top: 0px;
-  right: 48px;
+  right: 42px;
   z-index: 9;
   background-color: #000;
 }
