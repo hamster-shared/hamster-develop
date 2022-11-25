@@ -33,39 +33,27 @@
 
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
+            <span v-if="record.status == 0">{{ $t("pipeline.noData") }}</span>
+            <span v-if="record.status == 1">{{ $t("pipeline.running") }}</span>
+            <span v-if="record.status == 3">{{
+              $t("pipeline.successfulImplementation")
+            }}</span>
+            <span v-if="record.status == 2">{{
+              $t("pipeline.stage.fail")
+            }}</span>
+            <span v-if="record.status == 4">{{
+              $t("pipeline.userTermination")
+            }}</span>
+          </template>
+          <template v-else-if="column.key === 'id'">
             <span
-              v-if="record.status == 0"
               @click="handleToNextPage(record.id)"
-              class="cursor-pointer"
-              >{{ $t("pipeline.noData") }}</span
-            >
-            <span
-              v-if="record.status == 1"
-              @click="handleToNextPage(record.id)"
-              class="cursor-pointer"
-              >{{ $t("pipeline.running") }}</span
-            >
-            <span
-              v-if="record.status == 3"
-              @click="handleToNextPage(record.id)"
-              class="cursor-pointer"
-              >{{ $t("pipeline.successfulImplementation") }}</span
-            >
-            <span
-              v-if="record.status == 2"
-              @click="handleToNextPage(record.id)"
-              class="cursor-pointer"
-              >{{ $t("pipeline.stage.fail") }}</span
-            >
-            <span
-              v-if="record.status == 4"
-              @click="handleToNextPage(record.id)"
-              class="cursor-pointer"
-              >{{ $t("pipeline.userTermination") }}</span
+              class="cursor-pointer color-next-page"
+              >{{ record.id }}</span
             >
           </template>
           <template v-else-if="column.key === 'stages'">
-            <div
+            <!-- <div
               v-for="(item, index) in record.stages"
               :key="index"
               class="flex"
@@ -75,7 +63,10 @@
                   <img :src="nodataSVG" class="w-[20px] h-[20px]" />
                 </div>
                 <div v-if="item?.status == 1" class="inline-block">
-                  <img :src="runnngSVG" class="w-[20px] h-[20px]" />
+                  <img
+                    src="@/assets/images/run.gif"
+                    class="w-[20px] h-[20px]"
+                  />
                 </div>
                 <div v-if="item?.status == 3" class="inline-block">
                   <img :src="successSVG" class="w-[20px] h-[20px]" />
@@ -90,7 +81,8 @@
               <div v-if="index !== record.stages.length - 1">
                 <img :src="greyArrowSVG" />
               </div>
-            </div>
+            </div> -->
+            <PipelineStageVue :stages="record.stages" />
           </template>
           <template v-else-if="column.key === 'duration'">
             <span
@@ -139,14 +131,14 @@ import {
   apiImmediatelyExec,
   apiStopPipeline,
 } from "@/apis/pipeline";
-import runnngSVG from "@/assets/icons/pipeline-running.svg";
-import successSVG from "@/assets/icons/pipeline-success.svg";
-import failedSVG from "@/assets/icons/pipeline-failed.svg";
-import stopSVG from "@/assets/icons/pipeline-stop.svg";
-import nodataSVG from "@/assets/icons/pipeline-no-data.svg";
+import PipelineStageVue from "./components/PipelineStage.vue";
+// import successSVG from "@/assets/icons/pipeline-success.svg";
+// import failedSVG from "@/assets/icons/pipeline-failed.svg";
+// import stopSVG from "@/assets/icons/pipeline-stop.svg";
+// import nodataSVG from "@/assets/icons/pipeline-no-data.svg";
+// import greyArrowSVG from "@/assets/icons/grey-arrow.svg";
 import stopButtonSVG from "@/assets/icons/pipeline-stop-button.svg";
 import deleteButtonSVG from "@/assets/icons/pipeline-delete-button.svg";
-import greyArrowSVG from "@/assets/icons/grey-arrow.svg";
 import { message } from "ant-design-vue";
 import { formatDurationTime } from "@/utils/time/dateUtils.js";
 import { fromNowexecutionTime } from "@/utils/time/dateUtils.js";
@@ -210,19 +202,7 @@ const pagination = reactive({
   hideOnSinglePage: false, // 只有一页时是否隐藏分页器
   showQuickJumper: false, // 是否可以快速跳转至某页
   showSizeChanger: false, // 是否可以改变 pageSize
-  onChange: async (current) => {
-    // 切换分页时的回调，
-    isLoading.value = true;
-    const { data } = await apiGetPipelineInfo(pathName, {
-      page: current,
-      size: 10,
-    });
-    pipelineInfo.value = data.data;
-    pagination.pageSize = data.pageSize;
-    pagination.total = data.total;
-    pagination.current = current;
-    isLoading.value = false;
-  },
+  onChange: (current) => getPipelineInfo(current),
   // showTotal: total => `总数：${total}人`, // 可以展示总数
 });
 
@@ -233,32 +213,34 @@ const handleToEditPage = () => {
   router.push(`/edit/${pathName}`);
 };
 
-const getPipelineInfo = async () => {
-  isLoading.value = true;
+const getPipelineInfo = async (page = 1, isShowLoading = true) => {
+  if (isShowLoading) {
+    isLoading.value = true;
+  }
+
   try {
-    const { data } = await apiGetPipelineInfo(pathName, { page: 1, size: 10 });
+    const { data } = await apiGetPipelineInfo(pathName, {
+      page,
+      size: 10,
+    });
     console.log("data.data:", data.data);
     pipelineInfo.value = data.data;
     pagination.pageSize = data.pageSize;
     pagination.total = data.total;
-    // const findRuning = pipelineInfo.filter((item) => {
-    //   console.log("item:", item);
-    //   item.status == 1;
-    // });
-
-    // console.log("findRuning:", findRuning);
+    pagination.current = page;
   } catch (err) {
     console.log("err", err);
-    isLoading.value = true;
   } finally {
-    isLoading.value = false;
+    if (isShowLoading) {
+      isLoading.value = false;
+    }
   }
 };
 
 const handleImmediateImplementation = async () => {
   try {
     await apiImmediatelyExec(pathName);
-    location.reload();
+    getPipelineInfo(pagination.current, false);
   } catch (err) {
     console.log("err", err);
   }
@@ -267,8 +249,9 @@ const handleImmediateImplementation = async () => {
 const handleDelete = async (id) => {
   try {
     await apiDeletePipelineInfo(pathName, id);
-    const newJobs = pipelineInfo.value.filter((x) => x.id !== id);
-    Object.assign(pipelineInfo.value, newJobs);
+    // const newJobs = pipelineInfo.value.filter((x) => x.id !== id);
+    // pipelineInfo.value = newJobs;
+    getPipelineInfo(pagination.current, false);
     message.success("Delete success");
   } catch {
     message.error("Delete failed");
@@ -280,6 +263,7 @@ const handleStop = async (id) => {
   console.log("params:", params);
   try {
     await apiStopPipeline(params);
+    getPipelineInfo(pagination.current, false);
   } catch (err) {
     console.log("err", err);
   }
@@ -346,6 +330,9 @@ onMounted(() => {
 :deep(.ant-table-tbody > tr > td) {
   font-size: 12px;
   color: #7b7d7b;
+  .color-next-page {
+    color: #28c57c;
+  }
 }
 
 ol,
@@ -401,7 +388,6 @@ dl {
 
 :deep(.ant-table-tbody > tr > td:nth-child(4)) {
   display: flex;
-  border-bottom: unset;
   justify-content: center;
   align-items: center;
   height: 70.7px;
