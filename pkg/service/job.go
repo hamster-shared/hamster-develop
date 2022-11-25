@@ -85,8 +85,8 @@ func (svc *JobService) SaveJob(name string, job *model.Job) error {
 		return err
 	}
 	//file directory path
-	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name)
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+name+".yml")
+	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
 	//determine whether the folder exists, and create it if it does not exist
 	_, err = os.Stat(dir)
 	if err != nil && os.IsNotExist(err) {
@@ -111,7 +111,7 @@ func (svc *JobService) SaveJob(name string, job *model.Job) error {
 // GetJob get job
 func (svc *JobService) GetJob(name string) string {
 	//job file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+name+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
 	//judge whether the job file exists
 	_, err := os.Stat(src)
 	//not exist
@@ -131,7 +131,7 @@ func (svc *JobService) GetJob(name string) string {
 // UpdateJob update job
 func (svc *JobService) UpdateJob(oldName string, newName string, job *model.Job) error {
 	name := oldName
-	oldDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name)
+	oldDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
 	_, err := os.Stat(oldDir)
 	//not exist
 	if os.IsNotExist(err) {
@@ -139,7 +139,7 @@ func (svc *JobService) UpdateJob(oldName string, newName string, job *model.Job)
 		return err
 	}
 	// job file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+name+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
 	//judge whether the job detail file exists
 	_, err = os.Stat(src)
 	//not exist
@@ -157,8 +157,8 @@ func (svc *JobService) UpdateJob(oldName string, newName string, job *model.Job)
 			log.Println("reName failed", err.Error())
 			return err
 		}
-		oldSrc := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+newName+"/"+name+".yml")
-		newSrc := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+newName+"/"+newName+".yml")
+		oldSrc := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, newName, name+".yml")
+		newSrc := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, newName, newName+".yml")
 		err = os.Rename(oldSrc, newSrc)
 		if err != nil {
 			log.Println("reName failed", err.Error())
@@ -187,7 +187,7 @@ func (svc *JobService) UpdateJob(oldName string, newName string, job *model.Job)
 // DeleteJob delete job
 func (svc *JobService) DeleteJob(name string) error {
 	// job file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
 	//judge whether the job file exists
 	_, err := os.Stat(src)
 	//not exist
@@ -213,7 +213,7 @@ func (svc *JobService) SaveJobDetail(name string, job *model.JobDetail) error {
 		return err
 	}
 	//file directory path
-	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+consts.JOB_DETAIL_DIR_NAME)
+	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
 	//determine whether the folder exists, and create it if it does not exist
 	_, err = os.Stat(dir)
 	if os.IsNotExist(err) {
@@ -223,7 +223,7 @@ func (svc *JobService) SaveJobDetail(name string, job *model.JobDetail) error {
 			return err
 		}
 	}
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+consts.JOB_DETAIL_DIR_NAME+"/"+strconv.Itoa(job.Id)+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME, strconv.Itoa(job.Id)+".yml")
 	//write data to yaml file
 	err = os.WriteFile(src, data, 0777)
 	if err != nil {
@@ -242,14 +242,14 @@ func (svc *JobService) UpdateJobDetail(name string, job *model.JobDetail) error 
 		return err
 	}
 	//file directory path
-	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+consts.JOB_DETAIL_DIR_NAME)
+	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
 	//determine whether the folder exists, and create it if it does not exist
 	_, err = os.Stat(dir)
 	if os.IsNotExist(err) {
 		log.Println("update job detail failed", err.Error())
 		return err
 	}
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+consts.JOB_DETAIL_DIR_NAME+"/"+strconv.Itoa(job.Id)+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME, strconv.Itoa(job.Id)+".yml")
 	//write data to yaml file
 	err = os.WriteFile(src, data, 0777)
 	if err != nil {
@@ -263,7 +263,7 @@ func (svc *JobService) UpdateJobDetail(name string, job *model.JobDetail) error 
 func (svc *JobService) GetJobDetail(name string, id int) *model.JobDetail {
 	var jobDetailData model.JobDetail
 	//job file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+consts.JOB_DETAIL_DIR_NAME+"/"+strconv.Itoa(id)+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME, strconv.Itoa(id)+".yml")
 	//judge whether the job detail file exists
 	_, err := os.Stat(src)
 	//not exist
@@ -314,12 +314,12 @@ func (svc *JobService) JobList(keyword string, page, pageSize int) *model.JobPag
 		if keyword != "" {
 			if strings.Contains(file.Name(), keyword) {
 				//job yml file path
-				ymlPath = filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+file.Name()+"/"+file.Name()+".yml")
+				ymlPath = filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, file.Name(), file.Name()+".yml")
 			} else {
 				continue
 			}
 		} else {
-			ymlPath = filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+file.Name()+"/"+file.Name()+".yml")
+			ymlPath = filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, file.Name(), file.Name()+".yml")
 		}
 		//judge whether the job file exists
 		_, err := os.Stat(ymlPath)
@@ -358,7 +358,7 @@ func (svc *JobService) JobDetailList(name string, page, pageSize int) *model.Job
 	var jobDetailPage model.JobDetailPage
 	var jobDetails []model.JobDetail
 	//get the folder path of job details
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+consts.JOB_DETAIL_DIR_NAME)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
 	_, err := os.Stat(src)
 	if os.IsNotExist(err) {
 		log.Println("job-details folder does not exist", err.Error())
@@ -404,7 +404,7 @@ func (svc *JobService) JobDetailList(name string, page, pageSize int) *model.Job
 // DeleteJobDetail delete job detail
 func (svc *JobService) DeleteJobDetail(name string, pipelineDetailId int) error {
 	// job detail file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+consts.JOB_DETAIL_DIR_NAME+"/"+strconv.Itoa(pipelineDetailId)+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME, strconv.Itoa(pipelineDetailId)+".yml")
 	//judge whether the job detail file exists
 	_, err := os.Stat(src)
 	//not exist
@@ -428,7 +428,7 @@ func (svc *JobService) ExecuteJob(name string) (*model.JobDetail, error) {
 	var jobDetail model.JobDetail
 	var ids []int
 	//job-details file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+consts.JOB_DETAIL_DIR_NAME)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
 	//judge whether the job detail file exists
 	_, err := os.Stat(src)
 	if os.IsNotExist(err) {
@@ -590,7 +590,7 @@ func (svc *JobService) getJobInfo(jobData *model.JobVo) {
 func (svc *JobService) GetJobObject(name string) *model.Job {
 	var jobData model.Job
 	//job file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+name+"/"+name+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
 	//judge whether the job file exists
 	_, err := os.Stat(src)
 	//not exist
