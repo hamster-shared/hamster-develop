@@ -80,13 +80,7 @@ func (a *IpfsAction) Hook() (*model.ActionResult, error) {
 				Url:  url,
 			},
 		},
-		Reports: []model.Report{
-			{
-				Id:   1,
-				Url:  url,
-				Type: 1,
-			},
-		},
+		Reports: nil,
 	}
 	fmt.Println(actionResult)
 	return &actionResult, nil
