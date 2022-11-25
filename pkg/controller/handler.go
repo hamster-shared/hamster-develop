@@ -225,7 +225,12 @@ func (h *HandlerServer) getJobLog(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	jobDetail := h.jobService.GetJobDetail(name, id)
 	data := h.jobService.GetJobLog(name, id)
+
+	gin.Writer.Header().Set("LastLine", strconv.Itoa(data.LastLine))
+	gin.Writer.Header().Set("End", strconv.FormatBool(jobDetail.Status != model.STATUS_RUNNING))
+	//gin.String(200, data.Content)
 	Success(data, gin)
 }
 
@@ -242,6 +247,10 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 	}
 	start, _ := strconv.Atoi(startStr)
 	data := h.jobService.GetJobStageLog(name, id, stageName, start)
+
+	gin.Writer.Header().Set("LastLine", strconv.Itoa(data.LastLine))
+	gin.Writer.Header().Set("End", strconv.FormatBool(data.End))
+	//gin.String(200, data.Content)
 	Success(data, gin)
 }
 
