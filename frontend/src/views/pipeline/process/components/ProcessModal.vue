@@ -4,7 +4,7 @@
     <div class="px-[24px]">
       <div class="flex justify-between">
         <span class="text-[24px] text-[#000000] font-semibold mb-[28px]">{{
-            props.text
+            stagesData.title
         }}</span>
         <span class="text-[#28C57C] cursor-pointer pt-[6px]" @click="toggle">
           <img src="@/assets/icons/full.svg" class="w-[18px] mr-[10px]" />
@@ -22,11 +22,11 @@
             }}</span>
           </div>
 
-          <div class="main text-white bg-black bg-[#000000] break-all" :style="{
+          <div class="main text-white bg-black bg-[#000000] break-all pt-[30px]" :style="{
             height: bodyHeight,
           }">
             <div ref="scrollDom" class="scrollDom pb-[24px]">
-              <div class="" v-for="(it, idx) in props.content" :key="idx">{{ it }}
+              <div class="" v-for="(it, idx) in stagesData.content" :key="idx">{{ it }}
 
                 <!-- {{ props.content }} -->
                 <!-- hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
@@ -58,8 +58,7 @@ import { ref, defineComponent, toRefs, reactive, onMounted, nextTick, watch } fr
 import { api as fullscreen } from "vue-fullscreen";
 export default defineComponent({
   props: {
-    text: { type: String, default: "" },
-    content: { type: Array, default: () => { return [] } },
+    stagesData: { type: Object, default: () => { return {} } }
   },
   setup(props, context) {
     const root = ref();
@@ -71,11 +70,6 @@ export default defineComponent({
       visible: false,
       bodyHeight: document.body.clientHeight - 162 + "px",
     });
-
-    const queryJson = reactive({
-      start: 0,
-      lastLine: 0,
-    })
 
     async function toggle() {
       await fullscreen.toggle(root.value.querySelector(".fullscreen-wrapper"), {
@@ -97,7 +91,7 @@ export default defineComponent({
       })
     };
 
-    watch(() => props.content,
+    watch(() => props.stagesData.content,
       (oldV, newV) => {
         if (newV && scrollDom.value) {
           nextTick(() => {
@@ -111,8 +105,8 @@ export default defineComponent({
       root,
       fullscreenWrapper,
       scrollDom,
-      props,
       ...toRefs(state),
+      ...toRefs(props),
       toggle,
       showVisible,
     };

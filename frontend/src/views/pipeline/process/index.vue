@@ -90,7 +90,7 @@
     </div>
   </div>
 
-  <ProcessModal ref="processModalRef" :text="title" :content="content" />
+  <ProcessModal ref="processModalRef" :stagesData="stagesData" />
 </template>
 <script lang="ts" setup>
 import { ref, onMounted, reactive, onUnmounted } from "vue";
@@ -102,13 +102,17 @@ import BScroll from "@better-scroll/core";
 import ProcessModal from "./components/ProcessModal.vue";
 const router = useRouter();
 const processModalRef = ref();
-const title = ref("");
-const content = ref([]);
 const state = reactive({
   detailTimer: null,
   stagesTimer: null,
   running: true,
 })
+
+const stagesData = reactive({
+  title: '',
+  content: [],
+})
+
 const wrapper = ref();
 const jobData = reactive({
   id: undefined,
@@ -157,9 +161,9 @@ const checkProcess = async (item: any, e: Event) => {
   if (item.status === 0) {
     e.stopPropagation()
   } else {
-    title.value = item.name;
-    await getStageLogsData(item);
+    stagesData.title = item.name;
     processModalRef.value.showVisible();
+    await getStageLogsData(item);
   }
 
 };
@@ -168,13 +172,13 @@ const getStageLogsData = async (item: any, start = 0, lastLine = 0) => {
   const query = Object.assign(queryJson, { stagename: item.name, start: start, lastLine: lastLine });
   const { data } = await apiGetJobStageLogs(query);
   if (data.end) {
-    content.value = data?.content?.split('\r');
+    stagesData.content = data?.content?.split('\r');
   } else {
     let t = data?.content?.split('\r')
-    content.value.push(t)
+    stagesData.content.push(t)
   }
 
-  if (!data.end) {
+  if (!data.end && processModalRef.value.visible) {
     state.stagesTimer = setTimeout(() => {
       getStageLogsData(item, 0, data.lastLine)
     }, 3000)
