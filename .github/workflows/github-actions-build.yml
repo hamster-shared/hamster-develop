@@ -26,7 +26,7 @@ jobs:
       # You may need to manually build you frontend manually here, unless you have configured frontend build and install commands in wails.json.
       - name: build
         if: matrix.platform == 'ubuntu-latest'
-        run:  make linux
+        run:  make web linux
       - name: upload artifacts
         if: matrix.platform == 'ubuntu-latest'
         uses: actions/upload-artifact@v2
@@ -36,7 +36,7 @@ jobs:
 
       - name: build
         if: matrix.platform == 'windows-latest'
-        run:  make windows
+        run:  make web windows
       - name: upload artifacts
         if: matrix.platform == 'windows-latest'
         uses: actions/upload-artifact@v2
@@ -46,7 +46,7 @@ jobs:
 
       - name: build
         if: matrix.platform == 'macos-latest'
-        run:  make macos
+        run:  make web macos
       - name: MacOS download gon for code signing and app notarization
         if: matrix.platform == 'macos-latest'
         run: |
