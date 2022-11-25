@@ -2,10 +2,10 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/hamster-shared/a-line/pkg/controller/parameters"
-	"github.com/hamster-shared/a-line/pkg/dispatcher"
-	"github.com/hamster-shared/a-line/pkg/model"
-	"github.com/hamster-shared/a-line/pkg/service"
+	"github.com/hamster-shared/node-api/pkg/controller/parameters"
+	"github.com/hamster-shared/node-api/pkg/dispatcher"
+	"github.com/hamster-shared/node-api/pkg/model"
+	"github.com/hamster-shared/node-api/pkg/service"
 	"gopkg.in/yaml.v3"
 	"strconv"
 )

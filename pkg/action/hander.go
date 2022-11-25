@@ -1,6 +1,6 @@
 package action
 
-import "github.com/hamster-shared/a-line/pkg/model"
+import "github.com/hamster-shared/node-api/pkg/model"
 
 // ActionHandler 执行动作钩子
 type ActionHandler interface {

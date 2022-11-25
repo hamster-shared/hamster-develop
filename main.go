@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/hamster-shared/a-line/cmd"
-	"github.com/hamster-shared/a-line/pkg/logger"
+	"github.com/hamster-shared/node-api/cmd"
+	"github.com/hamster-shared/node-api/pkg/logger"
 
 	"github.com/sirupsen/logrus"
 )

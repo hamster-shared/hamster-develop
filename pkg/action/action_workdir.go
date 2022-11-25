@@ -2,8 +2,8 @@ package action
 
 import (
 	"context"
-	"github.com/hamster-shared/a-line/pkg/model"
-	"github.com/hamster-shared/a-line/pkg/output"
+	"github.com/hamster-shared/node-api/pkg/model"
+	"github.com/hamster-shared/node-api/pkg/output"
 	"os"
 )
 

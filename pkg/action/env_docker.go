@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hamster-shared/a-line/pkg/model"
+	"github.com/hamster-shared/node-api/pkg/model"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
-	"github.com/hamster-shared/a-line/pkg/logger"
-	"github.com/hamster-shared/a-line/pkg/output"
+	"github.com/hamster-shared/node-api/pkg/logger"
+	"github.com/hamster-shared/node-api/pkg/output"
 )
 
 const STACK = "stack"

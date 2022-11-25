@@ -5,13 +5,13 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/hamster-shared/a-line/pkg/controller"
-	"github.com/hamster-shared/a-line/pkg/dispatcher"
-	"github.com/hamster-shared/a-line/pkg/executor"
-	"github.com/hamster-shared/a-line/pkg/logger"
-	"github.com/hamster-shared/a-line/pkg/model"
-	"github.com/hamster-shared/a-line/pkg/pipeline"
-	"github.com/hamster-shared/a-line/pkg/service"
+	"github.com/hamster-shared/node-api/pkg/controller"
+	"github.com/hamster-shared/node-api/pkg/dispatcher"
+	"github.com/hamster-shared/node-api/pkg/executor"
+	"github.com/hamster-shared/node-api/pkg/logger"
+	"github.com/hamster-shared/node-api/pkg/model"
+	"github.com/hamster-shared/node-api/pkg/pipeline"
+	"github.com/hamster-shared/node-api/pkg/service"
 	"os"
 	"path"
 

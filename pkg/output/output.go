@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hamster-shared/a-line/pkg/consts"
-	"github.com/hamster-shared/a-line/pkg/logger"
-	"github.com/hamster-shared/a-line/pkg/utils"
+	"github.com/hamster-shared/node-api/pkg/consts"
+	"github.com/hamster-shared/node-api/pkg/logger"
+	"github.com/hamster-shared/node-api/pkg/utils"
 )
 
 type Output struct {

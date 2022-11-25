@@ -3,7 +3,7 @@ package service
 import (
 	"embed"
 	"fmt"
-	"github.com/hamster-shared/a-line/pkg/model"
+	"github.com/hamster-shared/node-api/pkg/model"
 	"github.com/jinzhu/copier"
 	"gopkg.in/yaml.v2"
 	"log"

@@ -1,4 +1,4 @@
-module github.com/hamster-shared/a-line
+module github.com/hamster-shared/node-api
 
 go 1.19
 

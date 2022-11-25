@@ -9,6 +9,7 @@ go build -o a-line-cli
 ### maven
 
 pipeline file :
+
 ```yaml
 version: 1.0
 name: my-test2
@@ -35,10 +36,10 @@ stages:
     steps:
       - run: |
           docker build -t mohaijiang/spring-boot-example:latest .
-
 ```
 
-usage: 
+usage:
+
 ```shell
 ./a-line-cli --file examples/maven.yml
 ```
@@ -70,6 +71,7 @@ stages:
 ```
 
 usage:
+
 ```shell
 ./a-line-cli --file examples/hardhat.yml
 ```

@@ -1,7 +1,7 @@
 package pipeline
 
 import (
-	"github.com/hamster-shared/a-line/pkg/model"
+	"github.com/hamster-shared/node-api/pkg/model"
 	"gopkg.in/yaml.v2"
 	"io"
 	"os"

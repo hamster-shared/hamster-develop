@@ -2,7 +2,7 @@ package utils
 
 import (
 	"context"
-	"github.com/hamster-shared/a-line/pkg/consts"
+	"github.com/hamster-shared/node-api/pkg/consts"
 	"log"
 	"math"
 	"math/rand"

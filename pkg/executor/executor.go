@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	action2 "github.com/hamster-shared/a-line/pkg/action"
-	"github.com/hamster-shared/a-line/pkg/logger"
-	"github.com/hamster-shared/a-line/pkg/model"
-	"github.com/hamster-shared/a-line/pkg/output"
-	"github.com/hamster-shared/a-line/pkg/service"
-	"github.com/hamster-shared/a-line/pkg/utils"
+	action2 "github.com/hamster-shared/node-api/pkg/action"
+	"github.com/hamster-shared/node-api/pkg/logger"
+	"github.com/hamster-shared/node-api/pkg/model"
+	"github.com/hamster-shared/node-api/pkg/output"
+	"github.com/hamster-shared/node-api/pkg/service"
+	"github.com/hamster-shared/node-api/pkg/utils"
 )
 
 type IExecutor interface {

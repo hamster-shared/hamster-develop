@@ -1,7 +1,7 @@
 package queue
 
 import (
-	model2 "github.com/hamster-shared/a-line/pkg/model"
+	model2 "github.com/hamster-shared/node-api/pkg/model"
 )
 
 type IQueue interface {

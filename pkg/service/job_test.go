@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hamster-shared/a-line/pkg/model"
+	"github.com/hamster-shared/node-api/pkg/model"
 	"github.com/stretchr/testify/assert"
 	ass "gotest.tools/v3/assert"
 )

@@ -27,8 +27,8 @@ coverage
 
 /dist
 /pkg/controller/dist/
-/a-line
-/a-line.exe
+/node-api
+/node-api.exe
 /aline
 
 /.vscode

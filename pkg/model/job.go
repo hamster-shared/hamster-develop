@@ -2,14 +2,14 @@ package model
 
 import (
 	"fmt"
-	"github.com/hamster-shared/a-line/pkg/utils"
+	"github.com/hamster-shared/node-api/pkg/utils"
 	"io"
 	"os"
 	"path"
 	"strconv"
 	"time"
 
-	"github.com/hamster-shared/a-line/pkg/output"
+	"github.com/hamster-shared/node-api/pkg/output"
 )
 
 type Status int

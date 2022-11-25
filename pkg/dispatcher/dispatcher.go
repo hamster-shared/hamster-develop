@@ -1,8 +1,8 @@
 package dispatcher
 
 import (
-	"github.com/hamster-shared/a-line/pkg/executor"
-	"github.com/hamster-shared/a-line/pkg/model"
+	"github.com/hamster-shared/node-api/pkg/executor"
+	"github.com/hamster-shared/node-api/pkg/model"
 )
 
 type IDispatcher interface {

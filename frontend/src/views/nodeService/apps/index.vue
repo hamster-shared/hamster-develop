@@ -1,0 +1,1 @@
+<template>apps index</template>

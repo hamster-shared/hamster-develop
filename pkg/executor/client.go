@@ -1,10 +1,10 @@
 package executor
 
 import (
-	"github.com/hamster-shared/a-line/pkg/logger"
-	"github.com/hamster-shared/a-line/pkg/model"
-	"github.com/hamster-shared/a-line/pkg/pipeline"
-	"github.com/hamster-shared/a-line/pkg/service"
+	"github.com/hamster-shared/node-api/pkg/logger"
+	"github.com/hamster-shared/node-api/pkg/model"
+	"github.com/hamster-shared/node-api/pkg/pipeline"
+	"github.com/hamster-shared/node-api/pkg/service"
 )
 
 func NewExecutorClient(channel chan model.QueueMessage, jobService service.IJobService) *ExecutorClient {

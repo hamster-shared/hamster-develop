@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hamster-shared/a-line/pkg/logger"
+	"github.com/hamster-shared/node-api/pkg/logger"
 	"github.com/sirupsen/logrus"
 )
 
