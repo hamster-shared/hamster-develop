@@ -284,12 +284,17 @@ func (svc *JobService) GetJobDetail(name string, id int) *model.JobDetail {
 		return &jobDetailData
 	}
 
-	for _, stage := range jobDetailData.Stages {
+	runningStage := -1
+	for index, stage := range jobDetailData.Stages {
 		if stage.Status == model.STATUS_RUNNING {
-			stage.Duration = time.Now().Sub(stage.StartTime).Milliseconds()
+			runningStage = index
+
 		}
 	}
 
+	if runningStage >= 0 && runningStage < len(jobDetailData.Stages) {
+		jobDetailData.Stages[runningStage].Duration = time.Now().Sub(jobDetailData.Stages[runningStage].StartTime).Milliseconds()
+	}
 	return &jobDetailData
 }
 
