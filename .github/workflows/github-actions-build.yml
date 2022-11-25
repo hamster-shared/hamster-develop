@@ -31,7 +31,7 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         uses: actions/upload-artifact@v2
         with:
-          name: aline-linux-amd64.zip
+          name: aline-linux-amd64
           path: aline
 
       - name: build
@@ -41,7 +41,7 @@ jobs:
         if: matrix.platform == 'windows-latest'
         uses: actions/upload-artifact@v2
         with:
-          name: aline-windows-amd64.zip
+          name: aline-windows-amd64
           path: aline.exe
 
       - name: build
@@ -70,5 +70,5 @@ jobs:
         if: matrix.platform == 'macos-latest'
         uses: actions/upload-artifact@v3
         with:
-          name: aline-darwin-amd64.zip
+          name: aline-darwin-amd64
           path: aline.dmg
