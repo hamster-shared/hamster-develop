@@ -100,13 +100,7 @@ func (a *ArtifactoryAction) Hook() (*model.ActionResult, error) {
 				Url:  dest,
 			},
 		},
-		Reports: []model.Report{
-			{
-				Id:   1,
-				Url:  dest,
-				Type: 1,
-			},
-		},
+		Reports: nil,
 	}
 	return &actionResult, nil
 }
