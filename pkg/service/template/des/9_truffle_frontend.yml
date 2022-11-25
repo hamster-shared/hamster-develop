@@ -14,4 +14,4 @@ tag: "DAPP_TEMPLATE(Frontend)"
 imageName: "truffle"
 
 #Affiliate Template
-template: "maven.yml"
+template: "truffle.yml"
