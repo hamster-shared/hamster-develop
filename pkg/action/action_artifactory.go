@@ -48,10 +48,6 @@ func (a *ArtifactoryAction) Pre() error {
 	if a.name == "" {
 		return errors.New("the name parameter of the save artifact is required")
 	}
-	split := strings.Split(a.name, ".")
-	if split[len(split)-1] != "zip" {
-		return errors.New("can only be saved as zip")
-	}
 	stack := a.ctx.Value(STACK).(map[string]interface{})
 	workdir, ok := stack["workdir"].(string)
 	if !ok {

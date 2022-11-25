@@ -14,4 +14,4 @@ tag: "SMART_CONTRACT_TEMPLATE"
 imageName: "hardhat"
 
 #Affiliate Template
-template: "maven.yml"
+template: "hardhat.yml"

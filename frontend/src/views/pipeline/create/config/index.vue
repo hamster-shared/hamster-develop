@@ -17,7 +17,7 @@
         <div class="mb-2">
           Pipeline Name
         </div>
-        <a-input v-model:value="pipelineName"  @change="setYamlName()" placeholder="Pipeline Name" allow-clear />
+        <a-input v-model:value="pipelineName" @change="setYamlName()" placeholder="Pipeline Name" allow-clear />
       </div>
       <a-row class="create" :gutter="24">
         <a-col :span="8">
@@ -126,11 +126,12 @@ import { message } from "ant-design-vue";
           obj["steps"].forEach((item: { [x: string]: any; }) => {
             let eleName = '';
             let eleValues = {};
-            if (item["uses"] && item["uses"] === "git-checkout") {
-              eleName = item["uses"];
-              eleValues = item["with"];
-            } else if(item["use"] && item["use"] === "hamster-artifactory") {
-              eleName = 'artifactory';
+            if (item["uses"]) {
+              if (item["uses"] === "hamster-artifactory") {
+                eleName = 'artifactory';
+              } else {
+                eleName = item["uses"];
+              }
               eleValues = item["with"];
             } else {
               eleName = 'shell';
@@ -190,6 +191,7 @@ import { message } from "ant-design-vue";
   }
 
   const setYamlName = async () => {
+    pipelineName.value = pipelineName.value.replace(/\s+/g, '');
     const config = YAML.parse(codeValue.value);
     config["name"] = pipelineName.value
     codeValue.value = YAML.stringify(config)

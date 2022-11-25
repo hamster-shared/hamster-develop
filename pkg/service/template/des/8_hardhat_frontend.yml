@@ -14,4 +14,4 @@ tag: "DAPP_TEMPLATE(Frontend)"
 imageName: "hardhat"
 
 #Affiliate Template
-template: "maven.yml"
+template: "hardhat.yml"
