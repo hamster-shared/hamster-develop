@@ -19,7 +19,7 @@ stages:
       - name: save artifactory
         uses: hamster-artifactory
         with:
-          name: some.zip
+          name: some-zip
           path: |
             target/*.jar
             target/maven-status
