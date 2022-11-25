@@ -6,6 +6,7 @@
         placeholder="search here..."
         style="width: 370px"
         class="w-[340px] h-[40px]"
+        @keyup.enter="handleSearch"
       >
         <template #prefix>
           <div @click="handleSearch">
@@ -46,7 +47,7 @@
                 v-if="data.status == 1"
                 class="text-sm font-normal text-[#2C5AFF]"
               >
-                <img :src="runnngSVG" />
+                <img src="@/assets/images/run.gif" class="h-[24px] w-[24px]" />
                 {{ $t("pipeline.running") }}
               </div>
               <div
@@ -120,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 import {
   apiGetPipelines,
@@ -128,7 +129,6 @@ import {
   apiStopPipeline,
 } from "@/apis/pipeline";
 import searchSVG from "@/assets/icons/search.svg";
-import runnngSVG from "@/assets/icons/pipeline-running.svg";
 import successSVG from "@/assets/icons/pipeline-success.svg";
 import failedSVG from "@/assets/icons/pipeline-failed.svg";
 import stopSVG from "@/assets/icons/pipeline-stop.svg";
@@ -162,59 +162,42 @@ const pagination = reactive({
   hideOnSinglePage: false, // 只有一页时是否隐藏分页器
   showQuickJumper: false, // 是否可以快速跳转至某页
   showSizeChanger: false,
-  onChange: async (current) => {
-    // 切换分页时的回调，
-    isLoading.value = true;
-    const { data } = await apiGetPipelines({
-      query: searchValue.value,
-      page: current,
-      size: 10,
-    });
-    pipelineList.value = data.data;
-    pagination.pageSize = data.pageSize;
-    pagination.total = data.total;
-    pagination.current = current;
-    isLoading.value = false;
-  },
-  // showTotal: total => `总数：${total}人`, // 可以展示总数
+  onChange: (current) => getPipelineInfo(current),
 });
 
-const getPipelineInfo = async () => {
-  isLoading.value = true;
+const getPipelineInfo = async (page = 1, options = { showLoading: true }) => {
+  if (options.showLoading) {
+    isLoading.value = true;
+  }
+
+  console.log("test log");
   try {
     const { data } = await apiGetPipelines({
       query: searchValue.value,
-      page: 1,
+      page,
       size: 10,
     });
     console.log("data:", data.data);
     pipelineList.value = data.data;
     pagination.pageSize = data.pageSize;
     pagination.total = data.total;
+    pagination.current = page;
   } catch (err) {
     console.log("err", err);
-    isLoading.value = true;
   } finally {
-    isLoading.value = false;
+    if (options.showLoading) {
+      isLoading.value = false;
+    }
   }
 };
 
 const handleSearch = async () => {
-  isLoading.value = true;
-  try {
-    const { data } = await apiGetPipelines({
-      query: searchValue.value,
-      page: 1,
-      size: 10,
-    });
-    pipelineList.value = data.data;
-    pagination.pageSize = data.pageSize;
-    pagination.total = data.total;
-  } catch (err) {
-    console.log("err", err);
-  } finally {
-    isLoading.value = false;
-    searchValue.value = "";
+  if (searchValue.value) {
+    try {
+      await getPipelineInfo();
+    } finally {
+      searchValue.value = "";
+    }
   }
 };
 
@@ -225,6 +208,7 @@ const handleToEditPage = (name) => {
 const handleImmediateImplementation = async (name) => {
   try {
     await apiImmediatelyExec(name);
+    getPipelineInfo(pagination.current, { showLoading: false });
   } catch (err) {
     console.log("err", err);
   }
@@ -235,10 +219,20 @@ const handleStopExec = async (name, id) => {
   console.log("params:", params);
   try {
     await apiStopPipeline(params);
+    getPipelineInfo(pagination.current, { showLoading: false });
   } catch (err) {
     console.log("err", err);
   }
 };
+
+watchEffect((onInvalidate) => {
+  const timer = setInterval(() => {
+    if (!isLoading.value) {
+      getPipelineInfo(pagination.current, { showLoading: false });
+    }
+  }, 5000);
+  onInvalidate(() => clearInterval(timer));
+});
 
 onMounted(() => {
   getPipelineInfo();
