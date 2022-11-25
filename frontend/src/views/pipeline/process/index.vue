@@ -58,7 +58,7 @@
               <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]"
                 :class="item.status === 0 ? '' : 'cursorP'" @click="checkProcess(item, $event)">
                 <img :src="getImageUrl(item.status)" class="w-[28px] mr-[24px] align-middle" v-if="item.status !== 1" />
-                <img src="@/assets/images/run.gif" class="w-[28px]" v-else />
+                <img src="@/assets/images/run.gif" class="w-[28px]  mr-[24px] align-middle" v-else />
                 <span class="align-middle">
                   <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">{{ item.name }}</span>
                   <span class="text-[16px] text-[#7B7D7B]" v-if="item.status !== 0">{{
@@ -93,7 +93,7 @@
   <ProcessModal ref="processModalRef" :text="title" :content="content" />
 </template>
 <script lang="ts" setup>
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted, reactive, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { apiGetJobStageLogs } from "@/apis/jobs";
 import { apiGetPipelineDetail } from "@/apis/pipeline";
@@ -104,13 +104,12 @@ const router = useRouter();
 const processModalRef = ref();
 const title = ref("");
 const content = ref([]);
-// const state = reactive({
-//   timer: null,
-//   running: true,
-// })
-// const timer = ref(null)
+const state = reactive({
+  detailTimer: null,
+  stagesTimer: null,
+  running: true,
+})
 const wrapper = ref();
-const count = ref(0)
 const jobData = reactive({
   id: undefined,
   stages: [],
@@ -134,10 +133,17 @@ const queryJson = reactive({
 });
 
 const getPipelineDetail = async () => {
-  const data = await apiGetPipelineDetail(queryJson);
-  Object.assign(jobData, data.data);
-};
-
+  const { data } = await apiGetPipelineDetail(queryJson);
+  Object.assign(jobData, data);
+  state.running = data.stages.some((val: any) => val.status === 1)
+  if (state.running) {
+    state.detailTimer = setTimeout(() => {
+      getPipelineDetail()
+    }, 3000)
+  } else {
+    clearTimeout(state.detailTimer)
+  }
+}
 const getImageUrl = (status: any) => {
   return new URL(`../../../assets/icons/Status${status}.svg`, import.meta.url)
     .href;
@@ -160,18 +166,37 @@ const checkProcess = async (item: any, e: Event) => {
 
 const getStageLogsData = async (item: any, start = 0, lastLine = 0) => {
   const query = Object.assign(queryJson, { stagename: item.name, start: start, lastLine: lastLine });
-  const data = await apiGetJobStageLogs(query);
-  content.value = data.data?.content?.split('\r');
+  const { data } = await apiGetJobStageLogs(query);
+  if (data.end) {
+    content.value = data?.content?.split('\r');
+  } else {
+    let t = data?.content?.split('\r')
+    content.value.push(t)
+  }
+
+  if (!data.end) {
+    state.stagesTimer = setTimeout(() => {
+      getStageLogsData(item, 0, data.lastLine)
+    }, 3000)
+  } else {
+    clearTimeout(state.stagesTimer)
+  }
 };
 
 
 onMounted(async () => {
-  await getPipelineDetail();
+  await getPipelineDetail()
   let scroll = new BScroll(wrapper.value, {
     startX: 0,
     scrollX: true,
   });
 });
+
+onUnmounted(() => {
+  clearTimeout(state.detailTimer)
+  clearTimeout(state.stagesTimer)
+})
+
 </script>
 <style lang="less" scoped>
 .process {
