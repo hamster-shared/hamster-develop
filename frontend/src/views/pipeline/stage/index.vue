@@ -392,7 +392,7 @@ dl {
 
 :deep(.ant-pagination-jump-prev),
 :deep(.ant-pagination-jump-next) {
-  .ant-pagination-item-container .ant-pagination-item-link-icon {
+  .ant-pagination-item-container .ant-pagination-item-link-icon { 
     color: #28c57c;
   }
 }

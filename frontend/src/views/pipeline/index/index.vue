@@ -111,8 +111,8 @@
             <a-button
               class="normal-button"
               @click.stop="handleToEditPage(data.name)"
-              >{{ $t("pipeline.set") }}</a-button
-            >
+              >{{ $t("pipeline.set") }}
+            </a-button>
           </div>
         </div>
       </a-card>
@@ -257,10 +257,12 @@ onMounted(() => {
   border-radius: 12px;
   border: 1px solid #efefef;
 }
+
 .ant-card-bordered:hover {
   border: 1px solid #28c57c;
   box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.2);
 }
+
 .ant-btn {
   display: block;
   width: 120px;
@@ -268,6 +270,7 @@ onMounted(() => {
   border-radius: 6px;
   font-size: 12px;
 }
+
 .ant-btn-primary {
   margin-bottom: 10px;
   border-radius: 6px;
@@ -286,12 +289,15 @@ onMounted(() => {
     background: #ff842c;
   }
 }
+
 .set-exec-btn {
   text-align: -webkit-right;
 }
+
 .loading-page {
   text-align: center;
 }
+
 .ant-card-bordered {
   border: 1px solid #dedddc;
 }

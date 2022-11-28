@@ -5,7 +5,8 @@ id: 12
 name: "Smart Contract Deployment"
 
 #Template Description
-description: "Deployment operation for a smart contract."
+descriptionEnglish: "Deployment operation for a smart contract."
+descriptionChinese: "对一个智能合约进行部署操作。"
 
 #Template classification
 tag: "GENERAL_TEMPLATE"

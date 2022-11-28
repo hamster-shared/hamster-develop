@@ -32,13 +32,17 @@
               {{ $t("log.totalDuration") }}
             </div>
             <div class="process-detail-info">
-              {{ formatDurationTime(jobData.duration, "noThing") }}
+              {{
+                state.running
+                  ? "-"
+                  : formatDurationTime(jobData.duration, "noThing")
+              }}
             </div>
           </div>
         </a-col>
       </a-row>
     </div>
-    <div class="p-[24px] border border-solid border-[#EFEFEF] rounded-b-[12px]">
+    <div class="p-[24px] rounded-b-[12px]">
       <div class="process-content">
         <div class="flex justify-between">
           <span class="process-content-title">{{
@@ -110,24 +114,43 @@
               />
             </div>
           </div>
+          <div class="custom-horizontal-scrollbar" ref="horizontal">
+            <div class="custom-horizontal-indicator"></div>
+          </div>
         </div>
       </div>
-      <div class="process-content">
+      <div
+        class="process-content"
+        v-if="jobData.actionResult.artifactorys.length > 0"
+      >
         <div class="process-content-title">{{ $t("log.artifats") }}</div>
         <div class="text-[#7B7D7B]">
-          <div v-for="it in jobData.actionResult.artifactorys" :key="it.id">
+          <div
+            v-for="it in jobData.actionResult.artifactorys"
+            :key="it.id"
+            class="text-[#1890ff] cursor-pointer"
+            @click="openNewUrl(it.url)"
+          >
             {{ it.url }}
           </div>
-          <a-empty v-if="jobData.actionResult.artifactorys.length <= 0" />
+          <!-- <a-empty v-if="jobData.actionResult.artifactorys.length <= 0" /> -->
         </div>
       </div>
-      <div class="process-content">
+      <div
+        class="process-content"
+        v-if="jobData.actionResult.reports.length > 0"
+      >
         <div class="process-content-title">{{ $t("log.report") }}</div>
         <div class="text-[#7B7D7B]">
-          <div v-for="it in jobData.actionResult.reports" :key="it.id">
+          <div
+            v-for="it in jobData.actionResult.reports"
+            :key="it.id"
+            class="text-[#1890ff] cursor-pointer"
+            @click="openNewUrl(it.url)"
+          >
             {{ it.url }}
           </div>
-          <a-empty v-if="jobData.actionResult.reports.length <= 0" />
+          <!-- <a-empty v-if="jobData.actionResult.reports.length <= 0" /> -->
         </div>
       </div>
     </div>
@@ -145,9 +168,14 @@ import {
   formatDurationTime,
 } from "@/utils/time/dateUtils.js";
 import BScroll from "@better-scroll/core";
+import Scrollbar from "@better-scroll/scroll-bar";
 import ProcessModal from "./components/ProcessModal.vue";
+import { message } from "ant-design-vue";
+
+BScroll.use(Scrollbar);
 const router = useRouter();
 const processModalRef = ref();
+const horizontal = ref();
 const state = reactive({
   detailTimer: null,
   stagesTimer: null,
@@ -236,11 +264,25 @@ const getStageLogsData = async (item: any, start = 0, lastLine = 0) => {
   }
 };
 
+const openNewUrl = (url: string) => {
+  message.info("暂不支持跳转");
+  // window.open(url)
+};
+
 onMounted(async () => {
   await getPipelineDetail();
   let scroll = new BScroll(wrapper.value, {
     startX: 0,
     scrollX: true,
+    scrollY: false,
+    probeType: 1,
+    scrollbar: {
+      // customElements: [horizontal.value],
+      fade: false,
+      interactive: true,
+      // scrollbarTrackClickable: true,
+      // scrollbarTrackOffsetType: 'clickedPoint' // can use 'step'
+    },
   });
 });
 
@@ -283,6 +325,7 @@ onUnmounted(() => {
 
     .process-scroll {
       display: inline-block;
+      margin-bottom: 24px;
 
       .cursorP {
         cursor: pointer;
@@ -317,5 +360,13 @@ onUnmounted(() => {
       display: none;
     }
   }
+}
+
+:deep(.bscroll-horizontal-scrollbar) {
+  z-index: 1 !important;
+}
+
+:deep(.bscroll-indicator) {
+  background: #efefef !important;
 }
 </style>

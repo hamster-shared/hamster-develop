@@ -16,8 +16,9 @@ export default defineConfig({
     },
   },
   server: {
+    open:true,
     proxy: {
-      "/api": {
+      "/api": { 
         target:
           //"https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/", //接口域名 //接口域名
           // "http://172.16.10.13:8080",

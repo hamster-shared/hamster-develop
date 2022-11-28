@@ -1,7 +1,9 @@
 package service
 
 import (
+	"gopkg.in/yaml.v2"
 	"log"
+	"os/exec"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -36,7 +38,9 @@ func Test_SaveJob(t *testing.T) {
 		},
 	}
 	jobService := NewJobService()
-	jobService.SaveJob("qiao", &job)
+	data, _ := yaml.Marshal(job)
+	err := jobService.SaveJob("qiao", string(data))
+	ass.NilError(t, err)
 }
 
 func Test_SaveJobDetail(t *testing.T) {
@@ -116,7 +120,8 @@ func Test_UpdateJob(t *testing.T) {
 			},
 		},
 	}
-	err := jobService.UpdateJob("guo", "jian", &job)
+	data, _ := yaml.Marshal(job)
+	err := jobService.UpdateJob("guo", "jian", string(data))
 	ass.NilError(t, err)
 }
 
@@ -172,4 +177,12 @@ func TestGetStageLog(t *testing.T) {
 		t.Error("log is nil")
 	}
 	spew.Dump(log)
+}
+
+func TestOpenFile(t *testing.T) {
+	cmd := exec.Command("open", "/Users/sunjianguo/Desktop/miner")
+	err := cmd.Run()
+	if err != nil {
+		log.Fatalf("cmd.Run() failed with %s\n", err)
+	}
 }

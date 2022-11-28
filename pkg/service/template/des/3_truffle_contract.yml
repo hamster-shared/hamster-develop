@@ -5,7 +5,8 @@ id: 3
 name: "Truffle + Smart Contracts"
 
 #Template Description
-description: "This template is used for smart contracts written based on Truffle framework, enabling fully automated code checkout -> check contract quality -> compile contract -> test contract -> deploy contract."
+descriptionEnglish: "This template is used for smart contracts written based on Truffle framework, enabling fully automated code checkout -> check contract quality -> compile contract -> test contract -> deploy contract."
+descriptionChinese: "该模版用于基于Truffle框架编写的智能合约，实现全自动检出代码 -> 检查合约质量 -> 编译合约 -> 测试合约->部署合约。"
 
 #Template classification
 tag: "SMART_CONTRACT_TEMPLATE"

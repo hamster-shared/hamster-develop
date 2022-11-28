@@ -1,6 +1,6 @@
 <template>
   <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px]">
-    <div class="bg-[#121211] p-4 rounded-tl-[12px] rounded-tr-[12px]">
+    <div class="bg-[#121211] p-[24px] rounded-tl-[12px] rounded-tr-[12px]">
       <div class="flex justify-between">
         <div class="text-[24px] font-semibold text-[#FFFFFF]">
           {{ $t("template.title") }}
@@ -11,9 +11,7 @@
         {{ $t("template.titleDesc") }}
       </div>
     </div>
-    <div
-      class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border"
-    >
+    <div class="p-[24px] rounded-bl-[12px] rounded-br-[12px] box-border">
       <Tabs :defaultActiveKey="activeKey">
         <TabPane key="0" :tab="$t('template.allText')">
           <div class="card-div">
@@ -159,6 +157,7 @@ const checkDivHeight = (className: string) => {
 
 <style scoped lang="less">
 @baseColor: #28c57c;
+
 .help-text {
   color: @baseColor;
   font-size: 14px;
@@ -169,6 +168,7 @@ const checkDivHeight = (className: string) => {
 :deep(.ant-tabs-tab-btn:hover) {
   color: @baseColor;
 }
+
 :deep(.ant-tabs-ink-bar) {
   background: @baseColor;
 }

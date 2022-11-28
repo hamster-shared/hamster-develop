@@ -50,6 +50,7 @@ func (h *HttpServer) StartHttpServer() {
 	// get template list
 	api.GET("/pipeline/templates", h.handlerServer.getTemplates)
 	api.GET("/pipeline/template/:id", h.handlerServer.getTemplateDetail)
+	api.GET("/pipeline/:name/detail/:id/artifactory", h.handlerServer.openArtifactoryDir)
 	api.GET("/ping", func(c *gin.Context) {
 		//输出json结果给调用方
 		Success("", c)
