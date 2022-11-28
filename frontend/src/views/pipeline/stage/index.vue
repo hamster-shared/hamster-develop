@@ -18,12 +18,12 @@
       <a-spin :spinning="isLoading" />
     </div>
 
-    <template v-else-if="pipelineInfo && pipelineInfo.length > 0">
+    <template v-else-if="jobs && jobs.length > 0">
       <a-table
         :columns="columns"
-        :data-source="pipelineInfo"
+        :data-source="jobs"
         v-bind:pagination="pagination"
-        v-if="pipelineInfo"
+        v-if="jobs"
       >
         <template #headerCell="{ column }">
           <template v-if="column.key === 'status'">
@@ -53,35 +53,6 @@
             >
           </template>
           <template v-else-if="column.key === 'stages'">
-            <!-- <div
-              v-for="(item, index) in record.stages"
-              :key="index"
-              class="flex"
-            >
-              <div>
-                <div v-if="item?.status == 0" class="inline-block">
-                  <img :src="nodataSVG" class="w-[20px] h-[20px]" />
-                </div>
-                <div v-if="item?.status == 1" class="inline-block">
-                  <img
-                    src="@/assets/images/run.gif"
-                    class="w-[20px] h-[20px]"
-                  />
-                </div>
-                <div v-if="item?.status == 3" class="inline-block">
-                  <img :src="successSVG" class="w-[20px] h-[20px]" />
-                </div>
-                <div v-if="item?.status == 2" class="inline-block">
-                  <img :src="failedSVG" class="w-[20px] h-[20px]" />
-                </div>
-                <div v-if="item?.status == 4" class="inline-block">
-                  <img :src="stopSVG" class="w-[20px] h-[20px]" />
-                </div>
-              </div>
-              <div v-if="index !== record.stages.length - 1">
-                <img :src="greyArrowSVG" />
-              </div>
-            </div> -->
             <PipelineStageVue :stages="record.stages" />
           </template>
           <template v-else-if="column.key === 'duration'">
@@ -123,20 +94,16 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, ref } from "vue";
+import { reactive, onMounted, ref, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 import {
   apiGetPipelineInfo,
   apiDeletePipelineInfo,
   apiImmediatelyExec,
   apiStopPipeline,
+  apiGetPipelineDetail,
 } from "@/apis/pipeline";
 import PipelineStageVue from "./components/PipelineStage.vue";
-// import successSVG from "@/assets/icons/pipeline-success.svg";
-// import failedSVG from "@/assets/icons/pipeline-failed.svg";
-// import stopSVG from "@/assets/icons/pipeline-stop.svg";
-// import nodataSVG from "@/assets/icons/pipeline-no-data.svg";
-// import greyArrowSVG from "@/assets/icons/grey-arrow.svg";
 import stopButtonSVG from "@/assets/icons/pipeline-stop-button.svg";
 import deleteButtonSVG from "@/assets/icons/pipeline-delete-button.svg";
 import { message } from "ant-design-vue";
@@ -181,7 +148,7 @@ const columns = reactive([
   },
 ]);
 
-const pipelineInfo = ref<
+const jobs = ref<
   {
     key?: string;
     id?: number;
@@ -224,7 +191,7 @@ const getPipelineInfo = async (page = 1, isShowLoading = true) => {
       size: 10,
     });
     console.log("data.data:", data.data);
-    pipelineInfo.value = data.data;
+    jobs.value = data.data;
     pagination.pageSize = data.pageSize;
     pagination.total = data.total;
     pagination.current = page;
@@ -249,10 +216,19 @@ const handleImmediateImplementation = async () => {
 const handleDelete = async (id) => {
   try {
     await apiDeletePipelineInfo(pathName, id);
-    // const newJobs = pipelineInfo.value.filter((x) => x.id !== id);
-    // pipelineInfo.value = newJobs;
-    getPipelineInfo(pagination.current, false);
+    await getPipelineInfo(pagination.current, false);
     message.success("Delete success");
+
+    const page = Math.ceil(pagination.total / 10);
+    if (page > 1 && pagination.current == page) {
+      if (!jobs.value.length) {
+        const previousPage = pagination.current - 1;
+        if (previousPage >= 1) {
+          pagination.current = pagination.current - 1;
+          getPipelineInfo(previousPage);
+        }
+      }
+    }
   } catch {
     message.error("Delete failed");
   }
@@ -268,6 +244,45 @@ const handleStop = async (id) => {
     console.log("err", err);
   }
 };
+
+const jobIdsFetching = ref<number[]>([]);
+
+watchEffect((onInvalidate) => {
+  const timer = setInterval(() => {
+    if (isLoading.value) {
+      return;
+    }
+
+    let jobIds = [];
+    jobs.value.forEach((x) => {
+      const newStages = x.stages?.filter((item) => item.status == 1);
+      if (newStages?.length > 0) {
+        jobIds.push(x.id);
+      }
+    });
+
+    jobIds.forEach(async (jobId) => {
+      console.log("jobIds", jobId);
+      if (!jobIdsFetching.value.includes(jobId)) {
+        jobIdsFetching.value = [...jobIdsFetching.value, jobId];
+        try {
+          const { data } = await apiGetPipelineDetail({
+            name: pathName,
+            id: jobId,
+          });
+          console.log("apiGetPipelineDetail", data);
+
+          jobs.value = jobs.value.map((x) => (x.id === jobId ? data : x));
+        } finally {
+          jobIdsFetching.value = jobIdsFetching.value.filter(
+            (x) => x !== jobId
+          );
+        }
+      }
+    });
+  }, 3000);
+  onInvalidate(() => clearInterval(timer));
+});
 
 onMounted(() => {
   getPipelineInfo();

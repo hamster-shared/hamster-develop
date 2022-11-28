@@ -1,6 +1,8 @@
 <template>
-  <div ref="editContainer"
-    class="code-editor rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border" />
+  <div
+    ref="editContainer"
+    class="code-editor rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border"
+  />
 </template>
 <script>
 import { getCurrentInstance, onMounted, watch } from "vue";
@@ -65,7 +67,7 @@ export default {
         fixedOverflowWidgets: false,
         scrollbar: {
           alwaysConsumeMouseWheel: false,
-        }
+        },
       });
       // Monitoring value change
       monacoEditor.onDidChangeModelContent(() => {

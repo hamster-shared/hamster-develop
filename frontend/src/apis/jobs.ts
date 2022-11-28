@@ -8,11 +8,10 @@ interface GegJobLogsParams {
 interface GegJobStagelogsParams {
   id: number | string;
   name: string;
-  stagename: string,
-  start: number,
-  lastLine: number,
+  stagename: string;
+  start: number;
+  lastLine: number;
 }
-
 
 // 查看所有日志  /pipeline/:name/logs/:id
 export function apiGetAllJobLogs(params: GegJobLogsParams) {

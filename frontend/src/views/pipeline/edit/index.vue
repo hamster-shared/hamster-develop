@@ -6,39 +6,62 @@
           <div class="text-[24px] font-semibold">
             {{ templateName }}
           </div>
-          <div class="text-[#979797] text-[14px] mt-2">
-            Pipelinefile
-          </div>
+          <div class="text-[#979797] text-[14px] mt-2">Pipelinefile</div>
         </div>
         <div>
-          <a-button type="primary" @click="backStep" ghost>{{ $t("template.discardChange") }}</a-button>
-          <a-button type="primary" class="ml-4" @click="showModal">{{ $t("template.saveBtn") }}</a-button>
+          <a-button type="primary" @click="backStep" ghost>{{
+            $t("template.discardChange")
+          }}</a-button>
+          <a-button type="primary" class="ml-4" @click="showModal">{{
+            $t("template.saveBtn")
+          }}</a-button>
         </div>
       </div>
     </div>
     <!-- :style="{ height: mainHeight }" -->
-    <div class="mx-[24px] rounded-[12px] mb-[24px]" :style="{ height: mainHeight }">
-      <CodeEditor @getYamlValue="getYamlValue" :readOnly="false" :value="codeValue"></CodeEditor>
+    <div
+      class="mx-[24px] rounded-[12px] mb-[24px]"
+      :style="{ height: mainHeight }"
+    >
+      <CodeEditor
+        @getYamlValue="getYamlValue"
+        :readOnly="false"
+        :value="codeValue"
+      ></CodeEditor>
     </div>
   </div>
 
-  <a-modal :getContainer="false" v-model:visible="visible" :title="$t('template.modalTitle')" :footer="null">
+  <a-modal
+    :getContainer="false"
+    v-model:visible="visible"
+    :title="$t('template.modalTitle')"
+    :footer="null"
+  >
     <div class="mb-8">
-      <div class="flex justify-between mb-2">
-        Pipeline Name
-      </div>
-      <a-input v-model:value="pipelineName" placeholder="Pipeline Name" allow-clear />
+      <div class="flex justify-between mb-2">Pipeline Name</div>
+      <a-input
+        v-model:value="pipelineName"
+        placeholder="Pipeline Name"
+        allow-clear
+      />
     </div>
     <div class="text-center">
-      <a-button type="primary" @click="visible = false" ghost>{{ $t("template.cancelBtn") }}</a-button>
-      <a-button type="primary" :loading="confirmLoading" class="ml-4" @click="handleOk">{{ $t("template.saveBtn") }}
+      <a-button type="primary" @click="visible = false" ghost>{{
+        $t("template.cancelBtn")
+      }}</a-button>
+      <a-button
+        type="primary"
+        :loading="confirmLoading"
+        class="ml-4"
+        @click="handleOk"
+        >{{ $t("template.saveBtn") }}
       </a-button>
     </div>
   </a-modal>
 </template>
 <script lang="ts" setup>
 import { ref, onMounted } from "vue";
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter } from "vue-router";
 import { apiGetPipelineByName, apiEditPipeline } from "@/apis/template";
 import CodeEditor from "../create/config/components/CodeEditor.vue";
 import { message } from "ant-design-vue";
@@ -49,11 +72,11 @@ const router = useRouter();
 const { params } = useRoute();
 const templateName = ref(params.id);
 
-const mainHeight = ref('0px')
+const mainHeight = ref("0px");
 
 const confirmLoading = ref<boolean>(false);
 const visible = ref<boolean>(false);
-const pipelineName = ref('');
+const pipelineName = ref("");
 
 const showModal = async () => {
   visible.value = true;
@@ -61,16 +84,20 @@ const showModal = async () => {
 
 const getYamlValue = async (value: String) => {
   codeValue.value = value;
-}
+};
 
 const handleOk = async () => {
   confirmLoading.value = true;
   try {
-    const result = await apiEditPipeline(templateName.value.toString(), pipelineName.value, codeValue.value);
+    const result = await apiEditPipeline(
+      templateName.value.toString(),
+      pipelineName.value,
+      codeValue.value
+    );
     if (result.code === 200) {
       visible.value = false;
       message.success(result.message);
-      router.push({ path: '/pipeline' });
+      router.push({ path: "/pipeline" });
     }
     confirmLoading.value = false;
   } catch (error: any) {
@@ -82,22 +109,20 @@ const handleOk = async () => {
 
 onMounted(async () => {
   getTemplatesById(templateName.value.toString());
-  mainHeight.value = document.body.clientHeight - 242 + 'px'
+  mainHeight.value = document.body.clientHeight - 242 + "px";
 });
 
 const getTemplatesById = async (templateName: String) => {
-
   try {
     const { data } = await apiGetPipelineByName(templateName);
     codeValue.value = data;
-
   } catch (error: any) {
-    console.log("erro:", error)
+    console.log("erro:", error);
   }
 };
 const backStep = async () => {
-  router.push({ path: '/pipeline' });
-}
+  router.push({ path: "/pipeline" });
+};
 </script>
 <style scoped lang="less">
 @baseColor: #28c57c;
@@ -127,11 +152,11 @@ const backStep = async () => {
 
 :deep(.ant-input),
 :deep(.ant-input-affix-wrapper) {
-  border-color: #EFEFEF;
+  border-color: #efefef;
   border-radius: 6px;
 }
 
-@placeholderColor: #BCBEBC;
+@placeholderColor: #bcbebc;
 
 :deep(input::-webkit-input-placeholder) {
   /* WebKit browsers */

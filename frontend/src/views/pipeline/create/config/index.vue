@@ -66,7 +66,9 @@
         </a-col>
       </a-row>
       <div class="mt-8 text-center">
-        <a-button type="primary" @click="lastStep" ghost>{{ $t("template.lastBtn") }}</a-button>
+        <a-button @click="lastStep" class="normal-button">{{
+          $t("template.lastBtn")
+        }}</a-button>
         <a-button type="primary" @click="submitData" class="ml-4">{{
             $t("template.submitBtn")
         }}</a-button>
@@ -77,7 +79,7 @@
 <script lang="ts" setup>
 import { reactive, ref, onMounted } from "vue";
 import YAML from "yaml";
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter } from "vue-router";
 import { apiGetTemplatesById, apiAddPipeline } from "@/apis/template";
 import CodeEditor from "./components/CodeEditor.vue";
 import GitCheckout from "./components/GitCheckout.vue";
@@ -111,7 +113,10 @@ onMounted(async () => {
 });
 
 const getTemplatesById = async (templateId: String) => {
+<<<<<<< HEAD
+=======
 
+>>>>>>> develop
   try {
     const { data } = await apiGetTemplatesById(templateId);
     Object.assign(templateInfo, data); //赋值
@@ -119,23 +124,23 @@ const getTemplatesById = async (templateId: String) => {
 
     const config = YAML.parse(codeValue.value.toString());
     pipelineName.value = config.name;
-    yamlList.value = []
+    yamlList.value = [];
     for (let key in config["stages"]) {
       let obj = config["stages"][key];
-      let steps: { eleName: string; eleValues: {}; }[] = [];
+      let steps: { eleName: string; eleValues: {} }[] = [];
       if (obj["steps"]) {
-        obj["steps"].forEach((item: { [x: string]: any; }) => {
-          let eleName = '';
+        obj["steps"].forEach((item: { [x: string]: any }) => {
+          let eleName = "";
           let eleValues = {};
           if (item["uses"]) {
             if (item["uses"] === "hamster-artifactory") {
-              eleName = 'artifactory';
+              eleName = "artifactory";
             } else {
               eleName = item["uses"];
             }
             eleValues = item["with"];
           } else {
-            eleName = 'shell';
+            eleName = "shell";
             eleValues = {
               run: item["run"],
               runsOn: item["runs-on"],
@@ -150,16 +155,16 @@ const getTemplatesById = async (templateId: String) => {
       const yaml = {
         stage: key,
         steps: steps,
-      }
+      };
       yamlList.value.push(yaml);
     }
   } catch (error: any) {
-    console.log("erro:", error)
+    console.log("erro:", error);
   }
 };
 const lastStep = async () => {
-  router.push({ path: '/create' });
-}
+  router.push({ path: "/create" });
+};
 
 const submitData = async () => {
   try {
@@ -172,7 +177,7 @@ const submitData = async () => {
       message.error(result.message);
     } else {
       message.success(result.message);
-      router.push({ path: '/pipeline' });
+      router.push({ path: "/pipeline" });
     }
   } catch (error: any) {
     console.log("erro:", error);
@@ -217,46 +222,43 @@ const setYamlName = async () => {
   width: 120px;
   height: 40px;
 }
-
 :deep(.ant-btn-primary),
 :deep(.ant-btn-primary:hover),
 :deep(.ant-btn-primary:focus) {
   border-color: @baseColor;
   background: @baseColor;
 }
-
 :deep(.ant-btn-background-ghost.ant-btn-primary),
 :deep(.ant-btn-background-ghost.ant-btn-primary:hover),
 :deep(.ant-btn-background-ghost.ant-btn-primary:focus) {
   border-color: @baseColor;
   color: @baseColor;
 }
-
+:deep(input::-webkit-input-placeholder) {
+  /* WebKit browsers */
+  color: @placeholderColor;
+}
 :deep(.ant-input),
 :deep(.ant-input-affix-wrapper) {
   border-color: #EFEFEF;
   border-radius: 6px;
 }
-
 @placeholderColor: #BCBEBC;
-
-:deep(input::-webkit-input-placeholder) {
-  /* WebKit browsers */
-  color: @placeholderColor;
-}
-
 :deep(input:-moz-placeholder) {
   /* Mozilla Firefox 4 to 18 */
   color: @placeholderColor;
 }
-
 :deep(input::-moz-placeholder) {
   /* Mozilla Firefox 19+ */
   color: @placeholderColor;
 }
-
 :deep(input:-ms-input-placeholder) {
   /* Internet Explorer 10+ */
   color: @placeholderColor;
+}
+.normal-button {
+  width: 120px;
+  height: 40px;
+  border-radius: 6px;
 }
 </style>
