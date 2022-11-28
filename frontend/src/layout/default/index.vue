@@ -42,7 +42,7 @@ const layoutClass = computed(() => {
   background-color: #ffffff;
   max-width: 1440px;
   min-width: 1080px;
-  margin: 24px auto;
+  margin: 16px auto;
   border-radius: 12px;
   border: 1px solid transparent;
 }

@@ -33,8 +33,11 @@
             <div class="mb-3 text-xl font-semibold text-[#121211]">
               {{ data.name }}
             </div>
-            <div class="mb-3 text-sm font-normal text-[#7B7D7B]">
-              {{ data.description }}
+            <div
+              class="mb-3 text-sm font-normal text-[#7B7D7B]"
+              v-if="data.status != 0"
+            >
+              {{ $t("pipeline.manualTrigger") }}
             </div>
             <div>
               <div
@@ -47,28 +50,28 @@
                 v-if="data.status == 1"
                 class="text-sm font-normal text-[#2C5AFF]"
               >
-                <img src="@/assets/images/run.gif" class="h-[24px] w-[24px]" />
+                <img src="@/assets/images/run.gif" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.running") }}
               </div>
               <div
                 v-if="data.status == 3"
                 class="text-sm font-normal text-[#2DCE83]"
               >
-                <img :src="successSVG" />
+                <img :src="successSVG" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.successfulImplementation") }}
               </div>
               <div
                 v-if="data.status == 2"
                 class="text-sm font-normal text-[#F52222]"
               >
-                <img :src="failedSVG" />
+                <img :src="failedSVG" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.pushFailed") }}
               </div>
               <div
                 v-if="data.status == 4"
                 class="text-sm font-normal text-[#FF842C]"
               >
-                <img :src="stopSVG" />
+                <img :src="stopSVG" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.userTermination") }}
               </div>
             </div>
@@ -84,8 +87,8 @@
               "
               >{{ fromNowexecutionTime(data.startTime, "operation") }}</span
             >
-            <span class="text-xs" v-if="data?.duration && data?.duration != 0">
-              <img :src="wasteTimeSVG" />
+            <span class="text-sm" v-if="data?.duration && data?.duration != 0">
+              <img :src="wasteTimeSVG" class="h-[20px] w-[20px]" />
               {{ formatDurationTime(data.duration, "elapsedTime") }}
             </span>
           </div>
@@ -255,7 +258,8 @@ onMounted(() => {
   border: 1px solid #efefef;
 }
 .ant-card-bordered:hover {
-  box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.1);
+  border: 1px solid #28c57c;
+  box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.2);
 }
 .ant-btn {
   display: block;
@@ -263,16 +267,6 @@ onMounted(() => {
   height: 40px;
   border-radius: 6px;
   font-size: 12px;
-
-  &:hover,
-  &:focus {
-    color: #28c57c;
-    border-color: #28c57c;
-  }
-}
-.normal-button {
-  color: #28c57c;
-  border-color: #28c57c;
 }
 .ant-btn-primary {
   margin-bottom: 10px;
@@ -280,13 +274,6 @@ onMounted(() => {
   width: 120px;
   height: 40px;
   background: #28c57c;
-
-  &:hover,
-  &:focus {
-    border-color: #28c57c;
-    background: #28c57c;
-    color: white;
-  }
 }
 
 .ant-btn-dangerous.ant-btn-primary {

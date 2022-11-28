@@ -2,10 +2,13 @@
 import httpRequest from "@/request/index";
 
 // 获取模板列表
-export function apiGetTemplates() {
+export function apiGetTemplates(language: string) {
   return httpRequest({
     url: "/pipeline/templates",
     method: "get",
+    headers: {
+      lang: `${language}`,
+    },
   });
 }
 
@@ -36,8 +39,12 @@ export function apiGetPipelineByName(name: String) {
   });
 }
 
-//修改 
-export function apiEditPipeline(oldName: String, newName: String, yaml: String) {
+//修改
+export function apiEditPipeline(
+  oldName: String,
+  newName: String,
+  yaml: String
+) {
   return httpRequest({
     url: `/pipeline/${oldName}`,
     method: "put",
