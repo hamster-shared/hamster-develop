@@ -3,6 +3,7 @@ package service
 import (
 	"embed"
 	"fmt"
+	"github.com/hamster-shared/a-line/pkg/consts"
 	"github.com/hamster-shared/a-line/pkg/model"
 	"github.com/jinzhu/copier"
 	"gopkg.in/yaml.v2"
@@ -27,7 +28,7 @@ var TemplateDir embed.FS
 
 type ITemplateService interface {
 	//GetTemplates get template list
-	GetTemplates() *[]model.Template
+	GetTemplates(lang string) *[]model.Template
 
 	//GetTemplateDetail  get template detail
 	GetTemplateDetail(id int) (*model.TemplateDetail, error)
@@ -41,7 +42,7 @@ func NewTemplateService() *TemplateService {
 }
 
 // GetTemplates get template list
-func (t *TemplateService) GetTemplates() *[]model.Template {
+func (t *TemplateService) GetTemplates(lang string) *[]model.Template {
 	var list []model.Template
 	files, err := TemplateDes.ReadDir(TemplateDesPath)
 	if err != nil {
@@ -56,11 +57,27 @@ func (t *TemplateService) GetTemplates() *[]model.Template {
 			log.Println("get templates failed", err.Error())
 			continue
 		}
-		err = yaml.Unmarshal(fileContent, &templateData)
-		if err != nil {
-			log.Println("get templates failed", err.Error())
-			continue
+		if consts.LANG_EN == lang {
+			var template model.TemplateEnglish
+			err = yaml.Unmarshal(fileContent, &template)
+			if err != nil {
+				log.Println("get templates failed", err.Error())
+				continue
+			}
+			copier.Copy(&templateData, &template)
+			templateData.Description = template.DescriptionEnglish
 		}
+		if consts.LANG_ZH == lang {
+			var template model.TemplateChinese
+			err = yaml.Unmarshal(fileContent, &template)
+			if err != nil {
+				log.Println("get templates failed", err.Error())
+				continue
+			}
+			copier.Copy(&templateData, &template)
+			templateData.Description = template.DescriptionChinese
+		}
+
 		list = append(list, templateData)
 	}
 	return &list

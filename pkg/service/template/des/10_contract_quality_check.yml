@@ -5,7 +5,8 @@ id: 10
 name: "Smart Contract Quality Check"
 
 #Template Description
-description: "Perform quality checks on a smart contract and output relevant reports."
+descriptionEnglish: "Perform quality checks on a smart contract and output relevant reports."
+descriptionChinese: "对一个智能合约进行质量检查，并输出相关报告。"
 
 #Template classification
 tag: "GENERAL_TEMPLATE"

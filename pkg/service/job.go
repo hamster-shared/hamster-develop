@@ -2,26 +2,26 @@ package service
 
 import (
 	"errors"
+	"github.com/hamster-shared/a-line/pkg/consts"
+	"github.com/hamster-shared/a-line/pkg/logger"
+	"github.com/hamster-shared/a-line/pkg/model"
+	"github.com/hamster-shared/a-line/pkg/output"
+	"github.com/hamster-shared/a-line/pkg/utils"
+	"github.com/hamster-shared/a-line/pkg/utils/platform"
+	"github.com/jinzhu/copier"
+	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/hamster-shared/a-line/pkg/consts"
-	"github.com/hamster-shared/a-line/pkg/logger"
-	"github.com/hamster-shared/a-line/pkg/model"
-	"github.com/hamster-shared/a-line/pkg/output"
-	"github.com/hamster-shared/a-line/pkg/utils"
-	"github.com/jinzhu/copier"
-	"gopkg.in/yaml.v3"
 	"time"
 )
 
 type IJobService interface {
 	//SaveJob 保存 Job
-	SaveJob(name string, job *model.Job) error
+	SaveJob(name string, yaml string) error
 
 	// GetJob 获取 Job
 	GetJob(name string) string
@@ -32,7 +32,7 @@ type IJobService interface {
 	JobList(keyword string, page, size int) *model.JobPage
 
 	//UpdateJob update job
-	UpdateJob(oldName string, newName string, job *model.Job) error
+	UpdateJob(oldName string, newName string, yaml string) error
 
 	//DeleteJob delete job
 	DeleteJob(name string) error
@@ -64,6 +64,9 @@ type IJobService interface {
 	GetJobLog(name string, pipelineDetailId int) *model.JobLog
 	// GetJobStageLog 获取 job 的 stage 日志
 	GetJobStageLog(name string, pipelineDetailId int, stageName string, start int) *model.JobStageLog
+
+	// OpenArtifactoryDir open artifactory folder
+	OpenArtifactoryDir(name string, detailId string) error
 }
 
 type JobService struct {
@@ -74,21 +77,12 @@ func NewJobService() *JobService {
 }
 
 // SaveJob save pipeline job
-func (svc *JobService) SaveJob(name string, job *model.Job) error {
-	if name != job.Name {
-		job.Name = name
-	}
-	// serializes yaml struct
-	data, err := yaml.Marshal(job)
-	if err != nil {
-		log.Println("serializes yaml failed", err)
-		return err
-	}
+func (svc *JobService) SaveJob(name string, yaml string) error {
 	//file directory path
 	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
 	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
 	//determine whether the folder exists, and create it if it does not exist
-	_, err = os.Stat(dir)
+	_, err := os.Stat(dir)
 	if err != nil && os.IsNotExist(err) {
 		err := os.MkdirAll(dir, os.ModePerm)
 		if err != nil {
@@ -100,7 +94,7 @@ func (svc *JobService) SaveJob(name string, job *model.Job) error {
 		return errors.New("the pipeline job name already exists")
 	}
 	//write data to yaml file
-	err = os.WriteFile(src, data, 0777)
+	err = os.WriteFile(src, []byte(yaml), 0777)
 	if err != nil {
 		log.Println("write data to yaml file failed", err)
 		return err
@@ -129,7 +123,7 @@ func (svc *JobService) GetJob(name string) string {
 }
 
 // UpdateJob update job
-func (svc *JobService) UpdateJob(oldName string, newName string, job *model.Job) error {
+func (svc *JobService) UpdateJob(oldName string, newName string, yaml string) error {
 	name := oldName
 	oldDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
 	_, err := os.Stat(oldDir)
@@ -147,11 +141,8 @@ func (svc *JobService) UpdateJob(oldName string, newName string, job *model.Job)
 		log.Println("update job failed,job file not exist", err.Error())
 		return err
 	}
-	if oldName != job.Name {
-		job.Name = oldName
-	}
 	if newName != "" {
-		newDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME+"/"+newName)
+		newDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, newName)
 		err = os.Rename(oldDir, newDir)
 		if err != nil {
 			log.Println("reName failed", err.Error())
@@ -165,18 +156,9 @@ func (svc *JobService) UpdateJob(oldName string, newName string, job *model.Job)
 			return err
 		}
 		src = newSrc
-		if newName != job.Name {
-			job.Name = newName
-		}
-	}
-	// serializes yaml struct
-	data, err := yaml.Marshal(job)
-	if err != nil {
-		log.Println("serializes yaml failed", err)
-		return err
 	}
 	//write data to yaml file
-	err = os.WriteFile(src, data, 0777)
+	err = os.WriteFile(src, []byte(yaml), 0777)
 	if err != nil {
 		log.Println("write data to yaml file failed", err)
 		return err
@@ -348,8 +330,11 @@ func (svc *JobService) JobList(keyword string, page, pageSize int) *model.JobPag
 		}
 		copier.Copy(&jobVo, &jobData)
 		svc.getJobInfo(&jobVo)
+		createTime := platform.GetFileCreateTime(ymlPath)
+		jobVo.CreateTime = *createTime
 		jobs = append(jobs, jobVo)
 	}
+	sort.Sort(model.JobVoTimeDecrement(jobs))
 	pageNum, size, start, end := utils.SlicePage(page, pageSize, len(jobs))
 	jobPage.Page = pageNum
 	jobPage.PageSize = size
@@ -616,4 +601,15 @@ func (svc *JobService) GetJobObject(name string) *model.Job {
 		return &jobData
 	}
 	return &jobData
+}
+
+// OpenArtifactoryDir open artifactory folder
+func (svc *JobService) OpenArtifactoryDir(name string, detailId string) error {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		logger.Errorf("Failed to get home directory, the file will be saved to the current directory, err is %s", err.Error())
+		userHomeDir = "."
+	}
+	artifactoryDir := filepath.Join(userHomeDir, consts.ARTIFACTORY_DIR, name, detailId)
+	return platform.OpenDir(artifactoryDir)
 }

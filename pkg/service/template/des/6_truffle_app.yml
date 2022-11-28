@@ -5,7 +5,8 @@ id: 6
 name: "Truffle + DApp"
 
 #Template Description
-description: "This template is used for DApps written on Truffle framework to fully automate code checkout -> check contract quality -> compile contract -> test contract -> deploy contract -> check front-end code quality -> edit front-end code -> deploy front-end code."
+descriptionEnglish: "This template is used for DApps written on Truffle framework to fully automate code checkout -> check contract quality -> compile contract -> test contract -> deploy contract -> check front-end code quality -> edit front-end code -> deploy front-end code."
+descriptionChinese: "该模版用于基于Truffle框架编写的DApp，实现全自动检出代码 -> 检查合约质量 -> 编译合约 -> 测试合约 -> 部署合约 -> 检查前端代码质量 -> 编辑前端代码 -> 部署前端代码。"
 
 #Template classification
 tag: "DAPP_TEMPLATE"
