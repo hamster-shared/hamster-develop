@@ -38,7 +38,7 @@ func (h *HandlerServer) createPipeline(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	err = h.jobService.SaveJob(createData.Name, &jobData)
+	err = h.jobService.SaveJob(createData.Name, createData.Yaml)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -61,7 +61,7 @@ func (h *HandlerServer) updatePipeline(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	err = h.jobService.UpdateJob(oldName, updateData.NewName, &jobData)
+	err = h.jobService.UpdateJob(oldName, updateData.NewName, updateData.Yaml)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -261,4 +261,16 @@ func (h *HandlerServer) getTemplateDetail(gin *gin.Context) {
 	}
 	data, _ := h.templateService.GetTemplateDetail(id)
 	Success(data, gin)
+}
+
+// openArtifactoryDir open artifactory folder
+func (h *HandlerServer) openArtifactoryDir(gin *gin.Context) {
+	idStr := gin.Param("id")
+	name := gin.Param("name")
+	err := h.jobService.OpenArtifactoryDir(name, idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success("", gin)
 }

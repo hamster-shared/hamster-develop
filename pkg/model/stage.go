@@ -6,8 +6,8 @@ import (
 )
 
 type Stage struct {
-	Steps []Step   `yaml:"steps" json:"steps"`
-	Needs []string `yaml:"needs" json:"needs"`
+	Steps []Step   `yaml:"steps,omitempty" json:"steps"`
+	Needs []string `yaml:"needs,omitempty" json:"needs"`
 }
 
 type StageDetail struct {

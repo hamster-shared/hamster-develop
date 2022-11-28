@@ -23,9 +23,9 @@ const (
 )
 
 type Job struct {
-	Version string           `yaml:"version" json:"version"`
-	Name    string           `yaml:"name" json:"name"`
-	Stages  map[string]Stage `yaml:"stages" json:"stages"`
+	Version string           `yaml:"version,omitempty" json:"version"`
+	Name    string           `yaml:"name,omitempty" json:"name"`
+	Stages  map[string]Stage `yaml:"stages,omitempty" json:"stages"`
 }
 
 type JobVo struct {
@@ -37,6 +37,8 @@ type JobVo struct {
 	Duration         int64            `json:"duration"`
 	TriggerMode      string           `yaml:"triggerMode" json:"triggerMode"`
 	PipelineDetailId int              `json:"pipelineDetailId"`
+	Error            string           `json:"error"`
+	CreateTime       time.Time        `json:"createTime"`
 }
 
 type JobDetail struct {
@@ -49,6 +51,7 @@ type JobDetail struct {
 	Duration     int64         `json:"duration"`
 	ActionResult `yaml:"actionResult" json:"actionResult"`
 	Output       *output.Output `json:"output"`
+	Error        string         `yaml:"error,omitempty"json:"error"`
 }
 
 func (jd *JobDetail) ToString() string {
@@ -174,3 +177,11 @@ func (s JobDetailDecrement) Len() int { return len(s) }
 func (s JobDetailDecrement) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 func (s JobDetailDecrement) Less(i, j int) bool { return s[i].Id > s[j].Id }
+
+type JobVoTimeDecrement []JobVo
+
+func (s JobVoTimeDecrement) Len() int { return len(s) }
+
+func (s JobVoTimeDecrement) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+func (s JobVoTimeDecrement) Less(i, j int) bool { return s[i].CreateTime.After(s[j].CreateTime) }
