@@ -1,13 +1,8 @@
 <template>
-  <div class="mx-auto bg-white py-[32px] mx-[24px] rounded-xl">
+  <div class="mx-auto bg-white p-[24px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-4">
-      <a-input
-        v-model:value="searchValue"
-        placeholder="search here..."
-        style="width: 370px"
-        class="w-[340px] h-[40px]"
-        @keyup.enter="handleSearch"
-      >
+      <a-input v-model:value="searchValue" placeholder="search here..." style="width: 370px" class="w-[340px] h-[40px]"
+        @keyup.enter="handleSearch">
         <template #prefix>
           <div @click="handleSearch">
             <img :src="searchSVG" />
@@ -36,10 +31,7 @@
               <div v-if="data.status == 0" class="text-sm font-normal text-[#7B7D7B]">
                 {{ $t("pipeline.noData") }}
               </div>
-              <div
-                v-if="data.status == 1"
-                class="text-sm font-normal text-[#2C5AFF]"
-              >
+              <div v-if="data.status == 1" class="text-sm font-normal text-[#2C5AFF]">
                 <img src="@/assets/images/run.gif" class="h-[24px] w-[24px]" />
                 {{ $t("pipeline.running") }}
               </div>

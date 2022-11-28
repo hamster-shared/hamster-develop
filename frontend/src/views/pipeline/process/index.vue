@@ -101,7 +101,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, reactive, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import { apiGetJobStageLogs } from "@/apis/jobs";
+import { apiGetJobStageLogs, apiCheekArtifactorys } from "@/apis/jobs";
 import { apiGetPipelineDetail } from "@/apis/pipeline";
 import { fromNowexecutionTime, formatDurationTime } from '@/utils/time/dateUtils.js';
 import BScroll from "@better-scroll/core";
@@ -198,9 +198,9 @@ const getStageLogsData = async (item: any, start = 0, lastLine = 0) => {
 };
 
 
-const openNewUrl = (url: string) => {
-  message.info('暂不支持跳转')
-  // window.open(url)
+const openNewUrl = async (url: string) => {
+  // message.info('暂不支持跳转')
+  const data = await apiCheekArtifactorys(queryJson)
 }
 
 onMounted(async () => {
@@ -211,11 +211,8 @@ onMounted(async () => {
     scrollY: false,
     probeType: 1,
     scrollbar: {
-      // customElements: [horizontal.value],
       fade: false,
       interactive: true,
-      // scrollbarTrackClickable: true,
-      // scrollbarTrackOffsetType: 'clickedPoint' // can use 'step'
     }
   });
 });
