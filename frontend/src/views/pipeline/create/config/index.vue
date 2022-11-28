@@ -12,10 +12,13 @@
     </div>
     <div class="p-[24px] rounded-bl-[12px] rounded-br-[12px] box-border">
       <div class="w-1/4 mb-4">
-        <div class="mb-2">
-          Pipeline Name
-        </div>
-        <a-input v-model:value="pipelineName" @change="setYamlName()" placeholder="Pipeline Name" allow-clear />
+        <div class="mb-2">Pipeline Name</div>
+        <a-input
+          v-model:value="pipelineName"
+          @change="setYamlName()"
+          placeholder="Pipeline Name"
+          allow-clear
+        />
       </div>
       <a-row class="create" :gutter="24">
         <a-col :span="8">
@@ -26,27 +29,51 @@
               </div>
             </div>
           </div>
-          <div class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border">
-            <a-form :label-col="{ xs: { span: 24 }, sm: { span: 7 } }" layout="vertical">
+          <div
+            class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border"
+          >
+            <a-form
+              :label-col="{ xs: { span: 24 }, sm: { span: 7 } }"
+              layout="vertical"
+            >
               <div v-for="(data, key) in yamlList" :key="key">
                 <div class="flex mb-4">
                   <div
-                    class="text-[#FFFFFF] bg-[#121211] rounded-[50%] h-[20px] w-[20px] text-center leading-[20px] text-[14px]">
-                    {{ key + 1 }}</div>
-                  <div class="ml-2 text-[#121211] font-semibold">{{ data.stage }}</div>
+                    class="text-[#FFFFFF] bg-[#121211] rounded-[50%] h-[20px] w-[20px] text-center leading-[20px] text-[14px]"
+                  >
+                    {{ key + 1 }}
+                  </div>
+                  <div class="ml-2 text-[#121211] font-semibold">
+                    {{ data.stage }}
+                  </div>
                 </div>
                 <div v-for="(item, index) in data.steps" :key="index">
                   <div v-if="item.eleName === 'git-checkout'">
-                    <GitCheckout :stage="data.stage" :index="index" :url="item.eleValues.url"
-                      :branch="item.eleValues.branch" @setYamlCode="setYamlCode"></GitCheckout>
+                    <GitCheckout
+                      :stage="data.stage"
+                      :index="index"
+                      :url="item.eleValues.url"
+                      :branch="item.eleValues.branch"
+                      @setYamlCode="setYamlCode"
+                    ></GitCheckout>
                   </div>
                   <div v-else-if="item.eleName === 'artifactory'">
-                    <Artifactory :stage="data.stage" :index="index" :name="item.eleValues.name"
-                      :path="item.eleValues.path" @setYamlCode="setYamlCode"></Artifactory>
+                    <Artifactory
+                      :stage="data.stage"
+                      :index="index"
+                      :name="item.eleValues.name"
+                      :path="item.eleValues.path"
+                      @setYamlCode="setYamlCode"
+                    ></Artifactory>
                   </div>
                   <div v-else-if="item.eleName === 'shell'">
-                    <Shell :stage="data.stage" :index="index" :run="item.eleValues.run" :runsOn="item.eleValues.runsOn"
-                      @setYamlCode="setYamlCode"></Shell>
+                    <Shell
+                      :stage="data.stage"
+                      :index="index"
+                      :run="item.eleValues.run"
+                      :runsOn="item.eleValues.runsOn"
+                      @setYamlCode="setYamlCode"
+                    ></Shell>
                   </div>
                 </div>
               </div>
@@ -70,7 +97,7 @@
           $t("template.lastBtn")
         }}</a-button>
         <a-button type="primary" @click="submitData" class="ml-4">{{
-            $t("template.submitBtn")
+          $t("template.submitBtn")
         }}</a-button>
       </div>
     </div>
@@ -93,30 +120,28 @@ const router = useRouter();
 const { params } = useRoute();
 const templateId = ref(params.id);
 const templateInfo = reactive({
-  name: '',
-  description: '',
-  yaml: '',
+  name: "",
+  description: "",
+  yaml: "",
 });
 const yamlList = ref([
   {
-    stage: '',
-    steps: [{
-      eleName: '',
-      eleValues: {},
-    }]
-  }
+    stage: "",
+    steps: [
+      {
+        eleName: "",
+        eleValues: {},
+      },
+    ],
+  },
 ]);
-const pipelineName = ref('');
+const pipelineName = ref("");
 
 onMounted(async () => {
   getTemplatesById(templateId.value.toString());
 });
 
 const getTemplatesById = async (templateId: String) => {
-<<<<<<< HEAD
-=======
-
->>>>>>> develop
   try {
     const { data } = await apiGetTemplatesById(templateId);
     Object.assign(templateInfo, data); //赋值
@@ -183,9 +208,15 @@ const submitData = async () => {
     console.log("erro:", error);
     message.error("Failed");
   }
-}
+};
 
-const setYamlCode = async (isUsers: any, key: string, index: number, item: string, val: any) => {
+const setYamlCode = async (
+  isUsers: any,
+  key: string,
+  index: number,
+  item: string,
+  val: any
+) => {
   const config = YAML.parse(codeValue.value);
   if (isUsers) {
     config["stages"][key]["steps"][index]["with"][item] = val;
@@ -193,15 +224,15 @@ const setYamlCode = async (isUsers: any, key: string, index: number, item: strin
     config["stages"][key]["steps"][index][item] = val;
   }
 
-  codeValue.value = YAML.stringify(config)
-}
+  codeValue.value = YAML.stringify(config);
+};
 
 const setYamlName = async () => {
-  pipelineName.value = pipelineName.value.replace(/\s+/g, '');
+  pipelineName.value = pipelineName.value.replace(/\s+/g, "");
   const config = YAML.parse(codeValue.value);
-  config["name"] = pipelineName.value
-  codeValue.value = YAML.stringify(config)
-}
+  config["name"] = pipelineName.value;
+  codeValue.value = YAML.stringify(config);
+};
 </script>
 <style scoped lang="less">
 .create {
@@ -240,10 +271,10 @@ const setYamlName = async () => {
 }
 :deep(.ant-input),
 :deep(.ant-input-affix-wrapper) {
-  border-color: #EFEFEF;
+  border-color: #efefef;
   border-radius: 6px;
 }
-@placeholderColor: #BCBEBC;
+@placeholderColor: #bcbebc;
 :deep(input:-moz-placeholder) {
   /* Mozilla Firefox 4 to 18 */
   color: @placeholderColor;

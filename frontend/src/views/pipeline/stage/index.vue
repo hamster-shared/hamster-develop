@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto bg-white py-[32px] mx-[24px] rounded-xl">
+  <div class="bg-white py-[32px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-6">
       <span class="text-2xl font-semibold text-[#121211]"
         >Hamster-pipeline
