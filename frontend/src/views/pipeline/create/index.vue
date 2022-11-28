@@ -187,6 +187,7 @@ const checkDivHeight = (className: string) => {
 .card-item:hover {
   /* 投影 */
   box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.2);
+  border: 1px solid #28c57c;
 }
 .card-img-div {
   @apply flex justify-center;
