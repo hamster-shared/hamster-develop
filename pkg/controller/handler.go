@@ -256,7 +256,8 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 
 // getTemplates get template list
 func (h *HandlerServer) getTemplates(gin *gin.Context) {
-	data := h.templateService.GetTemplates()
+	lang := gin.Request.Header.Get("lang")
+	data := h.templateService.GetTemplates(lang)
 	Success(data, gin)
 }
 

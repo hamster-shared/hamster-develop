@@ -8,6 +8,11 @@ const (
 )
 
 const (
+	LANG_EN = "en"
+	LANG_ZH = "zh"
+)
+
+const (
 	TRIGGER_MODE = "Manual trigger"
 )
 
