@@ -10,10 +10,12 @@ services:
     volumes:
       - "docker-certs:/certs"
       - "a-line-workdir:/root/pipelines"
-      - "./build/daemon.json:/etc/docker/daemon.json"
       - "tmp-dir:/root/workdir"
     ports:
       - "2376:2376"
+    command:
+      - --storage-driver
+      - overlay2
 
   a-line-cli:
     image: hamstershare/a-line-cli:latest

@@ -4,7 +4,7 @@
     <div class="px-[24px]">
       <div class="flex justify-between">
         <span class="text-[24px] text-[#000000] font-semibold mb-[28px]">{{
-            props.text
+            stagesData.title
         }}</span>
         <span class="text-[#28C57C] cursor-pointer pt-[6px]" @click="toggle">
           <img src="@/assets/icons/full.svg" class="w-[18px] mr-[10px]" />
@@ -22,11 +22,11 @@
             }}</span>
           </div>
 
-          <div class="main text-white bg-black bg-[#000000] break-all" :style="{
+          <div class="main text-white bg-black bg-[#000000] break-all pt-[30px]" :style="{
             height: bodyHeight,
           }">
-            <div ref="scrollDom" class="scrollDom  pb-[24px]">
-              <div class="" v-for="it in props.content" :key="it">{{ it }}
+            <div ref="scrollDom" class="scrollDom pb-[24px]">
+              <div class="" v-for="(it, idx) in stagesData.content" :key="idx">{{ it }}
 
                 <!-- {{ props.content }} -->
                 <!-- hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
@@ -54,12 +54,11 @@
   </a-modal>
 </template>
 <script lang="ts">
-import { ref, defineComponent, toRefs, reactive, onMounted, nextTick } from "vue";
+import { ref, defineComponent, toRefs, reactive, onMounted, nextTick, watch } from "vue";
 import { api as fullscreen } from "vue-fullscreen";
 export default defineComponent({
   props: {
-    text: { type: String, default: "" },
-    content: { type: String, default: "" },
+    stagesData: { type: Object, default: () => { return {} } }
   },
   setup(props, context) {
     const root = ref();
@@ -79,7 +78,6 @@ export default defineComponent({
         callback: (isFullscreen) => {
           state.fullscreen = isFullscreen;
           fullscreenWrapper.value.scrollTop = scrollDom.value.scrollHeight
-          // console.log(fullscreenWrapper.value.scrollTop, scrollDom.value.scrollHeight, scrollDom.value.scrollTop, '全屏')
         },
       });
       state.fullscreen = fullscreen.isFullscreen;
@@ -88,19 +86,27 @@ export default defineComponent({
 
     const showVisible = () => {
       state.visible = true;
-
       nextTick(() => {
         fullscreenWrapper.value.scrollTop = scrollDom.value.scrollHeight
-        // console.log(fullscreenWrapper.value.scrollTop, scrollDom.value.scrollHeight, '0099')
       })
     };
+
+    watch(() => props.stagesData.content,
+      (oldV, newV) => {
+        if (newV && scrollDom.value) {
+          nextTick(() => {
+            // console.log(scrollDom.value, '00000')
+            fullscreenWrapper.value.scrollTop = scrollDom.value.scrollHeight
+          })
+        }
+      }, { deep: true, immediate: false })
 
     return {
       root,
       fullscreenWrapper,
       scrollDom,
-      props,
       ...toRefs(state),
+      ...toRefs(props),
       toggle,
       showVisible,
     };
@@ -120,7 +126,7 @@ export default defineComponent({
   position: fixed;
   padding-top: 12px;
   top: 0px;
-  right: 48px;
+  right: 42px;
   z-index: 9;
   background-color: #000;
 }

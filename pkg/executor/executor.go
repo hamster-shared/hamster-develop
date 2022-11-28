@@ -77,7 +77,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 
 	engineContext := make(map[string]interface{})
 	engineContext["hamsterRoot"] = path.Join(homeDir, "workdir")
-	engineContext["workdir"] = engineContext["hamsterRoot"]
+	engineContext["workdir"] = path.Join(engineContext["hamsterRoot"].(string), job.Name)
 	engineContext["name"] = job.Name
 	engineContext["id"] = fmt.Sprintf("%d", id)
 	engineContext["env"] = env
@@ -195,7 +195,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 
 	//TODO ... 发送结果到队列
 	e.SendResultToQueue(nil)
-	_ = os.RemoveAll(path.Join(engineContext["hamsterRoot"].(string), job.Name))
+	//_ = os.RemoveAll(path.Join(engineContext["hamsterRoot"].(string), job.Name))
 
 	return err
 

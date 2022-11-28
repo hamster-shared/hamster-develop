@@ -41,6 +41,13 @@
   dependencies:
     "@better-scroll/shared-utils" "^2.5.0"
 
+"@better-scroll/scroll-bar@^2.5.0":
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/@better-scroll/scroll-bar/-/scroll-bar-2.5.0.tgz#c2c1daa607ffc8f81ee8a511f92b613595b3a953"
+  integrity sha512-eHfVy6mr0Pj1wwmsdHeRgHssxTSOtdytNbAmFq37tvB0StKtPwgm9OFce8cDNM1XpmBfSH/R99PhKW7Qvid5RQ==
+  dependencies:
+    "@better-scroll/core" "^2.5.0"
+
 "@better-scroll/shared-utils@^2.5.0":
   version "2.5.0"
   resolved "https://registry.npmjs.org/@better-scroll/shared-utils/-/shared-utils-2.5.0.tgz"

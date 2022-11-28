@@ -28,13 +28,13 @@
               {{ $t("log.totalDuration") }}
             </div>
             <div class="process-detail-info">
-              {{ formatDurationTime(jobData.duration, 'noThing') }}
+              {{ state.running ? '-' : formatDurationTime(jobData.duration, 'noThing') }}
             </div>
           </div>
         </a-col>
       </a-row>
     </div>
-    <div class="p-[24px] border border-solid border-[#EFEFEF] rounded-b-[12px]">
+    <div class="p-[24px] rounded-b-[12px]">
       <div class="process-content">
         <div class="flex justify-between">
           <span class="process-content-title">{{
@@ -58,7 +58,7 @@
               <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]"
                 :class="item.status === 0 ? '' : 'cursorP'" @click="checkProcess(item, $event)">
                 <img :src="getImageUrl(item.status)" class="w-[28px] mr-[24px] align-middle" v-if="item.status !== 1" />
-                <img src="@/assets/images/run.gif" class="w-[28px]" v-else />
+                <img src="@/assets/images/run.gif" class="w-[28px]  mr-[24px] align-middle" v-else />
                 <span class="align-middle">
                   <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">{{ item.name }}</span>
                   <span class="text-[16px] text-[#7B7D7B]" v-if="item.status !== 0">{{
@@ -69,48 +69,61 @@
               <img src="@/assets/images/arrow-green.jpg" class="w-[28px] space-mark ml-[20px] mr-[20px]" />
             </div>
           </div>
+          <div class="custom-horizontal-scrollbar" ref="horizontal">
+            <div class="custom-horizontal-indicator"></div>
+          </div>
         </div>
       </div>
-      <div class="process-content">
+      <div class="process-content" v-if="jobData.actionResult.artifactorys.length > 0">
         <div class="process-content-title">{{ $t("log.artifats") }}</div>
         <div class="text-[#7B7D7B]">
-          <div v-for="it in jobData.actionResult.artifactorys" :key="it.id">
+          <div v-for="it in jobData.actionResult.artifactorys" :key="it.id" class="text-[#1890ff] cursor-pointer"
+            @click="openNewUrl(it.url)">
             {{ it.url }}
           </div>
-          <a-empty v-if="jobData.actionResult.artifactorys.length <= 0" />
+          <!-- <a-empty v-if="jobData.actionResult.artifactorys.length <= 0" /> -->
         </div>
       </div>
-      <div class="process-content">
+      <div class="process-content" v-if="jobData.actionResult.reports.length > 0">
         <div class="process-content-title">{{ $t("log.report") }}</div>
         <div class="text-[#7B7D7B]">
-          <div v-for="it in jobData.actionResult.reports" :key="it.id">{{ it.url }}</div>
-          <a-empty v-if="jobData.actionResult.reports.length <= 0" />
+          <div v-for="it in jobData.actionResult.reports" :key="it.id" class="text-[#1890ff] cursor-pointer"
+            @click="openNewUrl(it.url)">{{ it.url
+            }}</div>
+          <!-- <a-empty v-if="jobData.actionResult.reports.length <= 0" /> -->
         </div>
       </div>
     </div>
   </div>
 
-  <ProcessModal ref="processModalRef" :text="title" :content="content" />
+  <ProcessModal ref="processModalRef" :stagesData="stagesData" />
 </template>
 <script lang="ts" setup>
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted, reactive, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { apiGetJobStageLogs } from "@/apis/jobs";
 import { apiGetPipelineDetail } from "@/apis/pipeline";
 import { fromNowexecutionTime, formatDurationTime } from '@/utils/time/dateUtils.js';
 import BScroll from "@better-scroll/core";
+import Scrollbar from '@better-scroll/scroll-bar';
 import ProcessModal from "./components/ProcessModal.vue";
+import { message } from 'ant-design-vue'
+
+BScroll.use(Scrollbar)
 const router = useRouter();
 const processModalRef = ref();
-const title = ref("");
-const content = ref([]);
-// const state = reactive({
-//   timer: null,
-//   running: true,
-// })
-// const timer = ref(null)
+const horizontal = ref();
+const state = reactive({
+  detailTimer: null,
+  stagesTimer: null,
+  running: true,
+})
+
+const stagesData = reactive({
+  title: '',
+  content: [],
+})
 const wrapper = ref();
-const count = ref(0)
 const jobData = reactive({
   id: undefined,
   stages: [],
@@ -134,10 +147,17 @@ const queryJson = reactive({
 });
 
 const getPipelineDetail = async () => {
-  const data = await apiGetPipelineDetail(queryJson);
-  Object.assign(jobData, data.data);
-};
-
+  const { data } = await apiGetPipelineDetail(queryJson);
+  Object.assign(jobData, data);
+  state.running = data.stages.some((val: any) => val.status === 1)
+  if (state.running) {
+    state.detailTimer = setTimeout(() => {
+      getPipelineDetail()
+    }, 3000)
+  } else {
+    clearTimeout(state.detailTimer)
+  }
+}
 const getImageUrl = (status: any) => {
   return new URL(`../../../assets/icons/Status${status}.svg`, import.meta.url)
     .href;
@@ -151,27 +171,60 @@ const checkProcess = async (item: any, e: Event) => {
   if (item.status === 0) {
     e.stopPropagation()
   } else {
-    title.value = item.name;
-    await getStageLogsData(item);
+    stagesData.title = item.name;
     processModalRef.value.showVisible();
+    await getStageLogsData(item);
   }
 
 };
 
 const getStageLogsData = async (item: any, start = 0, lastLine = 0) => {
   const query = Object.assign(queryJson, { stagename: item.name, start: start, lastLine: lastLine });
-  const data = await apiGetJobStageLogs(query);
-  content.value = data.data?.content?.split('\r');
+  const { data } = await apiGetJobStageLogs(query);
+  if (data.end) {
+    stagesData.content = data?.content?.split('\r');
+  } else {
+    let t = data?.content?.split('\r')
+    stagesData.content.push(t)
+  }
+
+  if (!data.end && processModalRef.value.visible) {
+    state.stagesTimer = setTimeout(() => {
+      getStageLogsData(item, 0, data.lastLine)
+    }, 3000)
+  } else {
+    clearTimeout(state.stagesTimer)
+  }
 };
 
 
+const openNewUrl = (url: string) => {
+  message.info('暂不支持跳转')
+  // window.open(url)
+}
+
 onMounted(async () => {
-  await getPipelineDetail();
+  await getPipelineDetail()
   let scroll = new BScroll(wrapper.value, {
     startX: 0,
     scrollX: true,
+    scrollY: false,
+    probeType: 1,
+    scrollbar: {
+      // customElements: [horizontal.value],
+      fade: false,
+      interactive: true,
+      // scrollbarTrackClickable: true,
+      // scrollbarTrackOffsetType: 'clickedPoint' // can use 'step'
+    }
   });
 });
+
+onUnmounted(() => {
+  clearTimeout(state.detailTimer)
+  clearTimeout(state.stagesTimer)
+})
+
 </script>
 <style lang="less" scoped>
 .process {
@@ -207,6 +260,7 @@ onMounted(async () => {
 
     .process-scroll {
       display: inline-block;
+      margin-bottom: 24px;
 
       .cursorP {
         cursor: pointer;
@@ -241,5 +295,13 @@ onMounted(async () => {
       display: none;
     }
   }
+}
+
+:deep(.bscroll-horizontal-scrollbar) {
+  z-index: 1 !important;
+}
+
+:deep(.bscroll-indicator) {
+  background: #efefef !important;
 }
 </style>
