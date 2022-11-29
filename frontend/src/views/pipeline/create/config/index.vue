@@ -1,6 +1,6 @@
 <template>
   <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px]">
-    <div class="bg-[#121211] p-4 rounded-tl-[12px] rounded-tr-[12px]">
+    <div class="bg-[#121211] p-[24px] rounded-tl-[12px] rounded-tr-[12px]">
       <div class="flex justify-between">
         <div class="text-[24px] font-semibold text-[#FFFFFF]">
           {{ templateInfo.name }}
@@ -10,14 +10,15 @@
         {{ templateInfo.description }}
       </div>
     </div>
-    <div
-      class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border"
-    >
-      <div class="mb-4 w-1/4">
-        <div class="mb-2">
-          Pipeline Name
-        </div>
-        <a-input v-model:value="pipelineName" @change="setYamlName()" placeholder="Pipeline Name" allow-clear />
+    <div class="p-[24px] rounded-bl-[12px] rounded-br-[12px] box-border">
+      <div class="w-1/4 mb-4">
+        <div class="mb-2">Pipeline Name</div>
+        <a-input
+          v-model:value="pipelineName"
+          @change="setYamlName()"
+          placeholder="Pipeline Name"
+          allow-clear
+        />
       </div>
       <a-row class="create" :gutter="24">
         <a-col :span="8">
@@ -37,18 +38,42 @@
             >
               <div v-for="(data, key) in yamlList" :key="key">
                 <div class="flex mb-4">
-                  <div class="text-[#FFFFFF] bg-[#121211] rounded-[50%] h-[20px] w-[20px] text-center leading-[20px] text-[14px]">{{ key + 1 }}</div>
-                  <div class="ml-2 text-[#121211] font-semibold">{{ data.stage }}</div>
+                  <div
+                    class="text-[#FFFFFF] bg-[#121211] rounded-[50%] h-[20px] w-[20px] text-center leading-[20px] text-[14px]"
+                  >
+                    {{ key + 1 }}
+                  </div>
+                  <div class="ml-2 text-[#121211] font-semibold">
+                    {{ data.stage }}
+                  </div>
                 </div>
                 <div v-for="(item, index) in data.steps" :key="index">
                   <div v-if="item.eleName === 'git-checkout'">
-                    <GitCheckout :stage="data.stage" :index="index" :url="item.eleValues.url" :branch="item.eleValues.branch" @setYamlCode="setYamlCode"></GitCheckout>
+                    <GitCheckout
+                      :stage="data.stage"
+                      :index="index"
+                      :url="item.eleValues.url"
+                      :branch="item.eleValues.branch"
+                      @setYamlCode="setYamlCode"
+                    ></GitCheckout>
                   </div>
                   <div v-else-if="item.eleName === 'artifactory'">
-                    <Artifactory :stage="data.stage" :index="index" :name="item.eleValues.name" :path="item.eleValues.path" @setYamlCode="setYamlCode"></Artifactory>
+                    <Artifactory
+                      :stage="data.stage"
+                      :index="index"
+                      :name="item.eleValues.name"
+                      :path="item.eleValues.path"
+                      @setYamlCode="setYamlCode"
+                    ></Artifactory>
                   </div>
                   <div v-else-if="item.eleName === 'shell'">
-                    <Shell :stage="data.stage" :index="index" :run="item.eleValues.run" :runsOn="item.eleValues.runsOn" @setYamlCode="setYamlCode"></Shell>
+                    <Shell
+                      :stage="data.stage"
+                      :index="index"
+                      :run="item.eleValues.run"
+                      :runsOn="item.eleValues.runsOn"
+                      @setYamlCode="setYamlCode"
+                    ></Shell>
                   </div>
                 </div>
               </div>
@@ -61,11 +86,16 @@
               Pipelinefile Preview
             </div>
           </div>
-          <CodeEditor :readOnly="true" :value="codeValue"></CodeEditor>
+          <div class="codeScrollHeight">
+            <CodeEditor :readOnly="true" :value="codeValue"></CodeEditor>
+          </div>
+          <!-- <CodeEditor :readOnly="true" :value="codeValue"></CodeEditor> -->
         </a-col>
       </a-row>
-      <div class="text-center mt-8">
-        <a-button type="primary" @click="lastStep" ghost>{{ $t("template.lastBtn") }}</a-button>
+      <div class="mt-8 text-center">
+        <a-button @click="lastStep" class="normal-button">{{
+          $t("template.lastBtn")
+        }}</a-button>
         <a-button type="primary" @click="submitData" class="ml-4">{{
           $t("template.submitBtn")
         }}</a-button>
@@ -76,7 +106,7 @@
 <script lang="ts" setup>
 import { reactive, ref, onMounted } from "vue";
 import YAML from "yaml";
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter } from "vue-router";
 import { apiGetTemplatesById, apiAddPipeline } from "@/apis/template";
 import CodeEditor from "./components/CodeEditor.vue";
 import GitCheckout from "./components/GitCheckout.vue";
@@ -84,154 +114,182 @@ import Artifactory from "./components/Artifactory.vue";
 import Shell from "./components/Shell.vue";
 import { message } from "ant-design-vue";
 
-  const codeValue = ref<String>();
+const codeValue = ref<String>();
 
-  const router = useRouter();
-  const { params } = useRoute();
-  const templateId = ref(params.id);
-  const templateInfo = reactive({
-    name: '',
-    description: '',
-    yaml: '',
-  });
-  const yamlList = ref([
-    {
-      stage: '',
-      steps: [{
-        eleName: '',
+const router = useRouter();
+const { params } = useRoute();
+const templateId = ref(params.id);
+const templateInfo = reactive({
+  name: "",
+  description: "",
+  yaml: "",
+});
+const yamlList = ref([
+  {
+    stage: "",
+    steps: [
+      {
+        eleName: "",
         eleValues: {},
-      }]
-    }
-  ]);
-  const pipelineName = ref('');
+      },
+    ],
+  },
+]);
+const pipelineName = ref("");
 
-  onMounted(async () => {
-    getTemplatesById(templateId.value.toString());
-  });
-  
-  const getTemplatesById = async (templateId: String) => {
+onMounted(async () => {
+  getTemplatesById(templateId.value.toString());
+});
 
-    try {
-      const { data } = await apiGetTemplatesById(templateId);
-      Object.assign(templateInfo, data); //赋值
-      codeValue.value = templateInfo.yaml; 
-      
-      const config = YAML.parse(codeValue.value.toString()); 
-      pipelineName.value = config.name;
-      yamlList.value = []
-      for (let key in config["stages"]){
-        let obj = config["stages"][key];
-        let steps: { eleName: string; eleValues: {}; }[] = [];
-        if (obj["steps"]){
-          obj["steps"].forEach((item: { [x: string]: any; }) => {
-            let eleName = '';
-            let eleValues = {};
-            if (item["uses"]) {
-              if (item["uses"] === "hamster-artifactory") {
-                eleName = 'artifactory';
-              } else {
-                eleName = item["uses"];
-              }
-              eleValues = item["with"];
+const getTemplatesById = async (templateId: String) => {
+  try {
+    const { data } = await apiGetTemplatesById(templateId);
+    Object.assign(templateInfo, data); //赋值
+    codeValue.value = templateInfo.yaml;
+
+    const config = YAML.parse(codeValue.value.toString());
+    pipelineName.value = config.name;
+    yamlList.value = [];
+    for (let key in config["stages"]) {
+      let obj = config["stages"][key];
+      let steps: { eleName: string; eleValues: {} }[] = [];
+      if (obj["steps"]) {
+        obj["steps"].forEach((item: { [x: string]: any }) => {
+          let eleName = "";
+          let eleValues = {};
+          if (item["uses"]) {
+            if (item["uses"] === "hamster-artifactory") {
+              eleName = "artifactory";
             } else {
-              eleName = 'shell';
-              eleValues = {
-                run: item["run"],
-                runsOn: item["runs-on"],
-              };
+              eleName = item["uses"];
             }
-            steps.push({
-              eleName: eleName,
-              eleValues: eleValues,
-            });
+            eleValues = item["with"];
+          } else {
+            eleName = "shell";
+            eleValues = {
+              run: item["run"],
+              runsOn: item["runs-on"],
+            };
+          }
+          steps.push({
+            eleName: eleName,
+            eleValues: eleValues,
           });
-        }
-        const yaml = {
-          stage: key,
-          steps: steps,
-        }
-        yamlList.value.push(yaml);
+        });
       }
-    } catch (error: any) {
-      console.log("erro:",error)
+      const yaml = {
+        stage: key,
+        steps: steps,
+      };
+      yamlList.value.push(yaml);
     }
-  };
-  const lastStep = async () => {
-    router.push({ path: '/create' });
+  } catch (error: any) {
+    console.log("erro:", error);
   }
+};
+const lastStep = async () => {
+  router.push({ path: "/create" });
+};
 
-  const submitData = async () => {
-    try {
-      if (pipelineName.value === "" || pipelineName.value === null) {
-        message.error("Please input Pipeline Name");
-        return false;
-      }
-      const result = await apiAddPipeline(pipelineName.value, codeValue.value);
-      if (result.code === 400) {
-         message.error(result.message);
-      } else {
-        message.success(result.message);
-        router.push({ path: '/pipeline' });
-      }
-    } catch (error: any) {
-      console.log("erro:", error);
-      message.error("Failed");
+const submitData = async () => {
+  try {
+    if (pipelineName.value === "" || pipelineName.value === null) {
+      message.error("Please input Pipeline Name");
+      return false;
     }
-  }
-
-  const setYamlCode = async (isUsers: any, key: string, index: number, item: string, val: any) => {
-    const config = YAML.parse(codeValue.value);
-    if (isUsers) {
-      config["stages"][key]["steps"][index]["with"][item] = val;
+    const result = await apiAddPipeline(pipelineName.value, codeValue.value);
+    if (result.code === 400) {
+      message.error(result.message);
     } else {
-      config["stages"][key]["steps"][index][item] = val;
+      message.success(result.message);
+      router.push({ path: "/pipeline" });
     }
+  } catch (error: any) {
+    console.log("erro:", error);
+    message.error("Failed");
+  }
+};
 
-    codeValue.value = YAML.stringify(config)
+const setYamlCode = async (
+  isUsers: any,
+  key: string,
+  index: number,
+  item: string,
+  val: any
+) => {
+  const config = YAML.parse(codeValue.value);
+  if (isUsers) {
+    config["stages"][key]["steps"][index]["with"][item] = val;
+  } else {
+    config["stages"][key]["steps"][index][item] = val;
   }
 
-  const setYamlName = async () => {
-    pipelineName.value = pipelineName.value.replace(/\s+/g, '');
-    const config = YAML.parse(codeValue.value);
-    config["name"] = pipelineName.value
-    codeValue.value = YAML.stringify(config)
-  }
+  codeValue.value = YAML.stringify(config);
+};
+
+const setYamlName = async () => {
+  pipelineName.value = pipelineName.value.replace(/\s+/g, "");
+  const config = YAML.parse(codeValue.value);
+  config["name"] = pipelineName.value;
+  codeValue.value = YAML.stringify(config);
+};
 </script>
 <style scoped lang="less">
 .create {
   height: 100%;
+
+  .codeScrollHeight {
+    height: calc(100% - 56px);
+  }
 }
+
 @baseColor: #28c57c;
+
 :deep(.ant-btn) {
   border-radius: 6px;
 }
+
 :deep(.ant-btn-primary) {
   width: 120px;
   height: 40px;
 }
-:deep(.ant-btn-primary), :deep(.ant-btn-primary:hover), :deep(.ant-btn-primary:focus){
+:deep(.ant-btn-primary),
+:deep(.ant-btn-primary:hover),
+:deep(.ant-btn-primary:focus) {
   border-color: @baseColor;
   background: @baseColor;
 }
-:deep(.ant-btn-background-ghost.ant-btn-primary), :deep(.ant-btn-background-ghost.ant-btn-primary:hover), :deep(.ant-btn-background-ghost.ant-btn-primary:focus){
+:deep(.ant-btn-background-ghost.ant-btn-primary),
+:deep(.ant-btn-background-ghost.ant-btn-primary:hover),
+:deep(.ant-btn-background-ghost.ant-btn-primary:focus) {
   border-color: @baseColor;
   color: @baseColor;
 }
-:deep(.ant-input),:deep(.ant-input-affix-wrapper){
-  border-color: #EFEFEF;
+:deep(input::-webkit-input-placeholder) {
+  /* WebKit browsers */
+  color: @placeholderColor;
+}
+:deep(.ant-input),
+:deep(.ant-input-affix-wrapper) {
+  border-color: #efefef;
   border-radius: 6px;
 }
-@placeholderColor: #BCBEBC;
-:deep(input::-webkit-input-placeholder) { /* WebKit browsers */
+@placeholderColor: #bcbebc;
+:deep(input:-moz-placeholder) {
+  /* Mozilla Firefox 4 to 18 */
   color: @placeholderColor;
 }
-:deep(input:-moz-placeholder) { /* Mozilla Firefox 4 to 18 */
+:deep(input::-moz-placeholder) {
+  /* Mozilla Firefox 19+ */
   color: @placeholderColor;
 }
-:deep(input::-moz-placeholder) { /* Mozilla Firefox 19+ */
+:deep(input:-ms-input-placeholder) {
+  /* Internet Explorer 10+ */
   color: @placeholderColor;
 }
-:deep(input:-ms-input-placeholder) { /* Internet Explorer 10+ */
-  color: @placeholderColor;
+.normal-button {
+  width: 120px;
+  height: 40px;
+  border-radius: 6px;
 }
 </style>

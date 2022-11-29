@@ -7,10 +7,16 @@ import Create from "../views/pipeline/create/index.vue";
 import Edit from "../views/pipeline/edit/index.vue";
 import AllLogs from "../views/pipeline/allLogs/index.vue";
 import CreatePipeline from "../views/pipeline/create/config/index.vue";
+import Test from "../views/test/index.vue";
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
+    {
+      path: "/test",
+      name: "test",
+      component: Test,
+    },
     {
       path: "/home",
       name: "home",

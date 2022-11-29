@@ -1,6 +1,7 @@
 export default {
   createPipeline: "创建 pipeline",
   immediateImplementation: "立即执行",
+  manualTrigger: "手动触发",
   set: "设置",
   stop: "终止执行",
   noData: "暂无执行数据",

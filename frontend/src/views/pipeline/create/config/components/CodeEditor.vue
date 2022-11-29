@@ -64,7 +64,10 @@ export default {
         fontSize: 16,
         scrollBeyondLastLine: false,
         overviewRulerBorder: false,
-        fixedOverflowWidgets: true,
+        fixedOverflowWidgets: false,
+        scrollbar: {
+          alwaysConsumeMouseWheel: false,
+        },
       });
       // Monitoring value change
       monacoEditor.onDidChangeModelContent(() => {
@@ -73,17 +76,18 @@ export default {
         emit("getYamlValue", currenValue);
       });
     });
-    return { };
+    return {};
   },
 };
 </script>
 <style scoped lang="less">
 .code-editor {
   width: 100%;
-  height: 92%;
+  height: 100%;
 }
+
 :deep(.monaco-editor),
-:deep(.overflow-guard){
+:deep(.overflow-guard) {
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
 }

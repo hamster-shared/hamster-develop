@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto bg-white py-[32px] mx-[24px] rounded-xl">
+  <div class="mx-auto bg-white p-[24px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-4">
       <a-input
         v-model:value="searchValue"
@@ -23,58 +23,95 @@
       <a-spin :spinning="isLoading" />
     </div>
     <template v-else-if="pipelineList && pipelineList.length > 0">
-      <a-card v-for="(data, index) in pipelineList" :key="index" @click="$router.push(`/pipeline/${data.name}`)">
+      <a-card
+        v-for="(data, index) in pipelineList"
+        :key="index"
+        @click="$router.push(`/pipeline/${data.name}`)"
+      >
         <div class="grid grid-cols-3 cursor-pointer">
           <div>
             <div class="mb-3 text-xl font-semibold text-[#121211]">
               {{ data.name }}
             </div>
-            <div class="mb-3 text-sm font-normal text-[#7B7D7B]">
-              {{ data.description }}
+            <div
+              class="mb-3 text-sm font-normal text-[#7B7D7B]"
+              v-if="data.status != 0"
+            >
+              {{ $t("pipeline.manualTrigger") }}
             </div>
             <div>
-              <div v-if="data.status == 0" class="text-sm font-normal text-[#7B7D7B]">
+              <div
+                v-if="data.status == 0"
+                class="text-sm font-normal text-[#7B7D7B]"
+              >
                 {{ $t("pipeline.noData") }}
               </div>
               <div
                 v-if="data.status == 1"
                 class="text-sm font-normal text-[#2C5AFF]"
               >
-                <img src="@/assets/images/run.gif" class="h-[24px] w-[24px]" />
+                <img src="@/assets/images/run.gif" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.running") }}
               </div>
-              <div v-if="data.status == 3" class="text-sm font-normal text-[#2DCE83]">
-                <img :src="successSVG" />
+              <div
+                v-if="data.status == 3"
+                class="text-sm font-normal text-[#2DCE83]"
+              >
+                <img :src="successSVG" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.successfulImplementation") }}
               </div>
-              <div v-if="data.status == 2" class="text-sm font-normal text-[#F52222]">
-                <img :src="failedSVG" />
+              <div
+                v-if="data.status == 2"
+                class="text-sm font-normal text-[#F52222]"
+              >
+                <img :src="failedSVG" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.pushFailed") }}
               </div>
-              <div v-if="data.status == 4" class="text-sm font-normal text-[#FF842C]">
-                <img :src="stopSVG" />
+              <div
+                v-if="data.status == 4"
+                class="text-sm font-normal text-[#FF842C]"
+              >
+                <img :src="stopSVG" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.userTermination") }}
               </div>
             </div>
           </div>
-          <div class="text-center cursor-pointer place-self-center" @click="$router.push(`/pipeline/${data.name}`)">
-            <span class="text-sm font-normal bg-[#F8F8F8] py-2 px-3 rounded text-[#3F4641] block mb-3" v-if="
-              data?.startTime && data?.startTime != '0001-01-01T00:00:00Z'
-            ">{{ fromNowexecutionTime(data.startTime, "operation") }}</span>
-            <span class="text-xs" v-if="data?.duration && data?.duration != 0">
-              <img :src="wasteTimeSVG" />
+          <div
+            class="text-center cursor-pointer place-self-center"
+            @click="$router.push(`/pipeline/${data.name}`)"
+          >
+            <span
+              class="text-sm font-normal bg-[#F8F8F8] py-2 px-3 rounded text-[#3F4641] block mb-3"
+              v-if="
+                data?.startTime && data?.startTime != '0001-01-01T00:00:00Z'
+              "
+              >{{ fromNowexecutionTime(data.startTime, "operation") }}</span
+            >
+            <span class="text-sm" v-if="data?.duration && data?.duration != 0">
+              <img :src="wasteTimeSVG" class="h-[20px] w-[20px]" />
               {{ formatDurationTime(data.duration, "elapsedTime") }}
             </span>
           </div>
           <div class="set-exec-btn">
-            <a-button type="primary" v-if="data.status !== 1" @click.stop="handleImmediateImplementation(data.name)">
+            <a-button
+              type="primary"
+              v-if="data.status !== 1"
+              @click.stop="handleImmediateImplementation(data.name)"
+            >
               {{ $t("pipeline.immediateImplementation") }}
             </a-button>
-            <a-button type="primary" danger v-if="data.status === 1"
-              @click.stop="handleStopExec(data.name, data.pipelineDetailId)">
+            <a-button
+              type="primary"
+              danger
+              v-if="data.status === 1"
+              @click.stop="handleStopExec(data.name, data.pipelineDetailId)"
+            >
               {{ $t("pipeline.stop") }}
             </a-button>
-            <a-button class="normal-button" @click.stop="handleToEditPage(data.name)">{{ $t("pipeline.set") }}
+            <a-button
+              class="normal-button"
+              @click.stop="handleToEditPage(data.name)"
+              >{{ $t("pipeline.set") }}
             </a-button>
           </div>
         </div>
@@ -222,7 +259,8 @@ onMounted(() => {
 }
 
 .ant-card-bordered:hover {
-  box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.1);
+  border: 1px solid #28c57c;
+  box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.2);
 }
 
 .ant-btn {
@@ -231,17 +269,6 @@ onMounted(() => {
   height: 40px;
   border-radius: 6px;
   font-size: 12px;
-
-  &:hover,
-  &:focus {
-    color: #28c57c;
-    border-color: #28c57c;
-  }
-}
-
-.normal-button {
-  color: #28c57c;
-  border-color: #28c57c;
 }
 
 .ant-btn-primary {
@@ -250,14 +277,6 @@ onMounted(() => {
   width: 120px;
   height: 40px;
   background: #28c57c;
-  border-color: #28c57c;
-
-  &:hover,
-  &:focus {
-    border-color: #28c57c;
-    background: #28c57c;
-    color: white;
-  }
 }
 
 .ant-btn-dangerous.ant-btn-primary {

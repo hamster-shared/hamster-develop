@@ -3,6 +3,43 @@
 @tailwind components;
 @tailwind utilities;
 
+  .ant-btn-primary{
+    background: #28c57c;
+    color: white !important;
+
+  }
+  .ant-btn-primary:hover,.ant-btn-primary:focus{
+    background: #28c57c !important;
+    color: white !important;
+    border-color:#28C57C !important;
+  }
+
+  .ant-btn{
+    border-color:#28C57C !important;
+  }
+  .ant-btn:hover,.ant-btn:focus{
+    border-color:#28C57C !important;
+    color: white !important;
+  }
+
+  .normal-button,.normal-button:hover{
+    color: #28c57c !important;
+    border-color: #28c57c;
+  }
+
+  .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover,.ant-input:hover{
+    border-color: #28c57c !important;
+  }
+
+  .ant-switch-checked{
+    background-color:#28C57C !important;
+  }
+
+  .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused{
+    border-color: #28c57c !important;
+    box-shadow: unset !important;
+  }
+
 /* #app {
   max-width: 1280px;
   margin: 0 auto;
