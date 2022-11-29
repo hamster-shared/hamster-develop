@@ -10,51 +10,30 @@
         </div>
         <div>
           <a-button type="primary" @click="backStep" ghost>{{
-            $t("template.discardChange")
+              $t("template.discardChange")
           }}</a-button>
           <a-button type="primary" class="ml-4" @click="showModal">{{
-            $t("template.saveBtn")
+              $t("template.saveBtn")
           }}</a-button>
         </div>
       </div>
     </div>
     <!-- :style="{ height: mainHeight }" -->
-    <div
-      class="mx-[24px] rounded-[12px] mb-[24px]"
-      :style="{ height: mainHeight }"
-    >
-      <CodeEditor
-        @getYamlValue="getYamlValue"
-        :readOnly="false"
-        :value="codeValue"
-      ></CodeEditor>
+    <div class="mx-[24px] rounded-[12px] mb-[24px]" :style="{ height: mainHeight }">
+      <CodeEditor @getYamlValue="getYamlValue" :readOnly="false" :value="codeValue"></CodeEditor>
     </div>
   </div>
 
-  <a-modal
-    :getContainer="false"
-    v-model:visible="visible"
-    :title="$t('template.modalTitle')"
-    :footer="null"
-  >
+  <a-modal :getContainer="false" v-model:visible="visible" :title="$t('template.modalTitle')" :footer="null">
     <div class="mb-8">
       <div class="flex justify-between mb-2">Pipeline Name</div>
-      <a-input
-        v-model:value="pipelineName"
-        placeholder="Pipeline Name"
-        allow-clear
-      />
+      <a-input v-model:value="pipelineName" placeholder="Pipeline Name" allow-clear />
     </div>
     <div class="text-center">
       <a-button type="primary" @click="visible = false" ghost>{{
-        $t("template.cancelBtn")
+          $t("template.cancelBtn")
       }}</a-button>
-      <a-button
-        type="primary"
-        :loading="confirmLoading"
-        class="ml-4"
-        @click="handleOk"
-        >{{ $t("template.saveBtn") }}
+      <a-button type="primary" :loading="confirmLoading" class="ml-4" @click="handleOk">{{ $t("template.saveBtn") }}
       </a-button>
     </div>
   </a-modal>
