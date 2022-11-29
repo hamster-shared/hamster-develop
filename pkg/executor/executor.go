@@ -77,7 +77,11 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 
 	engineContext := make(map[string]interface{})
 	engineContext["hamsterRoot"] = path.Join(homeDir, "workdir")
-	engineContext["workdir"] = path.Join(engineContext["hamsterRoot"].(string), job.Name)
+	workdir := path.Join(engineContext["hamsterRoot"].(string), job.Name)
+	engineContext["workdir"] = workdir
+
+	err = os.MkdirAll(workdir, os.ModePerm)
+
 	engineContext["name"] = job.Name
 	engineContext["id"] = fmt.Sprintf("%d", id)
 	engineContext["env"] = env
