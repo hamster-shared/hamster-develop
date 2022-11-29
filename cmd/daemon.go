@@ -5,11 +5,11 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/hamster-shared/a-line/pkg/consts"
 	"github.com/hamster-shared/a-line/pkg/controller"
 	"github.com/hamster-shared/a-line/pkg/dispatcher"
 	"github.com/hamster-shared/a-line/pkg/executor"
 	"github.com/hamster-shared/a-line/pkg/model"
-
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +37,7 @@ to quickly create a Cobra application.`,
 
 		go executeClient.Main()
 
-		controller.NewHttpService(*handlerServer).StartHttpServer()
+		controller.NewHttpService(*handlerServer).StartHttpServer(consts.WEB_PORT)
 
 	},
 }
@@ -54,4 +54,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// daemonCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	controller.OpenWeb(consts.WEB_PORT)
 }

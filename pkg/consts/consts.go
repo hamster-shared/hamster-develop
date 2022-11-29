@@ -8,8 +8,9 @@ const (
 )
 
 const (
-	LANG_EN = "en"
-	LANG_ZH = "zh"
+	LANG_EN  = "en"
+	LANG_ZH  = "zh"
+	WEB_PORT = 8080
 )
 
 const (

@@ -2,9 +2,12 @@ package controller
 
 import (
 	"embed"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/fs"
 	"net/http"
+	"os/exec"
+	"runtime"
 )
 
 //go:embed dist
@@ -20,7 +23,7 @@ func NewHttpService(handlerServer HandlerServer) *HttpServer {
 	}
 }
 
-func (h *HttpServer) StartHttpServer() {
+func (h *HttpServer) StartHttpServer(port int) {
 	r := gin.Default()
 	api := r.Group("/api")
 	//create pipeline job
@@ -57,5 +60,27 @@ func (h *HttpServer) StartHttpServer() {
 	})
 	fe, _ := fs.Sub(content, "dist")
 	r.NoRoute(gin.WrapH(http.FileServer(http.FS(fe))))
-	r.Run(":8080") // listen and serve on
+	r.Run(fmt.Sprintf(":%d", port)) // listen and serve on
+}
+
+var commands = map[string]string{
+	"windows": "start",
+	"darwin":  "open",
+	"linux":   "xdg-open",
+}
+
+func OpenWeb(port int) error {
+	run, ok := commands[runtime.GOOS]
+	if !ok {
+		return fmt.Errorf("don't know how to open things on %s platform", runtime.GOOS)
+	}
+
+	var cmd *exec.Cmd
+
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd.exe", "/c", fmt.Sprintf("start http://127.0.0.1:%d", port))
+	} else {
+		cmd = exec.Command(run, fmt.Sprintf("http://127.0.0.1:%d", port))
+	}
+	return cmd.Start()
 }
