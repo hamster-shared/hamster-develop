@@ -94,6 +94,9 @@ const changeLangEn =()=>{
   background: white;
   color: #BCBEBC !important;
 }
+.changeZh:hover{
+  color: white;
+}
 
 .langZh{
   width: 40px;
@@ -116,6 +119,9 @@ const changeLangEn =()=>{
 .langZh:hover{
   background: white;
   color: #BCBEBC !important;
+}
+.langEn:hover{
+  color: white !important;
 }
 
 </style>
