@@ -315,8 +315,8 @@ onMounted(() => {
 
 :deep(.ant-table table) {
   text-align: center;
-  border: 1px solid #f8f8f8;
-  box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.1);
+  border: unset;
+  box-shadow: unset;
   border-radius: 12px;
 }
 
@@ -335,6 +335,10 @@ onMounted(() => {
   .color-next-page {
     color: #28c57c;
   }
+}
+
+:deep(.ant-table-tbody > tr:last-child > td){
+  border-bottom: 0px solid !important;
 }
 
 ol,
@@ -394,4 +398,5 @@ dl {
   align-items: center;
   height: 77px;
 }
+
 </style>
