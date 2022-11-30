@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/hamster-shared/a-line/pkg/consts"
 	"github.com/hamster-shared/a-line/pkg/controller/parameters"
 	"github.com/hamster-shared/a-line/pkg/dispatcher"
 	"github.com/hamster-shared/a-line/pkg/model"
@@ -257,6 +258,9 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 // getTemplates get template list
 func (h *HandlerServer) getTemplates(gin *gin.Context) {
 	lang := gin.Request.Header.Get("lang")
+	if lang == "" {
+		lang = consts.LANG_EN
+	}
 	data := h.templateService.GetTemplates(lang)
 	Success(data, gin)
 }

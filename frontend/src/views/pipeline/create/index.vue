@@ -172,7 +172,7 @@ const checkDivHeight = (className: string) => {
 }
 
 .card-item {
-  @apply p-4 grid grid-cols-6 gap-4 cursor-pointer;
+  @apply p-6 grid grid-cols-6 gap-4 cursor-pointer;
   border: 1px solid #efefef;
   border-radius: 12px;
 }

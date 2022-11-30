@@ -59,14 +59,7 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	stack := a.ctx.Value(STACK).(map[string]interface{})
 
-	pipelineName := stack["name"].(string)
-
 	logger.Infof("git stack: %v", stack)
-
-	hamsterRoot := stack["hamsterRoot"].(string)
-
-	_ = os.MkdirAll(hamsterRoot, os.ModePerm)
-	_ = os.Remove(path.Join(hamsterRoot, pipelineName))
 
 	// before
 	//commands := []string{"git", "clone", "--progress", a.repository, "-b", a.branch, pipelineName}
@@ -78,7 +71,13 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 	command := "git rev-parse --is-inside-work-tree"
 	_, err := a.ExecuteStringCommand(command)
 	if err != nil {
-		return nil, err
+
+		command = "git init"
+		_, err = a.ExecuteStringCommand(command)
+		if err != nil {
+			return nil, err
+		}
+
 	}
 
 	command = "git fetch --tags --progress " + a.repository + " +refs/heads/*:refs/remotes/origin/*"
@@ -117,11 +116,11 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 		return nil, err
 	}
 
-	command = "git config core.sparsecheckout "
-	_, err = a.ExecuteStringCommand(command)
-	if err != nil {
-		return nil, err
-	}
+	//command = "git config core.sparsecheckout "
+	//_, err = a.ExecuteStringCommand(command)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	command = "git branch -a -v --no-abbrev"
 	_, err = a.ExecuteStringCommand(command)

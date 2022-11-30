@@ -83,3 +83,10 @@ export function apiGetPipeline(name: String) {
     method: "get",
   });
 }
+
+export function apiDeletePipelineList(name: string) {
+  return httpRequest({
+    url: `/pipeline/${name}`,
+    method: "delete",
+  });
+}

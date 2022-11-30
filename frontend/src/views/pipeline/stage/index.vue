@@ -329,7 +329,7 @@ onMounted(() => {
 }
 
 :deep(.ant-table-tbody > tr > td) {
-  font-size: 12px;
+  font-size: 14px;
   color: #7b7d7b;
 
   .color-next-page {
@@ -392,6 +392,6 @@ dl {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 70.7px;
+  height: 77px;
 }
 </style>

@@ -15,4 +15,6 @@ export default {
   SMART_CONTRACT_TEMPLATE: "SMART_CONTRACT_TEMPLATE",
   DAPP_TEMPLATE: "DAPP_TEMPLATE",
   DAPP_TEMPLATE_Frontend: "DAPP_TEMPLATE(Frontend)",
+  cannotEmpty: 'This field cannot be empty',
+  deletePipeline: 'Delete pipeline',
 };
