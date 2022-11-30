@@ -24,12 +24,21 @@
 </template>
 <script lang="ts" setup>
 import DefaultHeader from "../../components/DefaultHeader/index.vue";
+// import Breadcrumb from '@/components/Breadcrumb.vue'
 import { RouterView, useRoute } from "vue-router";
-import { computed } from "vue";
+import { computed, reactive } from "vue";
 const routes = useRoute();
+
+// const showBreadcrumbPathList = reactive(['Process', 'stage'])
+
 const layoutClass = computed(() => {
   return routes.meta.layoutClass;
 });
+
+// const showBreadcrumb = computed(() => {
+//   return showBreadcrumbPathList.includes(routes.name);
+// });
+
 </script>
 <style lang="less" scoped>
 .ant-layout {
@@ -39,7 +48,7 @@ const layoutClass = computed(() => {
 .layout-default-content {
   width: 100%;
   // padding: 24px;
-  background-color: #ffffff;
+  // background-color: #ffffff;
   max-width: 1440px;
   min-width: 1080px;
   margin: 16px auto;

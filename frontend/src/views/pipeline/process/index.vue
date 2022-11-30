@@ -1,5 +1,6 @@
 <template>
-  <div class="process">
+  <Breadcrumb :currentName="'构建记录' + queryJson.id" />
+  <div class="process bg-[#ffffff] ">
     <div class="bg-[#121211] rounded-t-[12px] h-[92px] p-[24px] text-center">
       <a-row>
         <a-col :span="6">
@@ -33,9 +34,9 @@
             </div>
             <div class="process-detail-info">
               {{
-                state.running
-                  ? "-"
-                  : formatDurationTime(jobData.duration, "noThing")
+                  state.running
+                    ? "-"
+                    : formatDurationTime(jobData.duration, "noThing")
               }}
             </div>
           </div>
@@ -46,72 +47,35 @@
       <div class="process-content">
         <div class="flex justify-between">
           <span class="process-content-title">{{
-            $t("log.executionProcess")
+              $t("log.executionProcess")
           }}</span>
-          <span
-            class="text-[14px] text-[#28C57C] cursor-pointer"
-            @click="checkAllLogs"
-            >{{ $t("log.viewAllLogs") }}</span
-          >
+          <span class="text-[14px] text-[#28C57C] cursor-pointer" @click="checkAllLogs">{{ $t("log.viewAllLogs")
+          }}</span>
         </div>
         <div class="process-scroll-box wrapper" ref="wrapper">
           <div class="process-scroll content">
             <div class="inline-block execution_process_item">
-              <div
-                class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]"
-              >
-                <img
-                  src="@/assets/icons/Frame.svg"
-                  class="w-[28px] mr-[24px] align-middle"
-                />
+              <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]">
+                <img src="@/assets/icons/Frame.svg" class="w-[28px] mr-[24px] align-middle" />
                 <span class="align-middle">
-                  <span
-                    class="text-[16px] text-[#121211] font-semibold mr-[24px]"
-                    >{{ $t("log.start") }}</span
-                  >
+                  <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">{{ $t("log.start") }}</span>
                 </span>
               </div>
-              <img
-                src="@/assets/images/arrow-green.jpg"
-                class="w-[28px] space-mark ml-[20px] mr-[20px]"
-              />
+              <img src="@/assets/images/arrow-green.jpg" class="w-[28px] space-mark ml-[20px] mr-[20px]" />
             </div>
-            <div
-              v-for="item in jobData.stages"
-              :key="item.name"
-              class="inline-block execution_process_item"
-            >
-              <div
-                class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]"
-                :class="item.status === 0 ? '' : 'cursorP'"
-                @click="checkProcess(item, $event)"
-              >
-                <img
-                  :src="getImageUrl(item.status)"
-                  class="w-[28px] mr-[24px] align-middle"
-                  v-if="item.status !== 1"
-                />
-                <img
-                  src="@/assets/images/run.gif"
-                  class="w-[28px] mr-[24px] align-middle"
-                  v-else
-                />
+            <div v-for="item in jobData.stages" :key="item.name" class="inline-block execution_process_item">
+              <div class="inline-block border border-solid border-[#EFEFEF] p-[12px] rounded-[5px]"
+                :class="item.status === 0 ? '' : 'cursorP'" @click="checkProcess(item, $event)">
+                <img :src="getImageUrl(item.status)" class="w-[28px] mr-[24px] align-middle" v-if="item.status !== 1" />
+                <img src="@/assets/images/run.gif" class="w-[28px] mr-[24px] align-middle" v-else />
                 <span class="align-middle">
-                  <span
-                    class="text-[16px] text-[#121211] font-semibold mr-[24px]"
-                    >{{ item.name }}</span
-                  >
-                  <span
-                    class="text-[16px] text-[#7B7D7B]"
-                    v-if="item.status !== 0"
-                    >{{ formatDurationTime(item.duration, "noThing") }}</span
-                  >
+                  <span class="text-[16px] text-[#121211] font-semibold mr-[24px]">{{ item.name }}</span>
+                  <span class="text-[16px] text-[#7B7D7B]" v-if="item.status !== 0">{{ formatDurationTime(item.duration,
+                      "noThing")
+                  }}</span>
                 </span>
               </div>
-              <img
-                src="@/assets/images/arrow-green.jpg"
-                class="w-[28px] space-mark ml-[20px] mr-[20px]"
-              />
+              <img src="@/assets/images/arrow-green.jpg" class="w-[28px] space-mark ml-[20px] mr-[20px]" />
             </div>
           </div>
           <div class="custom-horizontal-scrollbar" ref="horizontal">
@@ -119,35 +83,21 @@
           </div>
         </div>
       </div>
-      <div
-        class="process-content"
-        v-if="jobData.actionResult.artifactorys.length > 0"
-      >
+      <div class="process-content" v-if="jobData.actionResult.artifactorys.length > 0">
         <div class="process-content-title">{{ $t("log.artifats") }}</div>
         <div class="text-[#7B7D7B]">
-          <div
-            v-for="it in jobData.actionResult.artifactorys"
-            :key="it.id"
-            class="text-[#1890ff] cursor-pointer"
-            @click="openNewUrl(it.url)"
-          >
+          <div v-for="it in jobData.actionResult.artifactorys" :key="it.id" class="text-[#1890ff] cursor-pointer"
+            @click="openNewUrl(it.url)">
             {{ it.url }}
           </div>
           <!-- <a-empty v-if="jobData.actionResult.artifactorys.length <= 0" /> -->
         </div>
       </div>
-      <div
-        class="process-content"
-        v-if="jobData.actionResult.reports.length > 0"
-      >
+      <div class="process-content" v-if="jobData.actionResult.reports.length > 0">
         <div class="process-content-title">{{ $t("log.report") }}</div>
         <div class="text-[#7B7D7B]">
-          <div
-            v-for="it in jobData.actionResult.reports"
-            :key="it.id"
-            class="text-[#1890ff] cursor-pointer"
-            @click="openNewUrl(it.url)"
-          >
+          <div v-for="it in jobData.actionResult.reports" :key="it.id" class="text-[#1890ff] cursor-pointer"
+            @click="openNewUrl(it.url)">
             {{ it.url }}
           </div>
           <!-- <a-empty v-if="jobData.actionResult.reports.length <= 0" /> -->
@@ -160,7 +110,7 @@
 </template>
 <script lang="ts" setup>
 import { ref, onMounted, reactive, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { apiGetJobStageLogs, apiCheekArtifactorys } from "@/apis/jobs";
 import { apiGetPipelineDetail } from "@/apis/pipeline";
 import {
@@ -170,9 +120,10 @@ import {
 import BScroll from "@better-scroll/core";
 import Scrollbar from "@better-scroll/scroll-bar";
 import ProcessModal from "./components/ProcessModal.vue";
-import { message } from "ant-design-vue";
+import Breadcrumb from '@/views/components/Breadcrumb.vue'
 
 BScroll.use(Scrollbar);
+const route = useRoute();
 const router = useRouter();
 const processModalRef = ref();
 const horizontal = ref();
@@ -271,6 +222,7 @@ const openNewUrl = async (url: string) => {
 
 onMounted(async () => {
   await getPipelineDetail();
+  route.meta.breadcrumbName = router.currentRoute.value.params.id;
   let scroll = new BScroll(wrapper.value, {
     startX: 0,
     scrollX: true,
@@ -292,6 +244,8 @@ onUnmounted(() => {
 .process {
   width: 100%;
   font-size: 14px;
+  // background-color: #ffffff;
+  border-radius: 12px;
 
   .process-detail-item {
     position: relative;

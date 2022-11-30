@@ -32,12 +32,15 @@ const router = createRouter({
     },
     {
       path: "/pipeline/:name/:id",
-      name: "process",
+      name: "Process",
       component: Process,
+      meta:{
+        breadcrumbName: '',
+      }
     },
     {
       path: "/allLogs/:name/:id",
-      name: "allLogs",
+      name: "AllLogs",
       component: AllLogs,
       meta: {
         title: "全部日志",

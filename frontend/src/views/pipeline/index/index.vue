@@ -18,7 +18,8 @@
       <a-spin :spinning="isLoading" />
     </div>
     <template v-else-if="pipelineList && pipelineList.length > 0">
-      <a-card v-for="(data, index) in pipelineList" :key="index" @click="$router.push(`/pipeline/${data.name}`)">
+      <!-- <a-card v-for="(data, index) in pipelineList" :key="index" @click="$router.push(`/pipeline/${data.name}`)"> -->
+      <a-card v-for="(data, index) in pipelineList" :key="index" @click="toPilelinePath(data.name)">
         <div class="grid grid-cols-3 cursor-pointer">
           <div>
             <div class="mb-3 text-xl font-semibold text-[#121211]">
@@ -159,7 +160,11 @@ const handleSearch = async () => {
   }
 };
 
-const handleToEditPage = (name) => {
+const toPilelinePath = (name: string) => {
+  router.push(`/pipeline/${name}`)
+}
+
+const handleToEditPage = (name: string) => {
   router.push(`/edit/${name}`);
 };
 

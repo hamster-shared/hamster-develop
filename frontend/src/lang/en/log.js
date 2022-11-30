@@ -10,4 +10,5 @@ export default {
   ago: "ago",
   artifats: "Artifats",
   report: "Report",
+  buildRecords: "Build Records",
 };
