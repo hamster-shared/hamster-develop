@@ -226,8 +226,6 @@ const getStageLogsData = async (item: any, start = 0) => {
   } else {
     clearTimeout(state.stagesTimer);
   }
-
-
 };
 
 const terminationOfeExecution = async () => {
