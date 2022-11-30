@@ -195,6 +195,7 @@ const checkProcess = async (item: any, e: Event) => {
   } else {
     stagesData.title = item.name;
     processModalRef.value.showVisible();
+    stagesData.content = []
     await getStageLogsData(item);
   }
 };
@@ -205,12 +206,18 @@ const getStageLogsData = async (item: any, start = 0) => {
     start: start,
   });
   const { data } = await apiGetJobStageLogs(query);
-  if (data.end) {
-    stagesData.content = data?.content?.split("\r");
-  } else {
-    let t = data?.content?.split("\r");
-    stagesData.content.push(t);
+  let t = data?.content?.split("\r");
+  if (data.content) {
+    t.forEach(item => {
+      stagesData.content.push(item)
+    })
   }
+  // if (data.end) {
+  //   stagesData.content = data?.content?.split("\r");
+  // } else {
+  //   let t = data?.content?.split("\r");
+  //   stagesData.content.push(t);
+  // }
 
   if (!data.end && processModalRef.value.visible) {
     state.stagesTimer = setTimeout(() => {
@@ -219,6 +226,8 @@ const getStageLogsData = async (item: any, start = 0) => {
   } else {
     clearTimeout(state.stagesTimer);
   }
+
+
 };
 
 const terminationOfeExecution = async () => {
