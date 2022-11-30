@@ -10,7 +10,7 @@ interface GegJobStagelogsParams {
   name: string;
   stagename: string;
   start: number;
-  lastLine: number;
+  // lastLine: number;
 }
 
 // 查看所有日志  /pipeline/:name/logs/:id
@@ -19,7 +19,7 @@ export function apiGetAllJobLogs(params: GegJobLogsParams) {
     url: `/pipeline/${params.name}/logs/${params.id}`,
     // url:'https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/pipeline/:name/logs/:id?apipost_id=a005bc',
     method: "get",
-    params: params,
+    // params: params,
   });
 }
 
@@ -29,7 +29,7 @@ export function apiGetJobStageLogs(params: GegJobStagelogsParams) {
     url: `/pipeline/${params.name}/logs/${params.id}/${params.stagename}`,
     // url:'https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/pipeline/:name/logs/:id/:stagename?apipost_id=510db1',
     method: "get",
-    params: params,
+    // params: params,
   });
 }
 
@@ -39,6 +39,6 @@ export function apiCheekArtifactorys(params: GegJobLogsParams) {
     url: `/pipeline/${params.name}/detail/${params.id}/artifactory`,
     // url:'https://console-mock.apipost.cn/mock/ae73cd30-20d8-4975-b034-48b34891e956/pipeline/:name/logs/:id/:stagename?apipost_id=510db1',
     method: "get",
-    params: params,
+    // params: params,
   });
 }

@@ -146,22 +146,6 @@ const checkDivHeight = (className: string) => {
   font-size: 14px;
 }
 
-// :deep(.ant-tabs) {
-//   color: #7b7d7b;
-// }
-
-// :deep(.ant-tabs-tab:hover) {
-//   color: @baseColor;
-// }
-
-// :deep(.ant-tabs-tab-btn:hover) {
-//   color: @baseColor;
-// }
-
-// :deep(.ant-tabs-ink-bar) {
-//   background: @baseColor;
-// }
-
 :deep(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
   @apply font-semibold;
   color: #121211;
@@ -217,29 +201,6 @@ const checkDivHeight = (className: string) => {
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
-
-// :deep(.ant-btn) {
-//   border-radius: 6px;
-// }
-
-// :deep(.ant-btn-primary) {
-//   width: 120px;
-//   height: 40px;
-// }
-
-// :deep(.ant-btn-primary),
-// :deep(.ant-btn-primary:hover),
-// :deep(.ant-btn-primary:focus) {
-//   border-color: @baseColor;
-//   background: @baseColor;
-// }
-
-// :deep(.ant-btn-background-ghost.ant-btn-primary),
-// :deep(.ant-btn-background-ghost.ant-btn-primary:hover),
-// :deep(.ant-btn-background-ghost.ant-btn-primary:focus) {
-//   border-color: @baseColor;
-//   color: @baseColor;
-// }
 
 .check-border {
   border-color: @baseColor;

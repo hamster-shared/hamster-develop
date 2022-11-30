@@ -2,7 +2,7 @@
   <div class="flex justify-between">
     <Breadcrumb :currentName="pathName" />
     <div>
-      <a-button class="mr-2 normal-button" @click="handleToEditPage()">{{
+      <a-button class="mr-2" @click="handleToEditPage()">{{
           $t("pipeline.stage.set")
       }}</a-button>
       <a-button type="primary" @click="handleImmediateImplementation">
@@ -12,7 +12,7 @@
 
   <div class="bg-white rounded-xl pb-[24px]">
     <div class="loading-page" v-if="isLoading">
-      <a-spin :spinning="isLoading" />
+      <a-spin :spinning="isLoading" class="pt-[24px]" />
     </div>
 
     <template v-else-if="jobs && jobs.length > 0">
@@ -70,7 +70,7 @@
         </template>
       </a-table>
     </template>
-    <a-empty v-else />
+    <a-empty class="pt-[24px]" v-else />
   </div>
 </template>
 
@@ -272,35 +272,6 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.ant-btn {
-  font-size: 12px;
-  border-radius: 6px;
-  width: 120px;
-  height: 40px;
-
-  &:hover,
-  &:focus {
-    color: #28c57c;
-    border-color: #28c57c;
-  }
-}
-
-.normal-button {
-  color: #28c57c;
-  border-color: #28c57c;
-}
-
-.ant-btn-primary {
-  background: #28c57c;
-
-  &:hover,
-  &:focus {
-    border-color: #28c57c;
-    background: #28c57c;
-    color: white;
-  }
-}
-
 .loading-page {
   text-align: center;
 }
@@ -337,14 +308,8 @@ onMounted(() => {
   }
 }
 
-:deep(.ant-table-tbody > tr:last-child > td){
+:deep(.ant-table-tbody > tr:last-child > td) {
   border-bottom: 0px solid !important;
-}
-
-ol,
-ul,
-dl {
-  margin-bottom: 0px;
 }
 
 :deep(.ant-table-pagination-right) {
@@ -361,33 +326,6 @@ dl {
   margin-bottom: 0px;
 }
 
-:deep(.ant-pagination-item-active) {
-  background: #28c57c;
-  border-color: #28c57c;
-
-  & a {
-    color: white;
-  }
-}
-
-:deep(.ant-pagination-item:hover a) {
-  color: #28c57c !important;
-}
-
-:deep(.ant-pagination-prev:hover),
-:deep(.ant-pagination-next:hover) {
-  .ant-pagination-item-link {
-    color: #28c57c;
-  }
-}
-
-:deep(.ant-pagination-jump-prev),
-:deep(.ant-pagination-jump-next) {
-  .ant-pagination-item-container .ant-pagination-item-link-icon {
-    color: #28c57c;
-  }
-}
-
 :deep(.ant-pagination-item-active:hover a) {
   color: white !important;
 }
@@ -398,5 +336,4 @@ dl {
   align-items: center;
   height: 77px;
 }
-
 </style>

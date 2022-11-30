@@ -1,23 +1,15 @@
 <template>
   <div class="default-header h-[64px] bg-[#ccc] flex justify-between">
     <div>
-      <img
-        src="@/assets/images/logo.jpg"
-        class="h-[28px] mt-[18px] mb-[18px] cursor-pointer"
-        @click="goHome"
-      />
+      <img src="@/assets/images/logo.jpg" class="h-[28px] mt-[18px] mb-[18px] cursor-pointer" @click="goHome" />
     </div>
     <div>
-      <a-button @click="changeLangZh" class="align-middle" :class="languageZhClick=='true'?'changeZh':'changeEn'"
-        >中</a-button
-      >
-      <a-button @click="changeLangEn" class="align-middle mr-[32px]" :class="language=='en'?'langEn':'langZh'"
-        >EN</a-button
-      >
-      <img
-        src="@/assets/icons/fill.svg"
-        class="mt-[16px] mb-[16px] mr-[32px]"
-      />
+      <a-button @click="changeLangZh" class="align-middle" :class="languageZhClick == 'true' ? 'changeZh' : 'changeEn'">
+        中
+      </a-button>
+      <a-button @click="changeLangEn" class="align-middle mr-[32px]" :class="language == 'en' ? 'langEn' : 'langZh'">EN
+      </a-button>
+      <img src="@/assets/icons/fill.svg" class="mt-[16px] mb-[16px] mr-[32px]" />
       <img src="@/assets/icons/git.svg" class="mt-[16px] mb-[16px]" />
     </div>
   </div>
@@ -34,12 +26,12 @@ const goHome = () => {
   router.push("/pipeline");
 };
 
-const changeLangZh = ()=>{
+const changeLangZh = () => {
   window.localStorage.setItem("language", "zh");
   window.localStorage.setItem("languageZhClick", 'true');
   location.reload();
 }
-const changeLangEn =()=>{
+const changeLangEn = () => {
   window.localStorage.setItem("language", "en");
   window.localStorage.setItem("languageZhClick", 'false');
   location.reload();
@@ -60,62 +52,57 @@ const changeLangEn =()=>{
 }
 
 .ant-btn {
-  width: 60px;
+  width: 40px;
   height: 32px;
-  border-radius: 6px;
-  font-size: 12px;
+  font-size: 16px;
+  padding: 0;
 
   &:hover,
   &:focus {
-    color: #28c57c;
+    color: #fff;
     border-color: #28c57c;
   }
 }
 
-.changeZh{
-  width: 40px;
-  height: 32px;
-  font-size: 16px;
-  padding: 0px;
+.changeZh {
   background: #28c57c;
   color: white;
   border-radius: 6px 0px 0px 6px;
 }
-.changeEn{
-  width: 40px;
-  height: 32px;
-  font-size: 16px;
-  padding: 0px;
+
+.changeEn {
   background: white;
   color: #BCBEBC;
   border-radius: 6px 0px 0px 6px;
 }
-.changeEn:hover{
+
+.changeEn:hover {
   background: white;
   color: #BCBEBC !important;
 }
 
-.langZh{
-  width: 40px;
-  height: 32px;
-  font-size: 16px;
-  padding: 0px;
+.langZh {
+  // width: 40px;
+  // height: 32px;
+  // font-size: 16px;
+  // padding: 0px;
   background: white;
   color: #BCBEBC;
   border-radius: 0px 6px 6px 0px;
 }
-.langEn{
-  width: 40px;
-  height: 32px;
-  font-size: 16px;
-  padding: 0px;
+
+.langEn {
+  // width: 40px;
+  // height: 32px;
+  // font-size: 16px;
+  // padding: 0px;
   background: #28c57c;
   color: white;
   border-radius: 0px 6px 6px 0px;
 }
-.langZh:hover{
+
+.langZh:hover {
   background: white;
   color: #BCBEBC !important;
 }
-
 </style>

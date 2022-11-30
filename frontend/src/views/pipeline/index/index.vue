@@ -1,8 +1,8 @@
 <template>
   <div class="mx-auto bg-white p-[24px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-4">
-      <a-input v-model:value="searchValue" placeholder="search here..." allow-clear style="width: 370px" class="w-[340px] h-[40px]"
-        @keyup.enter="handleSearch">
+      <a-input v-model:value="searchValue" placeholder="search here..." allow-clear style="width: 370px"
+        class="w-[340px] h-[40px]" @keyup.enter="handleSearch">
         <template #prefix>
           <div @click="handleSearch">
             <img :src="searchSVG" />
@@ -154,8 +154,8 @@ const handleSearch = async () => {
   if (searchValue.value) {
     try {
       await getPipelineInfo();
-    } catch(err) {
-      console.log('err',err)
+    } catch (err) {
+      console.log('err', err)
     }
   }
 };
@@ -203,14 +203,14 @@ onMounted(() => {
 </script>
 
 <style scoped lang="less">
-.ant-input-affix-wrapper {
-  border: 1px solid #efefef;
-  border-radius: 6px;
+// .ant-input-affix-wrapper {
+//   border: 1px solid #efefef;
+//   border-radius: 6px;
 
-  // &:not(.ant-input-affix-wrapper-disabled):hover {
-  //   border-color: #6481dc;
-  // }
-}
+//   // &:not(.ant-input-affix-wrapper-disabled):hover {
+//   //   border-color: #6481dc;
+//   // }
+// }
 
 .ant-card-bordered {
   margin-bottom: 20px;
@@ -225,18 +225,18 @@ onMounted(() => {
 
 .ant-btn {
   display: block;
-  width: 120px;
-  height: 40px;
-  border-radius: 6px;
+  // width: 120px;
+  // height: 40px;
+  // border-radius: 6px;
   font-size: 12px;
 }
 
 .ant-btn-primary {
   margin-bottom: 10px;
-  border-radius: 6px;
-  width: 120px;
-  height: 40px;
-  background: #28c57c;
+  // border-radius: 6px;
+  // width: 120px;
+  // height: 40px;
+  // background: #28c57c;
 }
 
 .ant-btn-dangerous.ant-btn-primary {
@@ -262,48 +262,7 @@ onMounted(() => {
   border: 1px solid #dedddc;
 }
 
-ol,
-ul,
-dl {
-  margin-bottom: 0px;
-}
-
 .float-right {
   float: unset;
 }
-
-// .ant-pagination {
-//   text-align: center;
-// }
-
-// :deep(.ant-pagination-item-active) {
-//   background: #28c57c;
-//   border-color: #28c57c;
-
-//   & a {
-//     color: white;
-//   }
-// }
-
-// :deep(.ant-pagination-item:hover a) {
-//   color: #28c57c;
-// }
-
-// :deep(.ant-pagination-prev:hover),
-// :deep(.ant-pagination-next:hover) {
-//   .ant-pagination-item-link {
-//     color: #28c57c;
-//   }
-// }
-
-// :deep(.ant-pagination-jump-prev),
-// :deep(.ant-pagination-jump-next) {
-//   .ant-pagination-item-container .ant-pagination-item-link-icon {
-//     color: #28c57c;
-//   }
-// }
-
-// :deep(.ant-pagination-item-active:hover a) {
-//   color: white !important;
-// }
 </style>

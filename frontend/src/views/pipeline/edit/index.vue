@@ -23,7 +23,7 @@
           <div class="text-[#979797] text-[16px] mt-2">Pipelinefile</div>
         </div>
         <div>
-          <a-button @click="backStep" class="normal-button">{{
+          <a-button @click="backStep">{{
               $t("template.discardChange")
           }}</a-button>
           <a-button type="primary" class="ml-4" @click="handleSave">{{
@@ -46,7 +46,7 @@
       <span class="text-[red]" v-if="showVerify">{{ $t("template.cannotEmpty") }}</span>
     </div>
     <div class="text-center">
-      <a-button @click="visible = false" class="normal-button">{{
+      <a-button @click="visible = false">{{
           $t("template.cancelBtn")
       }}</a-button>
       <a-button type="primary" :loading="confirmLoading" class="ml-4" @click="handleOk">{{ $t("template.saveBtn") }}
@@ -161,65 +161,6 @@ const deletePipelineList = async () => {
 
 </script>
 <style scoped lang="less">
-@baseColor: #28c57c;
-
-:deep(.ant-btn) {
-  border-radius: 6px;
-}
-
-:deep(.ant-btn-primary) {
-  width: 120px;
-  height: 40px;
-}
-
-:deep(.ant-btn-primary),
-:deep(.ant-btn-primary:hover),
-:deep(.ant-btn-primary:focus) {
-  border-color: @baseColor;
-  background: @baseColor;
-}
-
-:deep(.ant-btn-background-ghost.ant-btn-primary),
-:deep(.ant-btn-background-ghost.ant-btn-primary:hover),
-:deep(.ant-btn-background-ghost.ant-btn-primary:focus) {
-  border-color: @baseColor;
-  color: @baseColor;
-}
-
-:deep(.ant-input),
-:deep(.ant-input-affix-wrapper) {
-  border-color: #efefef;
-  border-radius: 6px;
-}
-
-@placeholderColor: #bcbebc;
-
-:deep(input::-webkit-input-placeholder) {
-  /* WebKit browsers */
-  color: @placeholderColor;
-}
-
-:deep(input:-moz-placeholder) {
-  /* Mozilla Firefox 4 to 18 */
-  color: @placeholderColor;
-}
-
-:deep(input::-moz-placeholder) {
-  /* Mozilla Firefox 19+ */
-  color: @placeholderColor;
-}
-
-:deep(input:-ms-input-placeholder) {
-  /* Internet Explorer 10+ */
-  color: @placeholderColor;
-}
-
-.normal-button {
-  width: 120px;
-  height: 40px;
-  border-radius: 6px;
-}
-
 .delete-btn {
   background: #F52222;
   color: white;

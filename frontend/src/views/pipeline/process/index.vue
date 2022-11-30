@@ -7,7 +7,7 @@
   </div>
 
   <div class="process bg-[#ffffff] ">
-    <div class="bg-[#121211] rounded-t-[12px] h-[92px] p-[24px] text-center"> 
+    <div class="bg-[#121211] rounded-t-[12px] h-[92px] p-[24px] text-center">
       <a-row>
         <a-col :span="6">
           <div class="process-detail-item">
@@ -199,11 +199,10 @@ const checkProcess = async (item: any, e: Event) => {
   }
 };
 
-const getStageLogsData = async (item: any, start = 0, lastLine = 0) => {
+const getStageLogsData = async (item: any, start = 0) => {
   const query = Object.assign(queryJson, {
     stagename: item.name,
     start: start,
-    lastLine: lastLine,
   });
   const { data } = await apiGetJobStageLogs(query);
   if (data.end) {
@@ -215,7 +214,7 @@ const getStageLogsData = async (item: any, start = 0, lastLine = 0) => {
 
   if (!data.end && processModalRef.value.visible) {
     state.stagesTimer = setTimeout(() => {
-      getStageLogsData(item, 0, data.lastLine);
+      getStageLogsData(item, data.lastLine);
     }, 3000);
   } else {
     clearTimeout(state.stagesTimer);

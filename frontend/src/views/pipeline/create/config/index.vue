@@ -13,12 +13,7 @@
     <div class="p-[24px] rounded-bl-[12px] rounded-br-[12px] box-border">
       <div class="w-1/4 mb-4">
         <div class="mb-2">Pipeline Name</div>
-        <a-input
-          v-model:value="pipelineName"
-          @change="setYamlName()"
-          placeholder="Pipeline Name"
-          allow-clear
-        />
+        <a-input v-model:value="pipelineName" @change="setYamlName()" placeholder="Pipeline Name" allow-clear />
       </div>
       <a-row class="create" :gutter="24">
         <a-col :span="8">
@@ -29,18 +24,12 @@
               </div>
             </div>
           </div>
-          <div
-            class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border"
-          >
-            <a-form
-              :label-col="{ xs: { span: 24 }, sm: { span: 7 } }"
-              layout="vertical"
-            >
+          <div class="p-4 rounded-bl-[12px] rounded-br-[12px] border border-solid border-[#EFEFEF] box-border">
+            <a-form :label-col="{ xs: { span: 24 }, sm: { span: 7 } }" layout="vertical">
               <div v-for="(data, key) in yamlList" :key="key">
                 <div class="flex mb-4">
                   <div
-                    class="text-[#FFFFFF] bg-[#121211] rounded-[50%] h-[20px] w-[20px] text-center leading-[20px] text-[14px]"
-                  >
+                    class="text-[#FFFFFF] bg-[#121211] rounded-[50%] h-[20px] w-[20px] text-center leading-[20px] text-[14px]">
                     {{ key + 1 }}
                   </div>
                   <div class="ml-2 text-[#121211] font-semibold">
@@ -49,31 +38,16 @@
                 </div>
                 <div v-for="(item, index) in data.steps" :key="index">
                   <div v-if="item.eleName === 'git-checkout'">
-                    <GitCheckout
-                      :stage="data.stage"
-                      :index="index"
-                      :url="item.eleValues.url"
-                      :branch="item.eleValues.branch"
-                      @setYamlCode="setYamlCode"
-                    ></GitCheckout>
+                    <GitCheckout :stage="data.stage" :index="index" :url="item.eleValues.url"
+                      :branch="item.eleValues.branch" @setYamlCode="setYamlCode"></GitCheckout>
                   </div>
                   <div v-else-if="item.eleName === 'artifactory'">
-                    <Artifactory
-                      :stage="data.stage"
-                      :index="index"
-                      :name="item.eleValues.name"
-                      :path="item.eleValues.path"
-                      @setYamlCode="setYamlCode"
-                    ></Artifactory>
+                    <Artifactory :stage="data.stage" :index="index" :name="item.eleValues.name"
+                      :path="item.eleValues.path" @setYamlCode="setYamlCode"></Artifactory>
                   </div>
                   <div v-else-if="item.eleName === 'shell'">
-                    <Shell
-                      :stage="data.stage"
-                      :index="index"
-                      :run="item.eleValues.run"
-                      :runsOn="item.eleValues.runsOn"
-                      @setYamlCode="setYamlCode"
-                    ></Shell>
+                    <Shell :stage="data.stage" :index="index" :run="item.eleValues.run" :runsOn="item.eleValues.runsOn"
+                      @setYamlCode="setYamlCode"></Shell>
                   </div>
                 </div>
               </div>
@@ -94,10 +68,10 @@
       </a-row>
       <div class="mt-8 text-center">
         <a-button @click="lastStep" class="normal-button">{{
-          $t("template.lastBtn")
+            $t("template.lastBtn")
         }}</a-button>
         <a-button type="primary" @click="submitData" class="ml-4">{{
-          $t("template.submitBtn")
+            $t("template.submitBtn")
         }}</a-button>
       </div>
     </div>
@@ -243,50 +217,6 @@ const setYamlName = async () => {
   }
 }
 
-@baseColor: #28c57c;
-
-:deep(.ant-btn) {
-  border-radius: 6px;
-}
-
-:deep(.ant-btn-primary) {
-  width: 120px;
-  height: 40px;
-}
-:deep(.ant-btn-primary),
-:deep(.ant-btn-primary:hover),
-:deep(.ant-btn-primary:focus) {
-  border-color: @baseColor;
-  background: @baseColor;
-}
-:deep(.ant-btn-background-ghost.ant-btn-primary),
-:deep(.ant-btn-background-ghost.ant-btn-primary:hover),
-:deep(.ant-btn-background-ghost.ant-btn-primary:focus) {
-  border-color: @baseColor;
-  color: @baseColor;
-}
-:deep(input::-webkit-input-placeholder) {
-  /* WebKit browsers */
-  color: @placeholderColor;
-}
-:deep(.ant-input),
-:deep(.ant-input-affix-wrapper) {
-  border-color: #efefef;
-  border-radius: 6px;
-}
-@placeholderColor: #bcbebc;
-:deep(input:-moz-placeholder) {
-  /* Mozilla Firefox 4 to 18 */
-  color: @placeholderColor;
-}
-:deep(input::-moz-placeholder) {
-  /* Mozilla Firefox 19+ */
-  color: @placeholderColor;
-}
-:deep(input:-ms-input-placeholder) {
-  /* Internet Explorer 10+ */
-  color: @placeholderColor;
-}
 .normal-button {
   width: 120px;
   height: 40px;
