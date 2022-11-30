@@ -60,6 +60,7 @@ func (h *HttpServer) StartHttpServer(port int) {
 	})
 	fe, _ := fs.Sub(content, "dist")
 	r.NoRoute(gin.WrapH(http.FileServer(http.FS(fe))))
+	OpenWeb(port)
 	r.Run(fmt.Sprintf(":%d", port)) // listen and serve on
 }
 
