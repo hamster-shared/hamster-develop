@@ -7,7 +7,8 @@ import (
 
 func Test_GetTemplates(t *testing.T) {
 	templateService := NewTemplateService()
-	data := templateService.GetTemplates()
+	lang := "en"
+	data := templateService.GetTemplates(lang)
 	t.Log(data)
 	assert.NotEmpty(t, data)
 }

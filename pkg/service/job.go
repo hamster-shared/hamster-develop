@@ -156,6 +156,7 @@ func (svc *JobService) UpdateJob(oldName string, newName string, yaml string) er
 			return err
 		}
 		src = newSrc
+		svc.updateJobDetailName(newName)
 	}
 	//write data to yaml file
 	err = os.WriteFile(src, []byte(yaml), 0777)
@@ -612,4 +613,46 @@ func (svc *JobService) OpenArtifactoryDir(name string, detailId string) error {
 	}
 	artifactoryDir := filepath.Join(userHomeDir, consts.ARTIFACTORY_DIR, name, detailId)
 	return platform.OpenDir(artifactoryDir)
+}
+
+// updateJobDetailName update job detail name
+func (svc *JobService) updateJobDetailName(name string) {
+	//file directory path
+	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
+	//determine whether the folder exists, and create it if it does not exist
+	_, err := os.Stat(dir)
+	if os.IsNotExist(err) {
+		logger.Errorf("update job detail name failed:%s", err.Error())
+	}
+	// read file
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		logger.Errorf("read file failed:%s", err.Error())
+	}
+	if len(files) > 0 {
+		for _, file := range files {
+			ymlPath := filepath.Join(dir, file.Name())
+			//judge whether the job detail file exists
+			_, err := os.Stat(ymlPath)
+			//not exist
+			if os.IsNotExist(err) {
+				log.Println("job detail file not exist", err.Error())
+				continue
+			}
+			fileContent, err := os.ReadFile(ymlPath)
+			if err != nil {
+				log.Println("get job detail read file failed", err.Error())
+				continue
+			}
+			var jobDetailData model.JobDetail
+			//deserialization job yml file
+			err = yaml.Unmarshal(fileContent, &jobDetailData)
+			if err != nil {
+				log.Println("get job detail,deserialization job file failed", err.Error())
+				continue
+			}
+			jobDetailData.Name = name
+			svc.UpdateJobDetail(name, &jobDetailData)
+		}
+	}
 }

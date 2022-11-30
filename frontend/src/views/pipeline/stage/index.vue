@@ -55,7 +55,7 @@
           </template>
           <template v-else-if="column.key === 'action'">
             <div v-if="record.status == 1">
-              <img :src="stopButtonSVG" class="mr-2 align-text-bottom" />
+              <img :src="stopButtonSVG" class="mr-2 align-baseline" />
               <a @click="handleStop(record.id)" class="text-[#FF842C] hover:text-[#FF842C]">{{ $t("pipeline.stage.stop")
               }}</a>
             </div>
@@ -304,7 +304,11 @@ onMounted(() => {
   color: #7b7d7b;
 
   .color-next-page {
-    color: #28c57c;
+    display: inline-block;
+    width: 100%;
+    &:hover{
+      color: #28c57c;
+    }
   }
 }
 

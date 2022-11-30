@@ -180,7 +180,7 @@ const submitData = async () => {
     }
   } catch (error: any) {
     console.log("erro:", error);
-    message.error("Failed");
+    message.error("Failed: " + error.response.data.message);
   }
 };
 

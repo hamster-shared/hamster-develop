@@ -39,7 +39,7 @@ func (s *AlineGRPCServer) AlineChat(stream pb.AlineRPC_AlineChatServer) error {
 		}
 
 		if err := stream.Send(execMsg); err != nil {
-
+			fmt.Println("send execMsg success")
 		}
 		//for _, note := range rn {
 		//	if err := stream.Send(note); err != nil {
