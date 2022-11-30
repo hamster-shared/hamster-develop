@@ -1,7 +1,7 @@
 <template>
   <div class="mx-auto bg-white p-[24px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-4">
-      <a-input v-model:value="searchValue" placeholder="search here..." style="width: 370px" class="w-[340px] h-[40px]"
+      <a-input v-model:value="searchValue" placeholder="search here..." allow-clear style="width: 370px" class="w-[340px] h-[40px]"
         @keyup.enter="handleSearch">
         <template #prefix>
           <div @click="handleSearch">
@@ -154,8 +154,8 @@ const handleSearch = async () => {
   if (searchValue.value) {
     try {
       await getPipelineInfo();
-    } finally {
-      searchValue.value = "";
+    } catch(err) {
+      console.log('err',err)
     }
   }
 };
