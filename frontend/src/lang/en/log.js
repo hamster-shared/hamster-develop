@@ -11,5 +11,5 @@ export default {
   artifats: "Artifats",
   report: "Report",
   buildRecords: "Build Records",
-  terminationOfeExecution: "Termination of execution",
+  terminationOfeExecution: "Termination",
 };
