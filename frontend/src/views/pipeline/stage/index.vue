@@ -1,30 +1,22 @@
 <template>
-  <div class="bg-white py-[32px] mx-[24px] rounded-xl">
-    <div class="flex justify-between mb-6">
-      <span class="text-2xl font-semibold text-[#121211]"
-        >Hamster-pipeline
-      </span>
-      <div>
-        <a-button class="mr-2 normal-button" @click="handleToEditPage()">{{
+  <div class="flex justify-between">
+    <Breadcrumb :currentName="pathName" />
+    <div>
+      <a-button class="mr-2 normal-button" @click="handleToEditPage()">{{
           $t("pipeline.stage.set")
-        }}</a-button>
-        <a-button type="primary" @click="handleImmediateImplementation">
-          {{ $t("pipeline.stage.immediateImplementation") }}</a-button
-        >
-      </div>
+      }}</a-button>
+      <a-button type="primary" @click="handleImmediateImplementation">
+        {{ $t("pipeline.stage.immediateImplementation") }}</a-button>
     </div>
+  </div>
 
+  <div class="bg-white rounded-xl pb-[24px]">
     <div class="loading-page" v-if="isLoading">
       <a-spin :spinning="isLoading" />
     </div>
 
     <template v-else-if="jobs && jobs.length > 0">
-      <a-table
-        :columns="columns"
-        :data-source="jobs"
-        v-bind:pagination="pagination"
-        v-if="jobs"
-      >
+      <a-table :columns="columns" :data-source="jobs" v-bind:pagination="pagination" v-if="jobs">
         <template #headerCell="{ column }">
           <template v-if="column.key === 'status'">
             <span> Status </span>
@@ -36,53 +28,42 @@
             <span v-if="record.status == 0">{{ $t("pipeline.noData") }}</span>
             <span v-if="record.status == 1">{{ $t("pipeline.running") }}</span>
             <span v-if="record.status == 3">{{
-              $t("pipeline.successfulImplementation")
+                $t("pipeline.successfulImplementation")
             }}</span>
             <span v-if="record.status == 2">{{
-              $t("pipeline.stage.fail")
+                $t("pipeline.stage.fail")
             }}</span>
             <span v-if="record.status == 4">{{
-              $t("pipeline.userTermination")
+                $t("pipeline.userTermination")
             }}</span>
           </template>
           <template v-else-if="column.key === 'id'">
-            <span
-              @click="handleToNextPage(record.id)"
-              class="cursor-pointer color-next-page"
-              >{{ record.id }}</span
-            >
+            <span @click="handleToNextPage(record.id)" class="cursor-pointer color-next-page">{{ record.id }}</span>
           </template>
           <template v-else-if="column.key === 'stages'">
             <PipelineStageVue :stages="record.stages" />
           </template>
           <template v-else-if="column.key === 'duration'">
-            <span
-              class="block"
-              v-if="
-                record?.startTime && record?.startTime != '0001-01-01T00:00:00Z'
-              "
-            >
+            <span class="block" v-if="
+              record?.startTime && record?.startTime != '0001-01-01T00:00:00Z'
+            ">
               {{ fromNowexecutionTime(record.startTime, "operation") }}
             </span>
             <span v-if="record?.duration && record?.duration != 0">{{
-              formatDurationTime(record.duration, "elapsedTime")
+                formatDurationTime(record.duration, "elapsedTime")
             }}</span>
           </template>
           <template v-else-if="column.key === 'action'">
             <div v-if="record.status == 1">
               <img :src="stopButtonSVG" class="mr-2 align-text-bottom" />
-              <a
-                @click="handleStop(record.id)"
-                class="text-[#FF842C] hover:text-[#FF842C]"
-                >{{ $t("pipeline.stage.stop") }}</a
-              >
+              <a @click="handleStop(record.id)" class="text-[#FF842C] hover:text-[#FF842C]">{{ $t("pipeline.stage.stop")
+              }}</a>
             </div>
             <div v-else>
               <img :src="deleteButtonSVG" class="mr-1 align-text-bottom" />
-              <a
-                @click="handleDelete(record.id)"
-                class="text-[#F52222] hover:text-[#F52222]"
-                >{{ $t("pipeline.stage.delete") }}
+              <a @click="handleDelete(record.id)" class="text-[#F52222] hover:text-[#F52222]">{{
+                  $t("pipeline.stage.delete")
+              }}
               </a>
             </div>
           </template>
@@ -104,6 +85,7 @@ import {
   apiGetPipelineDetail,
 } from "@/apis/pipeline";
 import PipelineStageVue from "./components/PipelineStage.vue";
+import Breadcrumb from "@/views/components/Breadcrumb.vue";
 import stopButtonSVG from "@/assets/icons/pipeline-stop-button.svg";
 import deleteButtonSVG from "@/assets/icons/pipeline-delete-button.svg";
 import { message } from "ant-design-vue";
@@ -302,10 +284,12 @@ onMounted(() => {
     border-color: #28c57c;
   }
 }
+
 .normal-button {
   color: #28c57c;
   border-color: #28c57c;
 }
+
 .ant-btn-primary {
   background: #28c57c;
 
@@ -316,9 +300,11 @@ onMounted(() => {
     color: white;
   }
 }
+
 .loading-page {
   text-align: center;
 }
+
 :deep(.ant-table-thead > tr > th) {
   background: #121211;
   height: 48px;
@@ -343,8 +329,9 @@ onMounted(() => {
 }
 
 :deep(.ant-table-tbody > tr > td) {
-  font-size: 12px;
+  font-size: 14px;
   color: #7b7d7b;
+
   .color-next-page {
     color: #28c57c;
   }
@@ -392,7 +379,7 @@ dl {
 
 :deep(.ant-pagination-jump-prev),
 :deep(.ant-pagination-jump-next) {
-  .ant-pagination-item-container .ant-pagination-item-link-icon { 
+  .ant-pagination-item-container .ant-pagination-item-link-icon {
     color: #28c57c;
   }
 }
@@ -405,6 +392,6 @@ dl {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 70.7px;
+  height: 77px;
 }
 </style>

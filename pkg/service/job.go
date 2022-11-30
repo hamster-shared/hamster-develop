@@ -493,7 +493,7 @@ func (svc *JobService) GetJobLog(name string, pipelineDetailId int) *model.JobLo
 	jobLog := &model.JobLog{
 		StartTime: fileLog.StartTime,
 		Duration:  fileLog.Duration,
-		Content:   strings.Join(fileLog.Lines, "\n"),
+		Content:   strings.Join(fileLog.Lines, "\r"),
 		LastLine:  len(fileLog.Lines),
 	}
 

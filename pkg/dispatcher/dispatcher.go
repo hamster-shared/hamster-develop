@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"github.com/hamster-shared/a-line/pkg/executor"
 	"github.com/hamster-shared/a-line/pkg/model"
+	"math/rand"
 )
 
 type IDispatcher interface {
@@ -87,5 +88,49 @@ func (d *Dispatcher) CancelJob(job *model.JobDetail, node *model.Node) {
 // GetExecutor 根据节点获取执行器
 // TODO ... 这个方法设计的不好，分布式机构后应当用api代替
 func (d *Dispatcher) GetExecutor(node *model.Node) executor.IExecutor {
+	return nil
+}
+
+type HttpDispatcher struct {
+	Channel chan model.QueueMessage
+	nodes   []*model.Node
+}
+
+// DispatchNode 选择节点
+func (d *HttpDispatcher) DispatchNode(job *model.Job) *model.Node {
+
+	data := rand.Intn(len(d.nodes))
+	return d.nodes[data]
+}
+
+// Register 节点注册
+func (d *HttpDispatcher) Register(node *model.Node) {
+
+}
+
+// UnRegister 节点注销
+func (d *HttpDispatcher) UnRegister(node *model.Node) {
+
+}
+
+// HealthcheckNode 节点心跳
+func (d *HttpDispatcher) HealthcheckNode(node *model.Node) {
+
+}
+
+// SendJob 发送任务
+func (d *HttpDispatcher) SendJob(job *model.JobDetail, node *model.Node) {
+
+}
+
+// CancelJob 取消任务
+func (d *HttpDispatcher) CancelJob(job *model.JobDetail, node *model.Node) {
+
+}
+
+// GetExecutor 根据节点获取执行器
+// TODO ... 这个方法设计的不好，分布式机构后应当用api代替
+func (d *HttpDispatcher) GetExecutor(node *model.Node) executor.IExecutor {
+
 	return nil
 }

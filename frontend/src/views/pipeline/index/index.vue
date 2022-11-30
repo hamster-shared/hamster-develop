@@ -1,13 +1,8 @@
 <template>
   <div class="mx-auto bg-white p-[24px] mx-[24px] rounded-xl">
     <div class="flex justify-between mb-4">
-      <a-input
-        v-model:value="searchValue"
-        placeholder="search here..."
-        style="width: 370px"
-        class="w-[340px] h-[40px]"
-        @keyup.enter="handleSearch"
-      >
+      <a-input v-model:value="searchValue" placeholder="search here..." style="width: 370px" class="w-[340px] h-[40px]"
+        @keyup.enter="handleSearch">
         <template #prefix>
           <div @click="handleSearch">
             <img :src="searchSVG" />
@@ -23,95 +18,56 @@
       <a-spin :spinning="isLoading" />
     </div>
     <template v-else-if="pipelineList && pipelineList.length > 0">
-      <a-card
-        v-for="(data, index) in pipelineList"
-        :key="index"
-        @click="$router.push(`/pipeline/${data.name}`)"
-      >
+      <!-- <a-card v-for="(data, index) in pipelineList" :key="index" @click="$router.push(`/pipeline/${data.name}`)"> -->
+      <a-card v-for="(data, index) in pipelineList" :key="index" @click="toPilelinePath(data.name)">
         <div class="grid grid-cols-3 cursor-pointer">
           <div>
             <div class="mb-3 text-xl font-semibold text-[#121211]">
               {{ data.name }}
             </div>
-            <div
-              class="mb-3 text-sm font-normal text-[#7B7D7B]"
-              v-if="data.status != 0"
-            >
+            <div class="mb-3 text-sm font-normal text-[#7B7D7B]" v-if="data.status != 0">
               {{ $t("pipeline.manualTrigger") }}
             </div>
             <div>
-              <div
-                v-if="data.status == 0"
-                class="text-sm font-normal text-[#7B7D7B]"
-              >
+              <div v-if="data.status == 0" class="text-sm font-normal text-[#7B7D7B]">
                 {{ $t("pipeline.noData") }}
               </div>
-              <div
-                v-if="data.status == 1"
-                class="text-sm font-normal text-[#2C5AFF]"
-              >
+              <div v-if="data.status == 1" class="text-sm font-normal text-[#2C5AFF]">
                 <img src="@/assets/images/run.gif" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.running") }}
               </div>
-              <div
-                v-if="data.status == 3"
-                class="text-sm font-normal text-[#2DCE83]"
-              >
+              <div v-if="data.status == 3" class="text-sm font-normal text-[#2DCE83]">
                 <img :src="successSVG" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.successfulImplementation") }}
               </div>
-              <div
-                v-if="data.status == 2"
-                class="text-sm font-normal text-[#F52222]"
-              >
+              <div v-if="data.status == 2" class="text-sm font-normal text-[#F52222]">
                 <img :src="failedSVG" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.pushFailed") }}
               </div>
-              <div
-                v-if="data.status == 4"
-                class="text-sm font-normal text-[#FF842C]"
-              >
+              <div v-if="data.status == 4" class="text-sm font-normal text-[#FF842C]">
                 <img :src="stopSVG" class="h-[20px] w-[20px]" />
                 {{ $t("pipeline.userTermination") }}
               </div>
             </div>
           </div>
-          <div
-            class="text-center cursor-pointer place-self-center"
-            @click="$router.push(`/pipeline/${data.name}`)"
-          >
-            <span
-              class="text-sm font-normal bg-[#F8F8F8] py-2 px-3 rounded text-[#3F4641] block mb-3"
-              v-if="
-                data?.startTime && data?.startTime != '0001-01-01T00:00:00Z'
-              "
-              >{{ fromNowexecutionTime(data.startTime, "operation") }}</span
-            >
+          <div class="text-center cursor-pointer place-self-center" @click="$router.push(`/pipeline/${data.name}`)">
+            <span class="text-sm font-normal bg-[#F8F8F8] py-2 px-3 rounded text-[#3F4641] block mb-3" v-if="
+              data?.startTime && data?.startTime != '0001-01-01T00:00:00Z'
+            ">{{ fromNowexecutionTime(data.startTime, "operation") }}</span>
             <span class="text-sm" v-if="data?.duration && data?.duration != 0">
               <img :src="wasteTimeSVG" class="h-[20px] w-[20px]" />
               {{ formatDurationTime(data.duration, "elapsedTime") }}
             </span>
           </div>
           <div class="set-exec-btn">
-            <a-button
-              type="primary"
-              v-if="data.status !== 1"
-              @click.stop="handleImmediateImplementation(data.name)"
-            >
+            <a-button type="primary" v-if="data.status !== 1" @click.stop="handleImmediateImplementation(data.name)">
               {{ $t("pipeline.immediateImplementation") }}
             </a-button>
-            <a-button
-              type="primary"
-              danger
-              v-if="data.status === 1"
-              @click.stop="handleStopExec(data.name, data.pipelineDetailId)"
-            >
+            <a-button type="primary" danger v-if="data.status === 1"
+              @click.stop="handleStopExec(data.name, data.pipelineDetailId)">
               {{ $t("pipeline.stop") }}
             </a-button>
-            <a-button
-              class="normal-button"
-              @click.stop="handleToEditPage(data.name)"
-              >{{ $t("pipeline.set") }}
+            <a-button class="normal-button" @click.stop="handleToEditPage(data.name)">{{ $t("pipeline.set") }}
             </a-button>
           </div>
         </div>
@@ -204,7 +160,11 @@ const handleSearch = async () => {
   }
 };
 
-const handleToEditPage = (name) => {
+const toPilelinePath = (name: string) => {
+  router.push(`/pipeline/${name}`)
+}
+
+const handleToEditPage = (name: string) => {
   router.push(`/edit/${name}`);
 };
 
@@ -247,9 +207,9 @@ onMounted(() => {
   border: 1px solid #efefef;
   border-radius: 6px;
 
-  &:not(.ant-input-affix-wrapper-disabled):hover {
-    border-color: #6481dc;
-  }
+  // &:not(.ant-input-affix-wrapper-disabled):hover {
+  //   border-color: #6481dc;
+  // }
 }
 
 .ant-card-bordered {
@@ -312,38 +272,38 @@ dl {
   float: unset;
 }
 
-.ant-pagination {
-  text-align: center;
-}
+// .ant-pagination {
+//   text-align: center;
+// }
 
-:deep(.ant-pagination-item-active) {
-  background: #28c57c;
-  border-color: #28c57c;
+// :deep(.ant-pagination-item-active) {
+//   background: #28c57c;
+//   border-color: #28c57c;
 
-  & a {
-    color: white;
-  }
-}
+//   & a {
+//     color: white;
+//   }
+// }
 
-:deep(.ant-pagination-item:hover a) {
-  color: #28c57c;
-}
+// :deep(.ant-pagination-item:hover a) {
+//   color: #28c57c;
+// }
 
-:deep(.ant-pagination-prev:hover),
-:deep(.ant-pagination-next:hover) {
-  .ant-pagination-item-link {
-    color: #28c57c;
-  }
-}
+// :deep(.ant-pagination-prev:hover),
+// :deep(.ant-pagination-next:hover) {
+//   .ant-pagination-item-link {
+//     color: #28c57c;
+//   }
+// }
 
-:deep(.ant-pagination-jump-prev),
-:deep(.ant-pagination-jump-next) {
-  .ant-pagination-item-container .ant-pagination-item-link-icon {
-    color: #28c57c;
-  }
-}
+// :deep(.ant-pagination-jump-prev),
+// :deep(.ant-pagination-jump-next) {
+//   .ant-pagination-item-container .ant-pagination-item-link-icon {
+//     color: #28c57c;
+//   }
+// }
 
-:deep(.ant-pagination-item-active:hover a) {
-  color: white !important;
-}
+// :deep(.ant-pagination-item-active:hover a) {
+//   color: white !important;
+// }
 </style>

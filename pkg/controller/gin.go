@@ -15,15 +15,17 @@ var content embed.FS
 
 type HttpServer struct {
 	handlerServer HandlerServer
+	port          int
 }
 
-func NewHttpService(handlerServer HandlerServer) *HttpServer {
+func NewHttpService(handlerServer HandlerServer, port int) *HttpServer {
 	return &HttpServer{
 		handlerServer: handlerServer,
+		port:          port,
 	}
 }
 
-func (h *HttpServer) StartHttpServer(port int) {
+func (h *HttpServer) StartHttpServer() {
 	r := gin.Default()
 	api := r.Group("/api")
 	//create pipeline job
@@ -60,8 +62,7 @@ func (h *HttpServer) StartHttpServer(port int) {
 	})
 	fe, _ := fs.Sub(content, "dist")
 	r.NoRoute(gin.WrapH(http.FileServer(http.FS(fe))))
-	OpenWeb(port)
-	r.Run(fmt.Sprintf(":%d", port)) // listen and serve on
+	r.Run(fmt.Sprintf(":%d", h.port)) // listen and serve on
 }
 
 var commands = map[string]string{
@@ -84,4 +85,5 @@ func OpenWeb(port int) error {
 		cmd = exec.Command(run, fmt.Sprintf("http://127.0.0.1:%d", port))
 	}
 	return cmd.Start()
+
 }

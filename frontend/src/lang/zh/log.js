@@ -10,4 +10,7 @@ export default {
   ago: "前",
   artifats: "制品库",
   report: "报告",
+  buildRecords: "构建记录",
+  terminationOfeExecution: "终止执行",
+  back: "返回",
 };

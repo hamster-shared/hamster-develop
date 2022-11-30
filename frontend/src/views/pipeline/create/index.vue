@@ -15,13 +15,8 @@
       <Tabs :defaultActiveKey="activeKey">
         <TabPane key="0" :tab="$t('template.allText')">
           <div class="card-div">
-            <div
-              class="card-item"
-              @click="setCurrId(item.id)"
-              :class="{ 'check-border': checkCurrId === item.id }"
-              v-for="(item, index) in allTemplatesList"
-              :key="index"
-            >
+            <div class="card-item" @click="setCurrId(item.id)" :class="{ 'check-border': checkCurrId === item.id }"
+              v-for="(item, index) in allTemplatesList" :key="index">
               <div class="card-img-div">
                 <img :src="getImageURL(`${item.imageName}.png`)" />
               </div>
@@ -31,11 +26,8 @@
                   <template #content>
                     <div class="card-desc-popover">{{ item.description }}</div>
                   </template>
-                  <div
-                    @mouseover="checkDivHeight(`descDiv${index}`)"
-                    :class="`descDiv${index}`"
-                    class="card-desc show-line"
-                  >
+                  <div @mouseover="checkDivHeight(`descDiv${index}`)" :class="`descDiv${index}`"
+                    class="card-desc show-line">
                     {{ item.description }}
                   </div>
                 </a-popover>
@@ -43,19 +35,10 @@
             </div>
           </div>
         </TabPane>
-        <TabPane
-          v-for="(data, index) in templatesList"
-          :key="index + 1"
-          :tab="$t(`template.${data.tag}`)"
-        >
+        <TabPane v-for="(data, index) in templatesList" :key="index + 1" :tab="$t(`template.${data.tag}`)">
           <div class="card-div">
-            <div
-              class="card-item"
-              @click="setCurrId(item.id)"
-              :class="{ 'check-border': checkCurrId === item.id }"
-              v-for="(item, index2) in data.items"
-              :key="index2"
-            >
+            <div class="card-item" @click="setCurrId(item.id)" :class="{ 'check-border': checkCurrId === item.id }"
+              v-for="(item, index2) in data.items" :key="index2">
               <div>
                 <img :src="getImageURL(`${item.imageName}.png`)" />
               </div>
@@ -69,10 +52,10 @@
       </Tabs>
       <div class="mt-8 text-center">
         <Button @click="backStep" class="normal-button">{{
-          $t("template.cancelBtn")
+            $t("template.cancelBtn")
         }}</Button>
         <Button type="primary" class="ml-4" @click="nextStep">{{
-          $t("template.nextBtn")
+            $t("template.nextBtn")
         }}</Button>
       </div>
     </div>
@@ -162,86 +145,107 @@ const checkDivHeight = (className: string) => {
   color: @baseColor;
   font-size: 14px;
 }
-:deep(.ant-tabs) {
-  color: #7b7d7b;
-}
-:deep(.ant-tabs-tab-btn:hover) {
-  color: @baseColor;
-}
 
-:deep(.ant-tabs-ink-bar) {
-  background: @baseColor;
-}
+// :deep(.ant-tabs) {
+//   color: #7b7d7b;
+// }
+
+// :deep(.ant-tabs-tab:hover) {
+//   color: @baseColor;
+// }
+
+// :deep(.ant-tabs-tab-btn:hover) {
+//   color: @baseColor;
+// }
+
+// :deep(.ant-tabs-ink-bar) {
+//   background: @baseColor;
+// }
+
 :deep(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
   @apply font-semibold;
   color: #121211;
 }
+
 .card-div {
   @apply grid grid-cols-2 gap-4;
 }
+
 .card-item {
-  @apply p-4 grid grid-cols-6 gap-4 cursor-pointer;
+  @apply p-6 grid grid-cols-6 gap-4 cursor-pointer;
   border: 1px solid #efefef;
   border-radius: 12px;
 }
+
 .card-item:hover {
   /* 投影 */
   box-shadow: 3px 3px 12px rgba(203, 217, 207, 0.2);
   border: 1px solid #28c57c;
 }
+
 .card-img-div {
   @apply flex justify-center;
 }
+
 .card-item img {
   width: 64px;
   height: 64px;
   border-radius: 12px;
 }
+
 .card-title {
   @apply font-semibold;
   font-size: 16px;
   color: #121211;
 }
+
 .card-desc {
   font-size: 12px;
   color: #7b7d7b;
   margin-top: 4px;
 }
+
 .card-desc-popover {
   font-size: 12px;
   color: #7b7d7b;
   max-width: 500px;
 }
+
 .show-line {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
-:deep(.ant-btn) {
-  border-radius: 6px;
-}
-:deep(.ant-btn-primary) {
-  width: 120px;
-  height: 40px;
-}
-:deep(.ant-btn-primary),
-:deep(.ant-btn-primary:hover),
-:deep(.ant-btn-primary:focus) {
-  border-color: @baseColor;
-  background: @baseColor;
-}
 
-:deep(.ant-btn-background-ghost.ant-btn-primary),
-:deep(.ant-btn-background-ghost.ant-btn-primary:hover),
-:deep(.ant-btn-background-ghost.ant-btn-primary:focus) {
-  border-color: @baseColor;
-  color: @baseColor;
-}
+// :deep(.ant-btn) {
+//   border-radius: 6px;
+// }
+
+// :deep(.ant-btn-primary) {
+//   width: 120px;
+//   height: 40px;
+// }
+
+// :deep(.ant-btn-primary),
+// :deep(.ant-btn-primary:hover),
+// :deep(.ant-btn-primary:focus) {
+//   border-color: @baseColor;
+//   background: @baseColor;
+// }
+
+// :deep(.ant-btn-background-ghost.ant-btn-primary),
+// :deep(.ant-btn-background-ghost.ant-btn-primary:hover),
+// :deep(.ant-btn-background-ghost.ant-btn-primary:focus) {
+//   border-color: @baseColor;
+//   color: @baseColor;
+// }
+
 .check-border {
   border-color: @baseColor;
   background: #f3fffa;
 }
+
 .normal-button {
   width: 120px;
   height: 40px;

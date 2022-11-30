@@ -20,6 +20,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var (
+	port            = 8080
 	channel         = make(chan model.QueueMessage)
 	dispatch        = dispatcher.NewDispatcher(channel)
 	pipelineFile    string
@@ -89,4 +90,6 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().StringVar(&pipelineFile, "file", "cicd.yml", "pipeline file")
+
+	rootCmd.PersistentFlags().IntP("port", "p", 8080, "http port")
 }
