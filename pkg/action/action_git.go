@@ -68,7 +68,6 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	command := "git rev-parse --is-inside-work-tree"
 	out, err := a.ExecuteStringCommand(command)
-	logger.Debug(out)
 	a.output.WriteLine(out)
 	if err != nil {
 
@@ -82,7 +81,6 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	command = "git config remote.origin.url  " + a.repository
 	out, err = a.ExecuteStringCommand(command)
-	logger.Debug(out)
 	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
@@ -90,7 +88,6 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	command = "git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/*"
 	out, err = a.ExecuteStringCommand(command)
-	logger.Debug(out)
 	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
@@ -98,7 +95,6 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	command = "git config remote.origin.url " + a.repository
 	out, err = a.ExecuteStringCommand(command)
-	logger.Debug(out)
 	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
@@ -106,7 +102,6 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	command = "git fetch --tags --progress " + a.repository + " +refs/heads/*:refs/remotes/origin/*"
 	out, err = a.ExecuteStringCommand(command)
-	logger.Debug(out)
 	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
@@ -114,19 +109,16 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	command = fmt.Sprintf("git rev-parse refs/remotes/origin/%s^{commit}", a.branch)
 	commitId, err := a.ExecuteStringCommand(command)
-	logger.Debug(out)
 	if err != nil {
 		return nil, err
 	}
 
 	command = "git config core.sparsecheckout "
 	out, _ = a.ExecuteStringCommand(command)
-	logger.Debug(out)
 	a.output.WriteLine(out)
 
 	command = fmt.Sprintf("git checkout -f %s", commitId)
 	out, err = a.ExecuteStringCommand(command)
-	logger.Debug(out)
 	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
@@ -134,7 +126,6 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	command = "git branch -a -v --no-abbrev"
 	out, err = a.ExecuteStringCommand(command)
-	logger.Debug(out)
 	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
@@ -144,7 +135,6 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 		command = fmt.Sprintf("git branch -D  %s", a.branch)
 		out, err = a.ExecuteStringCommand(command)
 		logger.Debug(out)
-		a.output.WriteLine(out)
 		if err != nil {
 			return nil, err
 		}
@@ -152,7 +142,6 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	command = fmt.Sprintf("git checkout -b %s %s", a.branch, commitId)
 	out, err = a.ExecuteStringCommand(command)
-	logger.Debug(out)
 	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
@@ -259,6 +248,9 @@ func containsBranch(branchOutput, branch string) bool {
 	array := strings.Split(branchOutput, "\n")
 
 	for _, s := range array {
+		if len(strings.Fields(s)) == 0 {
+			continue
+		}
 		if strings.EqualFold(strings.Fields(s)[0], branch) {
 			return true
 		}

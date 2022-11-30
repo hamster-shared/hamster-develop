@@ -1,4 +1,5 @@
 web:
+	rm -rf pkg/controller/dist
 	cd frontend && yarn && yarn build
 
 macos:
