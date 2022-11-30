@@ -1,12 +1,17 @@
 <template>
   <div class="bg-[#f9f9f9] mb-[20px] flex justify-between">
     <div class="flex flex-1">
-      <img src="@/assets/icons/back-arrow.svg" class="w-[28px] h-[28px] self-center mr-2 cursor-pointer" @click="backStep"/>
-      <span class="text-2xl font-semibold text-[#121211] self-center cursor-pointer" @click="backStep">back |</span>
-      <span class="text-2xl font-semibold text-[#121211] self-center ml-2"> {{templateName}}</span>
-      <img src="@/assets/icons/edit-pen.svg" class="w-[20px] h-[20px] self-center ml-2 cursor-pointer" @click="visible = true"/>
+      <img src="@/assets/icons/back-arrow.svg" class="w-[24px] self-center mr-[4px] cursor-pointer" @click="backStep" />
+      <span class="text-[18px] text-[#7B7D7B] self-center cursor-pointer hover:text-[#28c57c]" @click="backStep">{{
+          $t("component.back")
+      }}</span>
+      <span class="text-[18px] text-[#7B7D7B] self-center ml-2"> | </span>
+      <span class="text-[18px] text-[#7B7D7B] self-center ml-2"> {{ templateName }}</span>
+      <img src="@/assets/icons/edit-pen.svg" class="w-[20px] h-[20px] self-center ml-2 cursor-pointer"
+        @click="visible = true" />
     </div>
-    <a-button type="primary" danger class="delete-btn" @click="deletePipelineList">{{$t("template.deletePipeline")}}</a-button>
+    <a-button type="primary" danger class="delete-btn" @click="deletePipelineList">{{ $t("template.deletePipeline") }}
+    </a-button>
   </div>
   <div class="bg-[#FFFFFF] rounded-[12px] leading-[24px]">
     <div class="p-[24px] rounded-tl-[12px] rounded-tr-[12px]">
@@ -19,16 +24,16 @@
         </div>
         <div>
           <a-button @click="backStep" class="normal-button">{{
-            $t("template.discardChange")
+              $t("template.discardChange")
           }}</a-button>
           <a-button type="primary" class="ml-4" @click="showModal">{{
-            $t("template.saveBtn")
+              $t("template.saveBtn")
           }}</a-button>
         </div>
       </div>
     </div>
     <!-- :style="{ height: mainHeight }" -->
-    <div class="mx-[24px] rounded-[12px] mb-[24px]" :style="{ height: mainHeight }">
+    <div class="mx-[24px] rounded-[12px] pb-[24px]" :style="{ height: mainHeight }">
       <CodeEditor @getYamlValue="getYamlValue" :readOnly="false" :value="codeValue"></CodeEditor>
     </div>
   </div>
@@ -36,18 +41,13 @@
   <a-modal :getContainer="false" v-model:visible="visible" :title="$t('template.modalTitle')" :footer="null">
     <div class="mb-8">
       <div class="flex justify-between mb-2">Pipeline Name</div>
-      <a-input
-        v-model:value="pipelineName"
-        placeholder="Pipeline Name"
-        @change="changeNameInput"
-        @keyup="pipelineName=pipelineName.replace(/\s+/g,'')"
-        allow-clear
-      />
-      <span class="text-[red]" v-if="showVerify">{{$t("template.cannotEmpty")}}</span>
+      <a-input v-model:value="pipelineName" placeholder="Pipeline Name" @change="changeNameInput"
+        @keyup="pipelineName = pipelineName.replace(/\s+/g, '')" allow-clear />
+      <span class="text-[red]" v-if="showVerify">{{ $t("template.cannotEmpty") }}</span>
     </div>
     <div class="text-center">
       <a-button @click="visible = false" class="normal-button">{{
-        $t("template.cancelBtn")
+          $t("template.cancelBtn")
       }}</a-button>
       <a-button type="primary" :loading="confirmLoading" class="ml-4" @click="handleOk">{{ $t("template.saveBtn") }}
       </a-button>
@@ -97,16 +97,16 @@ const handleSave = async () => {
   }
 };
 
-const changeNameInput = ()=>{
-  if(pipelineName.value){
+const changeNameInput = () => {
+  if (pipelineName.value) {
     showVerify.value = false
-  } else{
+  } else {
     showVerify.value = true
   }
 }
 
 const handleOk = async () => {
-  if(pipelineName.value){
+  if (pipelineName.value) {
     confirmLoading.value = true;
     const code = YAML.parse(codeValue.value);
     code.name = pipelineName.value
@@ -128,14 +128,14 @@ const handleOk = async () => {
       console.log("erro:", error);
       message.error("Failed");
     }
-  }else{
+  } else {
     showVerify.value = true
   }
 };
 
 onMounted(async () => {
   getTemplatesById(templateName.value.toString());
-  mainHeight.value = document.body.clientHeight - 242 + "px";
+  mainHeight.value = document.body.clientHeight - 262 + "px";
 });
 
 const getTemplatesById = async (templateName: String) => {
@@ -150,11 +150,11 @@ const backStep = async () => {
   router.push({ path: "/pipeline" });
 };
 
-const deletePipelineList = async()=>{
+const deletePipelineList = async () => {
   try {
     await apiDeletePipelineList(templateName.value)
     backStep()
-  } catch(error: any) {
+  } catch (error: any) {
     console.log("erro:", error);
   }
 }
@@ -213,17 +213,21 @@ const deletePipelineList = async()=>{
   /* Internet Explorer 10+ */
   color: @placeholderColor;
 }
+
 .normal-button {
   width: 120px;
   height: 40px;
   border-radius: 6px;
 }
-.delete-btn{
+
+.delete-btn {
   background: #F52222;
   color: white;
   border-color: #F52222 !important;
 }
-.delete-btn:hover,.delete-btn:focus{
+
+.delete-btn:hover,
+.delete-btn:focus {
   background: #F52222 !important;
   color: white !important;
   border-color: #F52222 !important;

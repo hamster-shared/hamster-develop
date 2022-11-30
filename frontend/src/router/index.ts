@@ -34,9 +34,6 @@ const router = createRouter({
       path: "/pipeline/:name/:id",
       name: "Process",
       component: Process,
-      meta:{
-        breadcrumbName: '',
-      }
     },
     {
       path: "/allLogs/:name/:id",

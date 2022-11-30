@@ -1,7 +1,13 @@
 <template>
-  <Breadcrumb :currentName="'构建记录' + queryJson.id" />
+  <div class="flex justify-between">
+    <Breadcrumb :currentName="$t('log.buildRecords') + queryJson.id" />
+    <div>
+      <a-button @click="terminationOfeExecution">{{ $t("log.terminationOfeExecution") }}</a-button>
+    </div>
+  </div>
+
   <div class="process bg-[#ffffff] ">
-    <div class="bg-[#121211] rounded-t-[12px] h-[92px] p-[24px] text-center">
+    <div class="bg-[#121211] rounded-t-[12px] h-[92px] p-[24px] text-center"> 
       <a-row>
         <a-col :span="6">
           <div class="process-detail-item">
@@ -112,7 +118,7 @@
 import { ref, onMounted, reactive, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { apiGetJobStageLogs, apiCheekArtifactorys } from "@/apis/jobs";
-import { apiGetPipelineDetail } from "@/apis/pipeline";
+import { apiGetPipelineDetail, apiStopPipeline } from "@/apis/pipeline";
 import {
   fromNowexecutionTime,
   formatDurationTime,
@@ -121,6 +127,7 @@ import BScroll from "@better-scroll/core";
 import Scrollbar from "@better-scroll/scroll-bar";
 import ProcessModal from "./components/ProcessModal.vue";
 import Breadcrumb from '@/views/components/Breadcrumb.vue'
+import { message } from "ant-design-vue"
 
 BScroll.use(Scrollbar);
 const route = useRoute();
@@ -215,8 +222,16 @@ const getStageLogsData = async (item: any, start = 0, lastLine = 0) => {
   }
 };
 
+const terminationOfeExecution = async () => {
+  if (state.running) {
+    const { data } = await apiStopPipeline(queryJson)
+    getPipelineDetail()
+  } else {
+    message.info('该构建已结束')
+  }
+}
+
 const openNewUrl = async (url: string) => {
-  // message.info('暂不支持跳转')
   const data = await apiCheekArtifactorys(queryJson);
 };
 
@@ -241,10 +256,28 @@ onUnmounted(() => {
 });
 </script>
 <style lang="less" scoped>
+:deep(.ant-btn) {
+  color: #ffffff;
+  background-color: #FF842C;
+  border-color: #FF842C;
+}
+
+:deep(.ant-btn:hover) {
+  color: #ffffff;
+  background-color: #FF842C;
+  border-color: #FF842C;
+}
+
+:deep(.ant-btn:focus) {
+  color: #ffffff;
+  background-color: #FF842C;
+  border-color: #FF842C;
+}
+
+
 .process {
   width: 100%;
   font-size: 14px;
-  // background-color: #ffffff;
   border-radius: 12px;
 
   .process-detail-item {

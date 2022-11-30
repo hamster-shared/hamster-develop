@@ -1,11 +1,11 @@
 <template>
   <div class="breadcrumb-list">
     <span @click="backRoute" class="path-info">
-      <img src="@/assets/icons/arrow-left.svg" class="fill-current svg-img text-[#28c57c]" />
-      <span>back</span>
+      <img src="@/assets/icons/back-arrow.svg" class="svg-img w-[24px] mr-[4px]" />
+      <span class="align-middle">{{ $t("component.back") }}</span>
     </span>
     <span> | </span>
-    <span>{{ currentName }}</span>
+    <span class="align-middle">{{ currentName }}</span>
   </div>
 </template>
 <script lang='ts' setup>
@@ -27,32 +27,16 @@ const backRoute = () => {
 </script>
 <style lang='less' scoped>
 .breadcrumb-list {
-  font-size: 24px;
-  color: #121211;
-  // margin: 0px auto 24px;
+  font-size: 18px;
+  color: #7B7D7B;
   margin-bottom: 24px;
   background-color: #F9F9F9;
-
-  span {
-    font-weight: 600;
-  }
-
 
   .path-info {
     cursor: pointer;
 
     &:hover {
       color: #28c57c;
-
-      .svg-img {
-        color: #28c57c;
-        // fill: currentColor;
-      }
-
-      // img {
-      //   transform: translateX(-2px);
-      //   filter: drop-shadow(#28c57c 2px 0);
-      // }
     }
   }
 }
