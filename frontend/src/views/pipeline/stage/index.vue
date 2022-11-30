@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white py-[32px] mx-[24px] rounded-xl">
+  <div class="bg-white py-[32px] mx-[24px] rounded-xl px-[24px]">
     <div class="flex justify-between mb-6">
       <span class="text-2xl font-semibold text-[#121211]"
         >Hamster-pipeline
@@ -343,9 +343,9 @@ onMounted(() => {
 }
 
 :deep(.ant-table-tbody > tr > td) {
-  font-size: 12px;
+  font-size: 14px;
   color: #7b7d7b;
-  .color-next-page {
+  .color-next-page:hover {
     color: #28c57c;
   }
 }
@@ -405,6 +405,6 @@ dl {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 70.7px;
+  height: 77px;
 }
 </style>

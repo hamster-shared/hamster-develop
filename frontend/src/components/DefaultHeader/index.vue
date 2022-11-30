@@ -8,8 +8,11 @@
       />
     </div>
     <div>
-      <a-button @click="changeLang" class="align-middle mr-[32px] normal-button"
-        >中/En</a-button
+      <a-button @click="changeLangZh" class="align-middle" :class="languageZhClick=='true'?'changeZh':'changeEn'"
+        >中</a-button
+      >
+      <a-button @click="changeLangEn" class="align-middle mr-[32px]" :class="language=='en'?'langEn':'langZh'"
+        >EN</a-button
       >
       <img
         src="@/assets/icons/fill.svg"
@@ -23,22 +26,25 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
 
+const language = window.localStorage.getItem("language") || 'en';
+const languageZhClick = window.localStorage.getItem("languageZhClick")
+
 const router = useRouter();
 const goHome = () => {
   router.push("/pipeline");
 };
 
-const changeLang = () => {
-  const language = window.localStorage.getItem("language");
+const changeLangZh = ()=>{
+  window.localStorage.setItem("language", "zh");
+  window.localStorage.setItem("languageZhClick", 'true');
+  location.reload();
+}
+const changeLangEn =()=>{
+  window.localStorage.setItem("language", "en");
+  window.localStorage.setItem("languageZhClick", 'false');
+  location.reload();
+}
 
-  if (language == undefined || language == "zh") {
-    window.localStorage.setItem("language", "en");
-    location.reload();
-  } else {
-    window.localStorage.setItem("language", "zh");
-    location.reload();
-  }
-};
 </script>
 
 <style lang="less" scoped>
@@ -65,8 +71,51 @@ const changeLang = () => {
     border-color: #28c57c;
   }
 }
-.normal-button {
-  color: #28c57c;
-  border-color: #28c57c;
+
+.changeZh{
+  width: 40px;
+  height: 32px;
+  font-size: 16px;
+  padding: 0px;
+  background: #28c57c;
+  color: white;
+  border-radius: 6px 0px 0px 6px;
 }
+.changeEn{
+  width: 40px;
+  height: 32px;
+  font-size: 16px;
+  padding: 0px;
+  background: white;
+  color: #BCBEBC;
+  border-radius: 6px 0px 0px 6px;
+}
+.changeEn:hover{
+  background: white;
+  color: #BCBEBC !important;
+}
+
+.langZh{
+  width: 40px;
+  height: 32px;
+  font-size: 16px;
+  padding: 0px;
+  background: white;
+  color: #BCBEBC;
+  border-radius: 0px 6px 6px 0px;
+}
+.langEn{
+  width: 40px;
+  height: 32px;
+  font-size: 16px;
+  padding: 0px;
+  background: #28c57c;
+  color: white;
+  border-radius: 0px 6px 6px 0px;
+}
+.langZh:hover{
+  background: white;
+  color: #BCBEBC !important;
+}
+
 </style>
