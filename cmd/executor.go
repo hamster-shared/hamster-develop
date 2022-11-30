@@ -9,12 +9,18 @@ import (
 	"github.com/hamster-shared/a-line/pkg/dispatcher"
 	"github.com/hamster-shared/a-line/pkg/executor"
 	"github.com/hamster-shared/a-line/pkg/model"
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
-// daemonCmd represents the daemon command
-var daemonCmd = &cobra.Command{
-	Use:   "daemon",
+var (
+	registry string
+)
+
+// executorCmd represents the executor command
+var executorCmd = &cobra.Command{
+	Use:   "executor",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -23,12 +29,19 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("daemon called")
+
+		if registry == "" {
+			fmt.Println("registry cannot be nil")
+			return
+		}
+
+		fmt.Println("executor called")
 		dispatch := dispatcher.NewDispatcher(channel)
+		hostname, _ := os.Hostname()
 		// 本地注册
 		dispatch.Register(&model.Node{
-			Name:    "localhost",
-			Address: "127.0.0.1",
+			Name:    hostname,
+			Address: registry,
 		})
 
 		executeClient := executor.NewExecutorClient(channel, jobService)
@@ -37,23 +50,20 @@ to quickly create a Cobra application.`,
 		go executeClient.Main()
 
 		port, _ = rootCmd.PersistentFlags().GetInt("port")
-		go controller.OpenWeb(port)
 		controller.NewHttpService(*handlerServer, port).StartHttpServer()
-
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(daemonCmd)
+	rootCmd.AddCommand(executorCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// daemonCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// executorCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// daemonCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	//controller.OpenWeb(consts.WEB_PORT)
+	executorCmd.Flags().StringVarP(&registry, "registry", "r", "", "registry url, example: 192.168.0.4:8080")
 }

@@ -26,7 +26,7 @@
           <a-button @click="backStep" class="normal-button">{{
               $t("template.discardChange")
           }}</a-button>
-          <a-button type="primary" class="ml-4" @click="showModal">{{
+          <a-button type="primary" class="ml-4" @click="handleSave">{{
               $t("template.saveBtn")
           }}</a-button>
         </div>
