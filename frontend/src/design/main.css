@@ -40,6 +40,22 @@
     box-shadow: unset !important;
   }
 
+  .ant-tabs-tab:hover{
+    color: #28C57C !important;
+  }
+
+  .ant-modal-header{
+    border-radius: 12px 12px 0 0 !important;
+  }
+  .ant-modal-title{
+    font-size:24px !important;
+    line-height:32px !important;
+    font-weight: 600 !important;
+  }
+  .ant-modal-content{
+    border-radius: 12px !important;
+  }
+
 /* #app {
   max-width: 1280px;
   margin: 0 auto;

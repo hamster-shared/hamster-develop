@@ -15,4 +15,6 @@ export default {
   SMART_CONTRACT_TEMPLATE: "智能合约模版",
   DAPP_TEMPLATE: "DApp模版",
   DAPP_TEMPLATE_Frontend: "DApp模版(仅前端)",
+  cannotEmpty: '此处不能为空',
+  deletePipeline: '删除Pipeline',
 };
