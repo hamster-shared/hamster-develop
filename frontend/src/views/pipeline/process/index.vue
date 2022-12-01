@@ -19,7 +19,7 @@
           <div class="process-detail-item">
             <div class="process-detail-title">{{ $t("log.status") }}</div>
             <div class="process-detail-info">
-              {{ StatusEnum[jobData.status] }}
+              {{ $t(`log.${StatusEnum[jobData.status]}`) }}
             </div>
           </div>
         </a-col>
@@ -96,7 +96,6 @@
             @click="openNewUrl(it.url)">
             {{ it.url }}
           </div>
-          <!-- <a-empty v-if="jobData.actionResult.artifactorys.length <= 0" /> -->
         </div>
       </div>
       <div class="process-content" v-if="jobData.actionResult.reports.length > 0">
@@ -106,7 +105,6 @@
             @click="openNewUrl(it.url)">
             {{ it.url }}
           </div>
-          <!-- <a-empty v-if="jobData.actionResult.reports.length <= 0" /> -->
         </div>
       </div>
     </div>
@@ -119,10 +117,7 @@ import { ref, onMounted, reactive, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { apiGetJobStageLogs, apiCheekArtifactorys } from "@/apis/jobs";
 import { apiGetPipelineDetail, apiStopPipeline } from "@/apis/pipeline";
-import {
-  fromNowexecutionTime,
-  formatDurationTime,
-} from "@/utils/time/dateUtils.js";
+import { fromNowexecutionTime, formatDurationTime } from "@/utils/time/dateUtils.js";
 import BScroll from "@better-scroll/core";
 import Scrollbar from "@better-scroll/scroll-bar";
 import ProcessModal from "./components/ProcessModal.vue";
@@ -148,6 +143,8 @@ const stagesData = reactive({
 const wrapper = ref();
 const jobData = reactive({
   id: undefined,
+  name: '',
+  triggerMode: '',
   stages: [],
   actionResult: {
     artifactorys: [],
@@ -156,11 +153,11 @@ const jobData = reactive({
 });
 
 const enum StatusEnum {
-  "Non-execution",
-  "Running",
-  "Failed",
-  "Passed",
-  "Stop",
+  "nonExecution",
+  "running",
+  "failed",
+  "passed",
+  "stop",
 }
 
 const queryJson = reactive({
@@ -208,7 +205,7 @@ const getStageLogsData = async (item: any, start = 0) => {
   const { data } = await apiGetJobStageLogs(query);
   let t = data?.content?.split("\r");
   if (data.content) {
-    t.forEach(item => {
+    t.forEach((item: any) => {
       stagesData.content.push(item)
     })
   }

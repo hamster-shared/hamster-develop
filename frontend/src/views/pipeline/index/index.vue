@@ -9,7 +9,7 @@
           </div>
         </template>
       </a-input>
-      <router-link to="/create">
+      <router-link to="/pipeline/create">
         <a-button type="primary">{{ $t("pipeline.createPipeline") }}</a-button>
       </router-link>
     </div>
@@ -129,14 +129,13 @@ const getPipelineInfo = async (page = 1, options = { showLoading: true }) => {
     isLoading.value = true;
   }
 
-  console.log("test log");
   try {
     const { data } = await apiGetPipelines({
       query: searchValue.value,
       page,
       size: 10,
     });
-    console.log("data:", data.data);
+    // console.log("data:", data.data);
     pipelineList.value = data.data;
     pagination.pageSize = data.pageSize;
     pagination.total = data.total;
@@ -165,7 +164,7 @@ const toPilelinePath = (name: string) => {
 }
 
 const handleToEditPage = (name: string) => {
-  router.push(`/edit/${name}`);
+  router.push(`/pipeline/edit/${name}`);
 };
 
 const handleImmediateImplementation = async (name) => {
@@ -179,7 +178,7 @@ const handleImmediateImplementation = async (name) => {
 
 const handleStopExec = async (name, id) => {
   const params = { name, id };
-  console.log("params:", params);
+  // console.log("params:", params);
   try {
     await apiStopPipeline(params);
     getPipelineInfo(pagination.current, { showLoading: false });
