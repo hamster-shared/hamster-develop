@@ -28,13 +28,3 @@ func GetJobFromReader(reader io.Reader) (*model.Job, error) {
 
 	return &job, err
 }
-
-// GetJobFromReaderToString 根据流获取Job string info
-func GetJobFromReaderToString(reader io.Reader) (string, error) {
-	yamlFile, err := io.ReadAll(reader)
-	if err != nil {
-		return "", err
-	}
-
-	return string(yamlFile), err
-}

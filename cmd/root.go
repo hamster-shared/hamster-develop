@@ -52,8 +52,7 @@ to quickly create a Cobra application.`,
 			defer close(channel)
 
 			job, _ := pipeline.GetJobFromReader(cicdFile)
-			jobStr, _ := pipeline.GetJobFromReaderToString(cicdFile)
-			jobService.SaveJob(job.Name, jobStr)
+			jobService.SaveJobWithFile(pipelineFile, job.Name)
 			Stages, _ := job.StageSort()
 			jobDetail := &model.JobDetail{
 				Id:     1,

@@ -10,8 +10,10 @@ import (
 	"github.com/hamster-shared/a-line/pkg/utils/platform"
 	"github.com/jinzhu/copier"
 	"gopkg.in/yaml.v3"
+	"io"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -67,6 +69,8 @@ type IJobService interface {
 
 	// OpenArtifactoryDir open artifactory folder
 	OpenArtifactoryDir(name string, detailId string) error
+	//SaveJobWithFile save pipeline job with template file
+	SaveJobWithFile(file, name string)
 }
 
 type JobService struct {
@@ -574,6 +578,7 @@ func (svc *JobService) getJobInfo(jobData *model.JobVo) {
 		jobData.StartTime = jobDetail.StartTime
 		jobData.TriggerMode = jobDetail.TriggerMode
 		jobData.PipelineDetailId = jobDetail.Id
+		jobData.Error = jobDetail.Error
 	}
 }
 
@@ -649,5 +654,30 @@ func (svc *JobService) updateJobDetailName(name string) {
 			jobDetailData.Name = name
 			svc.UpdateJobDetail(name, &jobDetailData)
 		}
+	}
+}
+
+// SaveJobWithFile save pipeline job with template file
+func (svc *JobService) SaveJobWithFile(file, name string) {
+	//file directory path
+	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
+	//determine whether the folder exists, and create it if it does not exist
+	_, err := os.Stat(dir)
+	if err != nil && os.IsNotExist(err) {
+		err := os.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			log.Println("create jobs dir failed", err.Error())
+		}
+	} else {
+		log.Println("the pipeline job name already exists")
+		return
+	}
+	cicdFile, err := os.Open(path.Join(file))
+	yamlFile, err := io.ReadAll(cicdFile)
+	//write data to yaml file
+	err = os.WriteFile(src, yamlFile, 0777)
+	if err != nil {
+		log.Println("write data to yaml file failed", err)
 	}
 }
