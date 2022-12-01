@@ -172,7 +172,7 @@ const getPipelineInfo = async (page = 1, isShowLoading = true) => {
       page,
       size: 10,
     });
-    console.log("data.data:", data.data);
+    // console.log("data.data:", data.data);
     jobs.value = data.data;
     pagination.pageSize = data.pageSize;
     pagination.total = data.total;
@@ -218,7 +218,7 @@ const handleDelete = async (id) => {
 
 const handleStop = async (id) => {
   const params = { name: pathName, id };
-  console.log("params:", params);
+  // console.log("params:", params);
   try {
     await apiStopPipeline(params);
     getPipelineInfo(pagination.current, false);
@@ -244,7 +244,7 @@ watchEffect((onInvalidate) => {
     });
 
     jobIds.forEach(async (jobId) => {
-      console.log("jobIds", jobId);
+      // console.log("jobIds", jobId);
       if (!jobIdsFetching.value.includes(jobId)) {
         jobIdsFetching.value = [...jobIdsFetching.value, jobId];
         try {
