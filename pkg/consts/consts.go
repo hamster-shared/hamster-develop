@@ -18,7 +18,8 @@ const (
 )
 
 const (
-	ARTIFACTORY_DIR = PIPELINE_DIR_NAME + "/" + JOB_DIR_NAME + "/artifactory"
+	ARTIFACTORY_NAME = "/artifactory"
+	ARTIFACTORY_DIR  = PIPELINE_DIR_NAME + "/" + JOB_DIR_NAME
 )
 
 const (
