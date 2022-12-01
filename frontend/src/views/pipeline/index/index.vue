@@ -9,7 +9,7 @@
           </div>
         </template>
       </a-input>
-      <router-link to="/create">
+      <router-link to="/pipeline/create">
         <a-button type="primary">{{ $t("pipeline.createPipeline") }}</a-button>
       </router-link>
     </div>
@@ -165,7 +165,7 @@ const toPilelinePath = (name: string) => {
 }
 
 const handleToEditPage = (name: string) => {
-  router.push(`/edit/${name}`);
+  router.push(`/pipeline/edit/${name}`);
 };
 
 const handleImmediateImplementation = async (name) => {

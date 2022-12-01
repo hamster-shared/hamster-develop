@@ -11,5 +11,10 @@ export default {
   artifats: "Artifats",
   report: "Report",
   buildRecords: "Build Records",
-  terminationOfeExecution: "Termination",
+  nonExecution: "Non-execution",
+  terminationOfeExecution: "Stop",
+  running: "Running",
+  failed: "Failed",
+  passed: "Passed",
+  stop: "Stop",
 };

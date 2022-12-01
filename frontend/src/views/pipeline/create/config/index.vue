@@ -162,7 +162,7 @@ const getTemplatesById = async (templateId: String) => {
   }
 };
 const lastStep = async () => {
-  router.push({ path: "/create" });
+  router.push({ path: "/pipeline/create" });
 };
 
 const submitData = async () => {
