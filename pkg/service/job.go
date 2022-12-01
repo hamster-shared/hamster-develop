@@ -606,12 +606,7 @@ func (svc *JobService) GetJobObject(name string) *model.Job {
 
 // OpenArtifactoryDir open artifactory folder
 func (svc *JobService) OpenArtifactoryDir(name string, detailId string) error {
-	userHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		logger.Errorf("Failed to get home directory, the file will be saved to the current directory, err is %s", err.Error())
-		userHomeDir = "."
-	}
-	artifactoryDir := filepath.Join(userHomeDir, consts.ARTIFACTORY_DIR, name, detailId)
+	artifactoryDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.ARTIFACTORY_NAME, detailId)
 	return platform.OpenDir(artifactoryDir)
 }
 
