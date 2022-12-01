@@ -129,14 +129,13 @@ const getPipelineInfo = async (page = 1, options = { showLoading: true }) => {
     isLoading.value = true;
   }
 
-  console.log("test log");
   try {
     const { data } = await apiGetPipelines({
       query: searchValue.value,
       page,
       size: 10,
     });
-    console.log("data:", data.data);
+    // console.log("data:", data.data);
     pipelineList.value = data.data;
     pagination.pageSize = data.pageSize;
     pagination.total = data.total;
@@ -179,7 +178,7 @@ const handleImmediateImplementation = async (name) => {
 
 const handleStopExec = async (name, id) => {
   const params = { name, id };
-  console.log("params:", params);
+  // console.log("params:", params);
   try {
     await apiStopPipeline(params);
     getPipelineInfo(pagination.current, { showLoading: false });
