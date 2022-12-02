@@ -17,4 +17,5 @@ export default {
   DAPP_TEMPLATE_Frontend: "DAPP_TEMPLATE(Frontend)",
   cannotEmpty: 'Cannot be empty',
   deletePipeline: 'Delete pipeline',
+  buildAfterCreation: 'Trigger build after creation',
 };
