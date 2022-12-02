@@ -42,7 +42,7 @@
               </div>
               <div v-if="data.status == 2" class="text-sm font-normal text-[#F52222]">
                 <img :src="failedSVG" class="h-[20px] w-[20px]" />
-                {{ $t("pipeline.pushFailed") }}
+                {{data?.error}}
               </div>
               <div v-if="data.status == 4" class="text-sm font-normal text-[#FF842C]">
                 <img :src="stopSVG" class="h-[20px] w-[20px]" />
@@ -109,6 +109,7 @@ const pipelineList = ref<
     id?: number;
     duration?: number;
     startTime?: string;
+    error?: string;
   }[]
 >([]);
 

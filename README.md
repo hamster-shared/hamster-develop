@@ -56,8 +56,12 @@ yarn build
     1. 访问[Downloads](https://golang.google.cn/dl/)
     2. 下载安装包并执行安装
     ![image](./frontend/src/assets/readmeImages/windows.png)
-             
-    3. 配置go代理
+    3. [配置go环境变量](https://blog.csdn.net/SMonkeyKing/article/details/86886090)  
+    4. 检查是否安装成功在命令行界面输入以下命令
+     ```shell
+      go version 
+    ```
+    5. 配置go代理
     ```shell
     #配置代理
      go env -w GOPROXY=https://goproxy.cn,direct
