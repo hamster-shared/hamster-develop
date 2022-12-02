@@ -8,7 +8,6 @@ import (
 	"github.com/hamster-shared/a-line/pkg/logger"
 	"github.com/hamster-shared/a-line/pkg/model"
 	"github.com/hamster-shared/a-line/pkg/output"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
