@@ -674,6 +674,9 @@ func (svc *JobService) SaveJobWithFile(file, name string) {
 		return
 	}
 	cicdFile, err := os.Open(path.Join(file))
+	defer func() {
+		cicdFile.Close()
+	}()
 	yamlFile, err := io.ReadAll(cicdFile)
 	//write data to yaml file
 	err = os.WriteFile(src, yamlFile, 0777)
