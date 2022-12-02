@@ -1,13 +1,15 @@
 <template>
-  <div class="inline-block mr-1" @click="handleClick">
-    <div v-if="!checked">
-      <img src="@/assets/icons/checkbox-uncheck.svg" />
+  <div class="cursor-pointer" @click="handleClick">
+    <div class="inline-block mr-1">
+      <div v-show="!checked">
+        <img src="@/assets/icons/checkbox-uncheck.svg" />
+      </div>
+      <div v-show="checked">
+        <img src="@/assets/icons/checkbox-checked.svg" />
+      </div>
     </div>
-    <div v-else>
-      <img src="@/assets/icons/checkbox-checked.svg" />
-    </div>
+    <span class="text-[#7B7D7B] text-sm align-middle">{{ $t("template.buildAfterCreation") }}</span>
   </div>
-  <span class="text-[#7B7D7B] text-sm">{{ $t("template.buildAfterCreation") }}</span>
 </template>
 
 <script setup lang="ts">
