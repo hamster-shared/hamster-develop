@@ -99,7 +99,7 @@ func (a *TruffleDeployAction) ExecuteStringCommand(command, workdir string) (str
 }
 
 func (a *TruffleDeployAction) ExecuteCommand(commands []string, workdir string) (string, error) {
-	c := exec.Command(commands[0], commands[1:]...) // mac linux
+	c := exec.CommandContext(a.ctx, commands[0], commands[1:]...) // mac linux
 	c.Dir = workdir
 	logger.Debugf("execute truffle deploy command: %s", strings.Join(commands, " "))
 	a.output.WriteCommandLine(strings.Join(commands, " "))
