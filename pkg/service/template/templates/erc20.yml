@@ -6,11 +6,11 @@ stages:
       - name: set workdir
         uses: workdir
         with:
-          workdir: /Users/mohaijiang/tmp/my-erc20
+          workdir: /Users/sunjianguo/tmp/my-erc20
       - name: template init
         uses: git-checkout
         with:
-          url: https://github.com/mohaijiang/truffle-webpack.git
+          url: https://github.com/jian-guo-s/truffle-webpack.git
           branch: main
 
   compile:
@@ -19,7 +19,7 @@ stages:
     steps:
       - name: compile
         run: |
-          npm install -g truffle
+          npm install
           truffle compile
 
   solidity-lint:

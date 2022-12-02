@@ -1,5 +1,5 @@
 export default {
-  elapsedTime: "Elapsed time",
+  elapsedTime: "consumed time",
   operation: "operation",
   year: "y",
   months: "m",

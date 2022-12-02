@@ -191,6 +191,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 		jobWrapper.Status = model.STATUS_SUCCESS
 	} else {
 		jobWrapper.Status = model.STATUS_FAIL
+		jobWrapper.Error = err.Error()
 	}
 
 	dataTime := time.Now().Sub(jobWrapper.StartTime)
