@@ -41,6 +41,10 @@
                     <GitCheckout :stage="data.stage" :index="index" :url="item.eleValues.url"
                       :branch="item.eleValues.branch" @setYamlCode="setYamlCode"></GitCheckout>
                   </div>
+                  <div v-else-if="item.eleName === 'workdir'">
+                    <Workdir :stage="data.stage" :index="index" :workdir="item.eleValues.workdir"
+                      @setYamlCode="setYamlCode"></Workdir>
+                  </div>
                   <div v-else-if="item.eleName === 'artifactory'">
                     <Artifactory :stage="data.stage" :index="index" :name="item.eleValues.name"
                       :path="item.eleValues.path" @setYamlCode="setYamlCode"></Artifactory>
@@ -85,10 +89,14 @@ import { apiGetTemplatesById, apiAddPipeline } from "@/apis/template";
 import CodeEditor from "./components/CodeEditor.vue";
 import GitCheckout from "./components/GitCheckout.vue";
 import Artifactory from "./components/Artifactory.vue";
+import Workdir from "./components/Workdir.vue";
 import Shell from "./components/Shell.vue";
 import { message } from "ant-design-vue";
 
+
 const codeValue = ref<String>();
+
+const checked = ref(false)
 
 const router = useRouter();
 const { params } = useRoute();
