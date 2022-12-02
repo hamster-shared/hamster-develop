@@ -11,7 +11,7 @@
       <a-row>
         <a-col :span="6">
           <div class="process-detail-item">
-            <div class="process-detail-title">{{ jobData.name }}</div>
+            <div class="process-detail-title">Trigger Info</div>
             <div class="process-detail-info">{{ jobData.triggerMode }}</div>
           </div>
         </a-col>
