@@ -1,6 +1,8 @@
 <div align="center">
 <img alt="Aline Logo" width="200" height="200" src="./frontend/src/assets/readmeImages/logo.png">
+</div>
 
+<div align="center">
 <img src="https://img.shields.io/badge/Aline-1.0.0-brightgreen"/>
 <img src="https://img.shields.io/badge/go-1.19-blue"/>
 <img src="https://img.shields.io/badge/vue-3.2.41-brightgreen"/>
