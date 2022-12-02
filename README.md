@@ -122,13 +122,18 @@ yarn build
 ## 快速创建部署DApp
 - 从模板创建
    1. 点击创建按钮，进入创建界面![创建按钮](./frontend/src/assets/readmeImages/create-one.jpg)
+
    2. 在创建页面，选择想要的模板，点击下一步按钮![模板选择](frontend/src/assets/readmeImages/create-two.png)
+
    3. 进入信息面板，确认信息无误，点击下一步创建按钮![创建按钮](frontend/src/assets/readmeImages/create-three.jpg)
+
    4. 成功创建后，在首页即可看到您所创建的Pipeline![Pipeline](frontend/src/assets/readmeImages/create-four.jpg)
+
 - 应用结构
 - 运行Pipeline：点击运行按钮即可运行![运行按钮](frontend/src/assets/readmeImages/exec.jpg)
 - 查看运行结果
    1. 点击卡片进入![点击卡片](frontend/src/assets/readmeImages/exec-result-one.jpg)
+   
    2. 此页面展示了具体的运行流程及结果![运行页面](frontend/src/assets/readmeImages/exec-result-two.jpg)
 - 通过CLI运行Pipeline: 在终端运行此代码即可
     ```sh
