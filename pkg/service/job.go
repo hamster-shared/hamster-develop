@@ -611,7 +611,7 @@ func (svc *JobService) GetJobObject(name string) *model.Job {
 
 // OpenArtifactoryDir open artifactory folder
 func (svc *JobService) OpenArtifactoryDir(name string, detailId string) error {
-	artifactoryDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.ARTIFACTORY_NAME, detailId)
+	artifactoryDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.ArtifactoryDir, detailId)
 	return platform.OpenDir(artifactoryDir)
 }
 
