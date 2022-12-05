@@ -13,4 +13,9 @@ export default {
   buildRecords: "构建记录",
   terminationOfeExecution: "终止执行",
   back: "返回",
+  nonExecution: "待执行",
+  running: "运行中",
+  failed: "失败",
+  passed: "成功",
+  stop: "终止",
 };

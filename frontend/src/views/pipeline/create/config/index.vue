@@ -66,6 +66,7 @@
           <!-- <CodeEditor :readOnly="true" :value="codeValue"></CodeEditor> -->
         </a-col>
       </a-row>
+      <div class="mt-6"><Checkbox v-model:checked="checked"></Checkbox></div>
       <div class="mt-8 text-center">
         <a-button @click="lastStep" class="normal-button">{{
             $t("template.lastBtn")
@@ -82,9 +83,11 @@ import { reactive, ref, onMounted } from "vue";
 import YAML from "yaml";
 import { useRoute, useRouter } from "vue-router";
 import { apiGetTemplatesById, apiAddPipeline } from "@/apis/template";
+import { apiImmediatelyExec } from '@/apis/pipeline';
 import CodeEditor from "./components/CodeEditor.vue";
 import GitCheckout from "./components/GitCheckout.vue";
 import Artifactory from "./components/Artifactory.vue";
+import Checkbox from './components/Checkbox.vue'
 import Shell from "./components/Shell.vue";
 import { message } from "ant-design-vue";
 
@@ -93,6 +96,7 @@ const codeValue = ref<String>();
 const router = useRouter();
 const { params } = useRoute();
 const templateId = ref(params.id);
+const checked = ref(false)
 const templateInfo = reactive({
   name: "",
   description: "",
@@ -162,7 +166,7 @@ const getTemplatesById = async (templateId: String) => {
   }
 };
 const lastStep = async () => {
-  router.push({ path: "/create" });
+  router.push({ path: "/pipeline/create" });
 };
 
 const submitData = async () => {
@@ -175,8 +179,14 @@ const submitData = async () => {
     if (result.code === 400) {
       message.error(result.message);
     } else {
-      message.success(result.message);
-      router.push({ path: "/pipeline" });
+      if(checked.value){
+        message.success(result.message);
+        await apiImmediatelyExec(pipelineName.value);
+        router.push({ path: "/pipeline" });
+      }else{
+        message.success(result.message);
+        router.push({ path: "/pipeline" });
+      }
     }
   } catch (error: any) {
     console.log("erro:", error);

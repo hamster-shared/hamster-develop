@@ -5,7 +5,6 @@
         <div class="text-[24px] font-semibold text-[#FFFFFF]">
           {{ $t("template.title") }}
         </div>
-        <div class="help-text">{{ $t("template.helpDoc") }}</div>
       </div>
       <div class="text-[#979797] text-[14px] mt-2">
         {{ $t("template.titleDesc") }}
@@ -124,7 +123,7 @@ const nextStep = async () => {
   if (checkCurrId.value === 0) {
     message.info("Please select the pipeline template");
   } else {
-    router.push({ path: "/create/config/" + checkCurrId.value });
+    router.push({ path: "/pipeline/create/config/" + checkCurrId.value });
   }
 };
 const checkDivHeight = (className: string) => {

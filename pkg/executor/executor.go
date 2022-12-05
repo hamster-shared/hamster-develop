@@ -152,6 +152,8 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 				ah = action2.NewIpfsAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "hamster-artifactory" {
 				ah = action2.NewArtifactoryAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "deploy-contract" {
+				ah = action2.NewTruffleDeployAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "workdir" {
 				ah = action2.NewWorkdirAction(step, ctx, jobWrapper.Output)
 			} else if strings.Contains(step.Uses, "/") {
@@ -191,6 +193,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 		jobWrapper.Status = model.STATUS_SUCCESS
 	} else {
 		jobWrapper.Status = model.STATUS_FAIL
+		jobWrapper.Error = err.Error()
 	}
 
 	dataTime := time.Now().Sub(jobWrapper.StartTime)

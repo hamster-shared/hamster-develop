@@ -16,7 +16,8 @@
     </div>
 
     <template v-else-if="jobs && jobs.length > 0">
-      <a-table :columns="columns" :data-source="jobs" v-bind:pagination="pagination" v-if="jobs">
+      <a-table :columns="columns" :data-source="jobs" v-bind:pagination="pagination" :customRow="customRowClick"
+        v-if="jobs">
         <template #headerCell="{ column }">
           <template v-if="column.key === 'status'">
             <span> Status </span>
@@ -38,7 +39,10 @@
             }}</span>
           </template>
           <template v-else-if="column.key === 'id'">
-            <span @click="handleToNextPage(record.id)" class="cursor-pointer color-next-page">{{ record.id }}</span>
+            <!-- <span @click.stop="handleToNextPage(record.id)" class="cursor-pointer color-next-page">{{ record.id
+            }}</span> -->
+            <span class="cursor-pointer color-next-page">{{ record.id
+            }}</span>
           </template>
           <template v-else-if="column.key === 'stages'">
             <PipelineStageVue :stages="record.stages" />
@@ -56,12 +60,13 @@
           <template v-else-if="column.key === 'action'">
             <div v-if="record.status == 1">
               <img :src="stopButtonSVG" class="mr-2 align-baseline" />
-              <a @click="handleStop(record.id)" class="text-[#FF842C] hover:text-[#FF842C]">{{ $t("pipeline.stage.stop")
+              <a @click.stop="handleStop(record.id)" class="text-[#FF842C] hover:text-[#FF842C]">{{
+                  $t("pipeline.stage.stop")
               }}</a>
             </div>
             <div v-else>
               <img :src="deleteButtonSVG" class="mr-1 align-text-bottom" />
-              <a @click="handleDelete(record.id)" class="text-[#F52222] hover:text-[#F52222]">{{
+              <a @click.stop="handleDelete(record.id)" class="text-[#F52222] hover:text-[#F52222]">{{
                   $t("pipeline.stage.delete")
               }}
               </a>
@@ -155,11 +160,23 @@ const pagination = reactive({
   // showTotal: total => `总数：${total}人`, // 可以展示总数
 });
 
-const handleToNextPage = (id) => {
-  router.push(`/pipeline/${pathName}/${id}`);
+const customRowClick = (record: any, index: number) => {
+  return {
+    style: {
+      cursor: 'pointer',
+    },
+    onClick: (event: Event) => {
+      router.push(`/pipeline/${pathName}/${record.id}`);
+    }
+  }
 };
+
+// const handleToNextPage = (id) => {
+//   router.push(`/pipeline/${pathName}/${id}`);
+// };
+
 const handleToEditPage = () => {
-  router.push(`/edit/${pathName}`);
+  router.push(`/pipeline/edit/${pathName}`);
 };
 
 const getPipelineInfo = async (page = 1, isShowLoading = true) => {
@@ -172,7 +189,7 @@ const getPipelineInfo = async (page = 1, isShowLoading = true) => {
       page,
       size: 10,
     });
-    console.log("data.data:", data.data);
+    // console.log("data.data:", data.data);
     jobs.value = data.data;
     pagination.pageSize = data.pageSize;
     pagination.total = data.total;
@@ -191,7 +208,7 @@ const handleImmediateImplementation = async () => {
     await apiImmediatelyExec(pathName);
     getPipelineInfo(pagination.current, false);
   } catch (err) {
-    console.log("err", err);
+    // console.log("err", err);
   }
 };
 
@@ -218,12 +235,12 @@ const handleDelete = async (id) => {
 
 const handleStop = async (id) => {
   const params = { name: pathName, id };
-  console.log("params:", params);
+  // console.log("params:", params);
   try {
     await apiStopPipeline(params);
     getPipelineInfo(pagination.current, false);
   } catch (err) {
-    console.log("err", err);
+    // console.log("err", err);
   }
 };
 
@@ -244,7 +261,7 @@ watchEffect((onInvalidate) => {
     });
 
     jobIds.forEach(async (jobId) => {
-      console.log("jobIds", jobId);
+      // console.log("jobIds", jobId);
       if (!jobIdsFetching.value.includes(jobId)) {
         jobIdsFetching.value = [...jobIdsFetching.value, jobId];
         try {
@@ -252,7 +269,7 @@ watchEffect((onInvalidate) => {
             name: pathName,
             id: jobId,
           });
-          console.log("apiGetPipelineDetail", data);
+          // console.log("apiGetPipelineDetail", data);
 
           jobs.value = jobs.value.map((x) => (x.id === jobId ? data : x));
         } finally {
@@ -306,7 +323,8 @@ onMounted(() => {
   .color-next-page {
     display: inline-block;
     width: 100%;
-    &:hover{
+
+    &:hover {
       color: #28c57c;
     }
   }
