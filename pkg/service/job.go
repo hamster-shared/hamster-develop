@@ -611,7 +611,7 @@ func (svc *JobService) OpenArtifactoryDir(name string, detailId string) error {
 		logger.Errorf("Failed to get home directory, the file will be saved to the current directory, err is %s", err.Error())
 		userHomeDir = "."
 	}
-	artifactoryDir := filepath.Join(userHomeDir, consts.ARTIFACTORY_DIR, name, detailId)
+	artifactoryDir := filepath.Join(userHomeDir, consts.ArtifactoryDir, name, detailId)
 	return platform.OpenDir(artifactoryDir)
 }
 
