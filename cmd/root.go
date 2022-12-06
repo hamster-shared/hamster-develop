@@ -24,9 +24,11 @@ var (
 	channel         = make(chan model.QueueMessage)
 	dispatch        = dispatcher.NewDispatcher(channel)
 	pipelineFile    string
+	projectName     string
 	jobService      = service.NewJobService()
 	templateService = service.NewTemplateService()
-	handlerServer   = controller.NewHandlerServer(jobService, dispatch, templateService)
+	projectService  = service.NewProjectService()
+	handlerServer   = controller.NewHandlerServer(jobService, dispatch, templateService, projectService)
 	rootCmd         = &cobra.Command{
 		Use:   "a-line-cli",
 		Short: "A brief description of your application",
@@ -50,9 +52,8 @@ to quickly create a Cobra application.`,
 
 			executeClient := executor.NewExecutorClient(channel, jobService)
 			defer close(channel)
-
 			job, _ := pipeline.GetJobFromReader(cicdFile)
-			jobService.SaveJobWithFile(pipelineFile, job.Name)
+			jobService.SaveJobWithFile(projectName, job.Name, pipelineFile)
 			Stages, _ := job.StageSort()
 			jobDetail := &model.JobDetail{
 				Id:     1,
@@ -60,9 +61,9 @@ to quickly create a Cobra application.`,
 				Status: model.STATUS_NOTRUN,
 				Stages: Stages,
 			}
-			jobService.SaveJobDetail(job.Name, jobDetail)
+			jobService.SaveJobDetail(projectName, job.Name, jobDetail)
 
-			err = executeClient.Execute(1, job)
+			err = executeClient.Execute(projectName, 1, job)
 			if err != nil {
 				logger.Error("err:", err)
 			}
@@ -90,6 +91,8 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().StringVar(&pipelineFile, "file", "cicd.yml", "pipeline file")
+
+	rootCmd.Flags().StringVar(&projectName, "project", "project-one", "project name")
 
 	rootCmd.PersistentFlags().IntP("port", "p", 8080, "http port")
 }

@@ -38,10 +38,11 @@ func (c *ExecutorClient) Main() {
 		//4.TODO...，获取job信息
 
 		// TODO ... 计算jobId
+		projectName := queueMessage.ProjectName
 		jobName := queueMessage.JobName
 		jobId := queueMessage.JobId
 
-		pipelineReader, err := c.executor.FetchJob(jobName)
+		pipelineReader, err := c.executor.FetchJob(projectName, jobName)
 
 		if err != nil {
 			logger.Error(err)
@@ -55,7 +56,7 @@ func (c *ExecutorClient) Main() {
 		go func() {
 			var err error
 			if queueMessage.Command == model.Command_Start {
-				err = c.executor.Execute(jobId, job)
+				err = c.executor.Execute(projectName, jobId, job)
 			} else if queueMessage.Command == model.Command_Stop {
 				err = c.executor.Cancel(jobId, job)
 			}
@@ -68,6 +69,6 @@ func (c *ExecutorClient) Main() {
 	}
 }
 
-func (c *ExecutorClient) Execute(jobId int, job *model.Job) error {
-	return c.executor.Execute(jobId, job)
+func (c *ExecutorClient) Execute(projectName string, jobId int, job *model.Job) error {
+	return c.executor.Execute(projectName, jobId, job)
 }

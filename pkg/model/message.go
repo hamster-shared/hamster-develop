@@ -8,25 +8,28 @@ const (
 )
 
 type QueueMessage struct {
-	JobName string
-	JobId   int
-	Command Command
+	ProjectName string
+	JobName     string
+	JobId       int
+	Command     Command
 }
 
-func NewStartQueueMsg(name string, id int) QueueMessage {
+func NewStartQueueMsg(projectName, name string, id int) QueueMessage {
 	return QueueMessage{
-		JobName: name,
-		JobId:   id,
-		Command: Command_Start,
+		ProjectName: projectName,
+		JobName:     name,
+		JobId:       id,
+		Command:     Command_Start,
 	}
 
 }
 
-func NewStopQueueMsg(name string, id int) QueueMessage {
+func NewStopQueueMsg(projectName, name string, id int) QueueMessage {
 	return QueueMessage{
-		JobName: name,
-		JobId:   id,
-		Command: Command_Stop,
+		ProjectName: projectName,
+		JobName:     name,
+		JobId:       id,
+		Command:     Command_Stop,
 	}
 
 }

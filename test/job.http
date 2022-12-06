@@ -1,14 +1,38 @@
-### create job
-POST http://183.66.65.207:38080/api/pipeline
+### create project
+POST http://localhost:8080/api/projects
 Content-Type: application/json
 
 {
-  "name": "test6",
+  "name": "project1"
+}
+
+### update project
+PUT http://localhost:8080/api/projects/project1
+Content-Type: application/json
+
+{
+  "name": "project2"
+}
+
+### query project list
+GET http://localhost:8080/api/projects/list?page=1&size=10
+
+
+
+### delete project
+DELETE http://localhost:8080/api/projects/project2
+
+### create job
+POST http://localhost:8080/api/project/project1/pipeline
+Content-Type: application/json
+
+{
+  "name": "test2",
   "yaml": "version: 1.0\nname: my-test2\nstages:\n  git-clone:\n    steps:\n      - name: git-clone\n        uses: git-checkout\n        with:\n          url: https://gitee.com/mohaijiang/spring-boot-example.git\n          branch: master\n  code-compile:\n    needs:\n      - git-clone\n    steps:\n      - name: code-compile\n        runs-on: maven:3.5-jdk-8\n        run: |\n          mvn clean package -Dmaven.test.skip=true\n      - name: save artifactory\n        use: hamster-artifactory\n        with:\n          name: some.zip\n          path: target/*.jar\n  build-image:\n    needs:\n      - code-compile\n    steps:\n      - run: |\n          docker build -t mohaijiang/spring-boot-example:latest .\n"
 }
 
 ### update pipeline job
-PUT http://localhost:8080/pipeline/test3?oldName=test3
+PUT http://localhost:8080/api/project/project1/pipeline/test1
 Content-Type: application/json
 
 {
@@ -16,39 +40,38 @@ Content-Type: application/json
   "yaml": "version: \"1.0\"\nname: test2\nstages:\n  git-clone:\n    steps:\n      - name: git-clone\n        uses: git-checkout\n        with:\n          url: https://gitee.com/mohaijiang/spring-boot-example.git\n          branch: master"
 }
 
+### get pipeline list
+GET http://localhost:8080/api/project/project1/pipeline?page=1&size=10
+
 ### exec job
-POST http://183.66.65.207:38080/api/pipeline/test2/exec
+POST http://localhost:8080/api/project/project1/pipeline/test2/exec
 Content-Type: application/json
 
 ### re exec job
-POST http://localhost:8080/api/pipeline/maven/7/re-exec
+POST http://localhost:8080/api/project/project1/pipeline/test2/0/re-exec
 
 ### get pipeline job
-GET http://localhost:8080/pipeline/test3
+GET http://localhost:8080/api/project/project1/pipeline/test2
 
 ### delete pipeline job
-DELETE http://localhost:8080/pipeline/test2
+DELETE http://localhost:8080/api/project/project1/pipeline/test2
 
 ### get pipeline job details
-GET http://localhost:8080/pipeline/test2/details?page=1&size=10
+GET http://localhost:8080/api/project/project1/pipeline/test2/details?page=1&size=10
 
 
 ### get pipeline job detail
-GET http://localhost:8080/pipeline/test2/detail/0
+GET http://localhost:8080/api/project/project1/pipeline/test2/detail/0
 
 
 ### get pipelie job log
-GET http://localhost:8080/pipeline/test2/logs/0
+GET http://localhost:8080/api/project/project1/pipeline/test2/logs/1
 
 ### delete pipelie detail
-DELETE http://localhost:8080/pipeline/test2/detail/0
-
-### exec job
-POST http://localhost:8080/pipeline/test3/exec
-Content-Type: application/json
+DELETE http://localhost:8080/api/project/project1/pipeline/test2/detail/0
 
 ### cancel job
-POST http://localhost:8080/pipeline/test3/7/stop
+POST http://localhost:8080/api/project/project1/pipeline/test2/1/stop
 
 ###
 GET http://localhost:8080/pipeline/test3/logs/9
@@ -63,3 +86,6 @@ POST http://hamsternet.io/docs/abcd1234
 Content-Type: application/json
 
 {"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}
+
+
+

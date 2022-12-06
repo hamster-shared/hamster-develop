@@ -18,10 +18,10 @@ type IDispatcher interface {
 	HealthcheckNode(node *model.Node)
 
 	// SendJob 发送任务
-	SendJob(job *model.JobDetail, node *model.Node)
+	SendJob(projectName string, job *model.JobDetail, node *model.Node)
 
 	// CancelJob 取消任务
-	CancelJob(job *model.JobDetail, node *model.Node)
+	CancelJob(projectName string, job *model.JobDetail, node *model.Node)
 
 	// GetExecutor 根据节点获取执行器
 	// TODO ... 这个方法设计的不好，分布式机构后应当用api代替
@@ -68,20 +68,20 @@ func (d *Dispatcher) HealthcheckNode(*model.Node) {
 }
 
 // SendJob 发送任务
-func (d *Dispatcher) SendJob(job *model.JobDetail, node *model.Node) {
+func (d *Dispatcher) SendJob(projectName string, job *model.JobDetail, node *model.Node) {
 
 	// TODO ... 单机情况下 不考虑节点，直接发送本地
 	// TODO ... 集群情况下 通过注册的ip 地址进行api接口调用
 
-	d.Channel <- model.NewStartQueueMsg(job.Name, job.Id)
+	d.Channel <- model.NewStartQueueMsg(projectName, job.Name, job.Id)
 
 	return
 }
 
 // CancelJob 取消任务
-func (d *Dispatcher) CancelJob(job *model.JobDetail, node *model.Node) {
+func (d *Dispatcher) CancelJob(projectName string, job *model.JobDetail, node *model.Node) {
 
-	d.Channel <- model.NewStopQueueMsg(job.Name, job.Id)
+	d.Channel <- model.NewStopQueueMsg(projectName, job.Name, job.Id)
 	return
 }
 
@@ -119,12 +119,12 @@ func (d *HttpDispatcher) HealthcheckNode(node *model.Node) {
 }
 
 // SendJob 发送任务
-func (d *HttpDispatcher) SendJob(job *model.JobDetail, node *model.Node) {
+func (d *HttpDispatcher) SendJob(projectName string, job *model.JobDetail, node *model.Node) {
 
 }
 
 // CancelJob 取消任务
-func (d *HttpDispatcher) CancelJob(job *model.JobDetail, node *model.Node) {
+func (d *HttpDispatcher) CancelJob(projectName string, job *model.JobDetail, node *model.Node) {
 
 }
 

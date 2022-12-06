@@ -16,6 +16,7 @@ import (
 
 type Output struct {
 	Name               string
+	ProjectName        string
 	ID                 int
 	buffer             []string
 	f                  *os.File
@@ -52,11 +53,12 @@ type TimeConsuming struct {
 }
 
 // New 新建一个 Output 对象，会自动初始化文件，以及定时将内容写入文件
-func New(name string, id int) *Output {
+func New(projectName, name string, id int) *Output {
 	o := &Output{
-		Name:   name,
-		ID:     id,
-		buffer: make([]string, 0, 16),
+		Name:        name,
+		ProjectName: projectName,
+		ID:          id,
+		buffer:      make([]string, 0, 16),
 		timeConsuming: TimeConsuming{
 			StartTime: time.Now().Local(),
 		},
@@ -273,7 +275,7 @@ func (o *Output) initFile() error {
 	}
 
 	if o.filename == "" {
-		o.filename = filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, o.Name, consts.JOB_DETAIL_LOG_DIR_NAME, fmt.Sprintf("%d.log", o.ID))
+		o.filename = filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, o.ProjectName, o.Name, consts.HISTORY_DIR_NAME, fmt.Sprintf("%d", o.ID), fmt.Sprintf("%s.log", consts.LOG_FILE_NAME))
 	}
 
 	basepath := filepath.Dir(o.filename)

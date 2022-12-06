@@ -17,13 +17,14 @@ import (
 
 // ArtifactoryAction Storage building
 type ArtifactoryAction struct {
-	name   string
-	path   []string
-	output *output.Output
-	ctx    context.Context
+	name        string
+	projectName string
+	path        []string
+	output      *output.Output
+	ctx         context.Context
 }
 
-func NewArtifactoryAction(step model.Step, ctx context.Context, output *output.Output) *ArtifactoryAction {
+func NewArtifactoryAction(step model.Step, ctx context.Context, output *output.Output, projectName string) *ArtifactoryAction {
 	var path string
 	s := step.With["path"]
 	if s != "" {
@@ -34,10 +35,11 @@ func NewArtifactoryAction(step model.Step, ctx context.Context, output *output.O
 		}
 	}
 	return &ArtifactoryAction{
-		name:   step.With["name"],
-		path:   strings.Split(path, "\n"),
-		ctx:    ctx,
-		output: output,
+		name:        step.With["name"],
+		path:        strings.Split(path, "\n"),
+		ctx:         ctx,
+		output:      output,
+		projectName: projectName,
 	}
 }
 

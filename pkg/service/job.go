@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/hamster-shared/a-line/pkg/consts"
 	"github.com/hamster-shared/a-line/pkg/logger"
 	"github.com/hamster-shared/a-line/pkg/model"
@@ -23,54 +24,54 @@ import (
 
 type IJobService interface {
 	//SaveJob 保存 Job
-	SaveJob(name string, yaml string) error
+	SaveJob(projectName, pipelineName string, yaml string) error
 
 	// GetJob 获取 Job
-	GetJob(name string) string
+	GetJob(projectName, pipelineName string) (string, error)
 
 	// GetJobObject get job object
-	GetJobObject(name string) *model.Job
+	GetJobObject(projectName, pipelineName string) *model.Job
 
-	JobList(keyword string, page, size int) *model.JobPage
+	JobList(projectName, keyword string, page, size int) *model.JobPage
 
 	//UpdateJob update job
-	UpdateJob(oldName string, newName string, yaml string) error
+	UpdateJob(projectName, oldName string, newName string, yaml string) error
 
 	//DeleteJob delete job
-	DeleteJob(name string) error
+	DeleteJob(projectName, pipelineName string) error
 
 	// SaveJobDetail 保存 Job 详情
-	SaveJobDetail(name string, job *model.JobDetail) error
+	SaveJobDetail(projectName, pipelineName string, job *model.JobDetail) error
 
-	UpdateJobDetail(name string, job *model.JobDetail) error
+	UpdateJobDetail(projectName, pipelineName string, job *model.JobDetail) error
 
 	// GetJobDetail 获取 Job 详情
-	GetJobDetail(name string, id int) *model.JobDetail
+	GetJobDetail(projectName, pipelineName string, id int) (*model.JobDetail, error)
 
 	//JobDetailList get job detail list
-	JobDetailList(name string, page, size int) *model.JobDetailPage
+	JobDetailList(projectName, pipelineName string, page, size int) *model.JobDetailPage
 
 	//DeleteJobDetail delete job detail
-	DeleteJobDetail(name string, pipelineDetailId int) error
+	DeleteJobDetail(projectName, pipelineName string, pipelineDetailId int) error
 
 	//ExecuteJob  exec pipeline job
-	ExecuteJob(name string) (*model.JobDetail, error)
+	ExecuteJob(projectName, pipelineName string) (*model.JobDetail, error)
 
 	// ReExecuteJob re exec pipeline job
-	ReExecuteJob(name string, pipelineDetailId int) error
+	ReExecuteJob(projectName, pipelineName string, pipelineDetailId int) error
 
 	// StopJobDetail stop pipeline job
-	StopJobDetail(name string, pipelineDetailId int) error
+	StopJobDetail(projectName, pipelineName string, pipelineDetailId int) error
 
 	// GetJobLog 获取 job 日志
-	GetJobLog(name string, pipelineDetailId int) *model.JobLog
+	GetJobLog(projectName, pipelineName string, pipelineDetailId int) *model.JobLog
 	// GetJobStageLog 获取 job 的 stage 日志
-	GetJobStageLog(name string, pipelineDetailId int, stageName string, start int) *model.JobStageLog
+	GetJobStageLog(projectName, pipelineName string, pipelineDetailId int, stageName string, start int) *model.JobStageLog
 
 	// OpenArtifactoryDir open artifactory folder
-	OpenArtifactoryDir(name string, detailId string) error
+	OpenArtifactoryDir(projectName, pipelineName string, detailId string) error
 	//SaveJobWithFile save pipeline job with template file
-	SaveJobWithFile(file, name string)
+	SaveJobWithFile(projectName, pipelineName, file string)
 }
 
 type JobService struct {
@@ -81,10 +82,10 @@ func NewJobService() *JobService {
 }
 
 // SaveJob save pipeline job
-func (svc *JobService) SaveJob(name string, yaml string) error {
+func (svc *JobService) SaveJob(projectName, pipelineName string, yaml string) error {
 	//file directory path
-	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
+	dir := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.PIPELINE_FILE_NAME+".yml")
 	//determine whether the folder exists, and create it if it does not exist
 	_, err := os.Stat(dir)
 	if err != nil && os.IsNotExist(err) {
@@ -107,29 +108,29 @@ func (svc *JobService) SaveJob(name string, yaml string) error {
 }
 
 // GetJob get job
-func (svc *JobService) GetJob(name string) string {
+func (svc *JobService) GetJob(projectName, pipelineName string) (string, error) {
 	//job file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.PIPELINE_FILE_NAME+".yml")
 	//judge whether the job file exists
 	_, err := os.Stat(src)
 	//not exist
 	if os.IsNotExist(err) {
 		log.Println("get job failed,job file not exist", err.Error())
-		return ""
+		return "", err
 	}
 	//exist
 	fileContent, err := os.ReadFile(src)
 	if err != nil {
 		log.Println("get job read file failed", err.Error())
-		return ""
+		return "", err
 	}
-	return string(fileContent)
+	return string(fileContent), nil
 }
 
 // UpdateJob update job
-func (svc *JobService) UpdateJob(oldName string, newName string, yaml string) error {
+func (svc *JobService) UpdateJob(projectName, oldName string, newName string, yaml string) error {
 	name := oldName
-	oldDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
+	oldDir := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, name)
 	_, err := os.Stat(oldDir)
 	//not exist
 	if os.IsNotExist(err) {
@@ -137,7 +138,7 @@ func (svc *JobService) UpdateJob(oldName string, newName string, yaml string) er
 		return err
 	}
 	// job file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, name, consts.PIPELINE_FILE_NAME+".yml")
 	//judge whether the job detail file exists
 	_, err = os.Stat(src)
 	//not exist
@@ -146,21 +147,14 @@ func (svc *JobService) UpdateJob(oldName string, newName string, yaml string) er
 		return err
 	}
 	if newName != "" {
-		newDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, newName)
+		newDir := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, newName)
 		err = os.Rename(oldDir, newDir)
 		if err != nil {
 			log.Println("reName failed", err.Error())
 			return err
 		}
-		oldSrc := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, newName, name+".yml")
-		newSrc := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, newName, newName+".yml")
-		err = os.Rename(oldSrc, newSrc)
-		if err != nil {
-			log.Println("reName failed", err.Error())
-			return err
-		}
-		src = newSrc
-		svc.updateJobDetailName(newName)
+		src = filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, newName, consts.PIPELINE_FILE_NAME+".yml")
+		svc.updateJobDetailName(projectName, newName)
 	}
 	//write data to yaml file
 	err = os.WriteFile(src, []byte(yaml), 0777)
@@ -172,9 +166,9 @@ func (svc *JobService) UpdateJob(oldName string, newName string, yaml string) er
 }
 
 // DeleteJob delete job
-func (svc *JobService) DeleteJob(name string) error {
+func (svc *JobService) DeleteJob(projectName, pipelineName string) error {
 	// job file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName)
 	//judge whether the job file exists
 	_, err := os.Stat(src)
 	//not exist
@@ -191,7 +185,7 @@ func (svc *JobService) DeleteJob(name string) error {
 }
 
 // SaveJobDetail  save job detail
-func (svc *JobService) SaveJobDetail(name string, job *model.JobDetail) error {
+func (svc *JobService) SaveJobDetail(projectName, pipelineName string, job *model.JobDetail) error {
 	job.TriggerMode = consts.TRIGGER_MODE
 	// serializes yaml struct
 	data, err := yaml.Marshal(job)
@@ -200,7 +194,7 @@ func (svc *JobService) SaveJobDetail(name string, job *model.JobDetail) error {
 		return err
 	}
 	//file directory path
-	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
+	dir := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.HISTORY_DIR_NAME, strconv.Itoa(job.Id))
 	//determine whether the folder exists, and create it if it does not exist
 	_, err = os.Stat(dir)
 	if os.IsNotExist(err) {
@@ -210,7 +204,7 @@ func (svc *JobService) SaveJobDetail(name string, job *model.JobDetail) error {
 			return err
 		}
 	}
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME, strconv.Itoa(job.Id)+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.HISTORY_DIR_NAME, strconv.Itoa(job.Id), consts.HISTORY_FILE_NAME+".yml")
 	//write data to yaml file
 	err = os.WriteFile(src, data, 0777)
 	if err != nil {
@@ -221,7 +215,7 @@ func (svc *JobService) SaveJobDetail(name string, job *model.JobDetail) error {
 }
 
 // UpdateJobDetail update job detail
-func (svc *JobService) UpdateJobDetail(name string, job *model.JobDetail) error {
+func (svc *JobService) UpdateJobDetail(projectName, pipelineName string, job *model.JobDetail) error {
 	// serializes yaml struct
 	data, err := yaml.Marshal(job)
 	if err != nil {
@@ -229,14 +223,14 @@ func (svc *JobService) UpdateJobDetail(name string, job *model.JobDetail) error 
 		return err
 	}
 	//file directory path
-	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
+	dir := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.HISTORY_DIR_NAME, strconv.Itoa(job.Id))
 	//determine whether the folder exists, and create it if it does not exist
 	_, err = os.Stat(dir)
 	if os.IsNotExist(err) {
 		log.Println("update job detail failed", err.Error())
 		return err
 	}
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME, strconv.Itoa(job.Id)+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.HISTORY_DIR_NAME, strconv.Itoa(job.Id), consts.HISTORY_FILE_NAME+".yml")
 	//write data to yaml file
 	err = os.WriteFile(src, data, 0777)
 	if err != nil {
@@ -247,28 +241,28 @@ func (svc *JobService) UpdateJobDetail(name string, job *model.JobDetail) error 
 }
 
 // GetJobDetail get job detail
-func (svc *JobService) GetJobDetail(name string, id int) *model.JobDetail {
+func (svc *JobService) GetJobDetail(projectName, pipelineName string, id int) (*model.JobDetail, error) {
 	var jobDetailData model.JobDetail
 	//job file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME, strconv.Itoa(id)+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.HISTORY_DIR_NAME, strconv.Itoa(id), consts.HISTORY_FILE_NAME+".yml")
 	//judge whether the job detail file exists
 	_, err := os.Stat(src)
 	//not exist
 	if os.IsNotExist(err) {
 		log.Println("get job detail failed,job detail file not exist", err.Error())
-		return &jobDetailData
+		return &jobDetailData, err
 	}
 	//exist
 	fileContent, err := os.ReadFile(src)
 	if err != nil {
 		log.Println("get job read detail file failed", err.Error())
-		return &jobDetailData
+		return &jobDetailData, err
 	}
 	//deserialization job detail yml file
 	err = yaml.Unmarshal(fileContent, &jobDetailData)
 	if err != nil {
 		log.Println("get job,deserialization job detail file failed", err.Error())
-		return &jobDetailData
+		return &jobDetailData, err
 	}
 
 	runningStage := -1
@@ -282,15 +276,15 @@ func (svc *JobService) GetJobDetail(name string, id int) *model.JobDetail {
 	if runningStage >= 0 && runningStage < len(jobDetailData.Stages) {
 		jobDetailData.Stages[runningStage].Duration = time.Now().Sub(jobDetailData.Stages[runningStage].StartTime).Milliseconds()
 	}
-	return &jobDetailData
+	return &jobDetailData, nil
 }
 
 // JobList  job list
-func (svc *JobService) JobList(keyword string, page, pageSize int) *model.JobPage {
+func (svc *JobService) JobList(projectName, keyword string, page, pageSize int) *model.JobPage {
 	var jobPage model.JobPage
 	var jobs []model.JobVo
 	//jobs folder path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName)
 	_, err := os.Stat(src)
 	if os.IsNotExist(err) {
 		log.Println("jobs folder does not exist", err.Error())
@@ -306,12 +300,12 @@ func (svc *JobService) JobList(keyword string, page, pageSize int) *model.JobPag
 		if keyword != "" {
 			if strings.Contains(file.Name(), keyword) {
 				//job yml file path
-				ymlPath = filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, file.Name(), file.Name()+".yml")
+				ymlPath = filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, file.Name(), consts.PIPELINE_FILE_NAME+".yml")
 			} else {
 				continue
 			}
 		} else {
-			ymlPath = filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, file.Name(), file.Name()+".yml")
+			ymlPath = filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, file.Name(), consts.PIPELINE_FILE_NAME+".yml")
 		}
 		//judge whether the job file exists
 		_, err := os.Stat(ymlPath)
@@ -334,7 +328,7 @@ func (svc *JobService) JobList(keyword string, page, pageSize int) *model.JobPag
 			continue
 		}
 		copier.Copy(&jobVo, &jobData)
-		svc.getJobInfo(&jobVo)
+		svc.getJobInfo(projectName, &jobVo)
 		createTime := platform.GetFileCreateTime(ymlPath)
 		jobVo.CreateTime = *createTime
 		jobs = append(jobs, jobVo)
@@ -349,11 +343,11 @@ func (svc *JobService) JobList(keyword string, page, pageSize int) *model.JobPag
 }
 
 // JobDetailList job detail list
-func (svc *JobService) JobDetailList(name string, page, pageSize int) *model.JobDetailPage {
+func (svc *JobService) JobDetailList(projectName, pipelineName string, page, pageSize int) *model.JobDetailPage {
 	var jobDetailPage model.JobDetailPage
 	var jobDetails []model.JobDetail
 	//get the folder path of job details
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.HISTORY_DIR_NAME)
 	_, err := os.Stat(src)
 	if os.IsNotExist(err) {
 		log.Println("job-details folder does not exist", err.Error())
@@ -365,7 +359,7 @@ func (svc *JobService) JobDetailList(name string, page, pageSize int) *model.Job
 		return &jobDetailPage
 	}
 	for _, file := range files {
-		ymlPath := filepath.Join(src, file.Name())
+		ymlPath := filepath.Join(src, file.Name(), consts.HISTORY_FILE_NAME+".yml")
 		//judge whether the job detail file exists
 		_, err := os.Stat(ymlPath)
 		//not exist
@@ -397,9 +391,9 @@ func (svc *JobService) JobDetailList(name string, page, pageSize int) *model.Job
 }
 
 // DeleteJobDetail delete job detail
-func (svc *JobService) DeleteJobDetail(name string, pipelineDetailId int) error {
+func (svc *JobService) DeleteJobDetail(projectName, pipelineName string, pipelineDetailId int) error {
 	// job detail file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME, strconv.Itoa(pipelineDetailId)+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.HISTORY_DIR_NAME, strconv.Itoa(pipelineDetailId))
 	//judge whether the job detail file exists
 	_, err := os.Stat(src)
 	//not exist
@@ -407,7 +401,7 @@ func (svc *JobService) DeleteJobDetail(name string, pipelineDetailId int) error 
 		log.Println("delete job detail failed,job detail file not exist", err.Error())
 		return err
 	}
-	err = os.Remove(src)
+	err = os.RemoveAll(src)
 	if err != nil {
 		log.Println("delete job detail failed", err.Error())
 		return err
@@ -416,14 +410,14 @@ func (svc *JobService) DeleteJobDetail(name string, pipelineDetailId int) error 
 }
 
 // ExecuteJob exec pipeline job
-func (svc *JobService) ExecuteJob(name string) (*model.JobDetail, error) {
+func (svc *JobService) ExecuteJob(projectName, pipelineName string) (*model.JobDetail, error) {
 	//get job data
-	jobData := svc.GetJobObject(name)
+	jobData := svc.GetJobObject(projectName, pipelineName)
 	//create job detail
 	var jobDetail model.JobDetail
 	var ids []int
 	//job-details file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.HISTORY_DIR_NAME)
 	//judge whether the job detail file exists
 	_, err := os.Stat(src)
 	if os.IsNotExist(err) {
@@ -440,8 +434,7 @@ func (svc *JobService) ExecuteJob(name string) (*model.JobDetail, error) {
 		return nil, err
 	}
 	for _, file := range files {
-		index := strings.Index(file.Name(), ".")
-		id, err := strconv.Atoi(file.Name()[0:index])
+		id, err := strconv.Atoi(file.Name())
 		if err != nil {
 			log.Println("string to int failed", err.Error())
 			continue
@@ -464,31 +457,38 @@ func (svc *JobService) ExecuteJob(name string) (*model.JobDetail, error) {
 	//TODO... 执行 pipeline job
 
 	//create and save job detail
-	return &jobDetail, svc.SaveJobDetail(name, &jobDetail)
+	return &jobDetail, svc.SaveJobDetail(projectName, pipelineName, &jobDetail)
 }
 
 // ReExecuteJob re exec pipeline job
-func (svc *JobService) ReExecuteJob(name string, pipelineDetailId int) error {
+func (svc *JobService) ReExecuteJob(projectName, pipelineName string, pipelineDetailId int) error {
 	//get job detail data
-	jobDetailData := svc.GetJobDetail(name, pipelineDetailId)
+	jobDetailData, err := svc.GetJobDetail(projectName, pipelineName, pipelineDetailId)
 	println(jobDetailData)
+	if err != nil {
+		return err
+	}
 	//todo 重新执行 pipeline job
 	return nil
 }
 
 // StopJobDetail stop pipeline job detail
-func (svc *JobService) StopJobDetail(name string, pipelineDetailId int) error {
+func (svc *JobService) StopJobDetail(projectName, pipelineName string, pipelineDetailId int) error {
 	//get job detail data
-	jobDetailData := svc.GetJobDetail(name, pipelineDetailId)
+	jobDetailData, err := svc.GetJobDetail(projectName, pipelineName, pipelineDetailId)
+	if err != nil {
+		return err
+	}
 	println(jobDetailData)
 	//todo stop pipeline job detail
 	return nil
 }
 
 // GetJobLog 获取 job 日志
-func (svc *JobService) GetJobLog(name string, pipelineDetailId int) *model.JobLog {
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_LOG_DIR_NAME, strconv.Itoa(pipelineDetailId)+".log")
-
+func (svc *JobService) GetJobLog(projectName, pipelineName string, pipelineDetailId int) *model.JobLog {
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.HISTORY_DIR_NAME, strconv.Itoa(pipelineDetailId), consts.LOG_FILE_NAME+".log")
+	log.Println(src)
+	log.Println("-----------------")
 	fileLog, err := output.ParseLogFile(src)
 	if err != nil {
 		logger.Errorf("parse log file failed, %v", err)
@@ -506,8 +506,8 @@ func (svc *JobService) GetJobLog(name string, pipelineDetailId int) *model.JobLo
 }
 
 // GetJobStageLog 获取 job 的 stage 日志
-func (svc *JobService) GetJobStageLog(name string, execId int, stageName string, start int) *model.JobStageLog {
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_LOG_DIR_NAME, strconv.Itoa(execId)+".log")
+func (svc *JobService) GetJobStageLog(projectName, pipelineName string, execId int, stageName string, start int) *model.JobStageLog {
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.HISTORY_DIR_NAME, strconv.Itoa(execId), consts.LOG_FILE_NAME+".log")
 
 	fileLog, err := output.ParseLogFile(src)
 	if err != nil {
@@ -515,7 +515,11 @@ func (svc *JobService) GetJobStageLog(name string, execId int, stageName string,
 		return nil
 	}
 
-	detail := svc.GetJobDetail(name, execId)
+	detail, err := svc.GetJobDetail(projectName, pipelineName, execId)
+	if err != nil {
+		logger.Errorf("parse log file failed, %v", err)
+		return nil
+	}
 
 	var stageDetail model.StageDetail
 
@@ -548,7 +552,7 @@ func (svc *JobService) GetJobStageLog(name string, execId int, stageName string,
 	return nil
 }
 
-func (svc *JobService) getJobInfo(jobData *model.JobVo) {
+func (svc *JobService) getJobInfo(projectName string, jobData *model.JobVo) {
 	//get the folder path of job details
 	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, jobData.Name, consts.JOB_DETAIL_DIR_NAME)
 	_, err := os.Stat(src)
@@ -571,7 +575,11 @@ func (svc *JobService) getJobInfo(jobData *model.JobVo) {
 	}
 	if len(ids) > 0 {
 		sort.Sort(sort.Reverse(sort.IntSlice(ids)))
-		jobDetail := svc.GetJobDetail(jobData.Name, ids[0])
+		jobDetail, err := svc.GetJobDetail(projectName, jobData.Name, ids[0])
+		if err != nil {
+			log.Println(fmt.Sprintf("project name:%s,pipeline name:%s,detail id:%d,pipeline detail not exist", projectName, jobData.Name, ids[0]))
+			return
+		}
 		jobData.Duration = jobDetail.Duration
 		jobData.Status = jobDetail.Status
 		jobData.TriggerMode = jobDetail.TriggerMode
@@ -583,10 +591,10 @@ func (svc *JobService) getJobInfo(jobData *model.JobVo) {
 }
 
 // GetJob get job
-func (svc *JobService) GetJobObject(name string) *model.Job {
+func (svc *JobService) GetJobObject(projectName, pipelineName string) *model.Job {
 	var jobData model.Job
 	//job file path
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.PIPELINE_FILE_NAME+".yml")
 	//judge whether the job file exists
 	_, err := os.Stat(src)
 	//not exist
@@ -610,13 +618,13 @@ func (svc *JobService) GetJobObject(name string) *model.Job {
 }
 
 // OpenArtifactoryDir open artifactory folder
-func (svc *JobService) OpenArtifactoryDir(name string, detailId string) error {
-	artifactoryDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.ArtifactoryDir, detailId)
+func (svc *JobService) OpenArtifactoryDir(projectName, pipelineName string, detailId string) error {
+	artifactoryDir := filepath.Join(utils.DefaultConfigDir(), consts.ARTIFACTORY_DIR_NAME, projectName, pipelineName, detailId)
 	return platform.OpenDir(artifactoryDir)
 }
 
 // updateJobDetailName update job detail name
-func (svc *JobService) updateJobDetailName(name string) {
+func (svc *JobService) updateJobDetailName(projectName, name string) {
 	//file directory path
 	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
 	//determine whether the folder exists, and create it if it does not exist
@@ -652,16 +660,16 @@ func (svc *JobService) updateJobDetailName(name string) {
 				continue
 			}
 			jobDetailData.Name = name
-			svc.UpdateJobDetail(name, &jobDetailData)
+			svc.UpdateJobDetail(projectName, name, &jobDetailData)
 		}
 	}
 }
 
 // SaveJobWithFile save pipeline job with template file
-func (svc *JobService) SaveJobWithFile(file, name string) {
+func (svc *JobService) SaveJobWithFile(projectName, pipelineName, file string) {
 	//file directory path
-	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
+	dir := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, pipelineName, consts.PIPELINE_FILE_NAME+".yml")
 	//determine whether the folder exists, and create it if it does not exist
 	_, err := os.Stat(dir)
 	if err != nil && os.IsNotExist(err) {

@@ -8,6 +8,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/model"
 	"github.com/hamster-shared/a-line/pkg/service"
 	"gopkg.in/yaml.v3"
+	"log"
 	"strconv"
 )
 
@@ -15,18 +16,21 @@ type HandlerServer struct {
 	jobService      service.IJobService
 	dispatch        dispatcher.IDispatcher
 	templateService service.ITemplateService
+	projectService  service.IProjectService
 }
 
-func NewHandlerServer(jobService service.IJobService, dispatch dispatcher.IDispatcher, templateService service.ITemplateService) *HandlerServer {
+func NewHandlerServer(jobService service.IJobService, dispatch dispatcher.IDispatcher, templateService service.ITemplateService, projectService service.IProjectService) *HandlerServer {
 	return &HandlerServer{
 		jobService:      jobService,
 		dispatch:        dispatch,
 		templateService: templateService,
+		projectService:  projectService,
 	}
 }
 
 // createPipeline create pipeline jon
 func (h *HandlerServer) createPipeline(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	createData := parameters.CreatePipeline{}
 	err := gin.BindJSON(&createData)
 	if err != nil {
@@ -39,7 +43,7 @@ func (h *HandlerServer) createPipeline(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	err = h.jobService.SaveJob(createData.Name, createData.Yaml)
+	err = h.jobService.SaveJob(projectName, createData.Name, createData.Yaml)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -49,6 +53,7 @@ func (h *HandlerServer) createPipeline(gin *gin.Context) {
 }
 
 func (h *HandlerServer) updatePipeline(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	oldName := gin.Param("oldName")
 	updateData := parameters.UpdatePipeline{}
 	err := gin.BindJSON(&updateData)
@@ -62,7 +67,7 @@ func (h *HandlerServer) updatePipeline(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	err = h.jobService.UpdateJob(oldName, updateData.NewName, updateData.Yaml)
+	err = h.jobService.UpdateJob(projectName, oldName, updateData.NewName, updateData.Yaml)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -72,15 +77,21 @@ func (h *HandlerServer) updatePipeline(gin *gin.Context) {
 
 // getPipeline get pipeline job
 func (h *HandlerServer) getPipeline(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	name := gin.Param("name")
-	pipelineData := h.jobService.GetJob(name)
+	pipelineData, err := h.jobService.GetJob(projectName, name)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	Success(pipelineData, gin)
 }
 
 // deletePipeline delete pipeline job and pipeline job detail
 func (h *HandlerServer) deletePipeline(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	name := gin.Param("name")
-	err := h.jobService.DeleteJob(name)
+	err := h.jobService.DeleteJob(projectName, name)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -90,6 +101,7 @@ func (h *HandlerServer) deletePipeline(gin *gin.Context) {
 
 // pipelineList get pipeline job list
 func (h *HandlerServer) pipelineList(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	query := gin.Query("query")
 	pageStr := gin.DefaultQuery("page", "1")
 	sizeStr := gin.DefaultQuery("size", "10")
@@ -103,12 +115,13 @@ func (h *HandlerServer) pipelineList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	jobData := h.jobService.JobList(query, page, size)
+	jobData := h.jobService.JobList(projectName, query, page, size)
 	Success(jobData, gin)
 }
 
 // getPipelineDetail get pipeline job detail info
 func (h *HandlerServer) getPipelineDetail(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	name := gin.Param("name")
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -116,12 +129,17 @@ func (h *HandlerServer) getPipelineDetail(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	jobDetailData := h.jobService.GetJobDetail(name, id)
+	jobDetailData, err := h.jobService.GetJobDetail(projectName, name, id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	Success(jobDetailData, gin)
 }
 
 // deleteJobDetail delete job detail
 func (h *HandlerServer) deleteJobDetail(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	name := gin.Param("name")
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -129,7 +147,7 @@ func (h *HandlerServer) deleteJobDetail(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	err = h.jobService.DeleteJobDetail(name, id)
+	err = h.jobService.DeleteJobDetail(projectName, name, id)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -139,6 +157,7 @@ func (h *HandlerServer) deleteJobDetail(gin *gin.Context) {
 
 // getPipelineDetailList get pipeline job detail list
 func (h *HandlerServer) getPipelineDetailList(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	name := gin.Param("name")
 	pageStr := gin.DefaultQuery("page", "1")
 	sizeStr := gin.DefaultQuery("size", "10")
@@ -152,21 +171,22 @@ func (h *HandlerServer) getPipelineDetailList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	jobDetailPage := h.jobService.JobDetailList(name, page, size)
+	jobDetailPage := h.jobService.JobDetailList(projectName, name, page, size)
 	Success(jobDetailPage, gin)
 }
 
 // execPipeline exec pipeline job
 func (h *HandlerServer) execPipeline(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	name := gin.Param("name")
-	job := h.jobService.GetJobObject(name)
-	jobDetail, err := h.jobService.ExecuteJob(name)
+	job := h.jobService.GetJobObject(projectName, name)
+	jobDetail, err := h.jobService.ExecuteJob(projectName, name)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
 	node := h.dispatch.DispatchNode(job)
-	h.dispatch.SendJob(jobDetail, node)
+	h.dispatch.SendJob(projectName, jobDetail, node)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -176,6 +196,7 @@ func (h *HandlerServer) execPipeline(gin *gin.Context) {
 
 // reExecuteJob re exec pipeline job detail
 func (h *HandlerServer) reExecuteJob(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	name := gin.Param("name")
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -183,11 +204,15 @@ func (h *HandlerServer) reExecuteJob(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	err = h.jobService.ReExecuteJob(name, id)
-	job := h.jobService.GetJobObject(name)
-	jobDetail := h.jobService.GetJobDetail(name, id)
+	err = h.jobService.ReExecuteJob(projectName, name, id)
+	job := h.jobService.GetJobObject(projectName, name)
+	jobDetail, err := h.jobService.GetJobDetail(projectName, name, id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	node := h.dispatch.DispatchNode(job)
-	h.dispatch.SendJob(jobDetail, node)
+	h.dispatch.SendJob(projectName, jobDetail, node)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -197,6 +222,7 @@ func (h *HandlerServer) reExecuteJob(gin *gin.Context) {
 
 // stopJobDetail stop pipeline job
 func (h *HandlerServer) stopJobDetail(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	name := gin.Param("name")
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -205,20 +231,25 @@ func (h *HandlerServer) stopJobDetail(gin *gin.Context) {
 		return
 	}
 
-	err = h.jobService.StopJobDetail(name, id)
+	err = h.jobService.StopJobDetail(projectName, name, id)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
-	job := h.jobService.GetJobObject(name)
-	jobDetail := h.jobService.GetJobDetail(name, id)
+	job := h.jobService.GetJobObject(projectName, name)
+	jobDetail, err := h.jobService.GetJobDetail(projectName, name, id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	node := h.dispatch.DispatchNode(job)
-	h.dispatch.CancelJob(jobDetail, node)
+	h.dispatch.CancelJob(projectName, jobDetail, node)
 	Success("", gin)
 }
 
 // getJobLog get pipeline job detail logs
 func (h *HandlerServer) getJobLog(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	name := gin.Param("name")
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -226,9 +257,15 @@ func (h *HandlerServer) getJobLog(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	jobDetail := h.jobService.GetJobDetail(name, id)
-	data := h.jobService.GetJobLog(name, id)
-
+	jobDetail, err := h.jobService.GetJobDetail(projectName, name, id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	data := h.jobService.GetJobLog(projectName, name, id)
+	log.Println(111111111)
+	log.Println(data)
+	log.Println(111111111)
 	gin.Writer.Header().Set("LastLine", strconv.Itoa(data.LastLine))
 	gin.Writer.Header().Set("End", strconv.FormatBool(jobDetail.Status != model.STATUS_RUNNING))
 	//gin.String(200, data.Content)
@@ -237,6 +274,7 @@ func (h *HandlerServer) getJobLog(gin *gin.Context) {
 
 // getJobStageLog get job detail stage logs
 func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	name := gin.Param("name")
 	idStr := gin.Param("id")
 	stageName := gin.Param("stagename")
@@ -247,7 +285,7 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 		return
 	}
 	start, _ := strconv.Atoi(startStr)
-	data := h.jobService.GetJobStageLog(name, id, stageName, start)
+	data := h.jobService.GetJobStageLog(projectName, name, id, stageName, start)
 
 	gin.Writer.Header().Set("LastLine", strconv.Itoa(data.LastLine))
 	gin.Writer.Header().Set("End", strconv.FormatBool(data.End))
@@ -279,9 +317,73 @@ func (h *HandlerServer) getTemplateDetail(gin *gin.Context) {
 
 // openArtifactoryDir open artifactory folder
 func (h *HandlerServer) openArtifactoryDir(gin *gin.Context) {
+	projectName := gin.Param("projectName")
 	idStr := gin.Param("id")
 	name := gin.Param("name")
-	err := h.jobService.OpenArtifactoryDir(name, idStr)
+	err := h.jobService.OpenArtifactoryDir(projectName, name, idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success("", gin)
+}
+
+// createProject create project
+func (h *HandlerServer) createProject(gin *gin.Context) {
+	var project model.Project
+	err := gin.BindJSON(&project)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	err = h.projectService.CreateProject(&project)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success("", gin)
+}
+
+// updateProject update project
+func (h *HandlerServer) updateProject(gin *gin.Context) {
+	oldName := gin.Param("oldName")
+	var project model.Project
+	err := gin.BindJSON(&project)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	err = h.projectService.UpdateProject(oldName, &project)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success("", gin)
+}
+
+// getProjects get project list
+func (h *HandlerServer) getProjects(gin *gin.Context) {
+	query := gin.Query("query")
+	pageStr := gin.DefaultQuery("page", "1")
+	sizeStr := gin.DefaultQuery("size", "10")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	data := h.projectService.GetProjects(query, page, size)
+	Success(data, gin)
+}
+
+// deleteProject delete project by name
+func (h *HandlerServer) deleteProject(gin *gin.Context) {
+	name := gin.Param("name")
+	err := h.projectService.DeleteProject(name)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

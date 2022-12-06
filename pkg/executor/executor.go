@@ -21,10 +21,10 @@ import (
 type IExecutor interface {
 
 	// FetchJob 获取任务
-	FetchJob(name string) (io.Reader, error)
+	FetchJob(projectName, name string) (io.Reader, error)
 
 	// Execute 执行任务
-	Execute(id int, job *model.Job) error
+	Execute(projectName string, id int, job *model.Job) error
 
 	// HandlerLog 处理日志
 	HandlerLog(jobId int)
@@ -41,15 +41,18 @@ type Executor struct {
 }
 
 // FetchJob 获取任务
-func (e *Executor) FetchJob(name string) (io.Reader, error) {
+func (e *Executor) FetchJob(projectName, name string) (io.Reader, error) {
 
 	//TODO... 根据 name 从 rpc 或 直接内部调用获取 job 的 pipeline 文件
-	job := e.jobService.GetJob(name)
+	job, err := e.jobService.GetJob(projectName, name)
+	if err != nil {
+		return nil, err
+	}
 	return strings.NewReader(job), nil
 }
 
 // Execute 执行任务
-func (e *Executor) Execute(id int, job *model.Job) error {
+func (e *Executor) Execute(projectName string, id int, job *model.Job) error {
 
 	// 1. 解析对 pipeline 进行任务排序
 	stages, err := job.StageSort()
@@ -122,7 +125,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 		return nil
 	}
 
-	jobWrapper.Output = output.New(job.Name, jobWrapper.Id)
+	jobWrapper.Output = output.New(projectName, job.Name, jobWrapper.Id)
 
 	for index, stageWapper := range jobWrapper.Stages {
 		//TODO ... stage 的输出也需要换成堆栈方式
@@ -132,7 +135,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 		stageWapper.StartTime = time.Now()
 		jobWrapper.Stages[index] = stageWapper
 		jobWrapper.Output.NewStage(stageWapper.Name)
-		e.jobService.SaveJobDetail(jobWrapper.Name, jobWrapper)
+		e.jobService.SaveJobDetail(projectName, jobWrapper.Name, jobWrapper)
 
 		for _, step := range stageWapper.Stage.Steps {
 			var ah action2.ActionHandler
@@ -151,7 +154,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 			} else if step.Uses == "hamster-ipfs" {
 				ah = action2.NewIpfsAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "hamster-artifactory" {
-				ah = action2.NewArtifactoryAction(step, ctx, jobWrapper.Output)
+				ah = action2.NewArtifactoryAction(step, ctx, jobWrapper.Output, projectName)
 			} else if step.Uses == "deploy-contract" {
 				ah = action2.NewTruffleDeployAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "workdir" {
@@ -178,7 +181,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 		dataTime := time.Now().Sub(stageWapper.StartTime)
 		stageWapper.Duration = dataTime.Milliseconds()
 		jobWrapper.Stages[index] = stageWapper
-		e.jobService.SaveJobDetail(jobWrapper.Name, jobWrapper)
+		e.jobService.SaveJobDetail(projectName, jobWrapper.Name, jobWrapper)
 		logger.Info("}")
 		if err != nil {
 			cancel()
@@ -198,7 +201,7 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 
 	dataTime := time.Now().Sub(jobWrapper.StartTime)
 	jobWrapper.Duration = dataTime.Milliseconds()
-	e.jobService.SaveJobDetail(jobWrapper.Name, jobWrapper)
+	e.jobService.SaveJobDetail(projectName, jobWrapper.Name, jobWrapper)
 
 	//TODO ... 发送结果到队列
 	e.SendResultToQueue(nil)

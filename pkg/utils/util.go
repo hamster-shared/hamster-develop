@@ -77,9 +77,9 @@ func DefaultConfigDir() string {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Println("get user home dir failed", err.Error())
-		return consts.PIPELINE_DIR_NAME + "."
+		return consts.A_LINE_DIR_NAME + "."
 	}
-	dir := filepath.Join(userHomeDir, consts.PIPELINE_DIR_NAME)
+	dir := filepath.Join(userHomeDir, consts.A_LINE_DIR_NAME)
 	return dir
 }
 
