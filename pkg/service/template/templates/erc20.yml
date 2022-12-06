@@ -6,7 +6,7 @@ stages:
       - name: set workdir
         uses: workdir
         with:
-          workdir: /Users/sunjianguo/tmp/my-erc20
+          workdir: $HOME/my-erc20
       - name: template init
         uses: git-checkout
         with:
@@ -65,7 +65,7 @@ stages:
         with:
           ## network的值有：default,rinkeby,goerli,mainnet
           network: default
-          private-key: 8d290072a3517f47e6c7c8db5ecd1876b6ef6576096797a7d6470022e7b3910a
+          private-key:
 
   compile-node:
     needs:
