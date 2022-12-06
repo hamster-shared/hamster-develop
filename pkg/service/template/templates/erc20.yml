@@ -6,7 +6,7 @@ stages:
       - name: set workdir
         uses: workdir
         with:
-          workdir: /Users/sunjianguo/tmp/my-erc20
+          workdir: $HOME/my-erc20
       - name: template init
         uses: git-checkout
         with:
