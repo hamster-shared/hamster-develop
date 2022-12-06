@@ -39,7 +39,7 @@ func Test_SaveJob(t *testing.T) {
 	}
 	jobService := NewJobService()
 	data, _ := yaml.Marshal(job)
-	err := jobService.SaveJob("qiao", string(data))
+	err := jobService.SaveJob("project2", "sun", string(data))
 	ass.NilError(t, err)
 }
 
@@ -84,12 +84,12 @@ func Test_SaveJobDetail(t *testing.T) {
 		Stages: stageDetails,
 	}
 	jobService := NewJobService()
-	jobService.SaveJobDetail("sun", &jobDetail)
+	jobService.SaveJobDetail("project2", "sun", &jobDetail)
 }
 
 func Test_GetJob(t *testing.T) {
 	jobService := NewJobService()
-	data := jobService.GetJob("guo")
+	data, _ := jobService.GetJob("project2", "sun")
 	log.Println(data)
 	assert.NotNil(t, data)
 }
@@ -121,49 +121,49 @@ func Test_UpdateJob(t *testing.T) {
 		},
 	}
 	data, _ := yaml.Marshal(job)
-	err := jobService.UpdateJob("guo", "jian", string(data))
+	err := jobService.UpdateJob("project2", "sun", "jian", string(data))
 	ass.NilError(t, err)
 }
 
 func Test_GetJobDetail(t *testing.T) {
 	jobService := NewJobService()
-	data := jobService.GetJobDetail("sun", 3)
+	data, _ := jobService.GetJobDetail("project2", "sun", 0)
 	assert.NotNil(t, data)
 }
 
 func Test_DeleteJob(t *testing.T) {
 	jobService := NewJobService()
-	err := jobService.DeleteJob("sun")
+	err := jobService.DeleteJob("project2", "sun")
 	ass.NilError(t, err)
 }
 
 func Test_DeleteJobDetail(t *testing.T) {
 	jobService := NewJobService()
-	err := jobService.DeleteJobDetail("cdqadqa92d3if4r9n8j0", 1)
+	err := jobService.DeleteJobDetail("project2", "sun", 0)
 	ass.NilError(t, err)
 }
 
 func Test_JobList(t *testing.T) {
 	jobService := NewJobService()
-	data := jobService.JobList("cdqadqa92d3if4r9n8j0", 1, 10)
+	data := jobService.JobList("project2", "", 1, 10)
 	assert.NotNil(t, data)
 }
 
 func Test_JobDetailList(t *testing.T) {
 	jobService := NewJobService()
-	data := jobService.JobDetailList("sun", 2, 10)
+	data := jobService.JobDetailList("project2", "sun", 2, 10)
 	log.Println(data)
 	assert.NotNil(t, data)
 }
 
 func Test_ExecuteJob(t *testing.T) {
 	jobService := NewJobService()
-	jobService.ExecuteJob("sun")
+	jobService.ExecuteJob("project2", "sun")
 }
 
 func TestGetJobLog(t *testing.T) {
 	jobService := NewJobService()
-	log := jobService.GetJobLog("test", 10001)
+	log := jobService.GetJobLog("project2", "test", 10001)
 	if log == nil {
 		t.Error("log is nil")
 	}
@@ -172,7 +172,7 @@ func TestGetJobLog(t *testing.T) {
 
 func TestGetStageLog(t *testing.T) {
 	jobService := NewJobService()
-	log := jobService.GetJobStageLog("maven", 11, "code-compile", 0)
+	log := jobService.GetJobStageLog("project2", "maven", 11, "code-compile", 0)
 	if log == nil {
 		t.Error("log is nil")
 	}

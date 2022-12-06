@@ -554,7 +554,7 @@ func (svc *JobService) GetJobStageLog(projectName, pipelineName string, execId i
 
 func (svc *JobService) getJobInfo(projectName string, jobData *model.JobVo) {
 	//get the folder path of job details
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, jobData.Name, consts.JOB_DETAIL_DIR_NAME)
+	src := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, jobData.Name, consts.HISTORY_DIR_NAME)
 	_, err := os.Stat(src)
 	if os.IsNotExist(err) {
 		log.Println("job-details folder does not exist", err.Error())
@@ -565,8 +565,7 @@ func (svc *JobService) getJobInfo(projectName string, jobData *model.JobVo) {
 	}
 	var ids []int
 	for _, file := range files {
-		index := strings.Index(file.Name(), ".")
-		id, err := strconv.Atoi(file.Name()[0:index])
+		id, err := strconv.Atoi(file.Name())
 		if err != nil {
 			log.Println("string to int failed", err.Error())
 			continue
@@ -626,7 +625,7 @@ func (svc *JobService) OpenArtifactoryDir(projectName, pipelineName string, deta
 // updateJobDetailName update job detail name
 func (svc *JobService) updateJobDetailName(projectName, name string) {
 	//file directory path
-	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.JOB_DETAIL_DIR_NAME)
+	dir := filepath.Join(utils.DefaultConfigDir(), consts.PROJECT_DIR_NAME, projectName, name, consts.HISTORY_DIR_NAME)
 	//determine whether the folder exists, and create it if it does not exist
 	_, err := os.Stat(dir)
 	if os.IsNotExist(err) {
@@ -639,7 +638,7 @@ func (svc *JobService) updateJobDetailName(projectName, name string) {
 	}
 	if len(files) > 0 {
 		for _, file := range files {
-			ymlPath := filepath.Join(dir, file.Name())
+			ymlPath := filepath.Join(dir, file.Name(), consts.HISTORY_FILE_NAME+".yml")
 			//judge whether the job detail file exists
 			_, err := os.Stat(ymlPath)
 			//not exist

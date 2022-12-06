@@ -76,12 +76,7 @@ func (a *ArtifactoryAction) Hook() (*model.ActionResult, error) {
 	if !ok {
 		return nil, errors.New("get job id error")
 	}
-	userHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		logger.Errorf("Failed to get home directory, the file will be saved to the current directory, err is %s", err.Error())
-		userHomeDir = "."
-	}
-	dest := path2.Join(userHomeDir, consts.ArtifactoryDir, jobName, consts.ArtifactoryName, jobId, a.name)
+	dest := path2.Join(utils.DefaultConfigDir(), consts.ARTIFACTORY_DIR_NAME, a.projectName, jobName, jobId, a.name)
 	var files []*os.File
 	for _, path := range a.path {
 		file, err := os.Open(path)
@@ -90,7 +85,7 @@ func (a *ArtifactoryAction) Hook() (*model.ActionResult, error) {
 		}
 		files = append(files, file)
 	}
-	err = utils.CompressZip(files, dest)
+	err := utils.CompressZip(files, dest)
 	if err != nil {
 		return nil, errors.New("compression failed")
 	}

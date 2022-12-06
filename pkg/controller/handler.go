@@ -8,7 +8,6 @@ import (
 	"github.com/hamster-shared/a-line/pkg/model"
 	"github.com/hamster-shared/a-line/pkg/service"
 	"gopkg.in/yaml.v3"
-	"log"
 	"strconv"
 )
 
@@ -263,9 +262,6 @@ func (h *HandlerServer) getJobLog(gin *gin.Context) {
 		return
 	}
 	data := h.jobService.GetJobLog(projectName, name, id)
-	log.Println(111111111)
-	log.Println(data)
-	log.Println(111111111)
 	gin.Writer.Header().Set("LastLine", strconv.Itoa(data.LastLine))
 	gin.Writer.Header().Set("End", strconv.FormatBool(jobDetail.Status != model.STATUS_RUNNING))
 	//gin.String(200, data.Content)
