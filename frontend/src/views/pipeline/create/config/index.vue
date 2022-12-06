@@ -98,9 +98,6 @@ import { message } from "ant-design-vue";
 
 
 const codeValue = ref<String>();
-
-const checked = ref(false)
-
 const router = useRouter();
 const { params } = useRoute();
 const templateId = ref(params.id);
