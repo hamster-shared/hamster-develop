@@ -611,7 +611,7 @@ func (svc *JobService) GetJobObject(name string) *model.Job {
 
 // OpenArtifactoryDir open artifactory folder
 func (svc *JobService) OpenArtifactoryDir(name string, detailId string) error {
-	artifactoryDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.ARTIFACTORY_NAME, detailId)
+	artifactoryDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.ArtifactoryDir, detailId)
 	return platform.OpenDir(artifactoryDir)
 }
 
@@ -674,6 +674,9 @@ func (svc *JobService) SaveJobWithFile(file, name string) {
 		return
 	}
 	cicdFile, err := os.Open(path.Join(file))
+	defer func() {
+		cicdFile.Close()
+	}()
 	yamlFile, err := io.ReadAll(cicdFile)
 	//write data to yaml file
 	err = os.WriteFile(src, yamlFile, 0777)

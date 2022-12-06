@@ -17,4 +17,5 @@ export default {
   DAPP_TEMPLATE_Frontend: "DApp模版(仅前端)",
   cannotEmpty: '此处不能为空',
   deletePipeline: '删除Pipeline',
+  buildAfterCreation: '创建后触发构建',
 };

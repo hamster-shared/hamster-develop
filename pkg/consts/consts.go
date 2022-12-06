@@ -18,11 +18,11 @@ const (
 )
 
 const (
-	ARTIFACTORY_NAME = "artifactory"
-	ARTIFACTORY_DIR  = PIPELINE_DIR_NAME + "/" + JOB_DIR_NAME
+	ArtifactoryName = "/artifactory"
+	ArtifactoryDir  = PIPELINE_DIR_NAME + "/" + JOB_DIR_NAME
 )
 
 const (
-	IPFS_SHELL   = "http://localhost:5001"
-	IPFS_WEB_URL = "http://localhost:37774/ipfs/"
+	IpfsUploadUrl = "https://api.ipfs-gateway.cloud/upload"
+	CarVersion    = 1
 )

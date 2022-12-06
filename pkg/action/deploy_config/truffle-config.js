@@ -35,7 +35,7 @@ module.exports = {
         },
         mainnet: {
             provider: () => new HDWalletProvider(mnemonic, `https://eth-mainnet.nodereal.io/v1/9f1a58fe4331425c971c9391a3d60c27`),
-            network_id: 5,       // Ropsten's id
+            network_id: 1,       // Ropsten's id
             gas: 5500000,        // Ropsten has a lower block limit than mainnet
             confirmations: 2,    // # of confs to wait between deployments. (default: 0)
             timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)

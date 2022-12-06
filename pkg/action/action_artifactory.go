@@ -79,7 +79,7 @@ func (a *ArtifactoryAction) Hook() (*model.ActionResult, error) {
 		logger.Errorf("Failed to get home directory, the file will be saved to the current directory, err is %s", err.Error())
 		userHomeDir = "."
 	}
-	dest := path2.Join(userHomeDir, consts.ARTIFACTORY_DIR, jobName, consts.ARTIFACTORY_NAME, jobId, a.name)
+	dest := path2.Join(userHomeDir, consts.ArtifactoryDir, jobName, consts.ArtifactoryName, jobId, a.name)
 	var files []*os.File
 	for _, path := range a.path {
 		file, err := os.Open(path)

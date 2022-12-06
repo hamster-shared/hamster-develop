@@ -20,6 +20,7 @@ stages:
       - name: compile
         run: |
           npm install
+          npm install -g truffle
           truffle compile
 
   solidity-lint:
@@ -57,11 +58,14 @@ stages:
 
   deploy-contract:
     needs:
-      - ganache
+      - template-init
     steps:
       - name: deploy-contract
-        run: |
-          truffle deploy
+        uses: deploy-contract
+        with:
+          ## network的值有：default,rinkeby,goerli,mainnet
+          network: default
+          private-key: 8d290072a3517f47e6c7c8db5ecd1876b6ef6576096797a7d6470022e7b3910a
 
   compile-node:
     needs:
@@ -70,7 +74,7 @@ stages:
       - name: compile
         run: |
           cd app && npm install
-          npm run build          
+          npm run build
 
   deploy-frontend:
     needs:
@@ -84,4 +88,4 @@ stages:
           fi
           nohup  npm run dev  > node.log 2>&1& echo $! > node.pid
           sleep 2
-         
+

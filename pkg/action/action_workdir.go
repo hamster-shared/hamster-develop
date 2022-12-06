@@ -56,8 +56,11 @@ func (a *WorkdirAction) Pre() error {
 func (a *WorkdirAction) Hook() (*model.ActionResult, error) {
 	_, err := os.Stat(a.workdir)
 	if err != nil {
-		a.output.WriteLine(" workdir not exists: " + a.workdir)
-		return nil, err
+		err = os.MkdirAll(a.workdir, os.ModePerm)
+		if err != nil {
+			return nil, err
+		}
+
 	}
 
 	stack := a.ctx.Value(STACK).(map[string]interface{})
