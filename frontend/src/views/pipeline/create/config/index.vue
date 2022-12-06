@@ -49,6 +49,10 @@
                     <Artifactory :stage="data.stage" :index="index" :name="item.eleValues.name"
                       :path="item.eleValues.path" @setYamlCode="setYamlCode"></Artifactory>
                   </div>
+                  <div v-else-if="item.eleName === 'deploy-contract'">
+                    <DeployContract :stage="data.stage" :index="index" :network="item.eleValues.network"
+                      :privateKey="(item.eleValues['private-key'])" @setYamlCode="setYamlCode"></DeployContract>
+                  </div>
                   <div v-else-if="item.eleName === 'shell'">
                     <Shell :stage="data.stage" :index="index" :run="item.eleValues.run" :runsOn="item.eleValues.runsOn"
                       @setYamlCode="setYamlCode"></Shell>
@@ -70,7 +74,9 @@
           <!-- <CodeEditor :readOnly="true" :value="codeValue"></CodeEditor> -->
         </a-col>
       </a-row>
-      <div class="mt-6"><Checkbox v-model:checked="checked"></Checkbox></div>
+      <div class="mt-6">
+        <Checkbox v-model:checked="checked"></Checkbox>
+      </div>
       <div class="mt-8 text-center">
         <a-button @click="lastStep" class="normal-button">{{
             $t("template.lastBtn")
@@ -93,14 +99,13 @@ import GitCheckout from "./components/GitCheckout.vue";
 import Artifactory from "./components/Artifactory.vue";
 import Checkbox from './components/Checkbox.vue'
 import Workdir from "./components/Workdir.vue";
+import DeployContract from "./components/DeployContract.vue";
 import Shell from "./components/Shell.vue";
 import { message } from "ant-design-vue";
 
 
+
 const codeValue = ref<String>();
-
-const checked = ref(false)
-
 const router = useRouter();
 const { params } = useRoute();
 const templateId = ref(params.id);
@@ -187,11 +192,11 @@ const submitData = async () => {
     if (result.code === 400) {
       message.error(result.message);
     } else {
-      if(checked.value){
+      if (checked.value) {
         message.success(result.message);
         await apiImmediatelyExec(pipelineName.value);
         router.push({ path: "/pipeline" });
-      }else{
+      } else {
         message.success(result.message);
         router.push({ path: "/pipeline" });
       }

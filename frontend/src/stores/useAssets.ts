@@ -16,6 +16,7 @@ export default function useAssets () {
 
   const getImageURL = (imageFilename: string) => assetsMapping.images[imageFilename]
   const getAssets = (assetType: string) => assetsMapping[assetType]
+  const getSvgUrl = (svgName: string) => { return new URL(`../assets/icons/${svgName}.svg`, import.meta.url).href }
 
-  return { getImageURL, getAssets }
+  return { getImageURL, getAssets, getSvgUrl }
 }
