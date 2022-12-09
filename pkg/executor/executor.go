@@ -150,6 +150,8 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 				ah = action2.NewGitAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "hamster-ipfs" {
 				ah = action2.NewIpfsAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "hamster-pinata-ipfs" {
+				ah = action2.NewPinataIpfsAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "hamster-artifactory" {
 				ah = action2.NewArtifactoryAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "deploy-contract" {
