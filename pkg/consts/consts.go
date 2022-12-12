@@ -31,3 +31,14 @@ const (
 	PinataOptionsFmt  = "{\"cidVersion\": 1}"
 	PinataMetadataFmt = "{\"name\": \"%s\", \"keyvalues\": {\"company\": \"Hamster\"}}"
 )
+
+const (
+	SolFileSuffix = ".sol"
+)
+
+const (
+	CheckName                 = "/check"
+	SuffixType                = ".txt"
+	SolProfilerCheck          = "sol-profiler "
+	SolProfilerCheckOutputDir = "sol_profiler"
+)

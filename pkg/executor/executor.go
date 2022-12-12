@@ -156,6 +156,8 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 				ah = action2.NewArtifactoryAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "deploy-contract" {
 				ah = action2.NewTruffleDeployAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "sol-profiler-check" {
+				ah = action2.NewSolProfilerAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "workdir" {
 				ah = action2.NewWorkdirAction(step, ctx, jobWrapper.Output)
 			} else if strings.Contains(step.Uses, "/") {
