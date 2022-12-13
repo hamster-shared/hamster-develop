@@ -15,26 +15,26 @@ import (
 	"strings"
 )
 
-// SolProfilerAction SolProfiler合约检查
-type SolProfilerAction struct {
+// SolHintAction SolHint合约检查
+type SolHintAction struct {
 	path   string
 	ctx    context.Context
 	output *output.Output
 }
 
-func NewSolProfilerAction(step model.Step, ctx context.Context, output *output.Output) *SolProfilerAction {
-	return &SolProfilerAction{
+func NewSolHintAction(step model.Step, ctx context.Context, output *output.Output) *SolHintAction {
+	return &SolHintAction{
 		path:   step.With["path"],
 		ctx:    ctx,
 		output: output,
 	}
 }
 
-func (a *SolProfilerAction) Pre() error {
+func (a *SolHintAction) Pre() error {
 	return nil
 }
 
-func (a *SolProfilerAction) Hook() (*model.ActionResult, error) {
+func (a *SolHintAction) Hook() (*model.ActionResult, error) {
 
 	a.output.NewStep("sol-profiler-check")
 
@@ -60,7 +60,7 @@ func (a *SolProfilerAction) Hook() (*model.ActionResult, error) {
 
 	var absPathList []string
 	absPathList = utils.GetSuffixFiles(path2.Join(workdir, a.path), consts.SolFileSuffix, absPathList)
-	destDir := path2.Join(userHomeDir, consts.ArtifactoryDir, jobName, consts.CheckName, jobId, consts.SolProfilerCheckOutputDir)
+	destDir := path2.Join(userHomeDir, consts.ArtifactoryDir, jobName, consts.CheckName, jobId, consts.SolHintCheckOutputDir)
 	_, err = os.Stat(destDir)
 	if os.IsNotExist(err) {
 		err := os.MkdirAll(destDir, os.ModePerm)
@@ -78,7 +78,7 @@ func (a *SolProfilerAction) Hook() (*model.ActionResult, error) {
 		filenameOnly = strings.TrimSuffix(filenameWithSuffix, fileSuffix)
 
 		dest := path2.Join(destDir, filenameOnly+consts.SuffixType)
-		command := consts.SolProfilerCheck + path
+		command := consts.SolHintCheck + path
 		fields := strings.Fields(command)
 		out, err := a.ExecuteCommand(fields, workdir)
 		if err != nil {
@@ -97,14 +97,14 @@ func (a *SolProfilerAction) Hook() (*model.ActionResult, error) {
 	return nil, err
 }
 
-func (a *SolProfilerAction) Post() error {
+func (a *SolHintAction) Post() error {
 	return nil
 }
 
-func (a *SolProfilerAction) ExecuteCommand(commands []string, workdir string) (string, error) {
+func (a *SolHintAction) ExecuteCommand(commands []string, workdir string) (string, error) {
 	c := exec.CommandContext(a.ctx, commands[0], commands[1:]...) // mac linux
 	c.Dir = workdir
-	logger.Debugf("execute sol-profiler *.sol command: %s", strings.Join(commands, " "))
+	logger.Debugf("execute solhint -f table *.sol command: %s", strings.Join(commands, " "))
 	a.output.WriteCommandLine(strings.Join(commands, " "))
 	out, err := c.CombinedOutput()
 	fmt.Println(string(out))

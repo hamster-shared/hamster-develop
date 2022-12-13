@@ -41,4 +41,6 @@ const (
 	SuffixType                = ".txt"
 	SolProfilerCheck          = "sol-profiler "
 	SolProfilerCheckOutputDir = "sol_profiler"
+	SolHintCheckOutputDir     = "solhint"
+	SolHintCheck              = "solhint -f table "
 )
