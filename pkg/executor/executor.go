@@ -160,6 +160,8 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 				ah = action2.NewSolProfilerAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "solhint-check" {
 				ah = action2.NewSolHintAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "mythril-check" {
+				ah = action2.NewMythRilAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "workdir" {
 				ah = action2.NewWorkdirAction(step, ctx, jobWrapper.Output)
 			} else if strings.Contains(step.Uses, "/") {

@@ -15,28 +15,28 @@ import (
 	"strings"
 )
 
-// SolHintAction SolHint合约检查
-type SolHintAction struct {
+// MythRilAction mythRil合约检查
+type MythRilAction struct {
 	path   string
 	ctx    context.Context
 	output *output.Output
 }
 
-func NewSolHintAction(step model.Step, ctx context.Context, output *output.Output) *SolHintAction {
-	return &SolHintAction{
+func NewMythRilAction(step model.Step, ctx context.Context, output *output.Output) *MythRilAction {
+	return &MythRilAction{
 		path:   step.With["path"],
 		ctx:    ctx,
 		output: output,
 	}
 }
 
-func (a *SolHintAction) Pre() error {
+func (a *MythRilAction) Pre() error {
 	return nil
 }
 
-func (a *SolHintAction) Hook() (*model.ActionResult, error) {
+func (a *MythRilAction) Hook() (*model.ActionResult, error) {
 
-	a.output.NewStep("sol-profiler-check")
+	a.output.NewStep("mythril-check")
 
 	stack := a.ctx.Value(STACK).(map[string]interface{})
 
@@ -59,8 +59,9 @@ func (a *SolHintAction) Hook() (*model.ActionResult, error) {
 	}
 
 	var absPathList []string
-	absPathList = utils.GetSuffixFiles(path2.Join(workdir, a.path), consts.SolFileSuffix, absPathList)
-	destDir := path2.Join(userHomeDir, consts.ArtifactoryDir, jobName, consts.CheckName, jobId, consts.SolHintCheckOutputDir)
+	basePath := path2.Join(workdir, a.path)
+	absPathList = utils.GetSuffixFiles(basePath, consts.SolFileSuffix, absPathList)
+	destDir := path2.Join(userHomeDir, consts.ArtifactoryDir, jobName, consts.CheckName, jobId, consts.MythRilCheckOutputDir)
 	_, err = os.Stat(destDir)
 	if os.IsNotExist(err) {
 		err := os.MkdirAll(destDir, os.ModePerm)
@@ -71,7 +72,12 @@ func (a *SolHintAction) Hook() (*model.ActionResult, error) {
 	for _, path := range absPathList {
 		_, filenameOnly := utils.GetFilenameWithSuffixAndFilenameOnly(path)
 		dest := path2.Join(destDir, filenameOnly+consts.SuffixType)
-		command := consts.SolHintCheck + path
+		err, redundantPath := utils.GetRedundantPath(basePath, path)
+		if err != nil {
+			return nil, err
+		}
+		commandTemplate := consts.MythRilCheck
+		command := fmt.Sprintf(commandTemplate, basePath, redundantPath)
 		fields := strings.Fields(command)
 		out, err := a.ExecuteCommand(fields, workdir)
 		if err != nil {
@@ -90,14 +96,14 @@ func (a *SolHintAction) Hook() (*model.ActionResult, error) {
 	return nil, err
 }
 
-func (a *SolHintAction) Post() error {
+func (a *MythRilAction) Post() error {
 	return nil
 }
 
-func (a *SolHintAction) ExecuteCommand(commands []string, workdir string) (string, error) {
+func (a *MythRilAction) ExecuteCommand(commands []string, workdir string) (string, error) {
 	c := exec.CommandContext(a.ctx, commands[0], commands[1:]...) // mac linux
 	c.Dir = workdir
-	logger.Debugf("execute solhint -f table *.sol command: %s", strings.Join(commands, " "))
+	logger.Debugf("execute mythril check command: %s", strings.Join(commands, " "))
 	a.output.WriteCommandLine(strings.Join(commands, " "))
 	out, err := c.CombinedOutput()
 	fmt.Println(string(out))

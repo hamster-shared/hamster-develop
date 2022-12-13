@@ -1,8 +1,11 @@
 package utils
 
 import (
+	"errors"
 	"os"
+	path2 "path"
 	"path/filepath"
+	"strings"
 )
 
 // GetFiles 获取文件路径集合
@@ -45,4 +48,31 @@ func GetSuffixFiles(workdir string, suffixName string, pathList []string) []stri
 		}
 	}
 	return pathList
+}
+
+// GetFilenameWithSuffixAndFilenameOnly 获取带后置的文件名和不带后缀的文件名
+func GetFilenameWithSuffixAndFilenameOnly(path string) (fileName string, fileNameWithSuffix string) {
+	_, file := path2.Split(path)
+	var filenameWithSuffix string
+	filenameWithSuffix = path2.Base(file)
+	var fileSuffix string
+	fileSuffix = path2.Ext(filenameWithSuffix)
+	var filenameOnly string
+	filenameOnly = strings.TrimSuffix(filenameWithSuffix, fileSuffix)
+	return filenameWithSuffix, filenameOnly
+}
+
+// GetRedundantPath 获取多余的路径 longPath相对于shortPath的 /a/b/  /a/b/c/d.txt
+// return c/d.txt
+func GetRedundantPath(shortPath string, longPath string) (err error, path string) {
+	index := strings.Index(longPath, shortPath)
+	if index == 0 {
+		relativePath := longPath[len(shortPath):]
+		if relativePath[0] == '/' {
+			return nil, relativePath[1:]
+		} else {
+			return nil, relativePath
+		}
+	}
+	return errors.New("path does not contain"), ""
 }

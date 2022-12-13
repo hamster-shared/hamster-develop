@@ -43,4 +43,6 @@ const (
 	SolProfilerCheckOutputDir = "sol_profiler"
 	SolHintCheckOutputDir     = "solhint"
 	SolHintCheck              = "solhint -f table "
+	MythRilCheckOutputDir     = "mythril"
+	MythRilCheck              = "docker run --rm -v %s:/tmp mythril/myth analyze /tmp/%s"
 )
