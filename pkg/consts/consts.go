@@ -8,9 +8,8 @@ const (
 )
 
 const (
-	LANG_EN  = "en"
-	LANG_ZH  = "zh"
-	WEB_PORT = 8080
+	LANG_EN = "en"
+	LANG_ZH = "zh"
 )
 
 const (
@@ -26,3 +25,10 @@ const (
 	IpfsUploadUrl = "https://api.ipfs-gateway.cloud/upload"
 	CarVersion    = 1
 )
+
+var InkUrlMap = map[string]string{
+	"Local":   "ws://127.0.0.1:9944",
+	"Rococo":  "wss://rococo-contracts-rpc.polkadot.io",
+	"Shibuya": "wss://rpc.shibuya.astar.network",
+	"Shiden":  "wss://rpc.shiden.astar.network",
+}
