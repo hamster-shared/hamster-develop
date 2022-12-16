@@ -46,5 +46,5 @@ const (
 	MythRilCheckOutputDir     = "mythril"
 	MythRilCheck              = "docker run --rm -v %s:/tmp mythril/myth analyze /tmp/%s"
 	SlitherCheckOutputDir     = "slither"
-	SlitherCheck              = "docker run --rm -v %s:/tmp bingjian/solidity_check:slither_091_0816 slither /tmp/%s"
+	SlitherCheck              = "docker run --rm -v %s:/tmp bingjian/solidity_check:slither_091_1_0816 slither /tmp/%s"
 )
