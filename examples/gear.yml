@@ -43,4 +43,4 @@ stages:
       - name: gear deploy
         run: |
           npm install
-          npm run program:upload
+          npm run code:submit
