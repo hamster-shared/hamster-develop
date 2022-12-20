@@ -1,0 +1,33 @@
+version: 1.0
+name: ink-erc20
+stages:
+  template-init:
+    steps:
+      - name: set workdir
+        uses: workdir
+        with:
+          workdir: $HOME/tmp/ink-erc20
+      - name: template init
+        uses: git-checkout
+        with:
+          url: https://github.com/jian-guo-s/polkadot-erc20.git
+          branch: main
+
+  compile:
+    needs:
+      - template-init
+    steps:
+      - name: compile
+        run: |
+          cargo +nightly contract build
+
+  deploy-contract:
+    needs:
+      - template-init
+    steps:
+      - name: deploy-ink-contract
+        uses: deploy-ink-contract
+        with:
+          ## network的值有：Local,Rococo,Shibuya,Shiden
+          network: Local
+          mnemonic:

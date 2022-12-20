@@ -8,9 +8,8 @@ const (
 )
 
 const (
-	LANG_EN  = "en"
-	LANG_ZH  = "zh"
-	WEB_PORT = 8080
+	LANG_EN = "en"
+	LANG_ZH = "zh"
 )
 
 const (
@@ -48,3 +47,10 @@ const (
 	SlitherCheckOutputDir     = "slither"
 	SlitherCheck              = "docker run --rm -v %s:/tmp bingjian/solidity_check:slither_091_1_0816 slither /tmp/%s"
 )
+
+var InkUrlMap = map[string]string{
+	"Local":   "ws://127.0.0.1:9944",
+	"Rococo":  "wss://rococo-contracts-rpc.polkadot.io",
+	"Shibuya": "wss://rpc.shibuya.astar.network",
+	"Shiden":  "wss://rpc.shiden.astar.network",
+}
