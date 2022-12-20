@@ -86,6 +86,12 @@ func (e *Executor) Execute(id int, job *model.Job) error {
 	engineContext["id"] = fmt.Sprintf("%d", id)
 	engineContext["env"] = env
 
+	if job.Parameter == nil {
+		job.Parameter = make(map[string]string)
+	}
+
+	engineContext["parameter"] = job.Parameter
+
 	ctx, cancel := context.WithCancel(context.WithValue(context.Background(), "stack", engineContext))
 
 	// 将取消 hook 记录到内存中，用于中断程序

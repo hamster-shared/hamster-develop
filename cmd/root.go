@@ -26,6 +26,7 @@ var (
 	pipelineFile    string
 	jobService      = service.NewJobService()
 	templateService = service.NewTemplateService()
+	DSN             = "root:123456@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local"
 	handlerServer   = controller.NewHandlerServer(jobService, dispatch, templateService)
 	rootCmd         = &cobra.Command{
 		Use:   "a-line-cli",

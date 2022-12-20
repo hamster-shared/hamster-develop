@@ -1,11 +1,13 @@
 package action
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"github.com/hamster-shared/a-line/pkg/logger"
 	"github.com/hamster-shared/a-line/pkg/model"
 	"github.com/hamster-shared/a-line/pkg/output"
+	"github.com/hamster-shared/a-line/pkg/utils"
 	"os"
 	"os/exec"
 	"strings"
@@ -21,9 +23,13 @@ type GitAction struct {
 }
 
 func NewGitAction(step model.Step, ctx context.Context, output *output.Output) *GitAction {
+
+	stack := ctx.Value(STACK).(map[string]interface{})
+	params := stack["parameter"].(map[string]string)
+
 	return &GitAction{
-		repository: step.With["url"],
-		branch:     step.With["branch"],
+		repository: utils.ReplaceWithParam(step.With["url"], params),
+		branch:     utils.ReplaceWithParam(step.With["branch"], params),
 		ctx:        ctx,
 		output:     output,
 	}
@@ -68,7 +74,6 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	command := "git rev-parse --is-inside-work-tree"
 	out, err := a.ExecuteStringCommand(command)
-	a.output.WriteLine(out)
 	if err != nil {
 
 		command = "git init"
@@ -81,52 +86,45 @@ func (a *GitAction) Hook() (*model.ActionResult, error) {
 
 	command = "git config remote.origin.url  " + a.repository
 	out, err = a.ExecuteStringCommand(command)
-	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
 	}
 
 	command = "git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/*"
 	out, err = a.ExecuteStringCommand(command)
-	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
 	}
 
 	command = "git config remote.origin.url " + a.repository
 	out, err = a.ExecuteStringCommand(command)
-	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
 	}
 
 	command = "git fetch --tags --progress " + a.repository + " +refs/heads/*:refs/remotes/origin/*"
 	out, err = a.ExecuteStringCommand(command)
-	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
 	}
 
 	command = fmt.Sprintf("git rev-parse refs/remotes/origin/%s^{commit}", a.branch)
-	commitId, err := a.ExecuteStringCommand(command)
+	commitId, err := a.ExecuteCommandDirect(strings.Fields(command))
 	if err != nil {
 		return nil, err
 	}
 
 	command = "git config core.sparsecheckout "
 	out, _ = a.ExecuteStringCommand(command)
-	a.output.WriteLine(out)
 
 	command = fmt.Sprintf("git checkout -f %s", commitId)
 	out, err = a.ExecuteStringCommand(command)
-	a.output.WriteLine(out)
 	if err != nil {
 		return nil, err
 	}
 
 	command = "git branch -a -v --no-abbrev"
-	out, err = a.ExecuteStringCommand(command)
-	a.output.WriteLine(out)
+	out, err = a.ExecuteCommandDirect(strings.Fields(command))
 	if err != nil {
 		return nil, err
 	}
@@ -234,8 +232,83 @@ func (a *GitAction) ExecuteCommand(commands []string) (string, error) {
 	logger.Debugf("execute git clone command: %s", strings.Join(commands, " "))
 	a.output.WriteCommandLine(strings.Join(commands, " "))
 
-	out, err := c.CombinedOutput()
+	stdout, err := c.StdoutPipe()
+	if err != nil {
+		logger.Errorf("stdout error: %v", err)
+		return "nil", err
+	}
+	stderr, err := c.StderrPipe()
+	if err != nil {
+		logger.Errorf("stderr error: %v", err)
+		return "nil", err
+	}
 
+	go func() {
+		for {
+			// 检测到 ctx.Done() 之后停止读取
+			<-a.ctx.Done()
+			if a.ctx.Err() != nil {
+				logger.Errorf("shell command error: %v", a.ctx.Err())
+				return
+			} else {
+				p := c.Process
+				if p == nil {
+					return
+				}
+				// Kill by negative PID to kill the process group, which includes
+				// the top-level process we spawned as well as any subprocesses
+				// it spawned.
+				//_ = syscall.Kill(-p.Pid, syscall.SIGKILL)
+				logger.Info("shell command killed")
+				return
+			}
+		}
+	}()
+
+	stdoutScanner := bufio.NewScanner(stdout)
+	stderrScanner := bufio.NewScanner(stderr)
+	go func() {
+		for stdoutScanner.Scan() {
+			fmt.Println(stdoutScanner.Text())
+			a.output.WriteLine(stdoutScanner.Text())
+		}
+	}()
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Println(stderrScanner.Text())
+			a.output.WriteLine(stderrScanner.Text())
+		}
+	}()
+
+	err = c.Start()
+	if err != nil {
+		logger.Errorf("shell command start error: %v", err)
+		return "nil", err
+	}
+
+	err = c.Wait()
+	if err != nil {
+		logger.Errorf("shell command wait error: %v", err)
+		return "nil", err
+	}
+	if err != nil {
+		a.output.WriteLine(err.Error())
+	}
+
+	defer stdout.Close()
+	defer stderr.Close()
+	return "", err
+
+}
+
+func (a *GitAction) ExecuteCommandDirect(commands []string) (string, error) {
+
+	c := exec.CommandContext(a.ctx, commands[0], commands[1:]...) // mac linux
+	c.Dir = a.workdir
+	logger.Debugf("execute git clone command: %s", strings.Join(commands, " "))
+	a.output.WriteCommandLine(strings.Join(commands, " "))
+
+	out, err := c.CombinedOutput()
 	a.output.WriteCommandLine(string(out))
 	if err != nil {
 		a.output.WriteLine(err.Error())

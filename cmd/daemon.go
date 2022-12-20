@@ -5,11 +5,14 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/controller"
 	"github.com/hamster-shared/a-line/pkg/dispatcher"
 	"github.com/hamster-shared/a-line/pkg/executor"
 	"github.com/hamster-shared/a-line/pkg/model"
 	"github.com/spf13/cobra"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 // daemonCmd represents the daemon command
@@ -38,6 +41,18 @@ to quickly create a Cobra application.`,
 
 		port, _ = rootCmd.PersistentFlags().GetInt("port")
 		go controller.OpenWeb(port)
+		db, err := gorm.Open(mysql.New(mysql.Config{
+			DSN:                       DSN,   // data source name
+			DefaultStringSize:         256,   // default size for string fields
+			DisableDatetimePrecision:  true,  // disable datetime precision, which not supported before MySQL 5.6
+			DontSupportRenameIndex:    true,  // drop & create when rename index, rename index not supported before MySQL 5.7, MariaDB
+			DontSupportRenameColumn:   true,  // `change` when rename column, rename column not supported before MySQL 8, MariaDB
+			SkipInitializeWithVersion: false, // auto configure based on currently MySQL version
+		}), &gorm.Config{})
+		if err != nil {
+			return
+		}
+		application.SetBean("db", db)
 		controller.NewHttpService(*handlerServer, port).StartHttpServer()
 
 	},

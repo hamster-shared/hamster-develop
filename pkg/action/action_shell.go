@@ -35,6 +35,8 @@ func (a *ShellAction) Pre() error {
 
 	stack := a.ctx.Value(STACK).(map[string]interface{})
 
+	params := stack["parameter"].(map[string]string)
+
 	data, ok := stack["workdir"]
 
 	var workdir string
@@ -50,7 +52,9 @@ func (a *ShellAction) Pre() error {
 
 	a.filename = workdirTmp + "/" + utils.RandSeq(10) + ".sh"
 
-	content := []byte("#!/bin/sh\nset -ex\n" + a.command)
+	command := utils.ReplaceWithParam(a.command, params)
+
+	content := []byte("#!/bin/sh\nset -ex\n" + command)
 	err := os.WriteFile(a.filename, content, os.ModePerm)
 
 	return err
