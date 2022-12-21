@@ -4,13 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-	"github.com/hamster-shared/a-line/engine/dispatcher"
-	"github.com/hamster-shared/a-line/engine/executor"
-	"github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/pkg/controller"
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -30,24 +24,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if registry == "" {
-			fmt.Println("registry cannot be nil")
-			return
-		}
-
-		fmt.Println("executor called")
-		dispatch := dispatcher.NewDispatcher(channel)
-		hostname, _ := os.Hostname()
-		// 本地注册
-		dispatch.Register(&model.Node{
-			Name:    hostname,
-			Address: registry,
-		})
-
-		executeClient := executor.NewExecutorClient(channel, jobService)
-		defer close(channel)
-
-		go executeClient.Main()
+		go Engine.Start()
 
 		port, _ = rootCmd.PersistentFlags().GetInt("port")
 		controller.NewHttpService(*handlerServer, port).StartHttpServer()

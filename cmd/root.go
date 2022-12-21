@@ -5,15 +5,15 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/hamster-shared/a-line/engine/dispatcher"
-	"github.com/hamster-shared/a-line/engine/executor"
+	"github.com/hamster-shared/a-line/engine"
 	"github.com/hamster-shared/a-line/engine/logger"
-	model2 "github.com/hamster-shared/a-line/engine/model"
+	"github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/engine/pipeline"
 	service2 "github.com/hamster-shared/a-line/engine/service"
 	"github.com/hamster-shared/a-line/pkg/controller"
 	"os"
 	"path"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -21,13 +21,11 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var (
 	port            = 8080
-	channel         = make(chan model2.QueueMessage)
-	dispatch        = dispatcher.NewDispatcher(channel)
 	pipelineFile    string
-	jobService      = service2.NewJobService()
 	templateService = service2.NewTemplateService()
 	DSN             = "root:123456@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local"
-	handlerServer   = controller.NewHandlerServer(jobService, dispatch, templateService)
+	Engine          = engine.NewEngine()
+	handlerServer   = controller.NewHandlerServer(Engine, templateService)
 	rootCmd         = &cobra.Command{
 		Use:   "a-line-cli",
 		Short: "A brief description of your application",
@@ -49,25 +47,21 @@ to quickly create a Cobra application.`,
 
 			// 启动executor
 
-			executeClient := executor.NewExecutorClient(channel, jobService)
-			defer close(channel)
-
 			job, _ := pipeline.GetJobFromReader(cicdFile)
-			jobService.SaveJobWithFile(pipelineFile, job.Name)
-			Stages, _ := job.StageSort()
-			jobDetail := &model2.JobDetail{
-				Id:     1,
-				Job:    *job,
-				Status: model2.STATUS_NOTRUN,
-				Stages: Stages,
-			}
-			jobService.SaveJobDetail(job.Name, jobDetail)
 
-			err = executeClient.Execute(1, job)
+			go Engine.Start()
+
+			err = Engine.CreateJob(job.Name, cicdFile)
+
+			jobDetail, err := Engine.ExecuteJob(job.Name)
 			if err != nil {
 				logger.Error("err:", err)
 			}
 
+			for jobDetail.Status <= model.STATUS_RUNNING {
+				time.Sleep(time.Second * 3)
+				jobDetail = Engine.GetJobHistory(jobDetail.Name, jobDetail.Id)
+			}
 		},
 	}
 )
