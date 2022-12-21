@@ -288,3 +288,17 @@ func (h *HandlerServer) openArtifactoryDir(gin *gin.Context) {
 	}
 	Success("", gin)
 }
+
+type UserAuth struct {
+	Id       uint   `json:"id"`
+	Username string `json:"username"`
+}
+
+func (h *HandlerServer) getUserInfo(gin *gin.Context) UserAuth {
+
+	// TODO ... 根据token 获取用户信息
+	return UserAuth{
+		Id:       1,
+		Username: "admin",
+	}
+}

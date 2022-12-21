@@ -33,7 +33,6 @@ func (h *HttpServer) StartHttpServer() {
 
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
-
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
 	api.GET("/templates-category/:id/template/:templateId", h.handlerServer.templateDetail)
 	// project
@@ -60,6 +59,8 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/contract/:deployId", h.handlerServer.contractDeployInfo)
 	api.GET("/contract/deploy/:deployId/detail", h.handlerServer.contractDeployDetail)
 	api.GET("/contract/deploy/detail", h.handlerServer.contractDeployDetailByVersion)
+
+	// ======== old api =========//
 	// pipeline
 	//create pipeline job
 	api.POST("/pipeline", h.handlerServer.createPipeline)
