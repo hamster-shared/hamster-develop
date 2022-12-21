@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/hamster-shared/a-line/cmd"
 	"gorm.io/driver/mysql"
@@ -39,10 +38,7 @@ func TestUser(t *testing.T) {
 		Name:        "Name",
 		Description: "description",
 		Type:        1,
-		CreateTime: sql.NullTime{
-			Time:  time.Now(),
-			Valid: true,
-		},
+		CreateTime:  time.Now(),
 	}
 
 	db.Create(templateType)

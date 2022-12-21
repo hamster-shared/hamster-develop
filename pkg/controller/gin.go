@@ -30,6 +30,37 @@ func NewHttpService(handlerServer HandlerServer, port int) *HttpServer {
 func (h *HttpServer) StartHttpServer() {
 	r := gin.Default()
 	api := r.Group("/api")
+
+	// project_template
+	api.GET("/templates-category", h.handlerServer.templatesCategory)
+
+	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
+	api.GET("/templates-category/:id/template/:templateId", h.handlerServer.templateDetail)
+	// project
+	api.GET("/projects", h.handlerServer.projectList)
+	api.POST("/projects", h.handlerServer.createProject)
+	api.GET("/projects/:id", h.handlerServer.projectDetail)
+	api.PUT("/projects/:id", h.handlerServer.updateProject)
+	api.DELETE("projects/:id", h.handlerServer.deleteProject)
+
+	api.POST("/projects/:id/check", h.handlerServer.projectWorkflowCheck)
+	api.POST("/projects/:id/build", h.handlerServer.projectWorkflowBuild)
+	api.POST("/projects/:id/deploy", h.handlerServer.projectWorkflowDeploy)
+	api.GET("/projects/:id/contract", h.handlerServer.projectContract)
+	api.GET("/projects/:id/reports", h.handlerServer.projectReport)
+	api.POST("/projects/:id/contract/deploy", h.handlerServer.saveContractDeployInfo)
+
+	//workflow
+	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)
+	api.GET("/workflows/:id", h.handlerServer.workflowDetail)
+	api.GET("/workflows/:id/contract", h.handlerServer.workflowContract)
+	api.GET("/workflows/:id/report", h.handlerServer.workflowReport)
+
+	//contract
+	api.GET("/contract/:deployId", h.handlerServer.contractDeployInfo)
+	api.GET("/contract/deploy/:deployId/detail", h.handlerServer.contractDeployDetail)
+	api.GET("/contract/deploy/detail", h.handlerServer.contractDeployDetailByVersion)
+	// pipeline
 	//create pipeline job
 	api.POST("/pipeline", h.handlerServer.createPipeline)
 	//update pipeline job
