@@ -2,22 +2,22 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/hamster-shared/a-line/pkg/consts"
+	"github.com/hamster-shared/a-line/engine/consts"
+	"github.com/hamster-shared/a-line/engine/dispatcher"
+	"github.com/hamster-shared/a-line/engine/model"
+	service2 "github.com/hamster-shared/a-line/engine/service"
 	"github.com/hamster-shared/a-line/pkg/controller/parameters"
-	"github.com/hamster-shared/a-line/pkg/dispatcher"
-	"github.com/hamster-shared/a-line/pkg/model"
-	"github.com/hamster-shared/a-line/pkg/service"
 	"gopkg.in/yaml.v3"
 	"strconv"
 )
 
 type HandlerServer struct {
-	jobService      service.IJobService
+	jobService      service2.IJobService
 	dispatch        dispatcher.IDispatcher
-	templateService service.ITemplateService
+	templateService service2.ITemplateService
 }
 
-func NewHandlerServer(jobService service.IJobService, dispatch dispatcher.IDispatcher, templateService service.ITemplateService) *HandlerServer {
+func NewHandlerServer(jobService service2.IJobService, dispatch dispatcher.IDispatcher, templateService service2.ITemplateService) *HandlerServer {
 	return &HandlerServer{
 		jobService:      jobService,
 		dispatch:        dispatch,

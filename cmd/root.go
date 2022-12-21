@@ -5,13 +5,13 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/hamster-shared/a-line/engine/dispatcher"
+	"github.com/hamster-shared/a-line/engine/executor"
+	"github.com/hamster-shared/a-line/engine/logger"
+	model2 "github.com/hamster-shared/a-line/engine/model"
+	"github.com/hamster-shared/a-line/engine/pipeline"
+	service2 "github.com/hamster-shared/a-line/engine/service"
 	"github.com/hamster-shared/a-line/pkg/controller"
-	"github.com/hamster-shared/a-line/pkg/dispatcher"
-	"github.com/hamster-shared/a-line/pkg/executor"
-	"github.com/hamster-shared/a-line/pkg/logger"
-	"github.com/hamster-shared/a-line/pkg/model"
-	"github.com/hamster-shared/a-line/pkg/pipeline"
-	"github.com/hamster-shared/a-line/pkg/service"
 	"os"
 	"path"
 
@@ -21,11 +21,11 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var (
 	port            = 8080
-	channel         = make(chan model.QueueMessage)
+	channel         = make(chan model2.QueueMessage)
 	dispatch        = dispatcher.NewDispatcher(channel)
 	pipelineFile    string
-	jobService      = service.NewJobService()
-	templateService = service.NewTemplateService()
+	jobService      = service2.NewJobService()
+	templateService = service2.NewTemplateService()
 	DSN             = "root:123456@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local"
 	handlerServer   = controller.NewHandlerServer(jobService, dispatch, templateService)
 	rootCmd         = &cobra.Command{
@@ -55,10 +55,10 @@ to quickly create a Cobra application.`,
 			job, _ := pipeline.GetJobFromReader(cicdFile)
 			jobService.SaveJobWithFile(pipelineFile, job.Name)
 			Stages, _ := job.StageSort()
-			jobDetail := &model.JobDetail{
+			jobDetail := &model2.JobDetail{
 				Id:     1,
 				Job:    *job,
-				Status: model.STATUS_NOTRUN,
+				Status: model2.STATUS_NOTRUN,
 				Stages: Stages,
 			}
 			jobService.SaveJobDetail(job.Name, jobDetail)
