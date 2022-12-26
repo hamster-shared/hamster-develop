@@ -12,7 +12,7 @@ descriptionChinese: "该模版是为了构建Gear智能合约，实现全自动�
 tag: "SMART_CONTRACT_TEMPLATE"
 
 #Corresponding picture name
-imageName: "truffle"
+imageName: "gear"
 
 #Affiliate Template
 template: "gear.yml"

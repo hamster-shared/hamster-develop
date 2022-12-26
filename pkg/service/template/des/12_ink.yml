@@ -12,7 +12,7 @@ descriptionChinese: "该模版是构建在Substrate框架上的区块链智能�
 tag: "SMART_CONTRACT_TEMPLATE"
 
 #Corresponding picture name
-imageName: "truffle"
+imageName: "ink"
 
 #Affiliate Template
 template: "ink-erc20.yml"

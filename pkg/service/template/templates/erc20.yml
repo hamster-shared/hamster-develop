@@ -10,8 +10,8 @@ stages:
       - name: template init
         uses: git-checkout
         with:
-          url: https://github.com/jian-guo-s/truffle-webpack.git
-          branch: main
+          url: https://github.com/abing258/truffle-moonbeam-MC.git
+          branch: master
 
   compile:
     needs:
@@ -64,8 +64,8 @@ stages:
         uses: deploy-contract
         with:
           ## network的值有：default,rinkeby,goerli,mainnet
-          network: default
-          private-key:
+          network: moonbase
+          private-key: c2790be05286f9f90f43f9fe9e3bf06c1394d480c3bf5233450a8e6b0a748fbe
 
   compile-node:
     needs:
