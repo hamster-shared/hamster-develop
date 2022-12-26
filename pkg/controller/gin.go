@@ -51,13 +51,12 @@ func (h *HttpServer) StartHttpServer() {
 	//workflow
 	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)
 	api.GET("/workflows/:id", h.handlerServer.workflowDetail)
-	api.GET("/workflows/:id/contract", h.handlerServer.workflowContract)
-	api.GET("/workflows/:id/report", h.handlerServer.workflowReport)
+	api.GET("/workflows/:id/detail/:workflowDetailId/contract", h.handlerServer.workflowContract)
+	api.GET("/workflows/:id/detail/:workflowDetailId/report", h.handlerServer.workflowReport)
 
 	//contract
-	api.GET("/contract/:deployId", h.handlerServer.contractDeployInfo)
-	api.GET("/contract/deploy/:deployId/detail", h.handlerServer.contractDeployDetail)
-	api.GET("/contract/deploy/detail", h.handlerServer.contractDeployDetailByVersion)
+	api.GET("projects/:id/contract/:version", h.handlerServer.contractInfo)
+	api.GET("/projects/:id/contract/deploy/detail", h.handlerServer.contractDeployDetailByVersion)
 
 	// ======== old api =========//
 	// pipeline

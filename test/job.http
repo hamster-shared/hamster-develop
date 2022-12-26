@@ -67,3 +67,26 @@ Content-Type: application/json
 
 ###
 GET http://localhost:8080/api/templates-category?type=1
+
+
+###
+GET http://localhost:8080/api/projects/1/workflows
+
+
+###
+GET http://localhost:8080/api/workflows/1
+
+###
+GET http://localhost:8080/api/workflows/1/detail/1/contract
+
+###
+GET http://localhost:8080/api/workflows/1/detail/2/report
+
+###
+GET http://localhost:8080/api/projects/1/contract/1.0
+
+###
+GET http://localhost:8080/api/projects/1/contract/deploy/detail
+
+
+
