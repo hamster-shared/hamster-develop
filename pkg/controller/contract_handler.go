@@ -16,4 +16,5 @@ func (h *HandlerServer) contractDeployDetailByVersion(g *gin.Context) {
 
 func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
 
+	Success("", g)
 }
