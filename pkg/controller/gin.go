@@ -36,14 +36,28 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/templates-category/:id/template/:templateId", h.handlerServer.templateDetail)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
-	api.POST("/projects", h.handlerServer.createProject)
+	api.POST("/projects", h.handlerServer.createProject) // 进行中
 	api.GET("/projects/:id", h.handlerServer.projectDetail)
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)
 
+	/*
+		创建项目返回项目ID
+		缺登录的接口
+		模版详情接口缺少返回字段
+		缺少仓库校验接口（根据project名称）
+		删除deploy接口
+		保存部署信息传参数有问题
+		Workflow详情返回字段缺少流水线类型（check, build）
+		查询workflow下的合约列表使用workflowDetailId
+		缺少项目日志接口使用ID
+		获取合约列表改为项目合约列表（改名字）
+		合约部署详情接口有问题
+		根据版本查询合约信息（返回abi信息和byte code）
+	*/
+
 	api.POST("/projects/:id/check", h.handlerServer.projectWorkflowCheck)
 	api.POST("/projects/:id/build", h.handlerServer.projectWorkflowBuild)
-	api.POST("/projects/:id/deploy", h.handlerServer.projectWorkflowDeploy)
 	api.GET("/projects/:id/contract", h.handlerServer.projectContract)
 	api.GET("/projects/:id/reports", h.handlerServer.projectReport)
 	api.POST("/projects/:id/contract/deploy", h.handlerServer.saveContractDeployInfo)

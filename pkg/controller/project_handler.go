@@ -87,10 +87,12 @@ func (h *HandlerServer) projectDetail(gin *gin.Context) {
 
 func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 
+	Success("", g)
 }
 
 func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 
+	Success("", g)
 }
 
 func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {

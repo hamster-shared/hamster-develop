@@ -278,13 +278,21 @@ func (h *HandlerServer) openArtifactoryDir(gin *gin.Context) {
 type UserAuth struct {
 	Id       uint   `json:"id"`
 	Username string `json:"username"`
+	Token    string `json:"token"`
 }
 
 func (h *HandlerServer) getUserInfo(gin *gin.Context) UserAuth {
+
+	// token 是什么东西?，方案1：我们自己的jwt token, 方案2: github token
+	token := gin.GetHeader("access_token")
+
+	//TODO...
+	//token = db_replace(token)
 
 	// TODO ... 根据token 获取用户信息
 	return UserAuth{
 		Id:       1,
 		Username: "admin",
+		Token:    token,
 	}
 }
