@@ -31,6 +31,7 @@ func (h *HttpServer) StartHttpServer() {
 	r := gin.Default()
 	api := r.Group("/api")
 
+	api.POST("/login")
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
