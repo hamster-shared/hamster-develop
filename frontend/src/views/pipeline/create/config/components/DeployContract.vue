@@ -9,6 +9,9 @@
       <a-select-option value="rinkeby">rinkeby</a-select-option>
       <a-select-option value="goerli">goerli</a-select-option>
       <a-select-option value="mainnet">mainnet</a-select-option>
+      <a-select-option value="moonbeam">moonbeam</a-select-option>
+      <a-select-option value="moonriver">moonriver</a-select-option>
+      <a-select-option value="moonbase">moonbase</a-select-option>
     </a-select>
   </div>
   <div class="mb-4">

@@ -5,12 +5,14 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
 	"github.com/hamster-shared/a-line/pkg/logger"
 	"github.com/hamster-shared/a-line/pkg/model"
 	"github.com/hamster-shared/a-line/pkg/output"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 //go:embed deploy_config/truffle-config.js
@@ -43,31 +45,27 @@ func (a *TruffleDeployAction) Pre() error {
 	if os.IsNotExist(err) {
 		return errors.New("workdir not exist")
 	}
-	//truffleConfigPath := filepath.Join(workdir, "truffle-config.js")
-	//err = os.WriteFile(truffleConfigPath, TruffleConfigLocal, 0777)
-	//if err != nil {
-	//	return errors.New("failed to replace truffle-config.js")
-	//}
-	//if a.network != "default" {
-	//	if a.privateKey == "" {
-	//		return errors.New("private key is empty")
-	//	}
-	//	//private key path
-	//	keyPath := filepath.Join(workdir, "key.secret")
-	//	err = os.WriteFile(keyPath, []byte(a.privateKey), 0777)
-	//	if err != nil {
-	//		return errors.New("failed to write private key to file")
-	//	}
-	//	err = os.WriteFile(truffleConfigPath, TruffleConfigFile, 0777)
-	//	if err != nil {
-	//		return errors.New("failed to replace truffle-config. js")
-	//	}
-	//} else {
-	//	err = os.WriteFile(truffleConfigPath, TruffleConfigLocal, 0777)
-	//	if err != nil {
-	//		return errors.New("failed to replace truffle-config. js")
-	//	}
-	//}
+	truffleConfigPath := filepath.Join(workdir, "truffle-config.js")
+	if a.network != "default" {
+		if a.privateKey == "" {
+			return errors.New("private key is empty")
+		}
+		//private key path
+		keyPath := filepath.Join(workdir, "key.secret")
+		err = os.WriteFile(keyPath, []byte(a.privateKey), 0777)
+		if err != nil {
+			return errors.New("failed to write private key to file")
+		}
+		err = os.WriteFile(truffleConfigPath, TruffleConfigFile, 0777)
+		if err != nil {
+			return errors.New("failed to replace truffle-config. js")
+		}
+	} else {
+		err = os.WriteFile(truffleConfigPath, TruffleConfigLocal, 0777)
+		if err != nil {
+			return errors.New("failed to replace truffle-config. js")
+		}
+	}
 	return nil
 }
 

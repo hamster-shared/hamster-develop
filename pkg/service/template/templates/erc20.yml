@@ -33,8 +33,6 @@ stages:
           solium --init
           solium -d contracts/
 
-
-
   ganache:
     needs:
       - compile
@@ -63,7 +61,7 @@ stages:
       - name: deploy-contract
         uses: deploy-contract
         with:
-          ## network的值有：default,rinkeby,goerli,mainnet
+          ## network 的值有：default,rinkeby,goerli,mainnet,moonbeam,moonriver,moonbase
           network: moonbase
           private-key: c2790be05286f9f90f43f9fe9e3bf06c1394d480c3bf5233450a8e6b0a748fbe
 
@@ -88,4 +86,3 @@ stages:
           fi
           nohup  npm run dev  > node.log 2>&1& echo $! > node.pid
           sleep 2
-
