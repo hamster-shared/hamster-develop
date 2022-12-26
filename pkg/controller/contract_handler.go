@@ -81,3 +81,16 @@ func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
 
 	Success("", g)
 }
+
+func (h *HandlerServer) versionList(gin *gin.Context) {
+	idStr := gin.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	log.Println(id)
+	var data []string
+	data = append(data, "1.0", "2.0", "3.0", "4.0")
+	Success(data, gin)
+}

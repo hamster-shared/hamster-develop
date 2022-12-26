@@ -71,6 +71,7 @@ func (h *HttpServer) StartHttpServer() {
 	//contract
 	api.GET("projects/:id/contract/:version", h.handlerServer.contractInfo)
 	api.GET("/projects/:id/contract/deploy/detail", h.handlerServer.contractDeployDetailByVersion)
+	api.GET("/projects/:id/versions", h.handlerServer.versionList)
 
 	// ======== old api =========//
 	// pipeline
