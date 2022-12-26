@@ -79,4 +79,5 @@ func (h *HandlerServer) contractInfo(gin *gin.Context) {
 
 func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
 
+	Success("", g)
 }

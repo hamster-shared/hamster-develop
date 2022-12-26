@@ -9,6 +9,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/vo"
 	"github.com/young2j/gocopy"
 	"strconv"
+	"time"
 )
 
 //go:embed templates
@@ -87,10 +88,12 @@ func (h *HandlerServer) projectDetail(gin *gin.Context) {
 
 func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 
+	Success("", g)
 }
 
 func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 
+	Success("", g)
 }
 
 func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
@@ -99,9 +102,43 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 
 func (h *HandlerServer) projectContract(g *gin.Context) {
 
+	list := make([]db.Contract, 0)
+
+	list = append(list, db.Contract{
+		Id:               1,
+		WorkflowId:       1,
+		WorkflowDetailId: 1,
+		Name:             "Contract-one",
+		Version:          "#4",
+		Network:          "mainnet",
+		BuildTime:        time.Now(),
+	})
+
+	page := vo.NewPage(list, 1, 1, 10)
+
+	Success(page, g)
+
 }
 
 func (h *HandlerServer) projectReport(g *gin.Context) {
+	list := make([]db.Report, 0)
+
+	list = append(list, db.Report{
+		Id:               1,
+		WorkflowId:       1,
+		WorkflowDetailId: 1,
+		Name:             "report-one",
+		Type:             1,
+		CheckTool:        "truffle",
+		Result:           "error",
+		CheckTime:        time.Now(),
+		ReportFile:       "there is something error \n  aaaabbbb  ",
+		CreateTime:       time.Now(),
+	})
+
+	page := vo.NewPage(list, 1, 1, 10)
+
+	Success(page, g)
 
 }
 
