@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/a-line/pkg/application"
-	"gorm.io/gorm"
 	"io/fs"
 	"net/http"
 	"os/exec"
@@ -92,7 +91,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/pipeline/:name/detail/:id/artifactory", h.handlerServer.openArtifactoryDir)
 	api.GET("/ping", func(c *gin.Context) {
 
-		db := application.GetBean[*gorm.DB]("db")
+		db := application.GetBean("db")
 		fmt.Println(db)
 		//输出json结果给调用方
 		Success("", c)

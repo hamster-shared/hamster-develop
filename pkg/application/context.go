@@ -1,31 +1,34 @@
 package application
 
-import "errors"
+import (
+	"errors"
+	"gorm.io/gorm"
+)
 
-type Context[T any] struct {
-	ctx map[string]T
+type Context struct {
+	ctx map[string]*gorm.DB
 }
 
-func GetBean[T any](name string) T {
+func GetBean(name string) *gorm.DB {
 	value, ok := ctx.ctx[name]
 
 	if ok {
-		return value.(T)
+		return value
 	} else {
 		panic(errors.New("bean not found"))
-		return value.(T)
+		return value
 	}
 
 }
 
-func SetBean[T any](name string, bean T) {
+func SetBean(name string, bean *gorm.DB) {
 	ctx.ctx[name] = bean
 }
 
-var ctx Context[any]
+var ctx Context
 
 func init() {
-	ctx = Context[any]{
-		ctx: make(map[string]any),
+	ctx = Context{
+		ctx: make(map[string]*gorm.DB),
 	}
 }

@@ -63,3 +63,7 @@ POST http://hamsternet.io/docs/abcd1234
 Content-Type: application/json
 
 {"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}
+
+
+###
+GET http://localhost:8080/api/templates-category?type=1

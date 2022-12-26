@@ -5,10 +5,11 @@ import (
 	"github.com/hamster-shared/a-line/engine"
 	"github.com/hamster-shared/a-line/engine/consts"
 	"github.com/hamster-shared/a-line/engine/model"
-	service2 "github.com/hamster-shared/a-line/engine/service"
+	service1 "github.com/hamster-shared/a-line/engine/service"
 	"github.com/hamster-shared/a-line/engine/utils"
 	"github.com/hamster-shared/a-line/engine/utils/platform"
 	"github.com/hamster-shared/a-line/pkg/controller/parameters"
+	service2 "github.com/hamster-shared/a-line/pkg/service"
 	"gopkg.in/yaml.v3"
 	"path/filepath"
 	"strconv"
@@ -16,14 +17,18 @@ import (
 )
 
 type HandlerServer struct {
-	Engine          *engine.Engine
-	templateService service2.ITemplateService
+	Engine           *engine.Engine
+	templateService  service2.ITemplateService
+	templateService1 service1.ITemplateService
+	projectService   service2.IProjectService
 }
 
-func NewHandlerServer(engine *engine.Engine, templateService service2.ITemplateService) *HandlerServer {
+func NewHandlerServer(engine *engine.Engine, templateService service2.ITemplateService, templateService1 service1.ITemplateService, projectService service2.IProjectService) *HandlerServer {
 	return &HandlerServer{
-		Engine:          engine,
-		templateService: templateService,
+		Engine:           engine,
+		templateService:  templateService,
+		templateService1: templateService1,
+		projectService:   projectService,
 	}
 }
 
@@ -240,7 +245,7 @@ func (h *HandlerServer) getTemplates(gin *gin.Context) {
 	if lang == "" {
 		lang = consts.LANG_EN
 	}
-	data := h.templateService.GetTemplates(lang)
+	data := h.templateService1.GetTemplates(lang)
 	Success(data, gin)
 }
 
@@ -252,7 +257,7 @@ func (h *HandlerServer) getTemplateDetail(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	data, _ := h.templateService.GetTemplateDetail(id)
+	data, _ := h.templateService1.GetTemplateDetail(id)
 	Success(data, gin)
 }
 

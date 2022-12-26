@@ -16,6 +16,8 @@ create table t_user (
                         id int primary key auto_increment,
                         username varchar(50) not null comment '用户名',
                         token varchar(100) comment 'token',
+                        avatar_url    varchar(100),
+                        html_url      varchar(100),
                         create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '创建时间'
 ) comment '用户表';
 

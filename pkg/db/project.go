@@ -1,21 +1,21 @@
 package db
 
 import (
-	"database/sql"
+	"gorm.io/gorm"
 	"time"
 )
 
 type Project struct {
-	Id            uint `gorm:"primaryKey" json:"id"`
-	Name          string
-	UserId        uint
-	Type          uint
-	RepositoryUrl string
-	FrameType     string
-	Creator       uint
-	DeleteUser    uint
-	UpdateUser    uint
-	CreateTime    time.Time    `json:"create_time"`
-	UpdateTime    time.Time    `json:"update_time"`
-	DeleteTime    sql.NullTime `json:"delete_time"`
+	Id            uint           `gorm:"primaryKey" json:"id"`
+	Name          string         `json:"name"`
+	UserId        uint           `json:"UserId"`
+	Type          uint           `json:"type"`
+	RepositoryUrl string         `json:"RepositoryUrl"`
+	FrameType     string         `json:"frameType"`
+	Creator       uint           `json:"creator"`
+	DeleteUser    uint           `json:"deleteUser"`
+	UpdateUser    uint           `json:"updateUser"`
+	CreateTime    time.Time      `json:"createTime"`
+	UpdateTime    time.Time      `json:"updateTime"`
+	DeleteTime    gorm.DeletedAt `json:"deleteTime"`
 }

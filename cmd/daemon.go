@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 // daemonCmd represents the daemon command
@@ -24,7 +25,6 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("daemon called")
-
 		go Engine.Start()
 
 		port, _ = rootCmd.PersistentFlags().GetInt("port")
@@ -36,11 +36,18 @@ to quickly create a Cobra application.`,
 			DontSupportRenameIndex:    true,  // drop & create when rename index, rename index not supported before MySQL 5.7, MariaDB
 			DontSupportRenameColumn:   true,  // `change` when rename column, rename column not supported before MySQL 8, MariaDB
 			SkipInitializeWithVersion: false, // auto configure based on currently MySQL version
-		}), &gorm.Config{})
+		}), &gorm.Config{
+			NamingStrategy: schema.NamingStrategy{
+				TablePrefix:   "t_", // table name prefix, table for `User` would be `t_users`
+				SingularTable: true, // use singular table name, table for `User` would be `user` with this option enabled
+			},
+		})
 		if err != nil {
 			return
 		}
 		application.SetBean("db", db)
+		templateService.Init(db)
+		projectService.Init(db)
 		controller.NewHttpService(*handlerServer, port).StartHttpServer()
 
 	},
