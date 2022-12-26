@@ -51,6 +51,8 @@ stages:
         run: |
           cp .env.example .env
           cat ../../gear-deploy/programID.txt >> .env
+          echo -e '\n\n' >> .env
+          cat ../../gear-deploy/metaString.txt >> .env
           yarn
           yarn add @polkadot/util-crypto
           yarn run start
