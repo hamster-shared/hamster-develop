@@ -5,8 +5,10 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/hamster-shared/a-line/engine"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/controller"
+	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -45,7 +47,14 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			return
 		}
-		application.SetBean("db", db)
+		application.SetBean[*gorm.DB]("db", db)
+		application.SetBean[*engine.Engine]("engine", Engine)
+		workflowService := service.NewWorkflowService()
+		application.SetBean[*service.WorkflowService]("workflowService", workflowService)
+		contractService := service.NewContractService()
+		application.SetBean[*service.ContractService]("contractService", contractService)
+		reportService := service.NewReportService()
+		application.SetBean[*service.ReportService]("reportService", reportService)
 		templateService.Init(db)
 		projectService.Init(db)
 		controller.NewHttpService(*handlerServer, port).StartHttpServer()

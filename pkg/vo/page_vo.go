@@ -15,3 +15,10 @@ func NewPage[T any](data []T, total int, page int, pageSize int) Page[T] {
 		PageSize: pageSize,
 	}
 }
+
+func NewEmptyPage[T any]() Page[T] {
+	return Page[T]{
+		Page:     1,
+		PageSize: 10,
+	}
+}

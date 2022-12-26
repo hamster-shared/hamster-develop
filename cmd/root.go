@@ -9,7 +9,6 @@ import (
 	"github.com/hamster-shared/a-line/engine/logger"
 	"github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/engine/pipeline"
-	service1 "github.com/hamster-shared/a-line/engine/service"
 	"github.com/hamster-shared/a-line/pkg/controller"
 	service2 "github.com/hamster-shared/a-line/pkg/service"
 	"os"
@@ -21,15 +20,14 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var (
-	port             = 8080
-	pipelineFile     string
-	templateService  = service2.NewTemplateService()
-	templateService1 = service1.NewTemplateService()
-	projectService   = service2.NewProjectService()
-	DSN              = "root:123456@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local"
-	Engine           = engine.NewEngine()
-	handlerServer    = controller.NewHandlerServer(Engine, templateService, templateService1, projectService)
-	rootCmd          = &cobra.Command{
+	port            = 8080
+	pipelineFile    string
+	templateService = service2.NewTemplateService()
+	projectService  = service2.NewProjectService()
+	DSN             = "root:123456@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local"
+	Engine          = engine.NewEngine()
+	handlerServer   = controller.NewHandlerServer(Engine, templateService, projectService)
+	rootCmd         = &cobra.Command{
 		Use:   "a-line-cli",
 		Short: "A brief description of your application",
 		Long: `A longer description that spans multiple lines and likely contains

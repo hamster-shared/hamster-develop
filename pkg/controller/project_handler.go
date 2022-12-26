@@ -6,10 +6,11 @@ import (
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/controller/parameters"
 	"github.com/hamster-shared/a-line/pkg/db"
+	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/vo"
 	"github.com/young2j/gocopy"
+	"gorm.io/gorm"
 	"strconv"
-	"time"
 )
 
 //go:embed templates
@@ -51,7 +52,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 
-	database := application.GetBean("db")
+	database := application.GetBean[*gorm.DB]("db")
 	var project db.Project
 	gocopy.Copy(&project, &createVo)
 	project.RepositoryUrl = createVo.TemplateUrl
@@ -88,6 +89,14 @@ func (h *HandlerServer) projectDetail(gin *gin.Context) {
 
 func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 
+	projectId, err := strconv.Atoi(g.Param("id"))
+	if err != nil {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	_ = workflowService.ExecProjectCheckWorkflow(uint(projectId), h.getUserInfo(g))
 	Success("", g)
 }
 
@@ -102,43 +111,51 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 
 func (h *HandlerServer) projectContract(g *gin.Context) {
 
-	list := make([]db.Contract, 0)
+	projectId, err := strconv.Atoi(g.Param("id"))
+	if err != nil {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
 
-	list = append(list, db.Contract{
-		Id:               1,
-		WorkflowId:       1,
-		WorkflowDetailId: 1,
-		Name:             "Contract-one",
-		Version:          "#4",
-		Network:          "mainnet",
-		BuildTime:        time.Now(),
-	})
+	query := g.Query("query")
+	version := g.Query("version")
+	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(g.DefaultQuery("size", "10"))
 
-	page := vo.NewPage(list, 1, 1, 10)
+	contractService := application.GetBean[*service.ContractService]("contractService")
 
-	Success(page, g)
+	result, err := contractService.QueryContracts(uint(projectId), query, version, page, size)
+
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+
+	Success(result, g)
 
 }
 
 func (h *HandlerServer) projectReport(g *gin.Context) {
-	list := make([]db.Report, 0)
+	projectId, err := strconv.Atoi(g.Param("id"))
+	if err != nil {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
 
-	list = append(list, db.Report{
-		Id:               1,
-		WorkflowId:       1,
-		WorkflowDetailId: 1,
-		Name:             "report-one",
-		Type:             1,
-		CheckTool:        "truffle",
-		Result:           "error",
-		CheckTime:        time.Now(),
-		ReportFile:       "there is something error \n  aaaabbbb  ",
-		CreateTime:       time.Now(),
-	})
+	Type, _ := strconv.Atoi(g.DefaultQuery("type", "1"))
+	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(g.DefaultQuery("size", "10"))
 
-	page := vo.NewPage(list, 1, 1, 10)
+	reportService := application.GetBean[*service.ReportService]("reportService")
 
-	Success(page, g)
+	result, err := reportService.QueryReports(uint(projectId), uint(Type), page, size)
+
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+
+	Success(result, g)
 
 }
 

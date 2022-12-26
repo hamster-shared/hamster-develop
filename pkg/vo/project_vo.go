@@ -21,3 +21,9 @@ type UpdateProjectParam struct {
 	Name   string `json:"name"`
 	UserId int    `json:"userId"`
 }
+
+type UserAuth struct {
+	Id       uint   `json:"id"`
+	Username string `json:"username"`
+	Token    string `json:"token"`
+}

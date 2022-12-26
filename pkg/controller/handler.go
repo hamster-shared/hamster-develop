@@ -5,11 +5,11 @@ import (
 	"github.com/hamster-shared/a-line/engine"
 	"github.com/hamster-shared/a-line/engine/consts"
 	"github.com/hamster-shared/a-line/engine/model"
-	service1 "github.com/hamster-shared/a-line/engine/service"
 	"github.com/hamster-shared/a-line/engine/utils"
 	"github.com/hamster-shared/a-line/engine/utils/platform"
 	"github.com/hamster-shared/a-line/pkg/controller/parameters"
 	service2 "github.com/hamster-shared/a-line/pkg/service"
+	"github.com/hamster-shared/a-line/pkg/vo"
 	"gopkg.in/yaml.v3"
 	"path/filepath"
 	"strconv"
@@ -17,18 +17,16 @@ import (
 )
 
 type HandlerServer struct {
-	Engine           *engine.Engine
-	templateService  service2.ITemplateService
-	templateService1 service1.ITemplateService
-	projectService   service2.IProjectService
+	Engine          *engine.Engine
+	templateService service2.ITemplateService
+	projectService  service2.IProjectService
 }
 
-func NewHandlerServer(engine *engine.Engine, templateService service2.ITemplateService, templateService1 service1.ITemplateService, projectService service2.IProjectService) *HandlerServer {
+func NewHandlerServer(engine *engine.Engine, templateService service2.ITemplateService, projectService service2.IProjectService) *HandlerServer {
 	return &HandlerServer{
-		Engine:           engine,
-		templateService:  templateService,
-		templateService1: templateService1,
-		projectService:   projectService,
+		Engine:          engine,
+		templateService: templateService,
+		projectService:  projectService,
 	}
 }
 
@@ -239,27 +237,27 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 	Success(data, gin)
 }
 
-// getTemplates get template list
-func (h *HandlerServer) getTemplates(gin *gin.Context) {
-	lang := gin.Request.Header.Get("lang")
-	if lang == "" {
-		lang = consts.LANG_EN
-	}
-	data := h.templateService1.GetTemplates(lang)
-	Success(data, gin)
-}
-
-// getTemplateDetail get template detail
-func (h *HandlerServer) getTemplateDetail(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
-	data, _ := h.templateService1.GetTemplateDetail(id)
-	Success(data, gin)
-}
+//// getTemplates get template list
+//func (h *HandlerServer) getTemplates(gin *gin.Context) {
+//	lang := gin.Request.Header.Get("lang")
+//	if lang == "" {
+//		lang = consts.LANG_EN
+//	}
+//	data := h.templateService1.GetTemplates(lang)
+//	Success(data, gin)
+//}
+//
+//// getTemplateDetail get template detail
+//func (h *HandlerServer) getTemplateDetail(gin *gin.Context) {
+//	idStr := gin.Param("id")
+//	id, err := strconv.Atoi(idStr)
+//	if err != nil {
+//		Fail(err.Error(), gin)
+//		return
+//	}
+//	data, _ := h.templateService1.GetTemplateDetail(id)
+//	Success(data, gin)
+//}
 
 // openArtifactoryDir open artifactory folder
 func (h *HandlerServer) openArtifactoryDir(gin *gin.Context) {
@@ -275,13 +273,7 @@ func (h *HandlerServer) openArtifactoryDir(gin *gin.Context) {
 	Success("", gin)
 }
 
-type UserAuth struct {
-	Id       uint   `json:"id"`
-	Username string `json:"username"`
-	Token    string `json:"token"`
-}
-
-func (h *HandlerServer) getUserInfo(gin *gin.Context) UserAuth {
+func (h *HandlerServer) getUserInfo(gin *gin.Context) vo.UserAuth {
 
 	// token 是什么东西?，方案1：我们自己的jwt token, 方案2: github token
 	token := gin.GetHeader("access_token")
@@ -290,7 +282,7 @@ func (h *HandlerServer) getUserInfo(gin *gin.Context) UserAuth {
 	//token = db_replace(token)
 
 	// TODO ... 根据token 获取用户信息
-	return UserAuth{
+	return vo.UserAuth{
 		Id:       1,
 		Username: "admin",
 		Token:    token,

@@ -2,10 +2,17 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/hamster-shared/a-line/pkg/application"
+	"github.com/hamster-shared/a-line/pkg/db"
+	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/vo"
 	"log"
 	"strconv"
 )
+
+func (h *HandlerServer) contractDeployInfo(g *gin.Context) {
+
+}
 
 func (h *HandlerServer) contractDeployDetailByVersion(gin *gin.Context) {
 	idStr := gin.Param("id")
@@ -78,6 +85,23 @@ func (h *HandlerServer) contractInfo(gin *gin.Context) {
 }
 
 func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
+
+	var contractDeploy db.ContractDeploy
+
+	err := g.BindJSON(contractDeploy)
+
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+
+	contractService := application.GetBean[*service.ContractService]("contractService")
+
+	err = contractService.SaveDeploy(contractDeploy)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
 
 	Success("", g)
 }
