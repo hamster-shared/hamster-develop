@@ -8,11 +8,11 @@ import (
 type Project struct {
 	Id            uint           `gorm:"primaryKey" json:"id"`
 	Name          string         `json:"name"`
-	UserId        uint           `json:"UserId"`
+	UserId        int64          `json:"UserId"`
 	Type          uint           `json:"type"`
 	RepositoryUrl string         `json:"RepositoryUrl"`
-	FrameType     string         `json:"frameType"`
-	Creator       uint           `json:"creator"`
+	FrameType     int            `json:"frameType"`
+	Creator       int64          `json:"creator"`
 	DeleteUser    uint           `json:"deleteUser"`
 	UpdateUser    uint           `json:"updateUser"`
 	CreateTime    time.Time      `json:"createTime"`

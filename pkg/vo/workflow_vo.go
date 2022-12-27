@@ -15,6 +15,7 @@ type WorkflowVo struct {
 	Id          uint      `json:"id"`
 	ProjectId   uint      `json:"projectId"`
 	Type        uint      `json:"type"`
+	LastExecId  uint      `json:"lastExecId"`
 	ExecNumber  uint      `json:"execNumber"`
 	StageInfo   string    `json:"stageInfo"`
 	CodeInfo    string    `json:"codeInfo"`

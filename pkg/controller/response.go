@@ -33,3 +33,11 @@ func Fail(message string, c *gin.Context) {
 		Data:    nil,
 	})
 }
+
+func Failed(code int, message string, c *gin.Context) {
+	c.JSON(code, Result{
+		Code:    code,
+		Message: message,
+		Data:    nil,
+	})
+}

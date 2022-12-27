@@ -4,12 +4,10 @@ import (
 	"embed"
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/a-line/pkg/application"
-	"github.com/hamster-shared/a-line/pkg/controller/parameters"
-	"github.com/hamster-shared/a-line/pkg/db"
+	"github.com/hamster-shared/a-line/pkg/consts"
+	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/vo"
-	"github.com/young2j/gocopy"
-	"gorm.io/gorm"
 	"strconv"
 )
 
@@ -40,26 +38,60 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 
 func (h *HandlerServer) createProject(g *gin.Context) {
 
+	createData := parameter.CreateProjectParam{}
+	err := g.BindJSON(&createData)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+
+	githubService := application.GetBean[*service.GithubService]("githubService")
+
+	repo, err := githubService.CreateRepo("", createData.TemplateOwner, createData.TemplateRepo, createData.Name, createData.RepoOwner)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	data := vo.CreateProjectParam{
+		Name:        createData.Name,
+		Type:        createData.Type,
+		TemplateUrl: *repo.URL,
+		FrameType:   createData.FrameType,
+		UserId:      createData.UserId,
+	}
+	id, err := h.projectService.CreateProject(data)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	file, err := workflowService.TemplateParse("solidity-check", *repo.URL, consts.Check)
+	if err == nil {
+		workflowData := parameter.SaveWorkflowParam{
+			ProjectId:  id,
+			Type:       consts.Check,
+			ExecFile:   file,
+			LastExecId: 0,
+		}
+		workflowService.SaveWorkflow(workflowData)
+	}
+	file1, err := workflowService.TemplateParse("solidity-build", *repo.URL, consts.Build)
+	if err == nil {
+		workflowData := parameter.SaveWorkflowParam{
+			ProjectId:  id,
+			Type:       consts.Build,
+			ExecFile:   file1,
+			LastExecId: 0,
+		}
+		workflowService.SaveWorkflow(workflowData)
+	}
+	Success(id, g)
+
 	// TODO ... 检查用户仓库是否被使用
 
 	//TODO ... github 导入仓库
 
 	//TODO ... 保存项目信息
-	var createVo parameters.ProjectCreateVo
-	err := g.BindJSON(&createVo)
-	if err != nil {
-		Fail("param error", g)
-		return
-	}
-
-	database := application.GetBean[*gorm.DB]("db")
-	var project db.Project
-	gocopy.Copy(&project, &createVo)
-	project.RepositoryUrl = createVo.TemplateUrl
-
-	project.UserId = h.getUserInfo(g).Id
-
-	database.Create(project)
 
 	//TODO ... 保存默认流水线
 	//fs, err := temp.Open("truffle_check.yml")

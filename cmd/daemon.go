@@ -55,6 +55,8 @@ to quickly create a Cobra application.`,
 		application.SetBean[*service.ContractService]("contractService", contractService)
 		reportService := service.NewReportService()
 		application.SetBean[*service.ReportService]("reportService", reportService)
+		githubService := service.NewGithubService()
+		application.SetBean[*service.GithubService]("githubService", githubService)
 		templateService.Init(db)
 		projectService.Init(db)
 		controller.NewHttpService(*handlerServer, port).StartHttpServer()

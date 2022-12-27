@@ -1,16 +1,28 @@
 package service
 
 import (
+	"bytes"
 	"database/sql"
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/hamster-shared/a-line/engine"
 	"github.com/hamster-shared/a-line/pkg/application"
+	"github.com/hamster-shared/a-line/pkg/consts"
 	"github.com/hamster-shared/a-line/pkg/db"
+	db2 "github.com/hamster-shared/a-line/pkg/db"
+	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"log"
+	"text/template"
+	"time"
 )
+
+//go:embed templates
+var temp embed.FS
 
 type WorkflowService struct {
 	db     *gorm.DB
@@ -85,10 +97,88 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 	return nil
 }
 
-func (w *WorkflowService) GetWorkflowList(workflowType, page, size int) (*[]db.Workflow, error) {
-	return nil, nil
+func (w *WorkflowService) GetWorkflowList(projectId, workflowType, page, size int) (*vo.WorkflowPage, error) {
+	var total int64
+	var data vo.WorkflowPage
+	var workflowData []vo.WorkflowVo
+	var workflowList []db2.Workflow
+	tx := w.db.Model(db2.Workflow{}).Where("project_id = ?", projectId)
+	if workflowType != 0 {
+		tx = tx.Where("type = ? ", workflowType)
+	}
+	result := tx.Offset((page - 1) * size).Limit(size).Find(&workflowList).Count(&total)
+	if result.Error != nil {
+		return &data, result.Error
+	}
+	copier.Copy(&workflowData, &workflowList)
+	if len(workflowData) > 0 {
+		for _, datum := range workflowData {
+			var detailData db2.WorkflowDetail
+			res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", datum.Id, datum.LastExecId).First(&detailData)
+			if res.Error != nil {
+				copier.Copy(&datum, &detailData)
+			}
+		}
+	}
+	data.Data = workflowData
+	data.Total = int(total)
+	data.Page = page
+	data.PageSize = size
+	return &data, nil
+}
+
+func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*db2.WorkflowDetail, error) {
+	var workflowDetail db2.WorkflowDetail
+	res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
+	if res.Error != nil {
+		return &workflowDetail, res.Error
+	}
+	return &workflowDetail, nil
 }
 
 func GetWorkflowKey(projectId uint, workflowId uint) string {
 	return fmt.Sprintf("%d_%d", projectId, workflowId)
+}
+
+func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (uint, error) {
+	var workflow db2.Workflow
+	workflow.Type = uint(saveData.Type)
+	workflow.CreateTime = time.Now()
+	workflow.ProjectId = saveData.ProjectId
+	workflow.ExecFile = saveData.ExecFile
+	workflow.LastExecId = saveData.LastExecId
+	res := w.db.Create(&workflow)
+	if res.Error != nil {
+		return 0, res.Error
+	}
+	return workflow.Id, nil
+}
+
+func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.WorkflowType) (string, error) {
+	filePath := "templates/truffle_check.yml"
+	if workflowType == consts.Check {
+		filePath = "templates/truffle-build.yml"
+	}
+	content, err := temp.ReadFile(filePath)
+	if err != nil {
+		log.Println("read template file failed ", err.Error())
+		return "", err
+	}
+	fileContent := string(content)
+	tmpl, err := template.New("test").Parse(fileContent)
+	if err != nil {
+		log.Println("template parse failed ", err.Error())
+		return "", err
+	}
+	templateData := parameter.TemplateCheck{
+		Name:          name,
+		RepositoryUrl: url,
+	}
+	var input bytes.Buffer
+	err = tmpl.Execute(&input, templateData)
+	if err != nil {
+		log.Println("failed to write parameters to the template ", err)
+		return "", err
+	}
+	return input.String(), nil
 }

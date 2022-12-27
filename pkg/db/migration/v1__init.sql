@@ -1,7 +1,7 @@
 create table t_project (
                            id int primary key auto_increment,
                            name varchar(100) not null  comment '项目名称',
-                           user_id varchar(50) not null comment '拥有者',
+                           user_id BIGINT not null comment '拥有者',
                            type tinyint(1) not null default 1 comment '项目类型(1: Contract,2: Frontend, 3: Blockchain Node)',
                            repository_url varchar(200) comment '仓库地址',
                            frame_type tinyint(1) comment '项目框架（1. truffle,hardhat;2: !ink; 3: move ; 4: vue.js; 5: nuxt.js;6: next.js;7: vite;8:Angular)',
@@ -13,7 +13,7 @@ create table t_project (
 ) comment '项目表';
 
 create table t_user (
-                        id int primary key auto_increment,
+                        id BIGINT primary key auto_increment,
                         username varchar(50) not null comment '用户名',
                         token varchar(100) comment 'token',
                         avatar_url    varchar(100),

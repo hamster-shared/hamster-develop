@@ -12,3 +12,10 @@ const (
 	Vite
 	Angular
 )
+
+type WorkflowType int
+
+const (
+	Check WorkflowType = iota + 1
+	Build
+)

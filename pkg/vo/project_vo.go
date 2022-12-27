@@ -13,8 +13,8 @@ type CreateProjectParam struct {
 	Name        string `json:"name"`
 	Type        int    `json:"type"`
 	TemplateUrl string `json:"templateUrl"`
-	FrameType   string `json:"frameType"`
-	UserId      int    `json:"userId"`
+	FrameType   int    `json:"frameType"`
+	UserId      int64  `json:"userId"`
 }
 
 type UpdateProjectParam struct {

@@ -53,12 +53,11 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uint, 
 	err := p.db.Where("name=? and user_id=?", createData.Name, createData.UserId).First(&project).Error
 	if err == gorm.ErrRecordNotFound {
 		project.Name = createData.Name
-		project.UserId = uint(createData.UserId)
-		project.Creator = uint(createData.UserId)
+		project.UserId = createData.UserId
+		project.Creator = createData.UserId
 		project.CreateTime = time.Now()
 		project.FrameType = createData.FrameType
 		project.Type = uint(createData.Type)
-		//todo create repo and clone repo
 		p.db.Create(&project)
 		return project.Id, nil
 	}
