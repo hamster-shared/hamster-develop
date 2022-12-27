@@ -2,7 +2,7 @@
 id: 11
 
 #Template name
-name: "gear erc20"
+name: "gear hello world"
 
 #Template Description
 descriptionEnglish: "The template is designed to build Gear smart contracts, enabling fully automated cloning -> token code pulling -> contract compilation -> contract deployment."
@@ -15,4 +15,4 @@ tag: "SMART_CONTRACT_TEMPLATE"
 imageName: "gear"
 
 #Affiliate Template
-template: "gear.yml"
+template: "gear-hello-world.yml"

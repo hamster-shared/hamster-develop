@@ -1,7 +1,7 @@
 version: 1.0
-name: my-gear
+name: my-gear-hello-world
 stages:
-  clone-code-gear-hello-world:
+  clone-code-hello-world:
     steps:
       - name: set workdir
         uses: workdir
@@ -12,7 +12,7 @@ stages:
         with:
           url: https://github.com/jlvihv/gear-hello-world
           branch: main
-  clone-code-gear-deploy-script:
+  clone-code-deploy:
     steps:
       - name: set workdir
         uses: workdir
@@ -24,9 +24,10 @@ stages:
           url: https://github.com/jlvihv/gear-deploy
           branch: hello-world
 
-  gear-code-compile:
+  compile:
     needs:
-      - clone-code-gear-hello-world
+      - clone-code-hello-world
+      - clone-code-deploy
     steps:
       - name: set workdir
         uses: workdir
@@ -35,6 +36,11 @@ stages:
       - name: make hello world
         run: |
           make
+
+  upload:
+    needs:
+      - compile
+    steps:
       - name: set workdir
         uses: workdir
         with:
@@ -44,6 +50,11 @@ stages:
           export MNEMONIC=''
           npm install
           npm run code:submit
+
+  frontend:
+    needs:
+      - upload
+    steps:
       - name: set workdir
         uses: workdir
         with:
