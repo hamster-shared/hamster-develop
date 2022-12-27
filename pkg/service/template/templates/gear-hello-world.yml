@@ -41,6 +41,7 @@ stages:
           workdir: $HOME/workdir/my-gear/gear-deploy
       - name: gear deploy
         run: |
+          export MNEMONIC=''
           npm install
           npm run code:submit
       - name: set workdir
@@ -51,7 +52,7 @@ stages:
         run: |
           cp .env.example .env
           cat ../../gear-deploy/programID.txt >> .env
-          echo '\n\n' >> .env
+          echo '' >> .env
           cat ../../gear-deploy/metaString.txt >> .env
           yarn
           yarn add @polkadot/util-crypto
