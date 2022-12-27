@@ -47,9 +47,9 @@ stages:
           workdir: $HOME/workdir/my-gear/gear-deploy
       - name: gear deploy
         run: |
-          export MNEMONIC=''
+          export NODE_TLS_REJECT_UNAUTHORIZED=0
           npm install
-          npm run code:submit
+          npm run upload
 
   frontend:
     needs:
