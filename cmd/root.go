@@ -24,7 +24,7 @@ var (
 	pipelineFile    string
 	templateService = service2.NewTemplateService()
 	projectService  = service2.NewProjectService()
-	DSN             = "root:Aline123456@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local"
+	DSN             = "root:123456@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local"
 	Engine          = engine.NewEngine()
 	handlerServer   = controller.NewHandlerServer(Engine, templateService, projectService)
 	rootCmd         = &cobra.Command{

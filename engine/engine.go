@@ -133,6 +133,14 @@ func (e *Engine) GetJobHistoryStageLog(name string, historyId int, stageName str
 	return e.jobService.GetJobStageLog(name, historyId, stageName, start)
 }
 
+func (e *Engine) GetCodeInfo(name string, historyId int) string {
+	jobDetail := e.jobService.GetJobDetail(name, historyId)
+	if jobDetail != nil {
+		return jobDetail.CodeInfo
+	}
+	return ""
+}
+
 func (e *Engine) RegisterStatusChangeHook(hookResult func(message model.StatusChangeMessage)) {
 	for { //
 

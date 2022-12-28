@@ -9,18 +9,21 @@ import (
 	model2 "github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/engine/output"
 	"github.com/hamster-shared/a-line/engine/utils"
+	"io"
 	"os"
 	path2 "path"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
 // ArtifactoryAction Storage building
 type ArtifactoryAction struct {
-	name   string
-	path   []string
-	output *output.Output
-	ctx    context.Context
+	name     string
+	path     []string
+	compress bool
+	output   *output.Output
+	ctx      context.Context
 }
 
 func NewArtifactoryAction(step model2.Step, ctx context.Context, output *output.Output) *ArtifactoryAction {
@@ -33,11 +36,20 @@ func NewArtifactoryAction(step model2.Step, ctx context.Context, output *output.
 			path = s
 		}
 	}
+
+	compress := true
+
+	val, ok := step.With["compress"]
+	if ok {
+		compress, _ = strconv.ParseBool(val)
+	}
+
 	return &ArtifactoryAction{
-		name:   step.With["name"],
-		path:   strings.Split(path, "\n"),
-		ctx:    ctx,
-		output: output,
+		name:     step.With["name"],
+		path:     strings.Split(path, "\n"),
+		ctx:      ctx,
+		compress: compress,
+		output:   output,
 	}
 }
 
@@ -79,30 +91,61 @@ func (a *ArtifactoryAction) Hook() (*model2.ActionResult, error) {
 		logger.Errorf("Failed to get home directory, the file will be saved to the current directory, err is %s", err.Error())
 		userHomeDir = "."
 	}
-	dest := path2.Join(userHomeDir, consts.ArtifactoryDir, jobName, consts.ArtifactoryName, jobId, a.name)
-	var files []*os.File
-	for _, path := range a.path {
-		file, err := os.Open(path)
-		if err != nil {
-			return nil, errors.New("file open fail")
+
+	// compress
+	if a.compress {
+		dest := path2.Join(userHomeDir, consts.ArtifactoryDir, jobName, consts.ArtifactoryName, jobId, a.name)
+		var files []*os.File
+		for _, path := range a.path {
+			file, err := os.Open(path)
+			if err != nil {
+				return nil, errors.New("file open fail")
+			}
+			files = append(files, file)
 		}
-		files = append(files, file)
-	}
-	err = utils.CompressZip(files, dest)
-	if err != nil {
-		return nil, errors.New("compression failed")
-	}
-	logger.Infof("File saved to %s", dest)
-	actionResult := model2.ActionResult{
-		Artifactorys: []model2.Artifactory{
-			{
-				Name: a.name,
-				Url:  dest,
+		err = utils.CompressZip(files, dest)
+		if err != nil {
+			return nil, errors.New("compression failed")
+		}
+		logger.Infof("File saved to %s", dest)
+		actionResult := model2.ActionResult{
+			Artifactorys: []model2.Artifactory{
+				{
+					Name: a.name,
+					Url:  dest,
+				},
 			},
-		},
-		Reports: nil,
+			Reports: nil,
+		}
+		return &actionResult, nil
+	} else {
+		actionResult := &model2.ActionResult{
+			Artifactorys: []model2.Artifactory{},
+		}
+		basePath := path2.Join(userHomeDir, consts.ArtifactoryDir, jobName, consts.ArtifactoryName, jobId)
+		os.MkdirAll(basePath, os.ModePerm)
+		for _, path := range a.path {
+			src, err := os.Open(path)
+			if err != nil {
+				continue
+			}
+			dest := path2.Join(basePath, path2.Base(path))
+			dst, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE, os.ModePerm)
+			if err != nil {
+				continue
+			}
+			io.Copy(dst, src)
+			_ = src.Close()
+			_ = dst.Close()
+
+			actionResult.Artifactorys = append(actionResult.Artifactorys, model2.Artifactory{
+				Name: path2.Base(dest),
+				Url:  dest,
+			})
+		}
+
+		return actionResult, nil
 	}
-	return &actionResult, nil
 }
 
 func (a *ArtifactoryAction) Post() error {

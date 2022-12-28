@@ -121,6 +121,9 @@ func (e *Executor) Execute(id int, job *model2.Job) error {
 		if actionResult != nil && len(actionResult.Reports) > 0 {
 			jobWrapper.Reports = append(jobWrapper.Reports, actionResult.Reports...)
 		}
+		if actionResult != nil && actionResult.CodeInfo != "" {
+			jobWrapper.CodeInfo = actionResult.CodeInfo
+		}
 		if err != nil {
 			job.Status = model2.STATUS_FAIL
 			return err
