@@ -18,6 +18,9 @@ import (
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"log"
+	"os"
+	"path"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -43,20 +46,87 @@ func NewWorkflowService() *WorkflowService {
 }
 
 func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
-	w.SyncContract(message)
+
+	_, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
+	if err != nil {
+		return
+	}
+
+	jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+
+	var workflowDetail db.WorkflowDetail
+
+	w.db.Where(&db.WorkflowDetail{
+		WorkflowId: uint(workflowId),
+		ExecNumber: uint(jobDetail.Id),
+	}).First(&workflowDetail)
+
+	workflowDetail.Status = uint(jobDetail.Status)
+	stageInfo, err := json.Marshal(jobDetail.Stages)
+	if err != nil {
+		return
+	}
+	workflowDetail.StageInfo = string(stageInfo)
+	workflowDetail.UpdateTime = time.Now()
+	workflowDetail.CodeInfo = w.engine.GetCodeInfo(message.JobName, message.JobId)
+
+	tx := w.db.Save(workflowDetail)
+	tx.Commit()
+
+	w.SyncContract(message, workflowDetail)
 	w.SyncReport(message)
 }
 
-func (w *WorkflowService) SyncContract(message model.StatusChangeMessage) {
+func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
+	projectId, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
+	if err != nil {
+		return
+	}
+	jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
 
+	if len(jobDetail.Artifactorys) > 0 {
+
+		for _, arti := range jobDetail.Artifactorys {
+
+			data, _ := os.ReadFile(arti.Url)
+			m := make(map[string]any)
+
+			err := json.Unmarshal(data, &m)
+			if err != nil {
+				continue
+			}
+			abi, err := json.Marshal(m["abi"])
+			bytecodeData, ok := m["bytecode"]
+			if !ok {
+				continue
+			}
+
+			contract := db.Contract{
+				ProjectId:        uint(projectId),
+				WorkflowId:       uint(workflowId),
+				WorkflowDetailId: workflowDetail.Id,
+				Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
+				Version:          fmt.Sprintf("#%d", workflowDetail.ExecNumber),
+				Network:          "",
+				BuildTime:        workflowDetail.CreateTime,
+				AbiInfo:          string(abi),
+				ByteCode:         bytecodeData.(string),
+				CreateTime:       time.Now(),
+			}
+			w.db.Save(contract)
+		}
+
+	}
 }
 
 func (w *WorkflowService) SyncReport(message model.StatusChangeMessage) {
 	if !strings.Contains(message.JobName, "_") {
 		return
 	}
-	projectId := strings.Split(message.JobName, "_")[0]
-	workflowId := strings.Split(message.JobName, "_")[1]
+	projectId, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
+	if err != nil {
+		return
+	}
 	workflowExecNumber := message.JobId
 
 	if message.Status == model.STATUS_SUCCESS {
@@ -113,6 +183,8 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 			Time:  detail.StartTime,
 			Valid: true,
 		},
+		CreateTime: time.Now(),
+		UpdateTime: time.Now(),
 	}
 
 	err = w.db.Transaction(func(tx *gorm.DB) error {
@@ -170,10 +242,21 @@ func GetWorkflowKey(projectId uint, workflowId uint) string {
 	return fmt.Sprintf("%d_%d", projectId, workflowId)
 }
 
+func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (int, int, error) {
+	projectId, err := strconv.Atoi(strings.Split(projectKey, "_")[0])
+	if err != nil {
+		return 0, 0, err
+	}
+	workflowId, err := strconv.Atoi(strings.Split(projectKey, "_")[1])
+	return projectId, workflowId, err
+
+}
+
 func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (uint, error) {
 	var workflow db2.Workflow
 	workflow.Type = uint(saveData.Type)
 	workflow.CreateTime = time.Now()
+	workflow.UpdateTime = time.Now()
 	workflow.ProjectId = saveData.ProjectId
 	workflow.ExecFile = saveData.ExecFile
 	workflow.LastExecId = saveData.LastExecId

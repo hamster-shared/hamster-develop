@@ -145,74 +145,10 @@ func (a *GitAction) Hook() (*model2.ActionResult, error) {
 		return nil, err
 	}
 
-	//c := exec.CommandContext(a.ctx, commands[0], commands[1:]...) // mac linux
-	//c.Dir = hamsterRoot
-	//logger.Debugf("execute git clone command: %s", strings.Join(commands, " "))
-	//a.output.WriteCommandLine(strings.Join(commands, " "))
-	//
-	//stdout, err := c.StdoutPipe()
-	//if err != nil {
-	//	logger.Errorf("stdout error: %v", err)
-	//	return nil, err
-	//}
-	//stderr, err := c.StderrPipe()
-	//if err != nil {
-	//	logger.Errorf("stderr error: %v", err)
-	//	return nil, err
-	//}
-	//
-	//go func() {
-	//	for {
-	//		// 检测到 ctx.Done() 之后停止读取
-	//		<-a.ctx.Done()
-	//		if a.ctx.Err() != nil {
-	//			logger.Errorf("git clone error: %v", a.ctx.Err())
-	//			return
-	//		} else {
-	//			p := c.Process
-	//			if p == nil {
-	//				return
-	//			}
-	//			// Kill by negative PID to kill the process group, which includes
-	//			// the top-level process we spawned as well as any subprocesses
-	//			// it spawned.
-	//			//_ = syscall.Kill(-p.Pid, syscall.SIGKILL)
-	//			logger.Info("git clone process killed")
-	//			return
-	//		}
-	//	}
-	//}()
-	//
-	//stdoutScanner := bufio.NewScanner(stdout)
-	//stderrScanner := bufio.NewScanner(stderr)
-	//go func() {
-	//	for stdoutScanner.Scan() {
-	//		fmt.Println(stdoutScanner.Text())
-	//		a.output.WriteLine(stdoutScanner.Text())
-	//	}
-	//}()
-	//go func() {
-	//	for stderrScanner.Scan() {
-	//		fmt.Println(stderrScanner.Text())
-	//		a.output.WriteLine(stderrScanner.Text())
-	//	}
-	//}()
-	//
-	//err = c.Start()
-	//if err != nil {
-	//	logger.Errorf("git clone error: %v", err)
-	//	return nil, err
-	//}
-	//
-	//err = c.Wait()
-	//if err != nil {
-	//	logger.Errorf("git clone error: %v", err)
-	//	return nil, err
-	//}
-	//logger.Info("git clone success")
-	//
 	stack["workdir"] = a.workdir
-	return nil, nil
+	return &model2.ActionResult{
+		CodeInfo: fmt.Sprintf("%s | %s", a.branch, commitId[0:6]),
+	}, nil
 }
 
 func (a *GitAction) Post() error {

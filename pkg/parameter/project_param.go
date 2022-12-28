@@ -9,3 +9,8 @@ type CreateProjectParam struct {
 	RepoOwner     string `json:"repoOwner"`
 	UserId        int64  `json:"userId"`
 }
+
+type CheckNameParam struct {
+	Owner string `json:"owner"`
+	Name  string `json:"name"`
+}

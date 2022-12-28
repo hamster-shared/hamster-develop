@@ -56,6 +56,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uint, 
 		project.UserId = createData.UserId
 		project.Creator = createData.UserId
 		project.CreateTime = time.Now()
+		project.UpdateTime = time.Now()
 		project.FrameType = createData.FrameType
 		project.Type = uint(createData.Type)
 		p.db.Create(&project)

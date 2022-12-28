@@ -7,6 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v48 v48.2.0
+	github.com/goperate/convert v0.0.7
 	github.com/ipfs/go-block-format v0.0.3
 	github.com/ipfs/go-cid v0.2.0
 	github.com/ipfs/go-unixfsnode v1.4.0

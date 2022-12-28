@@ -29,7 +29,7 @@ func NewHttpService(handlerServer HandlerServer, port int) *HttpServer {
 
 func (h *HttpServer) StartHttpServer() {
 	r := gin.Default()
-	api := r.Group("/api")
+	api := r.Group("/api", h.handlerServer.loginWithGithub)
 
 	api.POST("/login")
 	// project_template
@@ -42,6 +42,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id", h.handlerServer.projectDetail)
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)
+	api.POST("/projects/check-name", h.handlerServer.checkName)
 
 	/*
 		创建项目返回项目ID
@@ -67,11 +68,11 @@ func (h *HttpServer) StartHttpServer() {
 	//workflow
 	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)
 	api.GET("/workflows/:id/detail/:detailId", h.handlerServer.workflowDetail)
-	api.GET("/workflows/:id/detail/:workflowDetailId/contract", h.handlerServer.workflowContract)
-	api.GET("/workflows/:id/detail/:workflowDetailId/report", h.handlerServer.workflowReport)
+	api.GET("/workflows/:id/detail/:detailId/contract", h.handlerServer.workflowContract)
+	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)
 
 	//contract
-	api.GET("projects/:id/contract/:version", h.handlerServer.contractInfo)
+	api.GET("/projects/:id/contract/:version", h.handlerServer.contractInfo)
 	api.GET("/projects/:id/contract/deploy/detail", h.handlerServer.contractDeployDetailByVersion)
 	api.GET("/projects/:id/versions", h.handlerServer.versionList)
 

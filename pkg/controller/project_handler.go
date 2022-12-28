@@ -230,3 +230,15 @@ func (h *HandlerServer) deleteProject(gin *gin.Context) {
 	}
 	Success("", gin)
 }
+
+func (h *HandlerServer) checkName(gin *gin.Context) {
+	var checkData parameter.CheckNameParam
+	err := gin.BindJSON(&checkData)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	data := githubService.CheckName("", checkData.Owner, checkData.Name)
+	Success(data, gin)
+}

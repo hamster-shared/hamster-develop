@@ -18,6 +18,7 @@ type Report struct {
 }
 
 type ActionResult struct {
+	CodeInfo     string
 	Artifactorys []Artifactory `json:"artifactorys"`
 	Reports      []Report      `json:"reports"`
 }
