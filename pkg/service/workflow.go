@@ -174,6 +174,7 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (ui
 	var workflow db2.Workflow
 	workflow.Type = uint(saveData.Type)
 	workflow.CreateTime = time.Now()
+	workflow.UpdateTime = time.Now()
 	workflow.ProjectId = saveData.ProjectId
 	workflow.ExecFile = saveData.ExecFile
 	workflow.LastExecId = saveData.LastExecId

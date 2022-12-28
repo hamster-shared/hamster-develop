@@ -7,6 +7,7 @@ create table t_project (
                            frame_type tinyint(1) comment '项目框架（1. truffle,hardhat;2: !ink; 3: move ; 4: vue.js; 5: nuxt.js;6: next.js;7: vite;8:Angular)',
                            creator int(11) ,
                            delete_user int(11),
+                           update_user int(11),
                            create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '创建时间',
                            update_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '更新时间',
                            delete_time timestamp NULL comment '删除时间'
@@ -124,6 +125,7 @@ create table t_template_detail (
                                    byte_code   text,
                                    author      varchar(50) comment '模板仓库作者',
                                    repository_url  varchar(200)    comment '模板仓库地址',
+                                   repository_name  varchar(200)    comment '模板名称',
                                    branch      varchar(50),
                                    version     varchar(50),
                                    code_sources    text,

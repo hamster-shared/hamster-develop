@@ -65,28 +65,70 @@ Content-Type: application/json
 {"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}
 
 
-###
+### template category
 GET http://localhost:8080/api/templates-category?type=1
 
-
-###
+### query workflow by project id
 GET http://localhost:8080/api/projects/1/workflows
-
 
 ###
 GET http://localhost:8080/api/workflows/1
 
-###
+### query contract by workflow detail id
 GET http://localhost:8080/api/workflows/1/detail/1/contract
 
-###
+###query report by workflow detail id
 GET http://localhost:8080/api/workflows/1/detail/2/report
 
-###
+### query contract by version and project id
 GET http://localhost:8080/api/projects/1/contract/1.0
 
-###
+### query contract deploy detail
 GET http://localhost:8080/api/projects/1/contract/deploy/detail
 
+### query projects
+GET http://localhost:8080/api/projects
+
+### create projects
+POST http://localhost:8080/api/projects
+Content-Type: application/json
+
+{
+  "name": "lisi",
+  "type": 1,
+  "templateOwner": "jian-guo-s",
+  "templateRepo": "polkadot",
+  "frameType": 1,
+  "repoOwner": "jian-guo-s",
+  "userId": 53070354
+}
+
+
+### update project
+PUT http://localhost:8080/api/projects/2
+Content-Type: application/json
+
+{
+  "name": "wangwu",
+  "userId": 53070354
+}
+
+
+### query project detail
+GET http://localhost:8080/api/projects/2
+
+
+### query project detail
+DELETE http://localhost:8080/api/projects/2
+
+
+### check name
+POST http://localhost:8080/api/projects/check-name
+Content-Type: application/json
+
+{
+  "owner": "jian-guo-s",
+  "name": "ll"
+}
 
 
