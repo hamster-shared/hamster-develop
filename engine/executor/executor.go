@@ -156,24 +156,22 @@ func (e *Executor) Execute(id int, job *model2.Job) error {
 				ah = action.NewGitAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "hamster-ipfs" {
 				ah = action.NewIpfsAction(step, ctx, jobWrapper.Output)
-				ah = action2.NewIpfsAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "hamster-pinata-ipfs" {
-				ah = action2.NewPinataIpfsAction(step, ctx, jobWrapper.Output)
+				ah = action.NewPinataIpfsAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "hamster-artifactory" {
 				ah = action.NewArtifactoryAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "deploy-contract" {
 				ah = action.NewTruffleDeployAction(step, ctx, jobWrapper.Output)
-				ah = action2.NewTruffleDeployAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "sol-profiler-check" {
-				ah = action2.NewSolProfilerAction(step, ctx, jobWrapper.Output)
+				ah = action.NewSolProfilerAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "solhint-check" {
-				ah = action2.NewSolHintAction(step, ctx, jobWrapper.Output)
+				ah = action.NewSolHintAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "mythril-check" {
-				ah = action2.NewMythRilAction(step, ctx, jobWrapper.Output)
+				ah = action.NewMythRilAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "slither-check" {
-				ah = action2.NewSlitherAction(step, ctx, jobWrapper.Output)
+				ah = action.NewSlitherAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "deploy-ink-contract" {
-				ah = action2.NewInkAction(step, ctx, jobWrapper.Output)
+				ah = action.NewInkAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "workdir" {
 				ah = action.NewWorkdirAction(step, ctx, jobWrapper.Output)
 			} else if strings.Contains(step.Uses, "/") {
