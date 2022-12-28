@@ -134,11 +134,15 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 
 func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 
+	projectId, err := strconv.Atoi(g.Param("id"))
+	if err != nil {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	_ = workflowService.ExecProjectBuildWorkflow(uint(projectId), h.getUserInfo(g))
 	Success("", g)
-}
-
-func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
-
 }
 
 func (h *HandlerServer) projectContract(g *gin.Context) {
