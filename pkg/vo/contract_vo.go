@@ -20,12 +20,12 @@ type DeployInfVo struct {
 }
 
 type ContractVo struct {
-	Id               uint `json:"id"`
-	ProjectId        uint
-	WorkflowId       uint
-	WorkflowDetailId uint
-	Name             string
-	Version          string
-	AbiInfo          string
-	ByteCode         string
+	Id               uint   `json:"id"`
+	ProjectId        uint   `json:"projectId"`
+	WorkflowId       uint   `json:"workflowId"`
+	WorkflowDetailId uint   `json:"workflowDetailId"`
+	Name             string `json:"name"`
+	Version          string `json:"version"`
+	AbiInfo          string `json:"abiInfo"`
+	ByteCode         string `json:"byteCode"`
 }

@@ -156,7 +156,7 @@ func (h *HandlerServer) projectContract(g *gin.Context) {
 
 	contractService := application.GetBean[*service.ContractService]("contractService")
 
-	result, err := contractService.QueryContracts(uint(projectId), query, version, page, size)
+	result, err := contractService.QueryContracts(uint(projectId), query, version, "", page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)
