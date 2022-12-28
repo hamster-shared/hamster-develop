@@ -5,11 +5,14 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/hamster-shared/a-line/engine"
+	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/controller"
-	"github.com/hamster-shared/a-line/pkg/dispatcher"
-	"github.com/hamster-shared/a-line/pkg/executor"
-	"github.com/hamster-shared/a-line/pkg/model"
+	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/spf13/cobra"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 // daemonCmd represents the daemon command
@@ -24,20 +27,38 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("daemon called")
-		dispatch := dispatcher.NewDispatcher(channel)
-		// 本地注册
-		dispatch.Register(&model.Node{
-			Name:    "localhost",
-			Address: "127.0.0.1",
-		})
-
-		executeClient := executor.NewExecutorClient(channel, jobService)
-		defer close(channel)
-
-		go executeClient.Main()
+		go Engine.Start()
 
 		port, _ = rootCmd.PersistentFlags().GetInt("port")
 		go controller.OpenWeb(port)
+		db, err := gorm.Open(mysql.New(mysql.Config{
+			DSN:                       DSN,   // data source name
+			DefaultStringSize:         256,   // default size for string fields
+			DisableDatetimePrecision:  true,  // disable datetime precision, which not supported before MySQL 5.6
+			DontSupportRenameIndex:    true,  // drop & create when rename index, rename index not supported before MySQL 5.7, MariaDB
+			DontSupportRenameColumn:   true,  // `change` when rename column, rename column not supported before MySQL 8, MariaDB
+			SkipInitializeWithVersion: false, // auto configure based on currently MySQL version
+		}), &gorm.Config{
+			NamingStrategy: schema.NamingStrategy{
+				TablePrefix:   "t_", // table name prefix, table for `User` would be `t_users`
+				SingularTable: true, // use singular table name, table for `User` would be `user` with this option enabled
+			},
+		})
+		if err != nil {
+			return
+		}
+		application.SetBean[*gorm.DB]("db", db)
+		application.SetBean[*engine.Engine]("engine", Engine)
+		workflowService := service.NewWorkflowService()
+		application.SetBean[*service.WorkflowService]("workflowService", workflowService)
+		contractService := service.NewContractService()
+		application.SetBean[*service.ContractService]("contractService", contractService)
+		reportService := service.NewReportService()
+		application.SetBean[*service.ReportService]("reportService", reportService)
+		githubService := service.NewGithubService()
+		application.SetBean[*service.GithubService]("githubService", githubService)
+		templateService.Init(db)
+		projectService.Init(db)
 		controller.NewHttpService(*handlerServer, port).StartHttpServer()
 
 	},

@@ -1,0 +1,25 @@
+version: 1.0
+name: my-truffle
+stages:
+  git-clone:
+    steps:
+      - name: git-clone
+        uses: git-checkout
+        with:
+          url: https://github.com/mohaijiang/truffle-MetaCoin.git
+          branch: main
+  code-compile:
+    needs:
+      - git-clone
+    steps:
+      - name: code-compile
+        run: |
+          npm install -g truffle
+          truffle compile
+
+      - name: save artifactory
+        uses: hamster-artifactory
+        with:
+          name: contract-meta.zip
+          path: |
+            build/contracts/*.json

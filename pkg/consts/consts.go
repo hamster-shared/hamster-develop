@@ -10,7 +10,17 @@ const (
 const (
 	LANG_EN = "en"
 	LANG_ZH = "zh"
+	Solidity TemplateType = iota + 1
+	Ink
+	Move
+	Vue
+	Nuxt
+	Next
+	Vite
+	Angular
 )
+
+type WorkflowType int
 
 const (
 	TRIGGER_MODE = "Manual trigger"
@@ -33,6 +43,8 @@ const (
 
 const (
 	SolFileSuffix = ".sol"
+	Check WorkflowType = iota + 1
+	Build
 )
 
 const (

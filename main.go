@@ -2,8 +2,7 @@ package main
 
 import (
 	"github.com/hamster-shared/a-line/cmd"
-	"github.com/hamster-shared/a-line/pkg/logger"
-
+	"github.com/hamster-shared/a-line/engine/logger"
 	"github.com/sirupsen/logrus"
 )
 
