@@ -7,19 +7,22 @@ import (
 	"github.com/hamster-shared/a-line/engine/service"
 )
 
-func NewExecutorClient(channel chan model2.QueueMessage, jobService service.IJobService) *ExecutorClient {
+func NewExecutorClient(channel chan model2.QueueMessage, callbackChannel chan model2.StatusChangeMessage, jobService service.IJobService) *ExecutorClient {
 	return &ExecutorClient{
 		executor: &Executor{
-			cancelMap:  make(map[string]func()),
-			jobService: jobService,
+			cancelMap:       make(map[string]func()),
+			jobService:      jobService,
+			callbackChannel: callbackChannel,
 		},
-		channel: channel,
+		channel:         channel,
+		callbackChannel: callbackChannel,
 	}
 }
 
 type ExecutorClient struct {
-	executor IExecutor
-	channel  chan model2.QueueMessage
+	executor        IExecutor
+	channel         chan model2.QueueMessage
+	callbackChannel chan model2.StatusChangeMessage
 }
 
 func (c *ExecutorClient) Main() {

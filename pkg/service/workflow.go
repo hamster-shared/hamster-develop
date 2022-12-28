@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hamster-shared/a-line/engine"
+	"github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/consts"
 	"github.com/hamster-shared/a-line/pkg/db"
@@ -17,6 +18,7 @@ import (
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"log"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -30,10 +32,38 @@ type WorkflowService struct {
 }
 
 func NewWorkflowService() *WorkflowService {
-	return &WorkflowService{
+	workflowService := &WorkflowService{
 		db:     application.GetBean[*gorm.DB]("db"),
 		engine: application.GetBean[*engine.Engine]("engine"),
 	}
+
+	go workflowService.engine.RegisterStatusChangeHook(workflowService.SyncStatus)
+
+	return workflowService
+}
+
+func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
+	w.SyncContract(message)
+	w.SyncReport(message)
+}
+
+func (w *WorkflowService) SyncContract(message model.StatusChangeMessage) {
+
+}
+
+func (w *WorkflowService) SyncReport(message model.StatusChangeMessage) {
+	if !strings.Contains(message.JobName, "_") {
+		return
+	}
+	projectId := strings.Split(message.JobName, "_")[0]
+	workflowId := strings.Split(message.JobName, "_")[1]
+	workflowExecNumber := message.JobId
+
+	if message.Status == model.STATUS_SUCCESS {
+		//TODO.... 实现同步报告
+		fmt.Println(projectId, workflowId, workflowExecNumber)
+	}
+
 }
 
 func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uint, user vo.UserAuth) error {

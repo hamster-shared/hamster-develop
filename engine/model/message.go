@@ -30,3 +30,17 @@ func NewStopQueueMsg(name string, id int) QueueMessage {
 	}
 
 }
+
+type StatusChangeMessage struct {
+	JobName string
+	JobId   int
+	Status  Status
+}
+
+func NewStatusChangeMsg(name string, id int, status Status) StatusChangeMessage {
+	return StatusChangeMessage{
+		name,
+		id,
+		status,
+	}
+}

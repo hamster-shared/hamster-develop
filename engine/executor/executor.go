@@ -29,14 +29,15 @@ type IExecutor interface {
 	HandlerLog(jobId int)
 
 	//SendResultToQueue 发送结果到队列
-	SendResultToQueue(channel chan any)
+	SendResultToQueue(channel chan model2.StatusChangeMessage, jobWrapper *model2.JobDetail)
 
 	Cancel(id int, job *model2.Job) error
 }
 
 type Executor struct {
-	cancelMap  map[string]func()
-	jobService service.IJobService
+	cancelMap       map[string]func()
+	jobService      service.IJobService
+	callbackChannel chan model2.StatusChangeMessage
 }
 
 // FetchJob 获取任务
@@ -206,7 +207,7 @@ func (e *Executor) Execute(id int, job *model2.Job) error {
 	e.jobService.SaveJobDetail(jobWrapper.Name, jobWrapper)
 
 	//TODO ... 发送结果到队列
-	e.SendResultToQueue(nil)
+	e.SendResultToQueue(e.callbackChannel, jobWrapper)
 	//_ = os.RemoveAll(path.Join(engineContext["hamsterRoot"].(string), job.Name))
 
 	return err
@@ -220,8 +221,9 @@ func (e *Executor) HandlerLog(jobId int) {
 }
 
 // SendResultToQueue 发送结果到队列
-func (e *Executor) SendResultToQueue(channel chan any) {
+func (e *Executor) SendResultToQueue(channel chan model2.StatusChangeMessage, job *model2.JobDetail) {
 	//TODO ...
+	channel <- model2.NewStatusChangeMsg(job.Name, job.Id, job.Status)
 }
 
 // Cancel 取消

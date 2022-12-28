@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"github.com/hamster-shared/a-line/engine/dispatcher"
 	"github.com/hamster-shared/a-line/engine/executor"
 	"github.com/hamster-shared/a-line/engine/model"
@@ -11,18 +12,20 @@ import (
 )
 
 type Engine struct {
-	channel       chan model.QueueMessage
-	jobService    service.IJobService
-	dispatch      dispatcher.IDispatcher
-	executeClient *executor.ExecutorClient
+	channel         chan model.QueueMessage
+	callbackChannel chan model.StatusChangeMessage
+	jobService      service.IJobService
+	dispatch        dispatcher.IDispatcher
+	executeClient   *executor.ExecutorClient
 }
 
 func NewEngine() *Engine {
 
 	channel := make(chan model.QueueMessage)
+	callbackChannel := make(chan model.StatusChangeMessage)
 	jobService := service.NewJobService()
-	dispatch := dispatcher.NewDispatcher(channel)
-	executeClient := executor.NewExecutorClient(channel, jobService)
+	dispatch := dispatcher.NewDispatcher(channel, callbackChannel)
+	executeClient := executor.NewExecutorClient(channel, callbackChannel, jobService)
 
 	hostname, _ := os.Hostname()
 
@@ -32,10 +35,11 @@ func NewEngine() *Engine {
 	})
 
 	return &Engine{
-		channel:       channel,
-		jobService:    jobService,
-		dispatch:      dispatch,
-		executeClient: executeClient,
+		channel:         channel,
+		callbackChannel: callbackChannel,
+		jobService:      jobService,
+		dispatch:        dispatch,
+		executeClient:   executeClient,
 	}
 }
 
@@ -127,4 +131,23 @@ func (e *Engine) GetJobHistoryLog(name string, historyId int) *model.JobLog {
 
 func (e *Engine) GetJobHistoryStageLog(name string, historyId int, stageName string, start int) *model.JobStageLog {
 	return e.jobService.GetJobStageLog(name, historyId, stageName, start)
+}
+
+func (e *Engine) RegisterStatusChangeHook(hookResult func(message model.StatusChangeMessage)) {
+	for { //
+
+		//3. 监听队列
+		statusMsg, ok := <-e.callbackChannel
+		if !ok {
+			return
+		}
+
+		fmt.Println("=======[status callback]=========")
+		fmt.Println(statusMsg)
+		fmt.Println("=======[status callback]=========")
+
+		if hookResult != nil {
+			hookResult(statusMsg)
+		}
+	}
 }

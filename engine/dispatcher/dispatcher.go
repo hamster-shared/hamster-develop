@@ -29,14 +29,16 @@ type IDispatcher interface {
 }
 
 type Dispatcher struct {
-	Channel chan model2.QueueMessage
-	nodes   []*model2.Node
+	Channel         chan model2.QueueMessage
+	CallbackChannel chan model2.StatusChangeMessage
+	nodes           []*model2.Node
 }
 
-func NewDispatcher(channel chan model2.QueueMessage) *Dispatcher {
+func NewDispatcher(channel chan model2.QueueMessage, callbackChannel chan model2.StatusChangeMessage) *Dispatcher {
 	return &Dispatcher{
-		Channel: channel,
-		nodes:   make([]*model2.Node, 0),
+		Channel:         channel,
+		CallbackChannel: callbackChannel,
+		nodes:           make([]*model2.Node, 0),
 	}
 }
 
