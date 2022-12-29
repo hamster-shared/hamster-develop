@@ -23,8 +23,7 @@ func NewGithubService() *GithubService {
 }
 
 func (g *GithubService) CheckName(token, owner, projectName string) bool {
-	tokenData := "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"
-	client := utils.NewGithubClient(g.ctx, tokenData)
+	client := utils.NewGithubClient(g.ctx, token)
 	_, res, _ := client.Repositories.Get(g.ctx, owner, projectName)
 	if res.StatusCode == 404 {
 		return true
@@ -32,23 +31,21 @@ func (g *GithubService) CheckName(token, owner, projectName string) bool {
 	return false
 }
 
-func (g *GithubService) CreateRepo(token, templateOwner, templateRepo, repoName, repoOwner string) (*github.Repository, error) {
-	tokenData := "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"
-	client := utils.NewGithubClient(g.ctx, tokenData)
+func (g *GithubService) CreateRepo(token, templateOwner, templateRepo, repoName, repoOwner string) (*github.Repository, *github.Response, error) {
+	client := utils.NewGithubClient(g.ctx, token)
 	var data github.TemplateRepoRequest
 	data.Name = &repoName
 	data.Owner = &repoOwner
-	repo, _, err := client.Repositories.CreateFromTemplate(g.ctx, templateOwner, templateRepo, &data)
+	repo, res, err := client.Repositories.CreateFromTemplate(g.ctx, templateOwner, templateRepo, &data)
 	if err != nil {
 		log.Println("create github repository failed ", err.Error())
-		return nil, err
+		return nil, res, err
 	}
-	return repo, nil
+	return repo, res, nil
 }
 
 func (g *GithubService) GetUserInfo(token string) (*github.User, error) {
-	tokenData := "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"
-	client := utils.NewGithubClient(g.ctx, tokenData)
+	client := utils.NewGithubClient(g.ctx, token)
 	user, _, err := client.Users.Get(g.ctx, "")
 	if err != nil {
 		log.Println("get github user info failed ", err.Error())

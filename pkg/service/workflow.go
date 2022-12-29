@@ -159,7 +159,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 		return errors.New("no check workflow in the project ")
 	}
 
-	workflowKey := GetWorkflowKey(projectId, workflow.Id)
+	workflowKey := w.GetWorkflowKey(projectId, workflow.Id)
 
 	detail, err := w.engine.ExecuteJob(workflowKey)
 
@@ -229,7 +229,18 @@ func (w *WorkflowService) GetWorkflowList(projectId, workflowType, page, size in
 	return &data, nil
 }
 
-func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*db2.WorkflowDetail, error) {
+func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*vo.WorkflowDetailVo, error) {
+	var workflowDetail db2.WorkflowDetail
+	var detail vo.WorkflowDetailVo
+	res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
+	if res.Error != nil {
+		return &detail, res.Error
+	}
+	copier.Copy(&detail, &workflowDetail)
+	return &detail, nil
+}
+
+func (w *WorkflowService) QueryWorkflowDetail(workflowId, workflowDetailId int) (*db2.WorkflowDetail, error) {
 	var workflowDetail db2.WorkflowDetail
 	res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
 	if res.Error != nil {
@@ -238,7 +249,16 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	return &workflowDetail, nil
 }
 
-func GetWorkflowKey(projectId uint, workflowId uint) string {
+func (w *WorkflowService) QueryWorkflow(workflowId int) (*db2.Workflow, error) {
+	var workflow db2.Workflow
+	res := w.db.Model(db2.Workflow{}).Where("id = ?", workflowId).First(&workflow)
+	if res.Error != nil {
+		return &workflow, res.Error
+	}
+	return &workflow, nil
+}
+
+func (w *WorkflowService) GetWorkflowKey(projectId uint, workflowId uint) string {
 	return fmt.Sprintf("%d_%d", projectId, workflowId)
 }
 

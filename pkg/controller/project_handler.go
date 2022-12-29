@@ -7,7 +7,9 @@ import (
 	"github.com/hamster-shared/a-line/pkg/consts"
 	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/service"
+	"github.com/hamster-shared/a-line/pkg/utils"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	"net/http"
 	"strconv"
 )
 
@@ -37,18 +39,22 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 }
 
 func (h *HandlerServer) createProject(g *gin.Context) {
-
 	createData := parameter.CreateProjectParam{}
 	err := g.BindJSON(&createData)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
-
+	accessToken := g.Request.Header.Get("access_token")
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	githubService := application.GetBean[*service.GithubService]("githubService")
 
-	repo, err := githubService.CreateRepo("", createData.TemplateOwner, createData.TemplateRepo, createData.Name, createData.RepoOwner)
+	repo, res, err := githubService.CreateRepo(token, createData.TemplateOwner, createData.TemplateRepo, createData.Name, createData.RepoOwner)
 	if err != nil {
+		if res.StatusCode == http.StatusUnauthorized {
+			Failed(http.StatusUnauthorized, "access not authorized", g)
+			return
+		}
 		Fail(err.Error(), g)
 		return
 	}
@@ -238,7 +244,9 @@ func (h *HandlerServer) checkName(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	accessToken := gin.Request.Header.Get("access_token")
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	data := githubService.CheckName("", checkData.Owner, checkData.Name)
+	data := githubService.CheckName(token, checkData.Owner, checkData.Name)
 	Success(data, gin)
 }
