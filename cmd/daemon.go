@@ -60,6 +60,8 @@ to quickly create a Cobra application.`,
 		application.SetBean[*service.ContractService]("contractService", contractService)
 		reportService := service.NewReportService()
 		application.SetBean[*service.ReportService]("reportService", reportService)
+		userService := service.NewUserService()
+		application.SetBean[*service.UserService]("userService", userService)
 		githubService := service.NewGithubService()
 		application.SetBean[*service.GithubService]("githubService", githubService)
 		loginService := service.NewLoginService()

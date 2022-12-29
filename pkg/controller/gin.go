@@ -32,6 +32,8 @@ func (h *HttpServer) StartHttpServer() {
 	api := r.Group("/api")
 
 	api.POST("/login", h.handlerServer.loginWithGithub)
+	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
+	//api.Use(h.handlerServer.Authorize())
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
@@ -75,6 +77,10 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/contract/:version", h.handlerServer.contractInfo)
 	api.GET("/projects/:id/contract/deploy/detail", h.handlerServer.contractDeployDetailByVersion)
 	api.GET("/projects/:id/versions", h.handlerServer.versionList)
+
+	//logs
+	api.GET("/workflows/:id/detail/:detailId/logs", h.handlerServer.getWorkflowLog)
+	api.GET("/workflows/:id/detail/:detailId/logs/:stageName", h.handlerServer.getWorkflowStageLog)
 
 	// ======== old api =========//
 	// pipeline

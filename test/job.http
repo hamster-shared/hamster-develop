@@ -129,6 +129,7 @@ DELETE http://localhost:8080/api/projects/2
 ### check name
 POST http://localhost:8080/api/projects/check-name
 Content-Type: application/json
+access_token: q/fHsUxk/A9wemCoULUhgxKg+4xt1VgaWysR/G7H0tpEmwKLCa/8O9ukwHKcvqr2
 
 {
   "owner": "jian-guo-s",

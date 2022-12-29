@@ -26,10 +26,10 @@ type WorkflowVo struct {
 }
 
 type WorkflowDetailVo struct {
-	Id         uint `gorm:"primaryKey" json:"id"`
-	WorkflowId uint
-	StageInfo  string
-	Status     uint
-	StartTime  time.Time
-	EndTime    time.Time
+	Id         uint      `json:"id"`
+	WorkflowId uint      `json:"workflowId"`
+	StageInfo  string    `json:"stageInfo"`
+	Status     uint      `json:"status"`
+	StartTime  time.Time `json:"startTime"`
+	EndTime    time.Time `json:"endTime"`
 }
