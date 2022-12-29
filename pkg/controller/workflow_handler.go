@@ -78,7 +78,7 @@ func (h *HandlerServer) workflowDetail(gin *gin.Context) {
 
 func (h *HandlerServer) workflowContract(gin *gin.Context) {
 	idStr := gin.Param("id")
-	workflowDetailIdStr := gin.Param("workflowDetailId")
+	workflowDetailIdStr := gin.Param("detailId")
 	workflowId, err := strconv.Atoi(idStr)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -116,7 +116,7 @@ func (h *HandlerServer) workflowContract(gin *gin.Context) {
 
 func (h *HandlerServer) workflowReport(gin *gin.Context) {
 	idStr := gin.Param("id")
-	workflowDetailIdStr := gin.Param("workflowDetailId")
+	workflowDetailIdStr := gin.Param("detailId")
 	workflowId, err := strconv.Atoi(idStr)
 	if err != nil {
 		Fail(err.Error(), gin)
