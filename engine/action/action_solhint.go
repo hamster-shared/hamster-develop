@@ -31,6 +31,21 @@ func NewSolHintAction(step model.Step, ctx context.Context, output *output.Outpu
 }
 
 func (a *SolHintAction) Pre() error {
+	stack := a.ctx.Value(STACK).(map[string]interface{})
+
+	workdir, ok := stack["workdir"].(string)
+	if !ok {
+		return errors.New("workdir is empty")
+	}
+	create, err := os.Create(path2.Join(workdir, consts.SolHintCheckInitFileName))
+	if err != nil {
+		return err
+	}
+	_, err = create.WriteString(consts.SolHintCheckRule)
+	if err != nil {
+		return err
+	}
+	create.Close()
 	return nil
 }
 

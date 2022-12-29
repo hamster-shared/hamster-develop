@@ -39,6 +39,8 @@ const (
 	SolProfilerCheckOutputDir = "sol_profiler"
 	SolHintCheckOutputDir     = "solhint"
 	SolHintCheck              = "solhint -f table "
+	SolHintCheckInitFileName  = ".solhint.json"
+	SolHintCheckRule          = "{\n  \"extends\": \"solhint:recommended\",\n  \"rules\": {\n    \"code-complexity\": [\"warn\",7],\n    \"function-max-lines\": [\"warn\",50],\n    \"max-states-count\": [\"warn\",15],\n    \"no-empty-blocks\": \"warn\",\n    \"no-unused-vars\": \"warn\",\n    \"payable-fallback\": \"warn\",\n    \"reason-string\": [\"warn\",{\"maxLength\":32}],\n    \"constructor-syntax\": \"warn\",\n    \"avoid-call-value\": \"warn\",\n    \"avoid-low-level-calls\": \"warn\",\n    \"avoid-throw\": \"warn\",\n    \"compiler-version\": [\"off\",\"^0.8.13\"],\n    \"avoid-tx-origin\": \"warn\",\n    \"multiple-sends\": \"warn\",\n    \"reentrancy\": \"warn\",\n    \"not-rely-on-block-hash\": \"warn\",\n    \"not-rely-on-time\": \"warn\",\n    \"state-visibility\": \"warn\",\n    \"quotes\": [\"warn\",\"double\"],\n    \"visibility-modifier-order\": \"warn\"\n  }\n}\n"
 	MythRilCheckOutputDir     = "mythril"
 	MythRilCheck              = "docker run --rm -v %s:/tmp mythril/myth analyze /tmp/%s"
 	SlitherCheckOutputDir     = "slither"
