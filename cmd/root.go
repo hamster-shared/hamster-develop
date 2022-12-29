@@ -11,6 +11,7 @@ import (
 	"github.com/hamster-shared/a-line/engine/pipeline"
 	"github.com/hamster-shared/a-line/pkg/controller"
 	service2 "github.com/hamster-shared/a-line/pkg/service"
+	"io"
 	"os"
 	"path"
 	"time"
@@ -40,18 +41,25 @@ to quickly create a Cobra application.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			//wd, _ := os.Getwd()
 			cicdFile, err := os.Open(path.Join(pipelineFile))
+			defer cicdFile.Close()
 			if err != nil {
 				fmt.Println("file error")
 				return
 			}
 
 			// 启动executor
+			yamlByte, err := io.ReadAll(cicdFile)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			yaml := string(yamlByte)
 
-			job, _ := pipeline.GetJobFromReader(cicdFile)
+			job, _ := pipeline.GetJobFromYaml(yaml)
 
 			go Engine.Start()
 
-			err = Engine.CreateJob(job.Name, cicdFile)
+			err = Engine.CreateJob(job.Name, yaml)
 
 			jobDetail, err := Engine.ExecuteJob(job.Name)
 			if err != nil {

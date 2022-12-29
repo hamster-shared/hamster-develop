@@ -82,5 +82,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	daemonCmd.Flags().String("db_password", "123456", "database password")
+	daemonCmd.Flags().String("db_password", "Aline123456", "database password")
 }

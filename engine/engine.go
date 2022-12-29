@@ -6,8 +6,6 @@ import (
 	"github.com/hamster-shared/a-line/engine/executor"
 	"github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/engine/service"
-	"gopkg.in/yaml.v3"
-	"io"
 	"os"
 )
 
@@ -47,18 +45,9 @@ func (e *Engine) Start() {
 	e.executeClient.Main()
 }
 
-func (e *Engine) CreateJob(name string, reader io.Reader) error {
-	data, err := io.ReadAll(reader)
-	if err != nil {
-		return err
-	}
-	var jobData model.Job
-	err = yaml.Unmarshal(data, &jobData)
-	if err != nil {
-		return err
-	}
+func (e *Engine) CreateJob(name string, yaml string) error {
 
-	return e.jobService.SaveJob(jobData.Name, string(data))
+	return e.jobService.SaveJob(name, yaml)
 }
 
 func (e *Engine) DeleteJob(name string) error {
