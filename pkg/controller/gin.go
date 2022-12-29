@@ -29,9 +29,9 @@ func NewHttpService(handlerServer HandlerServer, port int) *HttpServer {
 
 func (h *HttpServer) StartHttpServer() {
 	r := gin.Default()
-	api := r.Group("/api", h.handlerServer.loginWithGithub)
+	api := r.Group("/api")
 
-	api.POST("/login")
+	api.POST("/login", h.handlerServer.loginWithGithub)
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
