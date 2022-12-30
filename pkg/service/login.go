@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+	"fmt"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/consts"
 	db2 "github.com/hamster-shared/a-line/pkg/db"
@@ -27,14 +29,18 @@ func NewLoginService() *LoginService {
 }
 
 func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (db2.User, error) {
+	data.ClientSecret = consts.ClientSecrets
 	var userData db2.User
 	var token parameter.Token
-	req := utils.NewHttp().NewRequest()
 	url := "https://github.com/login/oauth/access_token"
-	req.SetPathParam("client_id", data.ClientId)
-	req.SetPathParam("client_secret", data.ClientSecret)
-	req.SetPathParam("code", data.Code)
-	_, err := req.SetResult(&token).Post(url)
+	res, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
+		"client_id":     data.ClientId,
+		"client_secret": data.ClientSecret,
+		"code":          data.Code,
+	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
+	if res.StatusCode() != 200 {
+		return userData, err
+	}
 	if err != nil {
 		return userData, err
 	}
@@ -43,7 +49,7 @@ func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (db2.User, err
 		return userData, err
 	}
 	userData.Id = uint(*userInfo.ID)
-	userData.Username = *userInfo.Name
+	userData.Username = *userInfo.Login
 	userData.AvatarUrl = *userInfo.AvatarURL
 	userData.HtmlUrl = *userInfo.HTMLURL
 	userData.CreateTime = time.Now()
@@ -52,6 +58,7 @@ func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (db2.User, err
 }
 
 func (l *LoginService) GithubRepoAuth(authData parameter.AuthParam) (string, error) {
+	authData.ClientSecret = consts.ClientSecrets
 	var userData db2.User
 	var token parameter.Token
 	res := l.db.Model(db2.User{}).Where("id = ?", authData.UserId).First(&userData)
@@ -59,12 +66,17 @@ func (l *LoginService) GithubRepoAuth(authData parameter.AuthParam) (string, err
 		log.Println("login user not fond ", res.Error)
 		return "", res.Error
 	}
-	req := utils.NewHttp().NewRequest()
+
 	url := "https://github.com/login/oauth/access_token"
-	req.SetPathParam("client_id", authData.ClientId)
-	req.SetPathParam("client_secret", authData.ClientSecret)
-	req.SetPathParam("code", authData.Code)
-	_, err := req.SetResult(&token).Post(url)
+	response, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
+		"client_id":     authData.ClientId,
+		"client_secret": authData.ClientSecret,
+		"code":          authData.Code,
+	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
+	if response.StatusCode() != 200 {
+		log.Println(string(response.Body()))
+		return "", errors.New(fmt.Sprintf("auth failed:%s", string(response.Body())))
+	}
 	if err != nil {
 		log.Println("repo auth failed ", err)
 		return "", err

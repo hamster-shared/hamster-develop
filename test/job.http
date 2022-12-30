@@ -137,3 +137,22 @@ access_token: q/fHsUxk/A9wemCoULUhgxKg+4xt1VgaWysR/G7H0tpEmwKLCa/8O9ukwHKcvqr2
 }
 
 
+###login with github
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "code": "4e8c16f53af4dafc459d",
+  "clientId": "93512ec1db0460ada779"
+}
+
+###auth repo
+POST http://localhost:8080/api/repo/authorization
+Content-Type: application/json
+
+{
+  "code": "826a8fb7127374b39240",
+  "clientId": "93512ec1db0460ada779",
+  "userId": 53070354
+}
+

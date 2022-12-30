@@ -21,3 +21,5 @@ const (
 	Check WorkflowType = iota + 1
 	Build
 )
+
+const ClientSecrets = "a20f12e3ab2bd7228476d167a54a7ed279121955"
