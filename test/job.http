@@ -69,8 +69,28 @@ Content-Type: application/json
 {"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}
 
 
+
+
+
+
 ### template category
 GET http://localhost:8080/api/templates-category?type=1
+
+### query templates
+GET http://localhost:8080/api/templates-category/1/templates
+
+### query template detail
+GET http://localhost:8080/api/templates/1
+
+### query projects
+GET http://localhost:8080/api/projects?user=53070354&page=1&size=10
+
+### query project detail
+GET http://localhost:8080/api/projects/1
+
+### build
+POST http://localhost:8080/api/projects/1/build
+
 
 ### query workflow by project id
 GET http://localhost:8080/api/projects/1/workflows
@@ -89,9 +109,6 @@ GET http://localhost:8080/api/projects/1/contract/1.0
 
 ### query contract deploy detail
 GET http://localhost:8080/api/projects/1/contract/deploy/detail
-
-### query projects
-GET http://localhost:8080/api/projects
 
 ### create projects
 POST http://localhost:8080/api/projects
@@ -116,10 +133,6 @@ Content-Type: application/json
   "name": "wangwu",
   "userId": 53070354
 }
-
-
-### query project detail
-GET http://localhost:8080/api/projects/2
 
 
 ### query project detail

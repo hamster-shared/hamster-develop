@@ -9,6 +9,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/utils"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	"github.com/jinzhu/copier"
 	"net/http"
 	"strconv"
 )
@@ -138,9 +139,22 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-
+	//accessToken := g.Request.Header.Get("access_token")
+	//if accessToken == "" {
+	//	Failed(http.StatusUnauthorized, "No access",g)
+	//	return
+	//}
+	//token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	userService := application.GetBean[*service.UserService]("userService")
+	var userVo vo.UserAuth
+	user, err := userService.GetUserByToken("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")
+	if err != nil {
+		Fail("get user info failed", g)
+		return
+	}
+	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectCheckWorkflow(uint(projectId), h.getUserInfo(g))
+	_ = workflowService.ExecProjectCheckWorkflow(uint(projectId), userVo)
 	Success("", g)
 }
 
@@ -151,9 +165,22 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-
+	//accessToken := g.Request.Header.Get("access_token")
+	//if accessToken == "" {
+	//	Failed(http.StatusUnauthorized, "No access",g)
+	//	return
+	//}
+	//token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectBuildWorkflow(uint(projectId), h.getUserInfo(g))
+	userService := application.GetBean[*service.UserService]("userService")
+	var userVo vo.UserAuth
+	user, err := userService.GetUserByToken("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")
+	if err != nil {
+		Fail("get user info failed", g)
+		return
+	}
+	copier.Copy(&userVo, &user)
+	_ = workflowService.ExecProjectBuildWorkflow(uint(projectId), userVo)
 	Success("", g)
 }
 
