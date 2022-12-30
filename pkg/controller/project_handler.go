@@ -20,6 +20,12 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 	query := gin.Query("query")
 	pageStr := gin.DefaultQuery("page", "1")
 	sizeStr := gin.DefaultQuery("size", "10")
+	userStr := gin.Query("user")
+	userId, err := strconv.Atoi(userStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -30,7 +36,7 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	data, err := h.projectService.GetProjects(query, page, size)
+	data, err := h.projectService.GetProjects(userId, query, page, size)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

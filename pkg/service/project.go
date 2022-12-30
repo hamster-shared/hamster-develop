@@ -10,7 +10,7 @@ import (
 )
 
 type IProjectService interface {
-	GetProjects(keyword string, page, size int) (*vo.ProjectPage, error)
+	GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uint, error)
 	GetProject(id int) (*db2.Project, error)
 	UpdateProject(id int, updateData vo.UpdateProjectParam) error
@@ -29,11 +29,11 @@ func (p *ProjectService) Init(db *gorm.DB) {
 	p.db = db
 }
 
-func (p *ProjectService) GetProjects(keyword string, page, size int) (*vo.ProjectPage, error) {
+func (p *ProjectService) GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error) {
 	var total int64
 	var projectPage vo.ProjectPage
 	var projects []db2.Project
-	tx := p.db.Model(db2.Project{})
+	tx := p.db.Model(db2.Project{}).Where("user_id = ?", userId)
 	if keyword != "" {
 		tx = tx.Where("name like ? ", "%"+keyword+"%")
 	}
