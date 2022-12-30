@@ -16,6 +16,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/vo"
 	"github.com/jinzhu/copier"
+	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
 	"log"
 	"os"
@@ -160,6 +161,23 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 	}
 
 	workflowKey := w.GetWorkflowKey(projectId, workflow.Id)
+
+	job := w.engine.GetJob(workflowKey)
+	if job == nil {
+		var jobModel model.Job
+		err := yaml.Unmarshal([]byte((workflow.ExecFile)), &jobModel)
+		if jobModel.Name != workflowKey {
+			jobModel.Name = workflowKey
+			execFile, _ := yaml.Marshal(jobModel)
+			workflow.ExecFile = string(execFile)
+		}
+
+		err = w.engine.CreateJob(workflowKey, workflow.ExecFile)
+		if err != nil {
+			return err
+		}
+		job = w.engine.GetJob(workflowKey)
+	}
 
 	detail, err := w.engine.ExecuteJob(workflowKey)
 

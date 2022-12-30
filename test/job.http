@@ -1,5 +1,20 @@
-###
-POST http://localhost:8080/api/projects/1/check
+### 创建项目
+POST http://localhost:8080/api/projects
+Content-Type: application/json
+access_token: 6DLQHJsRN26VmCsPPE7U4xbrgzr6Q3S2y7qu9GyJP9y74CTgpSI/ZJBU02EHQUyg
+
+{
+  "name": "project-two",
+  "type": 1,
+  "templateOwner": "",
+  "templateRepo": "https://github.com/mohaijiang/spring-boot-example.git",
+  "frameType": 1,
+  "repoOwner": "",
+  "userId": 53070354
+}
+
+### 执行检查
+POST http://localhost:8080/api/projects/2/check
 
 
 ### create job

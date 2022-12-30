@@ -93,6 +93,7 @@ func (svc *JobService) SaveJob(name string, yaml string) error {
 			return err
 		}
 	}
+
 	//write data to yaml file
 	err = os.WriteFile(src, []byte(yaml), 0777)
 	if err != nil {
@@ -588,7 +589,7 @@ func (svc *JobService) GetJobObject(name string) *model2.Job {
 	//not exist
 	if os.IsNotExist(err) {
 		log.Println("get job failed,job file not exist", err.Error())
-		return &jobData
+		return nil
 	}
 	//exist
 	fileContent, err := os.ReadFile(src)
