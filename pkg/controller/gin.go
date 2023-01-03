@@ -60,7 +60,7 @@ func (h *HttpServer) StartHttpServer() {
 		合约部署详情接口有问题
 		根据版本查询合约信息（返回abi信息和byte code）
 	*/
-
+	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/stop", h.handlerServer.stopWorkflow)
 	api.POST("/projects/:id/check", h.handlerServer.projectWorkflowCheck)
 	api.POST("/projects/:id/build", h.handlerServer.projectWorkflowBuild)
 	api.GET("/projects/:id/contract", h.handlerServer.projectContract)

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/hamster-shared/a-line/engine"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/service"
 	"strconv"
@@ -105,4 +106,39 @@ func (h *HandlerServer) workflowReport(gin *gin.Context) {
 		return
 	}
 	Success(data, gin)
+}
+
+func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
+	projectIdStr := gin.Param("id")
+	workflowIdStr := gin.Param("workflowId")
+	detailIdStr := gin.Param("detailId")
+	projectId, err := strconv.Atoi(projectIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowId, err := strconv.Atoi(workflowIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	detailId, err := strconv.Atoi(detailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	workflowKey := workflowService.GetWorkflowKey(uint(projectId), uint(workflowId))
+	detail, err := workflowService.QueryWorkflowDetail(workflowId, detailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	engineService := application.GetBean[*engine.Engine]("engine")
+	err = engineService.TerminalJob(workflowKey, int(detail.ExecNumber))
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success("", gin)
 }
