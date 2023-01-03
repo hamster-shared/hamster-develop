@@ -1,16 +1,16 @@
 ### 创建项目
 POST http://localhost:8080/api/projects
 Content-Type: application/json
-access_token: 6DLQHJsRN26VmCsPPE7U4xbrgzr6Q3S2y7qu9GyJP9y74CTgpSI/ZJBU02EHQUyg
+access_token: pAckUATfeIsxSq1qzIVIdJcKf3jIhRDmnchfAqIrU2xX4smOe4Hd2p3e3iZNnX0/
 
 {
-  "name": "project-two",
+  "name": "project-three",
   "type": 1,
-  "templateOwner": "",
-  "templateRepo": "https://github.com/mohaijiang/spring-boot-example.git",
+  "templateOwner": "jian-guo-s",
+  "templateRepo": "truffle-webpack",
   "frameType": 1,
-  "repoOwner": "",
-  "userId": 53070354
+  "repoOwner": "mohaijiang",
+  "userId": 2
 }
 
 ### 执行检查
