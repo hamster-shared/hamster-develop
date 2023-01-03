@@ -1,12 +1,12 @@
 version: 1.0
-name: my-truffle
+name: {{.Name}}
 stages:
   git-clone:
     steps:
       - name: git-clone
         uses: git-checkout
         with:
-          url: https://github.com/mohaijiang/truffle-MetaCoin.git
+          url: {{ .RepositoryUrl }}
           branch: main
   code-compile:
     needs:

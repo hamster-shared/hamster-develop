@@ -298,11 +298,19 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (ui
 	workflow.ProjectId = saveData.ProjectId
 	workflow.ExecFile = saveData.ExecFile
 	workflow.LastExecId = saveData.LastExecId
-	res := w.db.Create(&workflow)
+	res := w.db.Save(&workflow)
 	if res.Error != nil {
 		return 0, res.Error
 	}
 	return workflow.Id, nil
+}
+
+func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {
+	res := w.db.Save(&data)
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
 }
 
 func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.WorkflowType) (string, error) {

@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/consts"
+	"github.com/hamster-shared/a-line/pkg/db"
 	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/utils"
@@ -78,25 +79,51 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	file, err := workflowService.TemplateParse("solidity-check", *repo.URL, consts.Check)
+	workflowCheckData := parameter.SaveWorkflowParam{
+		ProjectId:  id,
+		Type:       consts.Check,
+		ExecFile:   "",
+		LastExecId: 0,
+	}
+	workflowCheckId, err := workflowService.SaveWorkflow(workflowCheckData)
+	if err != nil {
+		Success(id, g)
+		return
+	}
+	checkKey := workflowService.GetWorkflowKey(id, workflowCheckId)
+	file, err := workflowService.TemplateParse(checkKey, *repo.CloneURL, consts.Check)
 	if err == nil {
-		workflowData := parameter.SaveWorkflowParam{
+		workflow := db.Workflow{
+			Id:         workflowCheckId,
 			ProjectId:  id,
-			Type:       consts.Check,
+			Type:       uint(consts.Check),
 			ExecFile:   file,
 			LastExecId: 0,
 		}
-		workflowService.SaveWorkflow(workflowData)
+		workflowService.UpdateWorkflow(workflow)
 	}
-	file1, err := workflowService.TemplateParse("solidity-build", *repo.URL, consts.Build)
+	workflowBuildData := parameter.SaveWorkflowParam{
+		ProjectId:  id,
+		Type:       consts.Build,
+		ExecFile:   "",
+		LastExecId: 0,
+	}
+	workflowBuildId, err := workflowService.SaveWorkflow(workflowBuildData)
+	if err != nil {
+		Success(id, g)
+		return
+	}
+	buildKey := workflowService.GetWorkflowKey(id, workflowBuildId)
+	file1, err := workflowService.TemplateParse(buildKey, *repo.CloneURL, consts.Build)
 	if err == nil {
-		workflowData := parameter.SaveWorkflowParam{
+		workflow := db.Workflow{
+			Id:         workflowBuildId,
 			ProjectId:  id,
-			Type:       consts.Build,
+			Type:       uint(consts.Build),
 			ExecFile:   file1,
 			LastExecId: 0,
 		}
-		workflowService.SaveWorkflow(workflowData)
+		workflowService.UpdateWorkflow(workflow)
 	}
 	Success(id, g)
 
