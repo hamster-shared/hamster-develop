@@ -103,8 +103,8 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			}
 
 			contract := db.Contract{
-				ProjectId:        uint(projectId),
-				WorkflowId:       uint(workflowId),
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
 				WorkflowDetailId: workflowDetail.Id,
 				Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
 				Version:          fmt.Sprintf("#%d", workflowDetail.ExecNumber),
@@ -114,7 +114,8 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				ByteCode:         bytecodeData.(string),
 				CreateTime:       time.Now(),
 			}
-			w.db.Save(contract)
+			err = w.db.Save(&contract).Error
+			fmt.Println(err)
 		}
 
 	}
@@ -133,6 +134,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage) {
 	if message.Status == model.STATUS_SUCCESS {
 		//TODO.... 实现同步报告
 		fmt.Println(projectId, workflowId, workflowExecNumber)
+
 	}
 
 }
@@ -280,13 +282,13 @@ func (w *WorkflowService) GetWorkflowKey(projectId uint, workflowId uint) string
 	return fmt.Sprintf("%d_%d", projectId, workflowId)
 }
 
-func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (int, int, error) {
+func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (uint, uint, error) {
 	projectId, err := strconv.Atoi(strings.Split(projectKey, "_")[0])
 	if err != nil {
 		return 0, 0, err
 	}
 	workflowId, err := strconv.Atoi(strings.Split(projectKey, "_")[1])
-	return projectId, workflowId, err
+	return uint(projectId), uint(workflowId), err
 
 }
 
