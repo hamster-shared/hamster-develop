@@ -131,12 +131,13 @@ GET http://localhost:8080/api/projects/1/contract/deploy/detail
 ### create projects
 POST http://localhost:8080/api/projects
 Content-Type: application/json
+access_token: LslFRcu72fynaKeKwl9egjraL2gDmYpd3cAI8jwQxkqvvZ2BTqDEpriWtHUwUOO0
 
 {
-  "name": "lisi",
+  "name": "webpack",
   "type": 1,
   "templateOwner": "jian-guo-s",
-  "templateRepo": "polkadot",
+  "templateRepo": "truffle-webpack",
   "frameType": 1,
   "repoOwner": "jian-guo-s",
   "userId": 53070354
