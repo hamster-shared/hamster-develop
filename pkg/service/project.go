@@ -59,6 +59,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uint, 
 		project.UpdateTime = time.Now()
 		project.FrameType = createData.FrameType
 		project.Type = uint(createData.Type)
+		project.RepositoryUrl = createData.TemplateUrl
 		p.db.Create(&project)
 		return project.Id, nil
 	}
