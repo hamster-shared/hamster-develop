@@ -180,7 +180,11 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 		return
 	}
 	copier.Copy(&userVo, &user)
-	_ = workflowService.ExecProjectBuildWorkflow(uint(projectId), userVo)
+	err = workflowService.ExecProjectBuildWorkflow(uint(projectId), userVo)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
 	Success("", g)
 }
 

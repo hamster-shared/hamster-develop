@@ -306,9 +306,9 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (ui
 }
 
 func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.WorkflowType) (string, error) {
-	filePath := "templates/truffle_check.yml"
+	filePath := "templates/truffle-build.yml"
 	if workflowType == consts.Check {
-		filePath = "templates/truffle-build.yml"
+		filePath = "templates/truffle_check.yml"
 	}
 	content, err := temp.ReadFile(filePath)
 	if err != nil {
