@@ -13,7 +13,7 @@ type Contract struct {
 	BuildTime        time.Time `json:"buildTime"`
 	AbiInfo          string    `json:"abiInfo"`
 	ByteCode         string    `json:"byteCode"`
-	CreateTime       time.Time `json:"createTime"`
+	CreateTime       time.Time `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
 }
 
 type ContractDeploy struct {
@@ -24,5 +24,5 @@ type ContractDeploy struct {
 	DeployTime time.Time `json:"deployTime"`
 	Network    string    `json:"network"`
 	Address    string    `json:"address"`
-	CreateTime time.Time `json:"createTime"`
+	CreateTime time.Time `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
 }

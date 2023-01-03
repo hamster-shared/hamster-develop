@@ -9,6 +9,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/utils"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	"github.com/jinzhu/copier"
 	"net/http"
 	"strconv"
 )
@@ -20,6 +21,12 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 	query := gin.Query("query")
 	pageStr := gin.DefaultQuery("page", "1")
 	sizeStr := gin.DefaultQuery("size", "10")
+	userStr := gin.Query("user")
+	userId, err := strconv.Atoi(userStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -30,7 +37,7 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	data, err := h.projectService.GetProjects(query, page, size)
+	data, err := h.projectService.GetProjects(userId, query, page, size)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -61,7 +68,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	data := vo.CreateProjectParam{
 		Name:        createData.Name,
 		Type:        createData.Type,
-		TemplateUrl: *repo.URL,
+		TemplateUrl: *repo.CloneURL,
 		FrameType:   createData.FrameType,
 		UserId:      createData.UserId,
 	}
@@ -71,25 +78,39 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	file, err := workflowService.TemplateParse("solidity-check", *repo.URL, consts.Check)
-	if err == nil {
-		workflowData := parameter.SaveWorkflowParam{
-			ProjectId:  id,
-			Type:       consts.Check,
-			ExecFile:   file,
-			LastExecId: 0,
-		}
-		workflowService.SaveWorkflow(workflowData)
+	workflowCheckData := parameter.SaveWorkflowParam{
+		ProjectId:  id,
+		Type:       consts.Check,
+		ExecFile:   "",
+		LastExecId: 0,
 	}
-	file1, err := workflowService.TemplateParse("solidity-build", *repo.URL, consts.Build)
+	workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+	if err != nil {
+		Success(id, g)
+		return
+	}
+	checkKey := workflowService.GetWorkflowKey(id, workflowCheckRes.Id)
+	file, err := workflowService.TemplateParse(checkKey, *repo.CloneURL, consts.Check)
 	if err == nil {
-		workflowData := parameter.SaveWorkflowParam{
-			ProjectId:  id,
-			Type:       consts.Build,
-			ExecFile:   file1,
-			LastExecId: 0,
-		}
-		workflowService.SaveWorkflow(workflowData)
+		workflowCheckRes.ExecFile = file
+		workflowService.UpdateWorkflow(workflowCheckRes)
+	}
+	workflowBuildData := parameter.SaveWorkflowParam{
+		ProjectId:  id,
+		Type:       consts.Build,
+		ExecFile:   "",
+		LastExecId: 0,
+	}
+	workflowBuildRes, err := workflowService.SaveWorkflow(workflowBuildData)
+	if err != nil {
+		Success(id, g)
+		return
+	}
+	buildKey := workflowService.GetWorkflowKey(id, workflowBuildRes.Id)
+	file1, err := workflowService.TemplateParse(buildKey, *repo.CloneURL, consts.Build)
+	if err == nil {
+		workflowBuildRes.ExecFile = file1
+		workflowService.UpdateWorkflow(workflowBuildRes)
 	}
 	Success(id, g)
 
@@ -132,9 +153,22 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-
+	//accessToken := g.Request.Header.Get("access_token")
+	//if accessToken == "" {
+	//	Failed(http.StatusUnauthorized, "No access",g)
+	//	return
+	//}
+	//token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	userService := application.GetBean[*service.UserService]("userService")
+	var userVo vo.UserAuth
+	user, err := userService.GetUserByToken("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")
+	if err != nil {
+		Fail("get user info failed", g)
+		return
+	}
+	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectCheckWorkflow(uint(projectId), h.getUserInfo(g))
+	_ = workflowService.ExecProjectCheckWorkflow(uint(projectId), userVo)
 	Success("", g)
 }
 
@@ -145,9 +179,26 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-
+	//accessToken := g.Request.Header.Get("access_token")
+	//if accessToken == "" {
+	//	Failed(http.StatusUnauthorized, "No access",g)
+	//	return
+	//}
+	//token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectBuildWorkflow(uint(projectId), h.getUserInfo(g))
+	userService := application.GetBean[*service.UserService]("userService")
+	var userVo vo.UserAuth
+	user, err := userService.GetUserByToken("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")
+	if err != nil {
+		Fail("get user info failed", g)
+		return
+	}
+	copier.Copy(&userVo, &user)
+	err = workflowService.ExecProjectBuildWorkflow(uint(projectId), userVo)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
 	Success("", g)
 }
 

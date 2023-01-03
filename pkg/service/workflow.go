@@ -16,6 +16,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/vo"
 	"github.com/jinzhu/copier"
+	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
 	"log"
 	"os"
@@ -102,8 +103,8 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			}
 
 			contract := db.Contract{
-				ProjectId:        uint(projectId),
-				WorkflowId:       uint(workflowId),
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
 				WorkflowDetailId: workflowDetail.Id,
 				Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
 				Version:          fmt.Sprintf("#%d", workflowDetail.ExecNumber),
@@ -113,7 +114,8 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				ByteCode:         bytecodeData.(string),
 				CreateTime:       time.Now(),
 			}
-			w.db.Save(contract)
+			err = w.db.Save(&contract).Error
+			fmt.Println(err)
 		}
 
 	}
@@ -132,6 +134,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage) {
 	if message.Status == model.STATUS_SUCCESS {
 		//TODO.... 实现同步报告
 		fmt.Println(projectId, workflowId, workflowExecNumber)
+
 	}
 
 }
@@ -160,6 +163,23 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 	}
 
 	workflowKey := w.GetWorkflowKey(projectId, workflow.Id)
+
+	job := w.engine.GetJob(workflowKey)
+	if job == nil {
+		var jobModel model.Job
+		err := yaml.Unmarshal([]byte((workflow.ExecFile)), &jobModel)
+		if jobModel.Name != workflowKey {
+			jobModel.Name = workflowKey
+			execFile, _ := yaml.Marshal(jobModel)
+			workflow.ExecFile = string(execFile)
+		}
+
+		err = w.engine.CreateJob(workflowKey, workflow.ExecFile)
+		if err != nil {
+			return err
+		}
+		job = w.engine.GetJob(workflowKey)
+	}
 
 	detail, err := w.engine.ExecuteJob(workflowKey)
 
@@ -262,17 +282,17 @@ func (w *WorkflowService) GetWorkflowKey(projectId uint, workflowId uint) string
 	return fmt.Sprintf("%d_%d", projectId, workflowId)
 }
 
-func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (int, int, error) {
+func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (uint, uint, error) {
 	projectId, err := strconv.Atoi(strings.Split(projectKey, "_")[0])
 	if err != nil {
 		return 0, 0, err
 	}
 	workflowId, err := strconv.Atoi(strings.Split(projectKey, "_")[1])
-	return projectId, workflowId, err
+	return uint(projectId), uint(workflowId), err
 
 }
 
-func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (uint, error) {
+func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db2.Workflow, error) {
 	var workflow db2.Workflow
 	workflow.Type = uint(saveData.Type)
 	workflow.CreateTime = time.Now()
@@ -280,17 +300,25 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (ui
 	workflow.ProjectId = saveData.ProjectId
 	workflow.ExecFile = saveData.ExecFile
 	workflow.LastExecId = saveData.LastExecId
-	res := w.db.Create(&workflow)
+	res := w.db.Save(&workflow)
 	if res.Error != nil {
-		return 0, res.Error
+		return workflow, res.Error
 	}
-	return workflow.Id, nil
+	return workflow, nil
+}
+
+func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {
+	res := w.db.Save(&data)
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
 }
 
 func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.WorkflowType) (string, error) {
-	filePath := "templates/truffle_check.yml"
+	filePath := "templates/truffle-build.yml"
 	if workflowType == consts.Check {
-		filePath = "templates/truffle-build.yml"
+		filePath = "templates/truffle_check.yml"
 	}
 	content, err := temp.ReadFile(filePath)
 	if err != nil {

@@ -46,7 +46,7 @@ func (t *TemplateService) GetTemplatesByTypeId(templateTypeId int) (*[]vo.Templa
 	var list []db2.Template
 	var listVo []vo.TemplateVo
 	log.Println(t.db)
-	result := t.db.Model(db2.TemplateType{}).Where("template_type_id = ?", templateTypeId).Find(&list)
+	result := t.db.Model(db2.Template{}).Where("template_type_id = ?", templateTypeId).Find(&list)
 	if result.Error != nil {
 		return &listVo, result.Error
 	}

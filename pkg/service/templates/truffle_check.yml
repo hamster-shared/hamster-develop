@@ -11,7 +11,7 @@ stages:
 
   solidity-lint:
     needs:
-      - code-compile
+      - git-clone
     steps:
       - name: solidity-check
         run: |

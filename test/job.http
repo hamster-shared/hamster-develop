@@ -1,5 +1,20 @@
-###
-POST http://localhost:8080/api/projects/1/check
+### 创建项目
+POST http://localhost:8080/api/projects
+Content-Type: application/json
+access_token: pAckUATfeIsxSq1qzIVIdJcKf3jIhRDmnchfAqIrU2xX4smOe4Hd2p3e3iZNnX0/
+
+{
+  "name": "project-three",
+  "type": 1,
+  "templateOwner": "jian-guo-s",
+  "templateRepo": "truffle-webpack",
+  "frameType": 1,
+  "repoOwner": "mohaijiang",
+  "userId": 2
+}
+
+### 执行检查
+POST http://localhost:8080/api/projects/4/build
 
 
 ### create job
@@ -69,11 +84,34 @@ Content-Type: application/json
 {"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}
 
 
+
+
+
+
 ### template category
 GET http://localhost:8080/api/templates-category?type=1
 
+### query templates
+GET http://localhost:8080/api/templates-category/1/templates
+
+### query template detail
+GET http://localhost:8080/api/templates/1
+
+### query projects
+GET http://localhost:8080/api/projects?user=53070354&page=1&size=10
+
+### query project detail
+GET http://localhost:8080/api/projects/1
+
+### build
+POST http://localhost:8080/api/projects/1/build
+
+
 ### query workflow by project id
 GET http://localhost:8080/api/projects/1/workflows
+
+### query workflow detail
+GET http://localhost:8080/api/workflows/2/detail/3
 
 ###
 GET http://localhost:8080/api/workflows/1
@@ -90,18 +128,16 @@ GET http://localhost:8080/api/projects/1/contract/1.0
 ### query contract deploy detail
 GET http://localhost:8080/api/projects/1/contract/deploy/detail
 
-### query projects
-GET http://localhost:8080/api/projects
-
 ### create projects
 POST http://localhost:8080/api/projects
 Content-Type: application/json
+access_token: LslFRcu72fynaKeKwl9egjraL2gDmYpd3cAI8jwQxkqvvZ2BTqDEpriWtHUwUOO0
 
 {
-  "name": "lisi",
+  "name": "webpack",
   "type": 1,
   "templateOwner": "jian-guo-s",
-  "templateRepo": "polkadot",
+  "templateRepo": "truffle-webpack",
   "frameType": 1,
   "repoOwner": "jian-guo-s",
   "userId": 53070354
@@ -119,10 +155,6 @@ Content-Type: application/json
 
 
 ### query project detail
-GET http://localhost:8080/api/projects/2
-
-
-### query project detail
 DELETE http://localhost:8080/api/projects/2
 
 
@@ -136,4 +168,23 @@ access_token: q/fHsUxk/A9wemCoULUhgxKg+4xt1VgaWysR/G7H0tpEmwKLCa/8O9ukwHKcvqr2
   "name": "ll"
 }
 
+
+###login with github
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "code": "4e8c16f53af4dafc459d",
+  "clientId": "93512ec1db0460ada779"
+}
+
+###auth repo
+POST http://localhost:8080/api/repo/authorization
+Content-Type: application/json
+
+{
+  "code": "826a8fb7127374b39240",
+  "clientId": "93512ec1db0460ada779",
+  "userId": 53070354
+}
 
