@@ -110,6 +110,9 @@ POST http://localhost:8080/api/projects/1/build
 ### query workflow by project id
 GET http://localhost:8080/api/projects/1/workflows
 
+### query workflow detail
+GET http://localhost:8080/api/workflows/2/detail/3
+
 ###
 GET http://localhost:8080/api/workflows/1
 
