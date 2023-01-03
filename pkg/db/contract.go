@@ -21,7 +21,7 @@ type ContractDeploy struct {
 	ContractId uint      `json:"contractId"`
 	ProjectId  uint      `json:"projectId"`
 	Version    string    `json:"version"`
-	DeployTime time.Time `json:"deployTime"`
+	DeployTime time.Time `gorm:"column:deploy_time;default:current_timestamp" json:"deployTime"`
 	Network    string    `json:"network"`
 	Address    string    `json:"address"`
 	CreateTime time.Time `gorm:"column:create_time;default:current_timestamp" json:"createTime"`

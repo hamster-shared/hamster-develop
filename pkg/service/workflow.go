@@ -192,6 +192,8 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 	}
 
 	dbDetail := db.WorkflowDetail{
+		Type:        workflowType,
+		ProjectId:   projectId,
 		WorkflowId:  workflow.Id,
 		ExecNumber:  uint(detail.Id),
 		StageInfo:   string(stageInfo),

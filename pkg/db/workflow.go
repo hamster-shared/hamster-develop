@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -18,6 +19,8 @@ type Workflow struct {
 
 type WorkflowDetail struct {
 	Id          uint `gorm:"primaryKey" json:"id"`
+	ProjectId   uint
+	Type        uint
 	WorkflowId  uint
 	ExecNumber  uint
 	StageInfo   string
@@ -27,7 +30,7 @@ type WorkflowDetail struct {
 	Status      uint
 	StartTime   sql.NullTime
 	EndTime     sql.NullTime
-	CreateTime  time.Time    `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
-	UpdateTime  time.Time    `json:"update_time"`
-	DeleteTime  sql.NullTime `json:"delete_time"`
+	CreateTime  time.Time      `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
+	UpdateTime  time.Time      `json:"update_time"`
+	DeleteTime  gorm.DeletedAt `json:"delete_time"`
 }

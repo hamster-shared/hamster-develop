@@ -1,12 +1,44 @@
 package vo
 
-import db2 "github.com/hamster-shared/a-line/pkg/db"
+import (
+	"time"
+)
 
 type ProjectPage struct {
-	Data     []db2.Project `json:"data"`
-	Total    int           `json:"total"`
-	Page     int           `json:"page"`
-	PageSize int           `json:"pageSize"`
+	Data     []ProjectListVo `json:"data"`
+	Total    int             `json:"total"`
+	Page     int             `json:"page"`
+	PageSize int             `json:"pageSize"`
+}
+
+type ProjectListVo struct {
+	Id            uint           `gorm:"primaryKey" json:"id"`
+	Name          string         `json:"name"`
+	UserId        int64          `json:"UserId"`
+	Type          uint           `json:"type"`
+	RepositoryUrl string         `json:"RepositoryUrl"`
+	FrameType     int            `json:"frameType"`
+	RecentCheck   RecentCheckVo  `json:"recentCheck"`
+	RecentBuild   RecentBuildVo  `json:"recentBuild"`
+	RecentDeploy  RecentDeployVo `json:"recentDeploy"`
+}
+
+type RecentCheckVo struct {
+	Id        uint      `json:"id"`
+	Status    uint      `json:"status"`
+	StartTime time.Time `json:"startTime"`
+}
+
+type RecentBuildVo struct {
+	Id        uint      `json:"id"`
+	Status    uint      `json:"status"`
+	StartTime time.Time `json:"startTime"`
+}
+
+type RecentDeployVo struct {
+	Id         uint      `json:"id"`
+	Version    string    `json:"version"`
+	DeployTime time.Time `json:"deployTime"`
 }
 
 type CreateProjectParam struct {

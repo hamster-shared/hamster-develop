@@ -195,3 +195,4 @@ Learn more : [https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4907.md](htt
        );
 alter table t_template_detail add title varchar(100);
 alter table t_template_detail add title_description text;
+alter table t_workflow_detail add (project_id  int,type tinyint(1));

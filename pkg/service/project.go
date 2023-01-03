@@ -3,8 +3,10 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/hamster-shared/a-line/pkg/consts"
 	db2 "github.com/hamster-shared/a-line/pkg/db"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"time"
 )
@@ -33,6 +35,7 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size int)
 	var total int64
 	var projectPage vo.ProjectPage
 	var projects []db2.Project
+	var projectList []vo.ProjectListVo
 	tx := p.db.Model(db2.Project{}).Where("user_id = ?", userId)
 	if keyword != "" {
 		tx = tx.Where("name like ? ", "%"+keyword+"%")
@@ -41,7 +44,34 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size int)
 	if result.Error != nil {
 		return &projectPage, result.Error
 	}
-	projectPage.Data = projects
+	if len(projects) > 0 {
+		for _, project := range projects {
+			var data vo.ProjectListVo
+			var recentBuild vo.RecentBuildVo
+			var recentCheck vo.RecentCheckVo
+			var recentDeploy vo.RecentDeployVo
+			var workflowData db2.WorkflowDetail
+			copier.Copy(&data, &project)
+			err := p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Check).Order("start_time DESC").Limit(1).Find(&workflowData).Error
+			if err == nil {
+				copier.Copy(&recentCheck, workflowData)
+			}
+			err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Build).Order("start_time DESC").Limit(1).Find(&workflowData).Error
+			if err == nil {
+				copier.Copy(&recentBuild, &workflowData)
+			}
+			var deployData db2.ContractDeploy
+			err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+			if err == nil {
+				copier.Copy(&recentDeploy, &deployData)
+			}
+			data.RecentBuild = recentBuild
+			data.RecentCheck = recentCheck
+			data.RecentDeploy = recentDeploy
+			projectList = append(projectList, data)
+		}
+	}
+	projectPage.Data = projectList
 	projectPage.Total = int(total)
 	projectPage.Page = page
 	projectPage.PageSize = size
