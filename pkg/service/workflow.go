@@ -290,7 +290,7 @@ func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (int, int, error)
 
 }
 
-func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (uint, error) {
+func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db2.Workflow, error) {
 	var workflow db2.Workflow
 	workflow.Type = uint(saveData.Type)
 	workflow.CreateTime = time.Now()
@@ -300,9 +300,9 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (ui
 	workflow.LastExecId = saveData.LastExecId
 	res := w.db.Save(&workflow)
 	if res.Error != nil {
-		return 0, res.Error
+		return workflow, res.Error
 	}
-	return workflow.Id, nil
+	return workflow, nil
 }
 
 func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {

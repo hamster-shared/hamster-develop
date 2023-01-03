@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/consts"
-	"github.com/hamster-shared/a-line/pkg/db"
 	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/utils"
@@ -85,22 +84,16 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		ExecFile:   "",
 		LastExecId: 0,
 	}
-	workflowCheckId, err := workflowService.SaveWorkflow(workflowCheckData)
+	workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
 	if err != nil {
 		Success(id, g)
 		return
 	}
-	checkKey := workflowService.GetWorkflowKey(id, workflowCheckId)
+	checkKey := workflowService.GetWorkflowKey(id, workflowCheckRes.Id)
 	file, err := workflowService.TemplateParse(checkKey, *repo.CloneURL, consts.Check)
 	if err == nil {
-		workflow := db.Workflow{
-			Id:         workflowCheckId,
-			ProjectId:  id,
-			Type:       uint(consts.Check),
-			ExecFile:   file,
-			LastExecId: 0,
-		}
-		workflowService.UpdateWorkflow(workflow)
+		workflowCheckRes.ExecFile = file
+		workflowService.UpdateWorkflow(workflowCheckRes)
 	}
 	workflowBuildData := parameter.SaveWorkflowParam{
 		ProjectId:  id,
@@ -108,22 +101,16 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		ExecFile:   "",
 		LastExecId: 0,
 	}
-	workflowBuildId, err := workflowService.SaveWorkflow(workflowBuildData)
+	workflowBuildRes, err := workflowService.SaveWorkflow(workflowBuildData)
 	if err != nil {
 		Success(id, g)
 		return
 	}
-	buildKey := workflowService.GetWorkflowKey(id, workflowBuildId)
+	buildKey := workflowService.GetWorkflowKey(id, workflowBuildRes.Id)
 	file1, err := workflowService.TemplateParse(buildKey, *repo.CloneURL, consts.Build)
 	if err == nil {
-		workflow := db.Workflow{
-			Id:         workflowBuildId,
-			ProjectId:  id,
-			Type:       uint(consts.Build),
-			ExecFile:   file1,
-			LastExecId: 0,
-		}
-		workflowService.UpdateWorkflow(workflow)
+		workflowBuildRes.ExecFile = file1
+		workflowService.UpdateWorkflow(workflowBuildRes)
 	}
 	Success(id, g)
 
