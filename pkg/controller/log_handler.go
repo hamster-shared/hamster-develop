@@ -47,7 +47,7 @@ func (h *HandlerServer) getWorkflowLog(gin *gin.Context) {
 func (h *HandlerServer) getWorkflowStageLog(gin *gin.Context) {
 	idStr := gin.Param("id")
 	detailIdStr := gin.Param("detailId")
-	name := gin.Param("name")
+	name := gin.Param("stageName")
 	startStr := gin.DefaultQuery("start", "0")
 	workflowId, err := strconv.Atoi(idStr)
 	if err != nil {

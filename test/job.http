@@ -1,7 +1,7 @@
 ### 创建项目
 POST http://localhost:8080/api/projects
 Content-Type: application/json
-access_token: pAckUATfeIsxSq1qzIVIdJcKf3jIhRDmnchfAqIrU2xX4smOe4Hd2p3e3iZNnX0/
+Access-Token: pAckUATfeIsxSq1qzIVIdJcKf3jIhRDmnchfAqIrU2xX4smOe4Hd2p3e3iZNnX0/
 
 {
   "name": "project-three",
@@ -104,7 +104,7 @@ GET http://localhost:8080/api/projects?user=53070354&page=1&size=10
 GET http://localhost:8080/api/projects/1
 
 ### build
-POST http://localhost:8080/api/projects/1/build
+POST http://localhost:8080/api/projects/4/build
 
 
 ### query workflow by project id
@@ -131,7 +131,7 @@ GET http://localhost:8080/api/projects/1/contract/deploy/detail
 ### create projects
 POST http://localhost:8080/api/projects
 Content-Type: application/json
-access_token: LslFRcu72fynaKeKwl9egjraL2gDmYpd3cAI8jwQxkqvvZ2BTqDEpriWtHUwUOO0
+Access-Token: 2JD63yEz1x8AvSGYD8Uk43iTq6aWDnPh+oRCCpqVWX2zf/GREHWQSSuDZ726IZJt
 
 {
   "name": "webpack",
@@ -161,7 +161,7 @@ DELETE http://localhost:8080/api/projects/2
 ### check name
 POST http://localhost:8080/api/projects/check-name
 Content-Type: application/json
-access_token: q/fHsUxk/A9wemCoULUhgxKg+4xt1VgaWysR/G7H0tpEmwKLCa/8O9ukwHKcvqr2
+Access-Token: q/fHsUxk/A9wemCoULUhgxKg+4xt1VgaWysR/G7H0tpEmwKLCa/8O9ukwHKcvqr2
 
 {
   "owner": "jian-guo-s",
@@ -188,3 +188,11 @@ Content-Type: application/json
   "userId": 53070354
 }
 
+### get version list
+GET http://localhost:8080/api/projects/4/versions
+
+### get workflow detail logs
+GET http://localhost:8080/api/workflows/8/detail/9/logs
+
+### query log by stage name
+GET http://localhost:8080/api/workflows/8/detail/10/logs/code-compile

@@ -7,7 +7,7 @@ import (
 )
 
 func Test_Cryptography(t *testing.T) {
-	data := "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"
+	data := "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"
 	str := AesEncrypt(data, consts.SecretKey)
 	log.Println(str)
 	token := AesDecrypt(str, consts.SecretKey)

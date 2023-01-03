@@ -52,7 +52,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
-	accessToken := g.Request.Header.Get("access_token")
+	accessToken := g.Request.Header.Get("Access-Token")
 	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	githubService := application.GetBean[*service.GithubService]("githubService")
 
@@ -153,15 +153,15 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-	//accessToken := g.Request.Header.Get("access_token")
-	//if accessToken == "" {
-	//	Failed(http.StatusUnauthorized, "No access",g)
-	//	return
-	//}
-	//token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	accessToken := g.Request.Header.Get("Access-Token")
+	if accessToken == "" {
+		Failed(http.StatusUnauthorized, "No access", g)
+		return
+	}
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	userService := application.GetBean[*service.UserService]("userService")
 	var userVo vo.UserAuth
-	user, err := userService.GetUserByToken("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")
+	user, err := userService.GetUserByToken(token)
 	if err != nil {
 		Fail("get user info failed", g)
 		return
@@ -179,16 +179,16 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-	//accessToken := g.Request.Header.Get("access_token")
-	//if accessToken == "" {
-	//	Failed(http.StatusUnauthorized, "No access",g)
-	//	return
-	//}
-	//token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	accessToken := g.Request.Header.Get("Access-Token")
+	if accessToken == "" {
+		Failed(http.StatusUnauthorized, "No access", g)
+		return
+	}
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	userService := application.GetBean[*service.UserService]("userService")
 	var userVo vo.UserAuth
-	user, err := userService.GetUserByToken("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")
+	user, err := userService.GetUserByToken(token)
 	if err != nil {
 		Fail("get user info failed", g)
 		return
@@ -295,7 +295,7 @@ func (h *HandlerServer) checkName(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	accessToken := gin.Request.Header.Get("access_token")
+	accessToken := gin.Request.Header.Get("Access-Token")
 	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	githubService := application.GetBean[*service.GithubService]("githubService")
 	data := githubService.CheckName(token, checkData.Owner, checkData.Name)

@@ -44,7 +44,7 @@ func (h *HandlerServer) githubRepoAuth(gin *gin.Context) {
 
 func (h *HandlerServer) Authorize() gin.HandlerFunc {
 	return func(gin *gin.Context) {
-		accessToken := gin.Request.Header.Get("access_token")
+		accessToken := gin.Request.Header.Get("Access-Token")
 		if accessToken == "" {
 			Failed(http.StatusUnauthorized, "access not authorized", gin)
 			return
