@@ -68,7 +68,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	data := vo.CreateProjectParam{
 		Name:        createData.Name,
 		Type:        createData.Type,
-		TemplateUrl: *repo.URL,
+		TemplateUrl: *repo.CloneURL,
 		FrameType:   createData.FrameType,
 		UserId:      createData.UserId,
 	}
