@@ -34,6 +34,7 @@ const (
 const (
 	SolFileSuffix             = ".sol"
 	CheckName                 = "/check"
+	CheckResult               = "total_result.txt"
 	SuffixType                = ".txt"
 	SolProfilerCheck          = "sol-profiler "
 	SolProfilerCheckOutputDir = "sol_profiler"

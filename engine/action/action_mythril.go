@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/hamster-shared/a-line/engine/consts"
@@ -93,10 +94,59 @@ func (a *MythRilAction) Hook() (*model.ActionResult, error) {
 		}
 		create.Close()
 	}
+	a.path = destDir
 	return nil, err
 }
 
 func (a *MythRilAction) Post() error {
+	open, err := os.Open(a.path)
+	if err != nil {
+		return err
+	}
+	fileInfo, err := open.Stat()
+	if err != nil {
+		return err
+	}
+	isDir := fileInfo.IsDir()
+	if !isDir {
+		return errors.New("check result path is err")
+	}
+	fileInfos, err := open.Readdir(-1)
+	successFlag := true
+	var checkResultDetailsList []model.ContractCheckResultDetails
+	for _, info := range fileInfos {
+		path := path2.Join(a.path, info.Name())
+		file, err := os.ReadFile(path)
+		if err != nil {
+			return errors.New("file open fail")
+		}
+		result := string(file)
+		if !strings.Contains(result, "The analysis was completed successfully") {
+			successFlag = false
+		}
+		details := model.NewContractCheckResultDetails(strings.Replace(info.Name(), consts.SuffixType, consts.SolFileSuffix, 1), result)
+		checkResultDetailsList = append(checkResultDetailsList, details)
+	}
+	var result string
+	if successFlag {
+		result = consts.CheckSuccess.Result
+	} else {
+		result = consts.CheckFail.Result
+	}
+	checkResult := model.NewContractCheckResult(consts.MythRil.Name, result, consts.MythRil.Tool, checkResultDetailsList)
+	create, err := os.Create(path2.Join(a.path, consts.CheckResult))
+	if err != nil {
+		return err
+	}
+	marshal, err := json.Marshal(checkResult)
+	if err != nil {
+		return err
+	}
+	_, err = create.WriteString(string(marshal))
+	if err != nil {
+		return err
+	}
+	create.Close()
 	return nil
 }
 
