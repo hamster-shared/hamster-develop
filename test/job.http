@@ -14,7 +14,7 @@ access_token: pAckUATfeIsxSq1qzIVIdJcKf3jIhRDmnchfAqIrU2xX4smOe4Hd2p3e3iZNnX0/
 }
 
 ### 执行检查
-POST http://localhost:8080/api/projects/2/check
+POST http://localhost:8080/api/projects/4/build
 
 
 ### create job
