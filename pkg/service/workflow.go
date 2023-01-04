@@ -62,6 +62,10 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 		ExecNumber: uint(jobDetail.Id),
 	}).First(&workflowDetail)
 
+	if workflowDetail.Id == 0 {
+		return
+	}
+
 	workflowDetail.Status = uint(jobDetail.Status)
 	stageInfo, err := json.Marshal(jobDetail.Stages)
 	if err != nil {
