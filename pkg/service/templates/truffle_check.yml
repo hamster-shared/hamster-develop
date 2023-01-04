@@ -33,11 +33,11 @@ stages:
         with:
           path:
 
-  mythril-check:
-    needs:
-      - solhint-check
-    steps:
-      - name: mythril-check
-        uses: mythril-check
-        with:
-          path:
+#  mythril-check:
+#    needs:
+#      - solhint-check
+#    steps:
+#      - name: mythril-check
+#        uses: mythril-check
+#        with:
+#          path:
