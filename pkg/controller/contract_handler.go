@@ -83,3 +83,35 @@ func (h *HandlerServer) versionList(gin *gin.Context) {
 	}
 	Success(data, gin)
 }
+
+func (h *HandlerServer) queryContractNameList(gin *gin.Context) {
+	idStr := gin.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	contractService := application.GetBean[*service.ContractService]("contractService")
+	data, err := contractService.QueryContractNameList(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) queryNetworkList(gin *gin.Context) {
+	idStr := gin.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	contractService := application.GetBean[*service.ContractService]("contractService")
+	data, err := contractService.QueryNetworkList(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}

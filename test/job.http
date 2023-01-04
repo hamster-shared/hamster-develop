@@ -103,10 +103,10 @@ GET http://localhost:8080/api/templates/1
 GET http://localhost:8080/api/projects?user=53070354&page=1&size=10
 
 ### query project detail
-GET http://localhost:8080/api/projects/4
+GET http://34.232.105.81:8080/api/projects/4
 
 ### build
-POST http://34.232.105.81:8080/api/projects/5/build
+POST http://localhost:8080/api/projects/5/build
 Content-Type: application/json
 Access-Token: Mp1msXet1r5fwACsnAyQtUjEQ1fMSL8Qrcl5SjK9N9lLryKZH/pAbLxLP0AOMfoj
 
@@ -206,3 +206,14 @@ GET http://localhost:8080/api/workflows/8/detail/9/logs
 
 ### query log by stage name
 GET http://localhost:8080/api/workflows/8/detail/10/logs/code-compile
+
+
+###query project contract
+GET http://localhost:8080/api/projects/4/contract
+
+###query contract name
+GET http://localhost:8080/api/projects/4/contract/name
+
+###query network
+GET http://localhost:8080/api/projects/4/contract/network
+

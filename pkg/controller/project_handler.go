@@ -21,12 +21,6 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 	query := gin.Query("query")
 	pageStr := gin.DefaultQuery("page", "1")
 	sizeStr := gin.DefaultQuery("size", "10")
-	userStr := gin.Query("user")
-	userId, err := strconv.Atoi(userStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -37,7 +31,15 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	data, err := h.projectService.GetProjects(userId, query, page, size)
+	accessToken := gin.Request.Header.Get("Access-Token")
+	if accessToken == "" {
+		Failed(http.StatusUnauthorized, "No access", gin)
+		return
+	}
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	userService := application.GetBean[*service.UserService]("userService")
+	user, err := userService.GetUserByToken(token)
+	data, err := h.projectService.GetProjects(int(user.Id), query, page, size)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -212,12 +214,13 @@ func (h *HandlerServer) projectContract(g *gin.Context) {
 
 	query := g.Query("query")
 	version := g.Query("version")
+	network := g.Query("network")
 	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(g.DefaultQuery("size", "10"))
 
 	contractService := application.GetBean[*service.ContractService]("contractService")
 
-	result, err := contractService.QueryContracts(uint(projectId), query, version, "", page, size)
+	result, err := contractService.QueryContracts(uint(projectId), query, version, network, page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)

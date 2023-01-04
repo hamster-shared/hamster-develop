@@ -77,6 +77,8 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/contract/:version", h.handlerServer.contractInfo)
 	api.GET("/projects/:id/contract/deploy/detail", h.handlerServer.contractDeployDetailByVersion)
 	api.GET("/projects/:id/versions", h.handlerServer.versionList)
+	api.GET("/projects/:id/contract/name", h.handlerServer.queryContractNameList)
+	api.GET("/projects/:id/contract/network", h.handlerServer.queryNetworkList)
 
 	//logs
 	api.GET("/workflows/:id/detail/:detailId/logs", h.handlerServer.getWorkflowLog)
