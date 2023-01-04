@@ -2,7 +2,6 @@ package service
 
 import (
 	"bytes"
-	"database/sql"
 	"embed"
 	"encoding/json"
 	"errors"
@@ -201,12 +200,9 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 		TriggerMode: 1,
 		CodeInfo:    "",
 		Status:      uint(detail.Status),
-		StartTime: sql.NullTime{
-			Time:  detail.StartTime,
-			Valid: true,
-		},
-		CreateTime: time.Now(),
-		UpdateTime: time.Now(),
+		StartTime:   detail.StartTime,
+		CreateTime:  time.Now(),
+		UpdateTime:  time.Now(),
 	}
 
 	err = w.db.Transaction(func(tx *gorm.DB) error {

@@ -17,18 +17,19 @@ type TemplateVo struct {
 }
 
 type TemplateDetailVo struct {
-	Id            uint   `json:"id"`
-	TemplateId    string `json:"templateId"`
-	MarkdownInfo  string `json:"markdownInfo"`
-	Name          string `json:"name"`
-	Audited       bool   `json:"audited"`
-	Extensions    string `json:"extensions"`
-	Description   string `json:"description"`
-	Examples      string `json:"examples"`
-	Resources     string `json:"resources"`
-	AbiInfo       string `json:"abiInfo"`
-	RepositoryUrl string `json:"repositoryUrl"`
-	Version       string `json:"version"`
-	Branch        string `json:"branch"`
-	CodeSources   string `json:"codeSources"`
+	Id               uint   `json:"id"`
+	TemplateId       string `json:"templateId"`
+	Name             string `json:"name"`
+	Audited          bool   `json:"audited"`
+	Extensions       string `json:"extensions"`
+	Description      string `json:"description"`
+	Examples         string `json:"examples"`
+	Resources        string `json:"resources"`
+	AbiInfo          string `json:"abiInfo"`
+	RepositoryUrl    string `json:"repositoryUrl"`
+	Version          string `json:"version"`
+	Branch           string `json:"branch"`
+	CodeSources      string `json:"codeSources"`
+	Title            string `json:"title"`
+	TitleDescription string `json:"titleDescription"`
 }

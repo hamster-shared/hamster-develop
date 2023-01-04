@@ -32,7 +32,6 @@ type Template struct {
 type TemplateDetail struct {
 	Id               uint         `gorm:"primaryKey" json:"id"`
 	TemplateId       string       `json:"template_id"`
-	MarkdownInfo     string       `json:"markdown_info"`
 	Name             string       `json:"name"`
 	Audited          bool         `json:"audited"`
 	Extensions       string       `json:"extensions"`
@@ -40,6 +39,7 @@ type TemplateDetail struct {
 	Examples         string       `json:"examples"`
 	Resources        string       `json:"resources"`
 	AbiInfo          string       `json:"abiInfo"`
+	ByteCode         string       `json:"byteCode"`
 	Author           string       `json:"author"`
 	RepositoryUrl    string       `json:"repositoryUrl"`
 	RepositoryName   string       `json:"repositoryName"`

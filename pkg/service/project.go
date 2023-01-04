@@ -14,7 +14,7 @@ import (
 type IProjectService interface {
 	GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uint, error)
-	GetProject(id int) (*db2.Project, error)
+	GetProject(id int) (*vo.ProjectDetailVo, error)
 	UpdateProject(id int, updateData vo.UpdateProjectParam) error
 	DeleteProject(id int) error
 }
@@ -50,15 +50,16 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size int)
 			var recentBuild vo.RecentBuildVo
 			var recentCheck vo.RecentCheckVo
 			var recentDeploy vo.RecentDeployVo
-			var workflowData db2.WorkflowDetail
+			var workflowBuildData db2.WorkflowDetail
+			var workflowCheckData db2.WorkflowDetail
 			copier.Copy(&data, &project)
-			err := p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Check).Order("start_time DESC").Limit(1).Find(&workflowData).Error
+			err := p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Check).Order("start_time DESC").Limit(1).Find(&workflowCheckData).Error
 			if err == nil {
-				copier.Copy(&recentCheck, workflowData)
+				copier.Copy(&recentCheck, workflowCheckData)
 			}
-			err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Build).Order("start_time DESC").Limit(1).Find(&workflowData).Error
+			err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Build).Order("start_time DESC").Limit(1).Find(&workflowBuildData).Error
 			if err == nil {
-				copier.Copy(&recentBuild, &workflowData)
+				copier.Copy(&recentBuild, &workflowBuildData)
 			}
 			var deployData db2.ContractDeploy
 			err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
@@ -96,13 +97,36 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uint, 
 	return project.Id, errors.New(fmt.Sprintf("application:%s already exists", createData.Name))
 }
 
-func (p *ProjectService) GetProject(id int) (*db2.Project, error) {
+func (p *ProjectService) GetProject(id int) (*vo.ProjectDetailVo, error) {
 	var data db2.Project
+	var detail vo.ProjectDetailVo
 	result := p.db.Where("id = ? ", id).First(&data)
 	if result.Error != nil {
-		return &data, result.Error
+		return &detail, result.Error
 	}
-	return &data, nil
+	var recentBuild vo.RecentBuildVo
+	var recentCheck vo.RecentCheckVo
+	var recentDeploy vo.RecentDeployVo
+	var workflowBuildData db2.WorkflowDetail
+	var workflowCheckData db2.WorkflowDetail
+	copier.Copy(&detail, &data)
+	err := p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Check).Order("start_time DESC").Limit(1).Find(&workflowCheckData).Error
+	if err == nil {
+		copier.Copy(&recentCheck, workflowCheckData)
+	}
+	err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Build).Order("start_time DESC").Limit(1).Find(&workflowBuildData).Error
+	if err == nil {
+		copier.Copy(&recentBuild, &workflowBuildData)
+	}
+	var deployData db2.ContractDeploy
+	err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+	if err == nil {
+		copier.Copy(&recentDeploy, &deployData)
+	}
+	detail.RecentBuild = recentBuild
+	detail.RecentCheck = recentCheck
+	detail.RecentDeploy = recentDeploy
+	return &detail, nil
 }
 
 func (p *ProjectService) UpdateProject(id int, updateData vo.UpdateProjectParam) error {

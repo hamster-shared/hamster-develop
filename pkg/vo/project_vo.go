@@ -23,6 +23,17 @@ type ProjectListVo struct {
 	RecentDeploy  RecentDeployVo `json:"recentDeploy"`
 }
 
+type ProjectDetailVo struct {
+	Id            uint           `json:"id"`
+	Name          string         `json:"name"`
+	Type          uint           `json:"type"`
+	RepositoryUrl string         `json:"RepositoryUrl"`
+	FrameType     int            `json:"frameType"`
+	RecentCheck   RecentCheckVo  `json:"recentCheck"`
+	RecentBuild   RecentBuildVo  `json:"recentBuild"`
+	RecentDeploy  RecentDeployVo `json:"recentDeploy"`
+}
+
 type RecentCheckVo struct {
 	Id        uint      `json:"id"`
 	Status    uint      `json:"status"`
