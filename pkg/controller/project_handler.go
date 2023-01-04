@@ -238,7 +238,7 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 		return
 	}
 
-	Type, _ := strconv.Atoi(g.DefaultQuery("type", "1"))
+	Type, _ := strconv.Atoi(g.DefaultQuery("type", "0"))
 	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(g.DefaultQuery("size", "10"))
 

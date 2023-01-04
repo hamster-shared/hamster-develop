@@ -23,9 +23,10 @@ func (c *ReportService) QueryReports(projectId uint, Type uint, page int, size i
 	var reports []db2.Report
 	tx := c.db.Model(db2.Report{
 		ProjectId: projectId,
-		Type:      Type,
 	})
-
+	if Type != 0 {
+		tx = tx.Where("type = ?", Type)
+	}
 	result := tx.Offset((page - 1) * size).Limit(size).Find(&reports).Count(&total)
 	if result.Error != nil {
 		return vo.NewEmptyPage[db2.Report](), result.Error
