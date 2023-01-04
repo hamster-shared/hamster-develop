@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	path2 "path"
+	"strconv"
 	"strings"
 )
 
@@ -104,7 +105,21 @@ func (a *SolHintAction) Hook() (*model.ActionResult, error) {
 		create.Close()
 	}
 	a.path = destDir
-	return nil, err
+	id, err := strconv.Atoi(jobId)
+	if err != nil {
+		return nil, err
+	}
+	actionResult := model.ActionResult{
+		Artifactorys: nil,
+		Reports: []model.Report{
+			{
+				Id:   id,
+				Url:  path2.Join(a.path, consts.CheckResult),
+				Type: 2,
+			},
+		},
+	}
+	return &actionResult, err
 }
 
 func (a *SolHintAction) Post() error {

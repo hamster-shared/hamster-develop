@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hamster-shared/a-line/engine"
+	"github.com/hamster-shared/a-line/engine/logger"
 	"github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/consts"
@@ -74,7 +75,7 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	tx.Commit()
 
 	w.SyncContract(message, workflowDetail)
-	w.SyncReport(message)
+	w.SyncReport(message, workflowDetail)
 }
 
 func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
@@ -120,7 +121,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 	}
 }
 
-func (w *WorkflowService) SyncReport(message model.StatusChangeMessage) {
+func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
 	if !strings.Contains(message.JobName, "_") {
 		return
 	}
@@ -133,7 +134,44 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage) {
 	if message.Status == model.STATUS_SUCCESS {
 		//TODO.... 实现同步报告
 		fmt.Println(projectId, workflowId, workflowExecNumber)
-
+		jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+		var reportList []db.Report
+		begin := w.db.Begin()
+		for _, report := range jobDetail.Reports {
+			file, err := os.ReadFile(report.Url)
+			if err != nil {
+				logger.Errorf("Check result path is err")
+				return
+			}
+			var contractCheckResult model.ContractCheckResult
+			err = json.Unmarshal(file, &contractCheckResult)
+			if err != nil {
+				logger.Errorf("Check result get fail")
+			}
+			marshal, err := json.Marshal(contractCheckResult.Context)
+			if err != nil {
+				logger.Errorf("Check context conversion failed")
+			}
+			report := db.Report{
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
+				WorkflowDetailId: workflowDetail.Id,
+				Name:             contractCheckResult.Name,
+				Type:             uint(consts.Check),
+				CheckTool:        contractCheckResult.Tool,
+				Result:           contractCheckResult.Result,
+				CheckTime:        time.Now(),
+				ReportFile:       string(marshal),
+				CreateTime:       time.Now(),
+			}
+			reportList = append(reportList, report)
+		}
+		err = begin.Save(&reportList).Error
+		if err != nil {
+			logger.Errorf("Save report fail, err is %s", err.Error())
+			return
+		}
+		begin.Commit()
 	}
 
 }

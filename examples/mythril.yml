@@ -8,7 +8,7 @@ stages:
         with:
           url: https://github.com/abing258/solidity_contracts.git
           branch: main
-  code-compile:
+  mythril-check:
     needs:
       - git-clone
     steps:

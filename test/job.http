@@ -109,6 +109,12 @@ Content-Type: application/json
 Access-Token: Mp1msXet1r5fwACsnAyQtUjEQ1fMSL8Qrcl5SjK9N9lLryKZH/pAbLxLP0AOMfoj
 
 
+### check
+POST http://localhost:8080/api/projects/1/check
+Content-Type: application/json
+Access-Token: Rt2r4Dek/0C9I/uu3VCZWZToWzoWcXD+O65YgH/vRy2A/eo5/f+GvpWxGJckaYlk
+
+
 ### query workflow by project id
 GET http://localhost:8080/api/projects/1/workflows
 
@@ -133,10 +139,10 @@ GET http://localhost:8080/api/projects/1/contract/deploy/detail
 ### create projects
 POST http://localhost:8080/api/projects
 Content-Type: application/json
-Access-Token: 2JD63yEz1x8AvSGYD8Uk43iTq6aWDnPh+oRCCpqVWX2zf/GREHWQSSuDZ726IZJt
+Access-Token: Rt2r4Dek/0C9I/uu3VCZWZToWzoWcXD+O65YgH/vRy2A/eo5/f+GvpWxGJckaYlk
 
 {
-  "name": "webpack",
+  "name": "webpack-abing",
   "type": 1,
   "templateOwner": "jian-guo-s",
   "templateRepo": "truffle-webpack",
