@@ -29,7 +29,7 @@ type WorkflowDetail struct {
 	CodeInfo    string
 	Status      uint
 	StartTime   time.Time
-	EndTime     time.Time
+	Duration    int64
 	CreateTime  time.Time      `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
 	UpdateTime  time.Time      `json:"update_time"`
 	DeleteTime  gorm.DeletedAt `json:"delete_time"`

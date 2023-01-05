@@ -31,5 +31,5 @@ type WorkflowDetailVo struct {
 	StageInfo  string    `json:"stageInfo"`
 	Status     uint      `json:"status"`
 	StartTime  time.Time `json:"startTime"`
-	EndTime    time.Time `json:"endTime"`
+	Duration   int64     `json:"duration"`
 }

@@ -26,6 +26,8 @@ alter table t_template_detail add title varchar(100);
 alter table t_template_detail add title_description text;
 alter table t_workflow_detail add (project_id  int,type tinyint(1));
 
+alter table t_workflow_detail change column end_time duration int(11) comment '耗时';
+
 insert into t_template (id, template_type_id, name, description, audited, last_version, logo, create_time, update_time, delete_time)
 values (1,1,'Multiwrap','Bundle multiple ERC721/ERC1155/ERC20 tokens into a single ERC721.',1, '1.1.6','https://gateway.ipfscdn.io/ipfs/QmQm3UytP51wWMMwmDYdDHH4vCdokPqt52bUtBQoLsx5qy/edition.png',now(),now(),null);
 

@@ -74,6 +74,7 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	workflowDetail.StageInfo = string(stageInfo)
 	workflowDetail.UpdateTime = time.Now()
 	workflowDetail.CodeInfo = w.engine.GetCodeInfo(message.JobName, message.JobId)
+	workflowDetail.Duration = jobDetail.Duration
 
 	tx := w.db.Save(&workflowDetail)
 	tx.Commit()
@@ -243,7 +244,6 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 		CodeInfo:    "",
 		Status:      uint(detail.Status),
 		StartTime:   detail.StartTime,
-		EndTime:     detail.StartTime,
 		CreateTime:  time.Now(),
 		UpdateTime:  time.Now(),
 	}
