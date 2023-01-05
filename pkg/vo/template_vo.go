@@ -26,6 +26,8 @@ type TemplateDetailVo struct {
 	Examples         string `json:"examples"`
 	Resources        string `json:"resources"`
 	AbiInfo          string `json:"abiInfo"`
+	Author           string `json:"author"`
+	RepositoryName   string `json:"repositoryName"`
 	RepositoryUrl    string `json:"repositoryUrl"`
 	Version          string `json:"version"`
 	Branch           string `json:"branch"`

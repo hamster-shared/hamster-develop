@@ -113,7 +113,6 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				WorkflowDetailId: workflowDetail.Id,
 				Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
 				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-				Network:          "",
 				BuildTime:        workflowDetail.CreateTime,
 				AbiInfo:          string(abi),
 				ByteCode:         bytecodeData.(string),

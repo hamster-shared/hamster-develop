@@ -27,7 +27,13 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
 		tx.Save(entity)
 		return nil
 	})
-
+	var contract db2.Contract
+	err = c.db.Model(db2.Workflow{}).Where("id = ?", entity.ContractId).First(&contract).Error
+	if err != nil {
+		return err
+	}
+	contract.Network = entity.Network
+	c.db.Save(contract)
 	return err
 }
 
