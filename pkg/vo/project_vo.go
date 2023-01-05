@@ -35,15 +35,17 @@ type ProjectDetailVo struct {
 }
 
 type RecentCheckVo struct {
-	Id        uint      `json:"id"`
-	Status    uint      `json:"status"`
-	StartTime time.Time `json:"startTime"`
+	Id         uint      `json:"id"`
+	WorkflowId uint      `json:"workflowId"`
+	Status     uint      `json:"status"`
+	StartTime  time.Time `json:"startTime"`
 }
 
 type RecentBuildVo struct {
-	Id        uint      `json:"id"`
-	Status    uint      `json:"status"`
-	StartTime time.Time `json:"startTime"`
+	Id         uint      `json:"id"`
+	WorkflowId uint      `json:"workflowId"`
+	Status     uint      `json:"status"`
+	StartTime  time.Time `json:"startTime"`
 }
 
 type RecentDeployVo struct {
