@@ -11,7 +11,7 @@ stages:
         uses: git-checkout
         with:
           url: https://github.com/jlvihv/gear-hello-world
-          branch: main
+          branch: develop
       - name: set workdir
         uses: workdir
         with:
@@ -20,7 +20,7 @@ stages:
         uses: git-checkout
         with:
           url: https://github.com/jlvihv/gear-deploy
-          branch: hello-world
+          branch: hello-world-use-mnemonic
 
   Build Contract:
     needs:
@@ -45,6 +45,8 @@ stages:
       - name: gear deploy
         run: |
           export NODE_TLS_REJECT_UNAUTHORIZED=0
+          export MNEMONIC=//Alice
+          export PROVIDER_ADDRESS=wss://rpc-node.gear-tech.io
           npm install
           npm run upload
 

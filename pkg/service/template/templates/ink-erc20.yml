@@ -44,7 +44,7 @@ stages:
         with:
           ## network的值有：Local,Rococo,Shibuya,Shiden
           network: Local
-          mnemonic:
+          mnemonic: laptop lyrics puppy only conduct frog little test tail atom foil wolf
 
   Build Front-End:
     needs:
