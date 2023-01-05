@@ -36,7 +36,7 @@ func (h *HandlerServer) contractInfo(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	version := gin.Query("version")
+	version := gin.Param("version")
 	contractService := application.GetBean[*service.ContractService]("contractService")
 	data, err := contractService.QueryContractByVersion(id, version)
 	if err != nil {

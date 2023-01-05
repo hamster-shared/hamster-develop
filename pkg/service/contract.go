@@ -80,7 +80,7 @@ func (c *ContractService) QueryContractByVersion(projectId int, version string) 
 	var contracts []db2.Contract
 	var data []vo.ContractVo
 	res := c.db.Model(db2.Contract{}).Where("project_id = ? and version = ?", projectId, version).Find(&contracts)
-	if res != nil {
+	if res.Error != nil {
 		return data, res.Error
 	}
 	if len(contracts) > 0 {
