@@ -67,12 +67,18 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
+	userService := application.GetBean[*service.UserService]("userService")
+	user, err := userService.GetUserByToken(token)
+	if err != nil {
+		Fail("get user info failed", g)
+		return
+	}
 	data := vo.CreateProjectParam{
 		Name:        createData.Name,
 		Type:        createData.Type,
 		TemplateUrl: *repo.CloneURL,
 		FrameType:   createData.FrameType,
-		UserId:      createData.UserId,
+		UserId:      int64(user.Id),
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {

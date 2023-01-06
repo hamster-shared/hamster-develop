@@ -4,8 +4,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/db"
+	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/service"
+	"github.com/jinzhu/copier"
 	"strconv"
+	"time"
 )
 
 func (h *HandlerServer) contractDeployInfo(g *gin.Context) {
@@ -48,17 +51,17 @@ func (h *HandlerServer) contractInfo(gin *gin.Context) {
 
 func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
 
+	var entity parameter.ContractDeployParam
 	var contractDeploy db.ContractDeploy
-
-	err := g.BindJSON(contractDeploy)
+	err := g.BindJSON(&entity)
 
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
-
+	copier.Copy(&contractDeploy, &entity)
 	contractService := application.GetBean[*service.ContractService]("contractService")
-
+	contractDeploy.DeployTime = time.Now()
 	err = contractService.SaveDeploy(contractDeploy)
 	if err != nil {
 		Fail(err.Error(), g)

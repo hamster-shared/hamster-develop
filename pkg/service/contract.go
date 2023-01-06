@@ -23,17 +23,17 @@ func NewContractService() *ContractService {
 
 func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
 
-	err := c.db.Transaction(func(tx *gorm.DB) error {
-		tx.Save(entity)
-		return nil
-	})
+	err := c.db.Save(&entity).Error
+	if err != nil {
+		return err
+	}
 	var contract db2.Contract
-	err = c.db.Model(db2.Workflow{}).Where("id = ?", entity.ContractId).First(&contract).Error
+	err = c.db.Model(db2.Contract{}).Where("id = ?", entity.ContractId).First(&contract).Error
 	if err != nil {
 		return err
 	}
 	contract.Network = entity.Network
-	c.db.Save(contract)
+	c.db.Save(&contract)
 	return err
 }
 
