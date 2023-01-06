@@ -219,3 +219,9 @@ GET http://localhost:8080/api/projects/4/contract/name
 ###query network
 GET http://localhost:8080/api/projects/4/contract/network
 
+####
+GET http://34.232.105.81:8080/api/projects/3/contract
+
+####
+DELETE http://localhost:8080/api/projects/4/workflows/7
+

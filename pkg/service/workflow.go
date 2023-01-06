@@ -390,3 +390,12 @@ func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.Wo
 	}
 	return input.String(), nil
 }
+
+func (w *WorkflowService) DeleteWorkflow(projectId, workflowId int) error {
+	err := w.db.Model(db2.Workflow{}).Where("project_id = ? and id = ?", projectId, workflowId).Delete(db2.Workflow{}).Error
+	if err != nil {
+		return err
+	}
+	w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ?", workflowId).Delete(db2.WorkflowDetail{})
+	return nil
+}

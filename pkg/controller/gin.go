@@ -69,6 +69,7 @@ func (h *HttpServer) StartHttpServer() {
 
 	//workflow
 	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)
+	api.DELETE("/projects/:id/workflows/:workflowId", h.handlerServer.deleteWorkflow)
 	api.GET("/workflows/:id/detail/:detailId", h.handlerServer.workflowDetail)
 	api.GET("/workflows/:id/detail/:detailId/contract", h.handlerServer.workflowContract)
 	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)

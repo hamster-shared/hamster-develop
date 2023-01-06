@@ -142,3 +142,25 @@ func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 	}
 	Success("", gin)
 }
+
+func (h *HandlerServer) deleteWorkflow(gin *gin.Context) {
+	projectIdStr := gin.Param("id")
+	workflowIdStr := gin.Param("workflowId")
+	projectId, err := strconv.Atoi(projectIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowId, err := strconv.Atoi(workflowIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	err = workflowService.DeleteWorkflow(projectId, workflowId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success("", gin)
+}
