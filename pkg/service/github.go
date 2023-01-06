@@ -53,3 +53,15 @@ func (g *GithubService) GetUserInfo(token string) (*github.User, error) {
 	}
 	return user, nil
 }
+
+func (g *GithubService) UpdateRepo(token, owner, repoName, name string) (*github.Repository, *github.Response, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	var data github.Repository
+	data.Name = &name
+	repo, res, err := client.Repositories.Edit(g.ctx, owner, repoName, &data)
+	if err != nil {
+		log.Println("create github repository failed ", err.Error())
+		return nil, res, err
+	}
+	return repo, res, nil
+}

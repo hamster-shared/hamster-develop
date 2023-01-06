@@ -133,7 +133,7 @@ func (p *ProjectService) UpdateProject(id int, updateData vo.UpdateProjectParam)
 	var data db2.Project
 	err := p.db.Where("name=? and user_id = ?", updateData.Name, updateData.UserId).First(&data).Error
 	if err == gorm.ErrRecordNotFound {
-		result := p.db.Model(data).Where("id = ?", id).Updates(db2.Project{Name: updateData.Name, UpdateTime: time.Now(), UpdateUser: uint(updateData.UserId)})
+		result := p.db.Model(data).Where("id = ?", id).Updates(db2.Project{Name: updateData.Name, RepositoryUrl: updateData.RepositoryUrl, UpdateTime: time.Now(), UpdateUser: uint(updateData.UserId)})
 		if result.Error != nil {
 			return result.Error
 		}

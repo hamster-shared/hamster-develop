@@ -274,6 +274,31 @@ func (h *HandlerServer) updateProject(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	accessToken := gin.Request.Header.Get("Access-Token")
+	if accessToken == "" {
+		Failed(http.StatusUnauthorized, "No access", gin)
+		return
+	}
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	userService := application.GetBean[*service.UserService]("userService")
+	user, err := userService.GetUserByToken(token)
+	updateData.UserId = int(user.Id)
+	project, err := h.projectService.GetProject(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	repo, res, err := githubService.UpdateRepo(token, user.Username, project.Name, updateData.Name)
+	if err != nil {
+		if res.StatusCode == http.StatusUnauthorized {
+			Failed(http.StatusUnauthorized, "access not authorized", gin)
+			return
+		}
+		Fail(err.Error(), gin)
+		return
+	}
+	updateData.RepositoryUrl = *repo.CloneURL
 	err = h.projectService.UpdateProject(id, updateData)
 	if err != nil {
 		Fail(err.Error(), gin)
