@@ -275,11 +275,11 @@ func (w *WorkflowService) GetWorkflowList(projectId, workflowType, page, size in
 	if len(workflowList) > 0 {
 		for _, datum := range workflowList {
 			var detailData db2.WorkflowDetail
-			res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and project_id = ?", datum.Id, datum.ProjectId).First(&detailData)
+			res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and project_id = ?", datum.Id, datum.ProjectId).Order("start_time DESC").First(&detailData)
 			if res.Error == nil {
 				var resData vo.WorkflowVo
-				copier.Copy(&resData, &datum)
 				copier.Copy(&resData, &detailData)
+				copier.Copy(&resData, &datum)
 				resData.DetailId = detailData.Id
 				workflowData = append(workflowData, resData)
 			} else {
