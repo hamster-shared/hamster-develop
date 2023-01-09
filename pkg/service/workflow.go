@@ -282,10 +282,6 @@ func (w *WorkflowService) GetWorkflowList(projectId, workflowType, page, size in
 				copier.Copy(&resData, &datum)
 				resData.DetailId = detailData.Id
 				workflowData = append(workflowData, resData)
-			} else {
-				var resData vo.WorkflowVo
-				copier.Copy(&resData, &datum)
-				workflowData = append(workflowData, resData)
 			}
 		}
 	}
