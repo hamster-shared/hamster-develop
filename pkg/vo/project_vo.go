@@ -14,9 +14,9 @@ type ProjectPage struct {
 type ProjectListVo struct {
 	Id            uint           `gorm:"primaryKey" json:"id"`
 	Name          string         `json:"name"`
-	UserId        int64          `json:"UserId"`
+	UserId        int64          `json:"userId"`
 	Type          uint           `json:"type"`
-	RepositoryUrl string         `json:"RepositoryUrl"`
+	RepositoryUrl string         `json:"repositoryUrl"`
 	FrameType     int            `json:"frameType"`
 	Branch        string         `json:"branch"`
 	RecentCheck   RecentCheckVo  `json:"recentCheck"`
@@ -28,7 +28,7 @@ type ProjectDetailVo struct {
 	Id            uint           `json:"id"`
 	Name          string         `json:"name"`
 	Type          uint           `json:"type"`
-	RepositoryUrl string         `json:"RepositoryUrl"`
+	RepositoryUrl string         `json:"repositoryUrl"`
 	FrameType     int            `json:"frameType"`
 	Branch        string         `json:"branch"`
 	RecentCheck   RecentCheckVo  `json:"recentCheck"`
@@ -48,6 +48,7 @@ type RecentBuildVo struct {
 	WorkflowId uint      `json:"workflowId"`
 	Status     uint      `json:"status"`
 	StartTime  time.Time `json:"startTime"`
+	Version    string    `json:"version"`
 }
 
 type RecentDeployVo struct {

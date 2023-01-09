@@ -80,6 +80,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/versions", h.handlerServer.versionList)
 	api.GET("/projects/:id/contract/name", h.handlerServer.queryContractNameList)
 	api.GET("/projects/:id/contract/network", h.handlerServer.queryNetworkList)
+	api.GET("/projects/:id/check-tools", h.handlerServer.queryReportCheckTools)
 
 	//logs
 	api.GET("/workflows/:id/detail/:detailId/logs", h.handlerServer.getWorkflowLog)

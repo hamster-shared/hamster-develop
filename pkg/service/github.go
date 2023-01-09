@@ -34,10 +34,10 @@ func (g *GithubService) CheckName(token, owner, projectName string) bool {
 func (g *GithubService) CreateRepo(token, templateOwner, templateRepo, repoName, repoOwner string) (*github.Repository, *github.Response, error) {
 	client := utils.NewGithubClient(g.ctx, token)
 	var data github.TemplateRepoRequest
-	private := true
+	//private := true
 	data.Name = &repoName
 	data.Owner = &repoOwner
-	data.Private = &private
+	//data.Private = &private
 	repo, res, err := client.Repositories.CreateFromTemplate(g.ctx, templateOwner, templateRepo, &data)
 	if err != nil {
 		log.Println("create github repository failed ", err.Error())

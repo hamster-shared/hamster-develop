@@ -164,3 +164,20 @@ func (h *HandlerServer) deleteWorkflow(gin *gin.Context) {
 	}
 	Success("", gin)
 }
+
+func (h *HandlerServer) queryReportCheckTools(gin *gin.Context) {
+	idStr := gin.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	reportService := application.GetBean[*service.ReportService]("reportService")
+	data, err := reportService.QueryReportCheckTools(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+
+}

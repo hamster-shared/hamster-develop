@@ -244,13 +244,13 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 		return
 	}
 
-	Type, _ := strconv.Atoi(g.DefaultQuery("type", "0"))
+	Type := g.DefaultQuery("type", "")
 	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(g.DefaultQuery("size", "10"))
 
 	reportService := application.GetBean[*service.ReportService]("reportService")
 
-	result, err := reportService.QueryReports(uint(projectId), uint(Type), page, size)
+	result, err := reportService.QueryReports(uint(projectId), Type, page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)
