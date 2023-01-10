@@ -35,3 +35,9 @@ type WorkflowDetailVo struct {
 	StartTime  time.Time `json:"startTime"`
 	Duration   int64     `json:"duration"`
 }
+
+const WORKFLOW_STATUS_NOT_RUN uint = 0
+const WORKFLOW_STATUS_RUNNING uint = 1
+const WORKFLOW_STATUS_SUCCESS uint = 2
+const WORKFLOW_STATUS_FAIL uint = 3
+const WORKFLOW_STATUS_CANCEL uint = 4
