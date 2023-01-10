@@ -5,6 +5,7 @@ import (
 	"github.com/hamster-shared/a-line/engine"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/service"
+	uuid "github.com/iris-contrib/go.uuid"
 	"strconv"
 )
 
@@ -110,13 +111,13 @@ func (h *HandlerServer) workflowReport(gin *gin.Context) {
 
 func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 	projectIdStr := gin.Param("id")
-	workflowIdStr := gin.Param("workflowId")
-	detailIdStr := gin.Param("detailId")
-	projectId, err := strconv.Atoi(projectIdStr)
+	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
-		Fail(err.Error(), gin)
+		Fail("projectId is empty or invalid", gin)
 		return
 	}
+	workflowIdStr := gin.Param("workflowId")
+	detailIdStr := gin.Param("detailId")
 	workflowId, err := strconv.Atoi(workflowIdStr)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -128,7 +129,7 @@ func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 		return
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	workflowKey := workflowService.GetWorkflowKey(uint(projectId), uint(workflowId))
+	workflowKey := workflowService.GetWorkflowKey(projectId.String(), uint(workflowId))
 	detail, err := workflowService.QueryWorkflowDetail(workflowId, detailId)
 	if err != nil {
 		Fail(err.Error(), gin)

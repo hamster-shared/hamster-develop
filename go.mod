@@ -14,6 +14,7 @@ require (
 	github.com/ipld/go-car/v2 v2.4.1
 	github.com/ipld/go-codec-dagpb v1.4.1
 	github.com/ipld/go-ipld-prime v0.17.0
+	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/multiformats/go-multicodec v0.5.0
 	github.com/multiformats/go-multihash v0.2.0
@@ -42,7 +43,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect

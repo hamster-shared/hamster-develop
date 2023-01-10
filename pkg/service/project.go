@@ -6,6 +6,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/consts"
 	db2 "github.com/hamster-shared/a-line/pkg/db"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"time"
@@ -13,7 +14,7 @@ import (
 
 type IProjectService interface {
 	GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error)
-	CreateProject(createData vo.CreateProjectParam) (uint, error)
+	CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error)
 	GetProject(id int) (*vo.ProjectDetailVo, error)
 	UpdateProject(id int, updateData vo.UpdateProjectParam) error
 	DeleteProject(id int) error
@@ -84,7 +85,7 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size int)
 	return &projectPage, nil
 }
 
-func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uint, error) {
+func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error) {
 	var project db2.Project
 	err := p.db.Where("name=? and user_id=?", createData.Name, createData.UserId).First(&project).Error
 	if err == gorm.ErrRecordNotFound {
@@ -96,6 +97,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uint, 
 		project.FrameType = createData.FrameType
 		project.Type = uint(createData.Type)
 		project.RepositoryUrl = createData.TemplateUrl
+		project.Branch = "main"
 		p.db.Create(&project)
 		return project.Id, nil
 	}

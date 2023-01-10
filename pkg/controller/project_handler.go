@@ -9,6 +9,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/utils"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"net/http"
 	"strconv"
@@ -97,7 +98,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Success(id, g)
 		return
 	}
-	checkKey := workflowService.GetWorkflowKey(id, workflowCheckRes.Id)
+	checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
 	file, err := workflowService.TemplateParse(checkKey, *repo.CloneURL, consts.Check)
 	if err == nil {
 		workflowCheckRes.ExecFile = file
@@ -114,7 +115,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Success(id, g)
 		return
 	}
-	buildKey := workflowService.GetWorkflowKey(id, workflowBuildRes.Id)
+	buildKey := workflowService.GetWorkflowKey(id.String(), workflowBuildRes.Id)
 	file1, err := workflowService.TemplateParse(buildKey, *repo.CloneURL, consts.Build)
 	if err == nil {
 		workflowBuildRes.ExecFile = file1
@@ -156,7 +157,8 @@ func (h *HandlerServer) projectDetail(gin *gin.Context) {
 
 func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 
-	projectId, err := strconv.Atoi(g.Param("id"))
+	projectIdStr := g.Param("id")
+	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
 		Fail("projectId is empty or invalid", g)
 		return
@@ -176,13 +178,14 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 	}
 	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectCheckWorkflow(uint(projectId), userVo)
+	_ = workflowService.ExecProjectCheckWorkflow(projectId, userVo)
 	Success("", g)
 }
 
 func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 
-	projectId, err := strconv.Atoi(g.Param("id"))
+	projectIdStr := g.Param("id")
+	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
 		Fail("projectId is empty or invalid", g)
 		return
@@ -202,7 +205,7 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 		return
 	}
 	copier.Copy(&userVo, &user)
-	err = workflowService.ExecProjectBuildWorkflow(uint(projectId), userVo)
+	err = workflowService.ExecProjectBuildWorkflow(projectId, userVo)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
