@@ -52,7 +52,7 @@ func (c *ContractService) QueryContracts(projectId uint, query, version, network
 		c.db.Raw(sql, projectId, query, network).Scan(&contracts)
 	} else if version != "" && network != "" {
 		sql = sql + "and version = ? and network = ? group by name"
-		c.db.Raw(sql, projectId, network).Scan(&contracts)
+		c.db.Raw(sql, projectId, version, network).Scan(&contracts)
 	} else if query != "" {
 		sql = sql + "and name like CONCAT('%',?,'%') group by name"
 		c.db.Raw(sql, projectId, query).Scan(&contracts)
@@ -150,7 +150,7 @@ func (c *ContractService) QueryContractNameList(projectId int) ([]string, error)
 
 func (c *ContractService) QueryNetworkList(projectId int) ([]string, error) {
 	var data []string
-	res := c.db.Model(db2.Contract{}).Distinct("network").Select("network").Where("project_id = ?", projectId).Find(&data)
+	res := c.db.Model(db2.Contract{}).Distinct("network").Select("network").Where("project_id = ? and network != '' ", projectId).Find(&data)
 	if res.Error != nil {
 		return data, res.Error
 	}

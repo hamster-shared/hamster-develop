@@ -241,10 +241,11 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 		TriggerUser: user.Username,
 		TriggerMode: 1,
 		CodeInfo:    "",
-		Status:      uint(detail.Status),
-		StartTime:   detail.StartTime,
-		CreateTime:  time.Now(),
-		UpdateTime:  time.Now(),
+		//Status:      uint(detail.Status),
+		Status:     1,
+		StartTime:  detail.StartTime,
+		CreateTime: time.Now(),
+		UpdateTime: time.Now(),
 	}
 
 	err = w.db.Transaction(func(tx *gorm.DB) error {
