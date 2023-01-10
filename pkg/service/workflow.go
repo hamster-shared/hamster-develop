@@ -314,12 +314,12 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 
 	copier.Copy(&detail, &workflowDetail)
 	if workflowDetail.Status == vo.WORKFLOW_STATUS_RUNNING {
-		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId, workflowDetail.Id)
+		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.Id)
 		jobDetail := w.engine.GetJobHistory(workflowKey, workflowDetailId)
 		data, err := json.Marshal(jobDetail.Stages)
 		if err != nil {
 			detail.StageInfo = string(data)
-			detail.EndTime = time.Now()
+			detail.Duration = jobDetail.Duration
 		}
 	}
 	return &detail, nil
