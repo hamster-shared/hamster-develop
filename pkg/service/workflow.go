@@ -2,12 +2,12 @@ package service
 
 import (
 	"bytes"
-	"database/sql"
 	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/hamster-shared/a-line/engine"
+	"github.com/hamster-shared/a-line/engine/logger"
 	"github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/consts"
@@ -16,6 +16,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/vo"
 	"github.com/jinzhu/copier"
+	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
 	"log"
 	"os"
@@ -61,6 +62,10 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 		ExecNumber: uint(jobDetail.Id),
 	}).First(&workflowDetail)
 
+	if workflowDetail.Id == 0 {
+		return
+	}
+
 	workflowDetail.Status = uint(jobDetail.Status)
 	stageInfo, err := json.Marshal(jobDetail.Stages)
 	if err != nil {
@@ -69,12 +74,13 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	workflowDetail.StageInfo = string(stageInfo)
 	workflowDetail.UpdateTime = time.Now()
 	workflowDetail.CodeInfo = w.engine.GetCodeInfo(message.JobName, message.JobId)
+	workflowDetail.Duration = jobDetail.Duration
 
-	tx := w.db.Save(workflowDetail)
+	tx := w.db.Save(&workflowDetail)
 	tx.Commit()
 
 	w.SyncContract(message, workflowDetail)
-	w.SyncReport(message)
+	w.SyncReport(message, workflowDetail)
 }
 
 func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
@@ -102,24 +108,24 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			}
 
 			contract := db.Contract{
-				ProjectId:        uint(projectId),
-				WorkflowId:       uint(workflowId),
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
 				WorkflowDetailId: workflowDetail.Id,
 				Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
-				Version:          fmt.Sprintf("#%d", workflowDetail.ExecNumber),
-				Network:          "",
+				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
 				BuildTime:        workflowDetail.CreateTime,
 				AbiInfo:          string(abi),
 				ByteCode:         bytecodeData.(string),
 				CreateTime:       time.Now(),
 			}
-			w.db.Save(contract)
+			err = w.db.Save(&contract).Error
+			fmt.Println(err)
 		}
 
 	}
 }
 
-func (w *WorkflowService) SyncReport(message model.StatusChangeMessage) {
+func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
 	if !strings.Contains(message.JobName, "_") {
 		return
 	}
@@ -132,6 +138,44 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage) {
 	if message.Status == model.STATUS_SUCCESS {
 		//TODO.... 实现同步报告
 		fmt.Println(projectId, workflowId, workflowExecNumber)
+		jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+		var reportList []db.Report
+		begin := w.db.Begin()
+		for _, report := range jobDetail.Reports {
+			file, err := os.ReadFile(report.Url)
+			if err != nil {
+				logger.Errorf("Check result path is err")
+				return
+			}
+			var contractCheckResult model.ContractCheckResult
+			err = json.Unmarshal(file, &contractCheckResult)
+			if err != nil {
+				logger.Errorf("Check result get fail")
+			}
+			marshal, err := json.Marshal(contractCheckResult.Context)
+			if err != nil {
+				logger.Errorf("Check context conversion failed")
+			}
+			report := db.Report{
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
+				WorkflowDetailId: workflowDetail.Id,
+				Name:             contractCheckResult.Name,
+				Type:             uint(consts.Check),
+				CheckTool:        contractCheckResult.Tool,
+				Result:           contractCheckResult.Result,
+				CheckTime:        time.Now(),
+				ReportFile:       string(marshal),
+				CreateTime:       time.Now(),
+			}
+			reportList = append(reportList, report)
+		}
+		err = begin.Save(&reportList).Error
+		if err != nil {
+			logger.Errorf("Save report fail, err is %s", err.Error())
+			return
+		}
+		begin.Commit()
 	}
 
 }
@@ -159,7 +203,24 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 		return errors.New("no check workflow in the project ")
 	}
 
-	workflowKey := GetWorkflowKey(projectId, workflow.Id)
+	workflowKey := w.GetWorkflowKey(projectId, workflow.Id)
+
+	job := w.engine.GetJob(workflowKey)
+	if job == nil {
+		var jobModel model.Job
+		err := yaml.Unmarshal([]byte((workflow.ExecFile)), &jobModel)
+		if jobModel.Name != workflowKey {
+			jobModel.Name = workflowKey
+			execFile, _ := yaml.Marshal(jobModel)
+			workflow.ExecFile = string(execFile)
+		}
+
+		err = w.engine.CreateJob(workflowKey, workflow.ExecFile)
+		if err != nil {
+			return err
+		}
+		job = w.engine.GetJob(workflowKey)
+	}
 
 	detail, err := w.engine.ExecuteJob(workflowKey)
 
@@ -172,6 +233,8 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 	}
 
 	dbDetail := db.WorkflowDetail{
+		Type:        workflowType,
+		ProjectId:   projectId,
 		WorkflowId:  workflow.Id,
 		ExecNumber:  uint(detail.Id),
 		StageInfo:   string(stageInfo),
@@ -179,12 +242,9 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 		TriggerMode: 1,
 		CodeInfo:    "",
 		Status:      uint(detail.Status),
-		StartTime: sql.NullTime{
-			Time:  detail.StartTime,
-			Valid: true,
-		},
-		CreateTime: time.Now(),
-		UpdateTime: time.Now(),
+		StartTime:   detail.StartTime,
+		CreateTime:  time.Now(),
+		UpdateTime:  time.Now(),
 	}
 
 	err = w.db.Transaction(func(tx *gorm.DB) error {
@@ -212,13 +272,16 @@ func (w *WorkflowService) GetWorkflowList(projectId, workflowType, page, size in
 	if result.Error != nil {
 		return &data, result.Error
 	}
-	copier.Copy(&workflowData, &workflowList)
-	if len(workflowData) > 0 {
-		for _, datum := range workflowData {
+	if len(workflowList) > 0 {
+		for _, datum := range workflowList {
 			var detailData db2.WorkflowDetail
-			res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", datum.Id, datum.LastExecId).First(&detailData)
-			if res.Error != nil {
-				copier.Copy(&datum, &detailData)
+			res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and project_id = ?", datum.Id, datum.ProjectId).Order("start_time DESC").First(&detailData)
+			if res.Error == nil {
+				var resData vo.WorkflowVo
+				copier.Copy(&resData, &detailData)
+				copier.Copy(&resData, &datum)
+				resData.DetailId = detailData.Id
+				workflowData = append(workflowData, resData)
 			}
 		}
 	}
@@ -229,7 +292,18 @@ func (w *WorkflowService) GetWorkflowList(projectId, workflowType, page, size in
 	return &data, nil
 }
 
-func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*db2.WorkflowDetail, error) {
+func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*vo.WorkflowDetailVo, error) {
+	var workflowDetail db2.WorkflowDetail
+	var detail vo.WorkflowDetailVo
+	res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
+	if res.Error != nil {
+		return &detail, res.Error
+	}
+	copier.Copy(&detail, &workflowDetail)
+	return &detail, nil
+}
+
+func (w *WorkflowService) QueryWorkflowDetail(workflowId, workflowDetailId int) (*db2.WorkflowDetail, error) {
 	var workflowDetail db2.WorkflowDetail
 	res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
 	if res.Error != nil {
@@ -238,21 +312,30 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	return &workflowDetail, nil
 }
 
-func GetWorkflowKey(projectId uint, workflowId uint) string {
+func (w *WorkflowService) QueryWorkflow(workflowId int) (*db2.Workflow, error) {
+	var workflow db2.Workflow
+	res := w.db.Model(db2.Workflow{}).Where("id = ?", workflowId).First(&workflow)
+	if res.Error != nil {
+		return &workflow, res.Error
+	}
+	return &workflow, nil
+}
+
+func (w *WorkflowService) GetWorkflowKey(projectId uint, workflowId uint) string {
 	return fmt.Sprintf("%d_%d", projectId, workflowId)
 }
 
-func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (int, int, error) {
+func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (uint, uint, error) {
 	projectId, err := strconv.Atoi(strings.Split(projectKey, "_")[0])
 	if err != nil {
 		return 0, 0, err
 	}
 	workflowId, err := strconv.Atoi(strings.Split(projectKey, "_")[1])
-	return projectId, workflowId, err
+	return uint(projectId), uint(workflowId), err
 
 }
 
-func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (uint, error) {
+func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db2.Workflow, error) {
 	var workflow db2.Workflow
 	workflow.Type = uint(saveData.Type)
 	workflow.CreateTime = time.Now()
@@ -260,17 +343,25 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (ui
 	workflow.ProjectId = saveData.ProjectId
 	workflow.ExecFile = saveData.ExecFile
 	workflow.LastExecId = saveData.LastExecId
-	res := w.db.Create(&workflow)
+	res := w.db.Save(&workflow)
 	if res.Error != nil {
-		return 0, res.Error
+		return workflow, res.Error
 	}
-	return workflow.Id, nil
+	return workflow, nil
+}
+
+func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {
+	res := w.db.Save(&data)
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
 }
 
 func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.WorkflowType) (string, error) {
-	filePath := "templates/truffle_check.yml"
+	filePath := "templates/truffle-build.yml"
 	if workflowType == consts.Check {
-		filePath = "templates/truffle-build.yml"
+		filePath = "templates/truffle_check.yml"
 	}
 	content, err := temp.ReadFile(filePath)
 	if err != nil {
@@ -294,4 +385,13 @@ func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.Wo
 		return "", err
 	}
 	return input.String(), nil
+}
+
+func (w *WorkflowService) DeleteWorkflow(projectId, workflowId int) error {
+	err := w.db.Model(db2.Workflow{}).Where("project_id = ? and id = ?", projectId, workflowId).Delete(db2.Workflow{}).Error
+	if err != nil {
+		return err
+	}
+	w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ?", workflowId).Delete(db2.WorkflowDetail{})
+	return nil
 }

@@ -8,6 +8,7 @@ type CreateProjectParam struct {
 	FrameType     int    `json:"frameType"`
 	RepoOwner     string `json:"repoOwner"`
 	UserId        int64  `json:"userId"`
+	Branch        string `json:"branch"`
 }
 
 type CheckNameParam struct {

@@ -27,6 +27,12 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("daemon called")
+
+		passwordFlag := cmd.Flags().Lookup("db_password")
+
+		DSN := fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local", passwordFlag.Value)
+		//DSN := fmt.Sprintf("root:%s@tcp(34.232.105.81:3306)/aline?charset=utf8&parseTime=True&loc=Local", "Aline123456")
+
 		go Engine.Start()
 
 		port, _ = rootCmd.PersistentFlags().GetInt("port")
@@ -55,6 +61,8 @@ to quickly create a Cobra application.`,
 		application.SetBean[*service.ContractService]("contractService", contractService)
 		reportService := service.NewReportService()
 		application.SetBean[*service.ReportService]("reportService", reportService)
+		userService := service.NewUserService()
+		application.SetBean[*service.UserService]("userService", userService)
 		githubService := service.NewGithubService()
 		application.SetBean[*service.GithubService]("githubService", githubService)
 		loginService := service.NewLoginService()
@@ -73,9 +81,9 @@ func init() {
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// daemonCmd.PersistentFlags().String("foo", "", "A help for foo")
+	//daemonCmd.PersistentFlags().String("db_password", "123456", "database password")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// daemonCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	daemonCmd.Flags().String("db_password", "123456", "database password")
 }

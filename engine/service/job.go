@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"github.com/hamster-shared/a-line/engine/consts"
 	"github.com/hamster-shared/a-line/engine/logger"
 	model2 "github.com/hamster-shared/a-line/engine/model"
@@ -84,7 +83,7 @@ func NewJobService() *JobService {
 func (svc *JobService) SaveJob(name string, yaml string) error {
 	//file directory path
 	dir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name)
-	src := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, name+".yml")
+	src := filepath.Join(dir, name+".yml")
 	//determine whether the folder exists, and create it if it does not exist
 	_, err := os.Stat(dir)
 	if err != nil && os.IsNotExist(err) {
@@ -93,10 +92,8 @@ func (svc *JobService) SaveJob(name string, yaml string) error {
 			log.Println("create jobs dir failed", err.Error())
 			return err
 		}
-	} else {
-		log.Println("the pipeline job name already exists")
-		return errors.New("the pipeline job name already exists")
 	}
+
 	//write data to yaml file
 	err = os.WriteFile(src, []byte(yaml), 0777)
 	if err != nil {
@@ -592,7 +589,7 @@ func (svc *JobService) GetJobObject(name string) *model2.Job {
 	//not exist
 	if os.IsNotExist(err) {
 		log.Println("get job failed,job file not exist", err.Error())
-		return &jobData
+		return nil
 	}
 	//exist
 	fileContent, err := os.ReadFile(src)

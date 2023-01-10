@@ -14,6 +14,7 @@ type WorkflowPage struct {
 type WorkflowVo struct {
 	Id          uint      `json:"id"`
 	ProjectId   uint      `json:"projectId"`
+	DetailId    uint      `json:"detailId"`
 	Type        uint      `json:"type"`
 	LastExecId  uint      `json:"lastExecId"`
 	ExecNumber  uint      `json:"execNumber"`
@@ -23,13 +24,14 @@ type WorkflowVo struct {
 	TriggerMode uint      `json:"triggerMode"`
 	Status      uint      `json:"status"`
 	StartTime   time.Time `json:"startTime"`
+	Duration    int64     `json:"duration"`
 }
 
 type WorkflowDetailVo struct {
-	Id         uint `gorm:"primaryKey" json:"id"`
-	WorkflowId uint
-	StageInfo  string
-	Status     uint
-	StartTime  time.Time
-	EndTime    time.Time
+	Id         uint      `json:"id"`
+	WorkflowId uint      `json:"workflowId"`
+	StageInfo  string    `json:"stageInfo"`
+	Status     uint      `json:"status"`
+	StartTime  time.Time `json:"startTime"`
+	Duration   int64     `json:"duration"`
 }

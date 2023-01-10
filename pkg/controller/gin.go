@@ -29,13 +29,15 @@ func NewHttpService(handlerServer HandlerServer, port int) *HttpServer {
 
 func (h *HttpServer) StartHttpServer() {
 	r := gin.Default()
-	api := r.Group("/api", h.handlerServer.loginWithGithub)
+	api := r.Group("/api")
 
-	api.POST("/login")
+	api.POST("/login", h.handlerServer.loginWithGithub)
+	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
+	//api.Use(h.handlerServer.Authorize())
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
-	api.GET("/templates-category/:id/template/:templateId", h.handlerServer.templateDetail)
+	api.GET("/templates/:id", h.handlerServer.templateDetail)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
 	api.POST("/projects", h.handlerServer.createProject) // 进行中
@@ -58,7 +60,7 @@ func (h *HttpServer) StartHttpServer() {
 		合约部署详情接口有问题
 		根据版本查询合约信息（返回abi信息和byte code）
 	*/
-
+	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/stop", h.handlerServer.stopWorkflow)
 	api.POST("/projects/:id/check", h.handlerServer.projectWorkflowCheck)
 	api.POST("/projects/:id/build", h.handlerServer.projectWorkflowBuild)
 	api.GET("/projects/:id/contract", h.handlerServer.projectContract)
@@ -67,6 +69,7 @@ func (h *HttpServer) StartHttpServer() {
 
 	//workflow
 	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)
+	api.DELETE("/projects/:id/workflows/:workflowId", h.handlerServer.deleteWorkflow)
 	api.GET("/workflows/:id/detail/:detailId", h.handlerServer.workflowDetail)
 	api.GET("/workflows/:id/detail/:detailId/contract", h.handlerServer.workflowContract)
 	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)
@@ -75,6 +78,13 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/contract/:version", h.handlerServer.contractInfo)
 	api.GET("/projects/:id/contract/deploy/detail", h.handlerServer.contractDeployDetailByVersion)
 	api.GET("/projects/:id/versions", h.handlerServer.versionList)
+	api.GET("/projects/:id/contract/name", h.handlerServer.queryContractNameList)
+	api.GET("/projects/:id/contract/network", h.handlerServer.queryNetworkList)
+	api.GET("/projects/:id/check-tools", h.handlerServer.queryReportCheckTools)
+
+	//logs
+	api.GET("/workflows/:id/detail/:detailId/logs", h.handlerServer.getWorkflowLog)
+	api.GET("/workflows/:id/detail/:detailId/logs/:stageName", h.handlerServer.getWorkflowStageLog)
 
 	// ======== old api =========//
 	// pipeline

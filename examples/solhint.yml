@@ -8,14 +8,13 @@ stages:
         with:
           url: https://github.com/abing258/solidity_contracts.git
           branch: main
-  code-compile:
+  solhint-check:
     needs:
       - git-clone
     steps:
-      - name: sol-profiler-install
+      - name: solhint-install
         run: |
           npm install -g solhint
-          solhint --init
       - name: solhint-check
         uses: solhint-check
         with:

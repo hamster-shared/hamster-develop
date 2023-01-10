@@ -13,5 +13,5 @@ type Report struct {
 	Result           string    `json:"result"`
 	CheckTime        time.Time `json:"checkTime"`
 	ReportFile       string    `json:"reportFile"`
-	CreateTime       time.Time `json:"createTime"`
+	CreateTime       time.Time `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
 }

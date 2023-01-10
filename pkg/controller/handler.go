@@ -13,7 +13,6 @@ import (
 	"gopkg.in/yaml.v3"
 	"path/filepath"
 	"strconv"
-	"strings"
 )
 
 type HandlerServer struct {
@@ -38,7 +37,7 @@ func (h *HandlerServer) createPipeline(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	err = h.Engine.CreateJob(createData.Name, strings.NewReader(createData.Yaml))
+	err = h.Engine.CreateJob(createData.Name, createData.Yaml)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

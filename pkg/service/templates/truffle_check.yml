@@ -9,12 +9,35 @@ stages:
           url: {{ .RepositoryUrl }}
           branch: main
 
-  solidity-lint:
+  sol-profiler-check:
     needs:
-      - code-compile
+      - git-clone
     steps:
-      - name: solidity-check
+      - name: sol-profiler-install
         run: |
-          npm install -g ethlint
-          solium --init
-          solium --rule 'indentation: ["error", "tab"]' -d contracts/
+          npm install --global sol-profiler
+      - name: sol-profiler-check
+        uses: sol-profiler-check
+        with:
+          path:
+
+  solhint-check:
+    needs:
+      - sol-profiler-check
+    steps:
+      - name: sol-profiler-install
+        run: |
+          npm install -g solhint
+      - name: solhint-check
+        uses: solhint-check
+        with:
+          path:
+
+#  mythril-check:
+#    needs:
+#      - solhint-check
+#    steps:
+#      - name: mythril-check
+#        uses: mythril-check
+#        with:
+#          path:

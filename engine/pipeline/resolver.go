@@ -28,3 +28,11 @@ func GetJobFromReader(reader io.Reader) (*model.Job, error) {
 
 	return &job, err
 }
+
+func GetJobFromYaml(yamlStr string) (*model.Job, error) {
+	var job model.Job
+
+	err := yaml.Unmarshal([]byte(yamlStr), &job)
+
+	return &job, err
+}

@@ -1,9 +1,11 @@
 package service
 
 import (
+	"fmt"
 	"github.com/goperate/convert/core/array"
 	"github.com/hamster-shared/a-line/pkg/application"
 	db2 "github.com/hamster-shared/a-line/pkg/db"
+	"github.com/hamster-shared/a-line/pkg/utils"
 	"github.com/hamster-shared/a-line/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
@@ -21,37 +23,54 @@ func NewContractService() *ContractService {
 
 func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
 
-	err := c.db.Transaction(func(tx *gorm.DB) error {
-		tx.Save(entity)
-		return nil
-	})
-
+	err := c.db.Save(&entity).Error
+	if err != nil {
+		return err
+	}
+	var contract db2.Contract
+	err = c.db.Model(db2.Contract{}).Where("id = ?", entity.ContractId).First(&contract).Error
+	if err != nil {
+		return err
+	}
+	contract.Network = entity.Network
+	c.db.Save(&contract)
 	return err
 }
 
 func (c *ContractService) QueryContracts(projectId uint, query, version, network string, page int, size int) (vo.Page[db2.Contract], error) {
-	var total int64
 	var contracts []db2.Contract
-	tx := c.db.Model(db2.Contract{
-		ProjectId: projectId,
-	})
-	if query != "" {
-		tx = tx.Where("name like ? ", "%"+query+"%")
+	var afterData []db2.Contract
+	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,byte_code,create_time from t_contract where project_id = ? ")
+	if query != "" && version != "" && network != "" {
+		sql = sql + "and name like CONCAT('%',?,'%') and version = ? and network = ? group by name"
+		c.db.Raw(sql, projectId, query, version, network).Scan(&contracts)
+	} else if query != "" && version != "" {
+		sql = sql + "and name like CONCAT('%',?,'%') and version = ? group by name"
+		c.db.Raw(sql, projectId, query, version).Scan(&contracts)
+	} else if query != "" && network != "" {
+		sql = sql + "and name like CONCAT('%',?,'%') and network = ? group by name"
+		c.db.Raw(sql, projectId, query, network).Scan(&contracts)
+	} else if version != "" && network != "" {
+		sql = sql + "and version = ? and network = ? group by name"
+		c.db.Raw(sql, projectId, network).Scan(&contracts)
+	} else if query != "" {
+		sql = sql + "and name like CONCAT('%',?,'%') group by name"
+		c.db.Raw(sql, projectId, query).Scan(&contracts)
+	} else if network != "" {
+		sql = sql + "and network = ? group by name"
+		c.db.Raw(sql, projectId, network).Scan(&contracts)
+	} else if version != "" {
+		sql = sql + "and version = ? group by name"
+		c.db.Raw(sql, projectId, version).Scan(&contracts)
+	} else {
+		sql = sql + "group by name"
+		c.db.Raw(sql, projectId).Scan(&contracts)
 	}
-
-	if version != "" {
-		tx = tx.Where("version = ?", version)
+	if len(contracts) > 0 {
+		start, end := utils.SlicePage(int64(page), int64(size), int64(len(contracts)))
+		afterData = contracts[start:end]
 	}
-	if network != "" {
-		tx = tx.Where("network like ?", "%"+network+"%")
-	}
-
-	result := tx.Offset((page - 1) * size).Limit(size).Find(&contracts).Count(&total)
-	if result.Error != nil {
-		return vo.NewEmptyPage[db2.Contract](), result.Error
-	}
-
-	return vo.NewPage[db2.Contract](contracts, int(total), page, size), nil
+	return vo.NewPage[db2.Contract](afterData, len(contracts), page, size), nil
 }
 
 func (c *ContractService) QueryContractByWorkflow(workflowId, workflowDetailId int) ([]db2.Contract, error) {
@@ -67,7 +86,7 @@ func (c *ContractService) QueryContractByVersion(projectId int, version string) 
 	var contracts []db2.Contract
 	var data []vo.ContractVo
 	res := c.db.Model(db2.Contract{}).Where("project_id = ? and version = ?", projectId, version).Find(&contracts)
-	if res != nil {
+	if res.Error != nil {
 		return data, res.Error
 	}
 	if len(contracts) > 0 {
@@ -114,6 +133,24 @@ func (c *ContractService) QueryContractDeployByVersion(projectId int, version st
 func (c *ContractService) QueryVersionList(projectId int) ([]string, error) {
 	var data []string
 	res := c.db.Model(db2.Contract{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Find(&data)
+	if res.Error != nil {
+		return data, res.Error
+	}
+	return data, nil
+}
+
+func (c *ContractService) QueryContractNameList(projectId int) ([]string, error) {
+	var data []string
+	res := c.db.Model(db2.Contract{}).Distinct("name").Select("name").Where("project_id = ?", projectId).Find(&data)
+	if res.Error != nil {
+		return data, res.Error
+	}
+	return data, nil
+}
+
+func (c *ContractService) QueryNetworkList(projectId int) ([]string, error) {
+	var data []string
+	res := c.db.Model(db2.Contract{}).Distinct("network").Select("network").Where("project_id = ?", projectId).Find(&data)
 	if res.Error != nil {
 		return data, res.Error
 	}

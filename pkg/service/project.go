@@ -3,16 +3,18 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/hamster-shared/a-line/pkg/consts"
 	db2 "github.com/hamster-shared/a-line/pkg/db"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"time"
 )
 
 type IProjectService interface {
-	GetProjects(keyword string, page, size int) (*vo.ProjectPage, error)
+	GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uint, error)
-	GetProject(id int) (*db2.Project, error)
+	GetProject(id int) (*vo.ProjectDetailVo, error)
 	UpdateProject(id int, updateData vo.UpdateProjectParam) error
 	DeleteProject(id int) error
 }
@@ -29,11 +31,12 @@ func (p *ProjectService) Init(db *gorm.DB) {
 	p.db = db
 }
 
-func (p *ProjectService) GetProjects(keyword string, page, size int) (*vo.ProjectPage, error) {
+func (p *ProjectService) GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error) {
 	var total int64
 	var projectPage vo.ProjectPage
 	var projects []db2.Project
-	tx := p.db.Model(db2.Project{})
+	var projectList []vo.ProjectListVo
+	tx := p.db.Model(db2.Project{}).Where("user_id = ?", userId)
 	if keyword != "" {
 		tx = tx.Where("name like ? ", "%"+keyword+"%")
 	}
@@ -41,7 +44,40 @@ func (p *ProjectService) GetProjects(keyword string, page, size int) (*vo.Projec
 	if result.Error != nil {
 		return &projectPage, result.Error
 	}
-	projectPage.Data = projects
+	if len(projects) > 0 {
+		for _, project := range projects {
+			var data vo.ProjectListVo
+			var recentBuild vo.RecentBuildVo
+			var recentCheck vo.RecentCheckVo
+			var recentDeploy vo.RecentDeployVo
+			var workflowBuildData db2.WorkflowDetail
+			var workflowCheckData db2.WorkflowDetail
+			copier.Copy(&data, &project)
+			err := p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Check).Order("start_time DESC").Limit(1).Find(&workflowCheckData).Error
+			if err == nil {
+				copier.Copy(&recentCheck, workflowCheckData)
+			}
+			err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Build).Order("start_time DESC").Limit(1).Find(&workflowBuildData).Error
+			if err == nil {
+				copier.Copy(&recentBuild, &workflowBuildData)
+				var contractData db2.Contract
+				err = p.db.Model(db2.Contract{}).Where("project_id = ?", project.Id).Order("build_time DESC").Limit(1).Find(&contractData).Error
+				if err == nil {
+					recentBuild.Version = contractData.Version
+				}
+			}
+			var deployData db2.ContractDeploy
+			err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+			if err == nil {
+				copier.Copy(&recentDeploy, &deployData)
+			}
+			data.RecentBuild = recentBuild
+			data.RecentCheck = recentCheck
+			data.RecentDeploy = recentDeploy
+			projectList = append(projectList, data)
+		}
+	}
+	projectPage.Data = projectList
 	projectPage.Total = int(total)
 	projectPage.Page = page
 	projectPage.PageSize = size
@@ -59,26 +95,55 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uint, 
 		project.UpdateTime = time.Now()
 		project.FrameType = createData.FrameType
 		project.Type = uint(createData.Type)
+		project.RepositoryUrl = createData.TemplateUrl
 		p.db.Create(&project)
 		return project.Id, nil
 	}
 	return project.Id, errors.New(fmt.Sprintf("application:%s already exists", createData.Name))
 }
 
-func (p *ProjectService) GetProject(id int) (*db2.Project, error) {
+func (p *ProjectService) GetProject(id int) (*vo.ProjectDetailVo, error) {
 	var data db2.Project
+	var detail vo.ProjectDetailVo
 	result := p.db.Where("id = ? ", id).First(&data)
 	if result.Error != nil {
-		return &data, result.Error
+		return &detail, result.Error
 	}
-	return &data, nil
+	var recentBuild vo.RecentBuildVo
+	var recentCheck vo.RecentCheckVo
+	var recentDeploy vo.RecentDeployVo
+	var workflowBuildData db2.WorkflowDetail
+	var workflowCheckData db2.WorkflowDetail
+	copier.Copy(&detail, &data)
+	err := p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Check).Order("start_time DESC").Limit(1).Find(&workflowCheckData).Error
+	if err == nil {
+		copier.Copy(&recentCheck, workflowCheckData)
+	}
+	err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Build).Order("start_time DESC").Limit(1).Find(&workflowBuildData).Error
+	if err == nil {
+		copier.Copy(&recentBuild, &workflowBuildData)
+		var contractData db2.Contract
+		err = p.db.Model(db2.Contract{}).Where("project_id = ?", data.Id).Order("build_time DESC").Limit(1).Find(&contractData).Error
+		if err == nil {
+			recentBuild.Version = contractData.Version
+		}
+	}
+	var deployData db2.ContractDeploy
+	err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+	if err == nil {
+		copier.Copy(&recentDeploy, &deployData)
+	}
+	detail.RecentBuild = recentBuild
+	detail.RecentCheck = recentCheck
+	detail.RecentDeploy = recentDeploy
+	return &detail, nil
 }
 
 func (p *ProjectService) UpdateProject(id int, updateData vo.UpdateProjectParam) error {
 	var data db2.Project
 	err := p.db.Where("name=? and user_id = ?", updateData.Name, updateData.UserId).First(&data).Error
 	if err == gorm.ErrRecordNotFound {
-		result := p.db.Model(data).Where("id = ?", id).Updates(db2.Project{Name: updateData.Name, UpdateTime: time.Now(), UpdateUser: uint(updateData.UserId)})
+		result := p.db.Model(data).Where("id = ?", id).Updates(db2.Project{Name: updateData.Name, RepositoryUrl: updateData.RepositoryUrl, UpdateTime: time.Now(), UpdateUser: uint(updateData.UserId)})
 		if result.Error != nil {
 			return result.Error
 		}

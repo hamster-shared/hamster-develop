@@ -7,7 +7,10 @@ import (
 	"github.com/hamster-shared/a-line/pkg/consts"
 	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/service"
+	"github.com/hamster-shared/a-line/pkg/utils"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	"github.com/jinzhu/copier"
+	"net/http"
 	"strconv"
 )
 
@@ -28,7 +31,15 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	data, err := h.projectService.GetProjects(query, page, size)
+	accessToken := gin.Request.Header.Get("Access-Token")
+	if accessToken == "" {
+		Failed(http.StatusUnauthorized, "No access", gin)
+		return
+	}
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	userService := application.GetBean[*service.UserService]("userService")
+	user, err := userService.GetUserByToken(token)
+	data, err := h.projectService.GetProjects(int(user.Id), query, page, size)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -37,27 +48,37 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 }
 
 func (h *HandlerServer) createProject(g *gin.Context) {
-
 	createData := parameter.CreateProjectParam{}
 	err := g.BindJSON(&createData)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
-
+	accessToken := g.Request.Header.Get("Access-Token")
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	githubService := application.GetBean[*service.GithubService]("githubService")
 
-	repo, err := githubService.CreateRepo("", createData.TemplateOwner, createData.TemplateRepo, createData.Name, createData.RepoOwner)
+	repo, res, err := githubService.CreateRepo(token, createData.TemplateOwner, createData.TemplateRepo, createData.Name, createData.RepoOwner)
 	if err != nil {
+		if res.StatusCode == http.StatusUnauthorized {
+			Failed(http.StatusUnauthorized, "access not authorized", g)
+			return
+		}
 		Fail(err.Error(), g)
+		return
+	}
+	userService := application.GetBean[*service.UserService]("userService")
+	user, err := userService.GetUserByToken(token)
+	if err != nil {
+		Fail("get user info failed", g)
 		return
 	}
 	data := vo.CreateProjectParam{
 		Name:        createData.Name,
 		Type:        createData.Type,
-		TemplateUrl: *repo.URL,
+		TemplateUrl: *repo.CloneURL,
 		FrameType:   createData.FrameType,
-		UserId:      createData.UserId,
+		UserId:      int64(user.Id),
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
@@ -65,25 +86,39 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	file, err := workflowService.TemplateParse("solidity-check", *repo.URL, consts.Check)
-	if err == nil {
-		workflowData := parameter.SaveWorkflowParam{
-			ProjectId:  id,
-			Type:       consts.Check,
-			ExecFile:   file,
-			LastExecId: 0,
-		}
-		workflowService.SaveWorkflow(workflowData)
+	workflowCheckData := parameter.SaveWorkflowParam{
+		ProjectId:  id,
+		Type:       consts.Check,
+		ExecFile:   "",
+		LastExecId: 0,
 	}
-	file1, err := workflowService.TemplateParse("solidity-build", *repo.URL, consts.Build)
+	workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+	if err != nil {
+		Success(id, g)
+		return
+	}
+	checkKey := workflowService.GetWorkflowKey(id, workflowCheckRes.Id)
+	file, err := workflowService.TemplateParse(checkKey, *repo.CloneURL, consts.Check)
 	if err == nil {
-		workflowData := parameter.SaveWorkflowParam{
-			ProjectId:  id,
-			Type:       consts.Build,
-			ExecFile:   file1,
-			LastExecId: 0,
-		}
-		workflowService.SaveWorkflow(workflowData)
+		workflowCheckRes.ExecFile = file
+		workflowService.UpdateWorkflow(workflowCheckRes)
+	}
+	workflowBuildData := parameter.SaveWorkflowParam{
+		ProjectId:  id,
+		Type:       consts.Build,
+		ExecFile:   "",
+		LastExecId: 0,
+	}
+	workflowBuildRes, err := workflowService.SaveWorkflow(workflowBuildData)
+	if err != nil {
+		Success(id, g)
+		return
+	}
+	buildKey := workflowService.GetWorkflowKey(id, workflowBuildRes.Id)
+	file1, err := workflowService.TemplateParse(buildKey, *repo.CloneURL, consts.Build)
+	if err == nil {
+		workflowBuildRes.ExecFile = file1
+		workflowService.UpdateWorkflow(workflowBuildRes)
 	}
 	Success(id, g)
 
@@ -126,9 +161,22 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-
+	accessToken := g.Request.Header.Get("Access-Token")
+	if accessToken == "" {
+		Failed(http.StatusUnauthorized, "No access", g)
+		return
+	}
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	userService := application.GetBean[*service.UserService]("userService")
+	var userVo vo.UserAuth
+	user, err := userService.GetUserByToken(token)
+	if err != nil {
+		Fail("get user info failed", g)
+		return
+	}
+	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectCheckWorkflow(uint(projectId), h.getUserInfo(g))
+	_ = workflowService.ExecProjectCheckWorkflow(uint(projectId), userVo)
 	Success("", g)
 }
 
@@ -139,9 +187,26 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-
+	accessToken := g.Request.Header.Get("Access-Token")
+	if accessToken == "" {
+		Failed(http.StatusUnauthorized, "No access", g)
+		return
+	}
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectBuildWorkflow(uint(projectId), h.getUserInfo(g))
+	userService := application.GetBean[*service.UserService]("userService")
+	var userVo vo.UserAuth
+	user, err := userService.GetUserByToken(token)
+	if err != nil {
+		Fail("get user info failed", g)
+		return
+	}
+	copier.Copy(&userVo, &user)
+	err = workflowService.ExecProjectBuildWorkflow(uint(projectId), userVo)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
 	Success("", g)
 }
 
@@ -155,12 +220,13 @@ func (h *HandlerServer) projectContract(g *gin.Context) {
 
 	query := g.Query("query")
 	version := g.Query("version")
+	network := g.Query("network")
 	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(g.DefaultQuery("size", "10"))
 
 	contractService := application.GetBean[*service.ContractService]("contractService")
 
-	result, err := contractService.QueryContracts(uint(projectId), query, version, "", page, size)
+	result, err := contractService.QueryContracts(uint(projectId), query, version, network, page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)
@@ -178,13 +244,13 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 		return
 	}
 
-	Type, _ := strconv.Atoi(g.DefaultQuery("type", "1"))
+	Type := g.DefaultQuery("type", "")
 	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(g.DefaultQuery("size", "10"))
 
 	reportService := application.GetBean[*service.ReportService]("reportService")
 
-	result, err := reportService.QueryReports(uint(projectId), uint(Type), page, size)
+	result, err := reportService.QueryReports(uint(projectId), Type, page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)
@@ -208,6 +274,31 @@ func (h *HandlerServer) updateProject(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	accessToken := gin.Request.Header.Get("Access-Token")
+	if accessToken == "" {
+		Failed(http.StatusUnauthorized, "No access", gin)
+		return
+	}
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	userService := application.GetBean[*service.UserService]("userService")
+	user, err := userService.GetUserByToken(token)
+	updateData.UserId = int(user.Id)
+	project, err := h.projectService.GetProject(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	repo, res, err := githubService.UpdateRepo(token, user.Username, project.Name, updateData.Name)
+	if err != nil {
+		if res.StatusCode == http.StatusUnauthorized {
+			Failed(http.StatusUnauthorized, "access not authorized", gin)
+			return
+		}
+		Fail(err.Error(), gin)
+		return
+	}
+	updateData.RepositoryUrl = *repo.CloneURL
 	err = h.projectService.UpdateProject(id, updateData)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -238,7 +329,9 @@ func (h *HandlerServer) checkName(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	accessToken := gin.Request.Header.Get("Access-Token")
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	data := githubService.CheckName("", checkData.Owner, checkData.Name)
+	data := githubService.CheckName(token, checkData.Owner, checkData.Name)
 	Success(data, gin)
 }

@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/hamster-shared/a-line/engine/consts"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	path2 "path"
+	"strconv"
 	"strings"
 )
 
@@ -31,6 +33,21 @@ func NewSolHintAction(step model.Step, ctx context.Context, output *output.Outpu
 }
 
 func (a *SolHintAction) Pre() error {
+	stack := a.ctx.Value(STACK).(map[string]interface{})
+
+	workdir, ok := stack["workdir"].(string)
+	if !ok {
+		return errors.New("workdir is empty")
+	}
+	create, err := os.Create(path2.Join(workdir, consts.SolHintCheckInitFileName))
+	if err != nil {
+		return err
+	}
+	_, err = create.WriteString(consts.SolHintCheckRule)
+	if err != nil {
+		return err
+	}
+	create.Close()
 	return nil
 }
 
@@ -87,10 +104,73 @@ func (a *SolHintAction) Hook() (*model.ActionResult, error) {
 		}
 		create.Close()
 	}
-	return nil, err
+	a.path = destDir
+	id, err := strconv.Atoi(jobId)
+	if err != nil {
+		return nil, err
+	}
+	actionResult := model.ActionResult{
+		Artifactorys: nil,
+		Reports: []model.Report{
+			{
+				Id:   id,
+				Url:  path2.Join(a.path, consts.CheckResult),
+				Type: 2,
+			},
+		},
+	}
+	return &actionResult, err
 }
 
 func (a *SolHintAction) Post() error {
+	open, err := os.Open(a.path)
+	if err != nil {
+		return err
+	}
+	fileInfo, err := open.Stat()
+	if err != nil {
+		return err
+	}
+	isDir := fileInfo.IsDir()
+	if !isDir {
+		return errors.New("check result path is err")
+	}
+	fileInfos, err := open.Readdir(-1)
+	successFlag := true
+	var checkResultDetailsList []model.ContractCheckResultDetails
+	for _, info := range fileInfos {
+		path := path2.Join(a.path, info.Name())
+		file, err := os.ReadFile(path)
+		if err != nil {
+			return errors.New("file open fail")
+		}
+		result := string(file)
+		if !strings.Contains(result, "0 Errors") || !strings.Contains(result, "0 Warnings") {
+			successFlag = false
+		}
+		details := model.NewContractCheckResultDetails(strings.Replace(info.Name(), consts.SuffixType, consts.SolFileSuffix, 1), result)
+		checkResultDetailsList = append(checkResultDetailsList, details)
+	}
+	var result string
+	if successFlag {
+		result = consts.CheckSuccess.Result
+	} else {
+		result = consts.CheckFail.Result
+	}
+	checkResult := model.NewContractCheckResult(consts.SolHint.Name, result, consts.SolHint.Tool, checkResultDetailsList)
+	create, err := os.Create(path2.Join(a.path, consts.CheckResult))
+	if err != nil {
+		return err
+	}
+	marshal, err := json.Marshal(checkResult)
+	if err != nil {
+		return err
+	}
+	_, err = create.WriteString(string(marshal))
+	if err != nil {
+		return err
+	}
+	create.Close()
 	return nil
 }
 

@@ -15,7 +15,8 @@ type Project struct {
 	Creator       int64          `json:"creator"`
 	DeleteUser    uint           `json:"deleteUser"`
 	UpdateUser    uint           `json:"updateUser"`
-	CreateTime    time.Time      `json:"createTime"`
+	Branch        string         `json:"branch"`
+	CreateTime    time.Time      `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
 	UpdateTime    time.Time      `json:"updateTime"`
 	DeleteTime    gorm.DeletedAt `json:"deleteTime"`
 }
