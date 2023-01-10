@@ -15,9 +15,9 @@ import (
 type IProjectService interface {
 	GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error)
-	GetProject(id int) (*vo.ProjectDetailVo, error)
-	UpdateProject(id int, updateData vo.UpdateProjectParam) error
-	DeleteProject(id int) error
+	GetProject(id string) (*vo.ProjectDetailVo, error)
+	UpdateProject(id string, updateData vo.UpdateProjectParam) error
+	DeleteProject(id string) error
 }
 
 type ProjectService struct {
@@ -104,7 +104,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 	return project.Id, errors.New(fmt.Sprintf("application:%s already exists", createData.Name))
 }
 
-func (p *ProjectService) GetProject(id int) (*vo.ProjectDetailVo, error) {
+func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 	var data db2.Project
 	var detail vo.ProjectDetailVo
 	result := p.db.Where("id = ? ", id).First(&data)
@@ -141,7 +141,7 @@ func (p *ProjectService) GetProject(id int) (*vo.ProjectDetailVo, error) {
 	return &detail, nil
 }
 
-func (p *ProjectService) UpdateProject(id int, updateData vo.UpdateProjectParam) error {
+func (p *ProjectService) UpdateProject(id string, updateData vo.UpdateProjectParam) error {
 	var data db2.Project
 	err := p.db.Where("name=? and user_id = ?", updateData.Name, updateData.UserId).First(&data).Error
 	if err == gorm.ErrRecordNotFound {
@@ -154,7 +154,7 @@ func (p *ProjectService) UpdateProject(id int, updateData vo.UpdateProjectParam)
 	return errors.New(fmt.Sprintf("application:%s already exists", updateData.Name))
 }
 
-func (p *ProjectService) DeleteProject(id int) error {
+func (p *ProjectService) DeleteProject(id string) error {
 	result := p.db.Debug().Where("id = ?", id).Delete(&db2.Project{})
 	if result.Error != nil {
 		return result.Error

@@ -1,6 +1,7 @@
 package vo
 
 import (
+	uuid "github.com/iris-contrib/go.uuid"
 	"time"
 )
 
@@ -12,7 +13,7 @@ type ProjectPage struct {
 }
 
 type ProjectListVo struct {
-	Id            uint           `gorm:"primaryKey" json:"id"`
+	Id            uuid.UUID      `gorm:"primaryKey" json:"id"`
 	Name          string         `json:"name"`
 	UserId        int64          `json:"userId"`
 	Type          uint           `json:"type"`
@@ -25,7 +26,7 @@ type ProjectListVo struct {
 }
 
 type ProjectDetailVo struct {
-	Id            uint           `json:"id"`
+	Id            uuid.UUID      `json:"id"`
 	Name          string         `json:"name"`
 	Type          uint           `json:"type"`
 	RepositoryUrl string         `json:"repositoryUrl"`

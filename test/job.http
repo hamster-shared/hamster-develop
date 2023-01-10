@@ -100,12 +100,12 @@ GET http://localhost:8080/api/templates-category/1/templates
 GET http://localhost:8080/api/templates/1
 
 ### query projects
-GET http://34.232.105.81:8080/api/projects?page=1&size=10
+GET http://localhost:8080/api/projects?page=1&size=10
 Content-Type: application/json
-Access-Token: WATa9CJDBAqfNi/Wc+pXTfa7tpd1dT1Ki2MrGXGB9PVf18zof9nRCW6Kv1Ov/HCV
+Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
 
 ### query project detail
-GET http://34.232.105.81:8080/api/projects/4
+GET http://localhost:8080/api/projects/48068104-d96a-4d4d-a107-4fe3e268408f
 
 ### build
 POST http://localhost:8080/api/projects/48068104-d96a-4d4d-a107-4fe3e268408f/build

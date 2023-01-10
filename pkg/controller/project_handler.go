@@ -141,12 +141,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 }
 
 func (h *HandlerServer) projectDetail(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	data, err := h.projectService.GetProject(id)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -265,14 +260,9 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 }
 
 func (h *HandlerServer) updateProject(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	var updateData vo.UpdateProjectParam
-	err = gin.BindJSON(&updateData)
+	err := gin.BindJSON(&updateData)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -311,13 +301,8 @@ func (h *HandlerServer) updateProject(gin *gin.Context) {
 }
 
 func (h *HandlerServer) deleteProject(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
-	err = h.projectService.DeleteProject(id)
+	id := gin.Param("id")
+	err := h.projectService.DeleteProject(id)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

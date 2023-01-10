@@ -1,5 +1,7 @@
 package vo
 
+import uuid "github.com/iris-contrib/go.uuid"
+
 type ContractDeployInfoVo struct {
 	Version      string                    `json:"version"`
 	ContractInfo map[string]ContractInfoVo `json:"contractInfo"`
@@ -7,7 +9,7 @@ type ContractDeployInfoVo struct {
 
 type ContractInfoVo struct {
 	Id               uint          `json:"id"`
-	ProjectId        uint          `json:"projectId"`
+	ProjectId        uuid.UUID     `json:"projectId"`
 	WorkflowId       uint          `json:"workflowId"`
 	WorkflowDetailId uint          `json:"workflowDetailId"`
 	AbiInfo          string        `json:"abiInfo"`
@@ -20,12 +22,12 @@ type DeployInfVo struct {
 }
 
 type ContractVo struct {
-	Id               uint   `json:"id"`
-	ProjectId        uint   `json:"projectId"`
-	WorkflowId       uint   `json:"workflowId"`
-	WorkflowDetailId uint   `json:"workflowDetailId"`
-	Name             string `json:"name"`
-	Version          string `json:"version"`
-	AbiInfo          string `json:"abiInfo"`
-	ByteCode         string `json:"byteCode"`
+	Id               uint      `json:"id"`
+	ProjectId        uuid.UUID `json:"projectId"`
+	WorkflowId       uint      `json:"workflowId"`
+	WorkflowDetailId uint      `json:"workflowDetailId"`
+	Name             string    `json:"name"`
+	Version          string    `json:"version"`
+	AbiInfo          string    `json:"abiInfo"`
+	ByteCode         string    `json:"byteCode"`
 }
