@@ -67,3 +67,13 @@ func (g *GithubService) UpdateRepo(token, owner, repoName, name string) (*github
 	}
 	return repo, res, nil
 }
+
+func (g *GithubService) DeleteRepo(token, owner, repoName string) (*github.Response, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	res, err := client.Repositories.Delete(g.ctx, owner, repoName)
+	if err != nil {
+		log.Println("delete github repository failed ", err.Error())
+		return res, err
+	}
+	return res, nil
+}

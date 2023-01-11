@@ -166,8 +166,8 @@ Content-Type: application/json
 }
 
 
-### query project detail
-DELETE http://localhost:8080/api/projects/2
+### delete project
+DELETE http://localhost:8080/api/projects/48068104-d96a-4d4d-a107-4fe3e268408f
 
 
 ### check name
