@@ -15,12 +15,12 @@ stages:
       - name: code-compile
         run: |
           npm install -g truffle
+          npm install
           truffle compile
 
       - name: save artifactory
         uses: hamster-artifactory
         with:
-          name: contract-meta.zip
           compress: false
           path: |
             build/contracts/*.json
