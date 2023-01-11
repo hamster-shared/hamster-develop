@@ -5,16 +5,12 @@ import (
 	"github.com/hamster-shared/a-line/engine"
 	"github.com/hamster-shared/a-line/pkg/application"
 	"github.com/hamster-shared/a-line/pkg/service"
+	uuid "github.com/iris-contrib/go.uuid"
 	"strconv"
 )
 
 func (h *HandlerServer) workflowList(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	pageStr := gin.DefaultQuery("page", "1")
 	sizeStr := gin.DefaultQuery("size", "10")
 	page, err := strconv.Atoi(pageStr)
@@ -110,13 +106,13 @@ func (h *HandlerServer) workflowReport(gin *gin.Context) {
 
 func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 	projectIdStr := gin.Param("id")
-	workflowIdStr := gin.Param("workflowId")
-	detailIdStr := gin.Param("detailId")
-	projectId, err := strconv.Atoi(projectIdStr)
+	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
-		Fail(err.Error(), gin)
+		Fail("projectId is empty or invalid", gin)
 		return
 	}
+	workflowIdStr := gin.Param("workflowId")
+	detailIdStr := gin.Param("detailId")
 	workflowId, err := strconv.Atoi(workflowIdStr)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -128,7 +124,7 @@ func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 		return
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	workflowKey := workflowService.GetWorkflowKey(uint(projectId), uint(workflowId))
+	workflowKey := workflowService.GetWorkflowKey(projectId.String(), uint(workflowId))
 	detail, err := workflowService.QueryWorkflowDetail(workflowId, detailId)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -166,12 +162,7 @@ func (h *HandlerServer) deleteWorkflow(gin *gin.Context) {
 }
 
 func (h *HandlerServer) queryReportCheckTools(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	reportService := application.GetBean[*service.ReportService]("reportService")
 	data, err := reportService.QueryReportCheckTools(id)
 	if err != nil {

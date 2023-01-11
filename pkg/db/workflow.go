@@ -2,13 +2,14 @@ package db
 
 import (
 	"database/sql"
+	uuid "github.com/iris-contrib/go.uuid"
 	"gorm.io/gorm"
 	"time"
 )
 
 type Workflow struct {
 	Id         uint `gorm:"primaryKey" json:"id"`
-	ProjectId  uint
+	ProjectId  uuid.UUID
 	Type       uint
 	ExecFile   string
 	LastExecId uint
@@ -19,7 +20,7 @@ type Workflow struct {
 
 type WorkflowDetail struct {
 	Id          uint `gorm:"primaryKey" json:"id"`
-	ProjectId   uint
+	ProjectId   uuid.UUID
 	Type        uint
 	WorkflowId  uint
 	ExecNumber  uint

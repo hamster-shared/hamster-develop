@@ -6,6 +6,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/consts"
 	db2 "github.com/hamster-shared/a-line/pkg/db"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"time"
@@ -13,10 +14,10 @@ import (
 
 type IProjectService interface {
 	GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error)
-	CreateProject(createData vo.CreateProjectParam) (uint, error)
-	GetProject(id int) (*vo.ProjectDetailVo, error)
-	UpdateProject(id int, updateData vo.UpdateProjectParam) error
-	DeleteProject(id int) error
+	CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error)
+	GetProject(id string) (*vo.ProjectDetailVo, error)
+	UpdateProject(id string, updateData vo.UpdateProjectParam) error
+	DeleteProject(id string) error
 }
 
 type ProjectService struct {
@@ -84,7 +85,7 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size int)
 	return &projectPage, nil
 }
 
-func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uint, error) {
+func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error) {
 	var project db2.Project
 	err := p.db.Where("name=? and user_id=?", createData.Name, createData.UserId).First(&project).Error
 	if err == gorm.ErrRecordNotFound {
@@ -96,13 +97,14 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uint, 
 		project.FrameType = createData.FrameType
 		project.Type = uint(createData.Type)
 		project.RepositoryUrl = createData.TemplateUrl
+		project.Branch = "main"
 		p.db.Create(&project)
 		return project.Id, nil
 	}
 	return project.Id, errors.New(fmt.Sprintf("application:%s already exists", createData.Name))
 }
 
-func (p *ProjectService) GetProject(id int) (*vo.ProjectDetailVo, error) {
+func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 	var data db2.Project
 	var detail vo.ProjectDetailVo
 	result := p.db.Where("id = ? ", id).First(&data)
@@ -139,7 +141,7 @@ func (p *ProjectService) GetProject(id int) (*vo.ProjectDetailVo, error) {
 	return &detail, nil
 }
 
-func (p *ProjectService) UpdateProject(id int, updateData vo.UpdateProjectParam) error {
+func (p *ProjectService) UpdateProject(id string, updateData vo.UpdateProjectParam) error {
 	var data db2.Project
 	err := p.db.Where("name=? and user_id = ?", updateData.Name, updateData.UserId).First(&data).Error
 	if err == gorm.ErrRecordNotFound {
@@ -152,7 +154,7 @@ func (p *ProjectService) UpdateProject(id int, updateData vo.UpdateProjectParam)
 	return errors.New(fmt.Sprintf("application:%s already exists", updateData.Name))
 }
 
-func (p *ProjectService) DeleteProject(id int) error {
+func (p *ProjectService) DeleteProject(id string) error {
 	result := p.db.Debug().Where("id = ?", id).Delete(&db2.Project{})
 	if result.Error != nil {
 		return result.Error

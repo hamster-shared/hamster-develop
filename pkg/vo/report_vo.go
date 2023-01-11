@@ -1,10 +1,13 @@
 package vo
 
-import "time"
+import (
+	uuid "github.com/iris-contrib/go.uuid"
+	"time"
+)
 
 type ReportVo struct {
 	Id               uint      `json:"id"`
-	ProjectId        uint      `json:"projectId"`
+	ProjectId        uuid.UUID `json:"projectId"`
 	WorkflowId       uint      `json:"workflowId"`
 	WorkflowDetailId uint      `json:"workflowDetailId"`
 	Name             string    `json:"name"`

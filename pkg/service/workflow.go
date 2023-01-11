@@ -15,6 +15,7 @@ import (
 	db2 "github.com/hamster-shared/a-line/pkg/db"
 	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
@@ -84,8 +85,13 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 }
 
 func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
-	projectId, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
+	projectIdStr, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
 	if err != nil {
+		return
+	}
+	projectId, err := uuid.FromString(projectIdStr)
+	if err != nil {
+		log.Println("UUID from string failed: ", err.Error())
 		return
 	}
 	jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
@@ -129,8 +135,13 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 	if !strings.Contains(message.JobName, "_") {
 		return
 	}
-	projectId, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
+	projectIdStr, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
 	if err != nil {
+		return
+	}
+	projectId, err := uuid.FromString(projectIdStr)
+	if err != nil {
+		log.Println("UUID from string failed: ", err.Error())
 		return
 	}
 	workflowExecNumber := message.JobId
@@ -182,15 +193,15 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 
 }
 
-func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uint, user vo.UserAuth) error {
+func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
 	return w.ExecProjectWorkflow(projectId, user, 1)
 }
 
-func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uint, user vo.UserAuth) error {
+func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
 	return w.ExecProjectWorkflow(projectId, user, 2)
 }
 
-func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, workflowType uint) error {
+func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserAuth, workflowType uint) error {
 
 	// query project workflow
 
@@ -205,7 +216,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 		return errors.New("no check workflow in the project ")
 	}
 
-	workflowKey := w.GetWorkflowKey(projectId, workflow.Id)
+	workflowKey := w.GetWorkflowKey(projectId.String(), workflow.Id)
 
 	job := w.engine.GetJob(workflowKey)
 	if job == nil {
@@ -243,10 +254,11 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 		TriggerUser: user.Username,
 		TriggerMode: 1,
 		CodeInfo:    "",
-		Status:      uint(detail.Status),
-		StartTime:   detail.StartTime,
-		CreateTime:  time.Now(),
-		UpdateTime:  time.Now(),
+		//Status:      uint(detail.Status),
+		Status:     1,
+		StartTime:  detail.StartTime,
+		CreateTime: time.Now(),
+		UpdateTime: time.Now(),
 	}
 
 	err = w.db.Transaction(func(tx *gorm.DB) error {
@@ -261,7 +273,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uint, user vo.UserAuth, 
 	return nil
 }
 
-func (w *WorkflowService) GetWorkflowList(projectId, workflowType, page, size int) (*vo.WorkflowPage, error) {
+func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, size int) (*vo.WorkflowPage, error) {
 	var total int64
 	var data vo.WorkflowPage
 	var workflowData []vo.WorkflowVo
@@ -301,7 +313,17 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	if res.Error != nil {
 		return &detail, res.Error
 	}
+
 	copier.Copy(&detail, &workflowDetail)
+	if workflowDetail.Status == vo.WORKFLOW_STATUS_RUNNING {
+		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.Id)
+		jobDetail := w.engine.GetJobHistory(workflowKey, workflowDetailId)
+		data, err := json.Marshal(jobDetail.Stages)
+		if err != nil {
+			detail.StageInfo = string(data)
+			detail.Duration = jobDetail.Duration
+		}
+	}
 	return &detail, nil
 }
 
@@ -323,17 +345,17 @@ func (w *WorkflowService) QueryWorkflow(workflowId int) (*db2.Workflow, error) {
 	return &workflow, nil
 }
 
-func (w *WorkflowService) GetWorkflowKey(projectId uint, workflowId uint) string {
-	return fmt.Sprintf("%d_%d", projectId, workflowId)
+func (w *WorkflowService) GetWorkflowKey(projectId string, workflowId uint) string {
+	return fmt.Sprintf("%s_%d", projectId, workflowId)
 }
 
-func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (uint, uint, error) {
-	projectId, err := strconv.Atoi(strings.Split(projectKey, "_")[0])
-	if err != nil {
-		return 0, 0, err
-	}
+func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (string, uint, error) {
+	projectId := strings.Split(projectKey, "_")[0]
 	workflowId, err := strconv.Atoi(strings.Split(projectKey, "_")[1])
-	return uint(projectId), uint(workflowId), err
+	if err != nil {
+		return projectId, 0, err
+	}
+	return projectId, uint(workflowId), err
 
 }
 

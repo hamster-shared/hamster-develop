@@ -15,6 +15,7 @@ stages:
       - name: code-compile
         run: |
           npm install -g truffle
+          npm install
           truffle compile
 
       - name: save artifactory

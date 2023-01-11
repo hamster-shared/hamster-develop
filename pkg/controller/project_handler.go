@@ -9,6 +9,7 @@ import (
 	"github.com/hamster-shared/a-line/pkg/service"
 	"github.com/hamster-shared/a-line/pkg/utils"
 	"github.com/hamster-shared/a-line/pkg/vo"
+	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"net/http"
 	"strconv"
@@ -97,7 +98,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Success(id, g)
 		return
 	}
-	checkKey := workflowService.GetWorkflowKey(id, workflowCheckRes.Id)
+	checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
 	file, err := workflowService.TemplateParse(checkKey, *repo.CloneURL, consts.Check)
 	if err == nil {
 		workflowCheckRes.ExecFile = file
@@ -114,7 +115,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Success(id, g)
 		return
 	}
-	buildKey := workflowService.GetWorkflowKey(id, workflowBuildRes.Id)
+	buildKey := workflowService.GetWorkflowKey(id.String(), workflowBuildRes.Id)
 	file1, err := workflowService.TemplateParse(buildKey, *repo.CloneURL, consts.Build)
 	if err == nil {
 		workflowBuildRes.ExecFile = file1
@@ -140,12 +141,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 }
 
 func (h *HandlerServer) projectDetail(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	data, err := h.projectService.GetProject(id)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -156,7 +152,8 @@ func (h *HandlerServer) projectDetail(gin *gin.Context) {
 
 func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 
-	projectId, err := strconv.Atoi(g.Param("id"))
+	projectIdStr := g.Param("id")
+	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
 		Fail("projectId is empty or invalid", g)
 		return
@@ -176,13 +173,14 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 	}
 	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectCheckWorkflow(uint(projectId), userVo)
+	_ = workflowService.ExecProjectCheckWorkflow(projectId, userVo)
 	Success("", g)
 }
 
 func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 
-	projectId, err := strconv.Atoi(g.Param("id"))
+	projectIdStr := g.Param("id")
+	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
 		Fail("projectId is empty or invalid", g)
 		return
@@ -202,7 +200,7 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 		return
 	}
 	copier.Copy(&userVo, &user)
-	err = workflowService.ExecProjectBuildWorkflow(uint(projectId), userVo)
+	err = workflowService.ExecProjectBuildWorkflow(projectId, userVo)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
@@ -212,8 +210,8 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 
 func (h *HandlerServer) projectContract(g *gin.Context) {
 
-	projectId, err := strconv.Atoi(g.Param("id"))
-	if err != nil {
+	projectId := g.Param("id")
+	if projectId == "" {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
@@ -226,7 +224,7 @@ func (h *HandlerServer) projectContract(g *gin.Context) {
 
 	contractService := application.GetBean[*service.ContractService]("contractService")
 
-	result, err := contractService.QueryContracts(uint(projectId), query, version, network, page, size)
+	result, err := contractService.QueryContracts(projectId, query, version, network, page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)
@@ -238,8 +236,8 @@ func (h *HandlerServer) projectContract(g *gin.Context) {
 }
 
 func (h *HandlerServer) projectReport(g *gin.Context) {
-	projectId, err := strconv.Atoi(g.Param("id"))
-	if err != nil {
+	projectId := g.Param("id")
+	if projectId == "" {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
@@ -250,7 +248,7 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 
 	reportService := application.GetBean[*service.ReportService]("reportService")
 
-	result, err := reportService.QueryReports(uint(projectId), Type, page, size)
+	result, err := reportService.QueryReports(projectId, Type, page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)
@@ -262,14 +260,9 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 }
 
 func (h *HandlerServer) updateProject(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	var updateData vo.UpdateProjectParam
-	err = gin.BindJSON(&updateData)
+	err := gin.BindJSON(&updateData)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -308,13 +301,8 @@ func (h *HandlerServer) updateProject(gin *gin.Context) {
 }
 
 func (h *HandlerServer) deleteProject(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
-	err = h.projectService.DeleteProject(id)
+	id := gin.Param("id")
+	err := h.projectService.DeleteProject(id)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

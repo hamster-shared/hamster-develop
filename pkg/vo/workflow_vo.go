@@ -1,6 +1,7 @@
 package vo
 
 import (
+	uuid "github.com/iris-contrib/go.uuid"
 	"time"
 )
 
@@ -13,7 +14,7 @@ type WorkflowPage struct {
 
 type WorkflowVo struct {
 	Id          uint      `json:"id"`
-	ProjectId   uint      `json:"projectId"`
+	ProjectId   uuid.UUID `json:"projectId"`
 	DetailId    uint      `json:"detailId"`
 	Type        uint      `json:"type"`
 	LastExecId  uint      `json:"lastExecId"`
@@ -35,3 +36,9 @@ type WorkflowDetailVo struct {
 	StartTime  time.Time `json:"startTime"`
 	Duration   int64     `json:"duration"`
 }
+
+const WORKFLOW_STATUS_NOT_RUN uint = 0
+const WORKFLOW_STATUS_RUNNING uint = 1
+const WORKFLOW_STATUS_SUCCESS uint = 2
+const WORKFLOW_STATUS_FAIL uint = 3
+const WORKFLOW_STATUS_CANCEL uint = 4
