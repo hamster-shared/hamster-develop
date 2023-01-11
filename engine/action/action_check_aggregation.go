@@ -38,11 +38,6 @@ func (a *CheckAggregationAction) Hook() (*model.ActionResult, error) {
 	a.output.NewStep("check-aggregation")
 
 	stack := a.ctx.Value(STACK).(map[string]interface{})
-
-	workdir, ok := stack["workdir"].(string)
-	if !ok {
-		return nil, errors.New("workdir is empty")
-	}
 	jobName, ok := stack["name"].(string)
 	if !ok {
 		return nil, errors.New("get job name error")
@@ -58,9 +53,8 @@ func (a *CheckAggregationAction) Hook() (*model.ActionResult, error) {
 	}
 
 	var absPathList []string
-	basePath := path2.Join(workdir, a.path)
-	absPathList = utils.GetSuffixFiles(basePath, consts.CheckResult, absPathList)
 	destDir := path2.Join(userHomeDir, consts.ArtifactoryDir, jobName, consts.CheckName, jobId)
+	absPathList = utils.GetSameFileNameFiles(destDir, consts.CheckResult, absPathList)
 	_, err = os.Stat(destDir)
 	if os.IsNotExist(err) {
 		err := os.MkdirAll(destDir, os.ModePerm)
@@ -136,7 +130,7 @@ func (a *CheckAggregationAction) Hook() (*model.ActionResult, error) {
 			contractCheckResultList = append(contractCheckResultList, securityAnalysisReportString)
 		}
 	}
-	a.path = path2.Join(a.path, consts.CheckAggregationResult)
+	a.path = path2.Join(destDir, consts.CheckAggregationResult)
 	create, err := os.Create(a.path)
 	if err != nil {
 		return nil, err

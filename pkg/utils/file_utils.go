@@ -50,6 +50,25 @@ func GetSuffixFiles(workdir string, suffixName string, pathList []string) []stri
 	return pathList
 }
 
+// GetSameFileNameFiles 获取路径下的所有相同文件文件名的文件
+// workdir 基础路径
+// fileName 要赛选的路径
+// pathList 查找到的路径对象
+func GetSameFileNameFiles(workdir string, fileName string, pathList []string) []string {
+	files, _ := os.ReadDir(workdir)
+	for _, file := range files {
+		currentPath := workdir + "/" + file.Name()
+		if file.IsDir() {
+			pathList = GetSameFileNameFiles(currentPath, fileName, pathList)
+		} else {
+			if file.Name() == fileName {
+				pathList = append(pathList, currentPath)
+			}
+		}
+	}
+	return pathList
+}
+
 // GetFilenameWithSuffixAndFilenameOnly 获取带后置的文件名和不带后缀的文件名
 func GetFilenameWithSuffixAndFilenameOnly(path string) (fileName string, fileNameWithSuffix string) {
 	_, file := path2.Split(path)

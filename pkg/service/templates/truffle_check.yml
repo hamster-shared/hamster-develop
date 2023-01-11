@@ -19,7 +19,7 @@ stages:
       - name: sol-profiler-check
         uses: sol-profiler-check
         with:
-          path:
+          path: contracts
 
   solhint-check:
     needs:
@@ -31,21 +31,21 @@ stages:
       - name: solhint-check
         uses: solhint-check
         with:
-          path:
+          path: contracts
 
-  mythril-check:
-    needs:
-      - solhint-check
-    steps:
-      - name: mythril-check
-        uses: mythril-check
-        with:
-          path:
-          solc-version: 0.6.0
+#  mythril-check:
+#    needs:
+#      - solhint-check
+#    steps:
+#      - name: mythril-check
+#        uses: mythril-check
+#        with:
+#          path: contracts
+#          solc-version: 0.6.0
 
   check-aggregation:
     needs:
-      - mythril-check
+      - solhint-check
     steps:
       - name: check-aggregation
         uses: check-aggregation

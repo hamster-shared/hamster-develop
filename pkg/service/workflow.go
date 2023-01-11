@@ -153,6 +153,9 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 		var reportList []db.Report
 		begin := w.db.Begin()
 		for _, report := range jobDetail.Reports {
+			if report.Url == "" {
+				continue
+			}
 			file, err := os.ReadFile(report.Url)
 			if err != nil {
 				logger.Errorf("Check result path is err")
