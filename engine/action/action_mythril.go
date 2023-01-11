@@ -1,6 +1,7 @@
 package action
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/engine/output"
 	"github.com/hamster-shared/a-line/pkg/utils"
+	"io"
 	"os"
 	"os/exec"
 	path2 "path"
@@ -19,16 +21,18 @@ import (
 
 // MythRilAction mythRil合约检查
 type MythRilAction struct {
-	path   string
-	ctx    context.Context
-	output *output.Output
+	path        string
+	solcVersion string
+	ctx         context.Context
+	output      *output.Output
 }
 
 func NewMythRilAction(step model.Step, ctx context.Context, output *output.Output) *MythRilAction {
 	return &MythRilAction{
-		path:   step.With["path"],
-		ctx:    ctx,
-		output: output,
+		path:        step.With["path"],
+		solcVersion: step.With["solc-version"],
+		ctx:         ctx,
+		output:      output,
 	}
 }
 
@@ -80,6 +84,9 @@ func (a *MythRilAction) Hook() (*model.ActionResult, error) {
 		}
 		commandTemplate := consts.MythRilCheck
 		command := fmt.Sprintf(commandTemplate, basePath, redundantPath)
+		if a.solcVersion != "" {
+			command = command + " --solv " + a.solcVersion
+		}
 		fields := strings.Fields(command)
 		out, err := a.ExecuteCommand(fields, workdir)
 		if err != nil {
@@ -105,7 +112,7 @@ func (a *MythRilAction) Hook() (*model.ActionResult, error) {
 		Reports: []model.Report{
 			{
 				Id:   id,
-				Url:  path2.Join(a.path, consts.CheckResult),
+				Url:  "",
 				Type: 2,
 			},
 		},
@@ -128,18 +135,52 @@ func (a *MythRilAction) Post() error {
 	}
 	fileInfos, err := open.Readdir(-1)
 	successFlag := true
-	var checkResultDetailsList []model.ContractCheckResultDetails
+	var checkResultDetailsList []model.ContractCheckResultDetails[[]model.ContractStyleGuideValidationsReportDetails]
 	for _, info := range fileInfos {
 		path := path2.Join(a.path, info.Name())
-		file, err := os.ReadFile(path)
+		var styleGuideValidationsReportDetailsList []model.ContractStyleGuideValidationsReportDetails
+		file, err := os.Open(path)
 		if err != nil {
 			return errors.New("file open fail")
 		}
-		result := string(file)
-		if !strings.Contains(result, "The analysis was completed successfully") {
+		defer file.Close()
+
+		line := bufio.NewReader(file)
+		for {
+			content, _, err := line.ReadLine()
+			if err == io.EOF {
+				break
+			}
+			s := string(content)
+			if strings.Contains(s, "The analysis was completed successfully") {
+				break
+			}
+			var styleGuideValidationsReportDetails model.ContractStyleGuideValidationsReportDetails
+			styleGuideValidationsReportDetails.Tool = consts.MythRilCheckOutputDir
+			if strings.Contains(s, "Error:") || strings.Contains(s, "Note:") {
+				index := strings.Index(s, ":")
+				styleGuideValidationsReportDetails.Note = s[index+2:]
+			}
+			if strings.Contains(s, "-->") {
+				split := strings.Split(s, ":")
+				if len(split) < 3 {
+					continue
+				}
+				styleGuideValidationsReportDetails.Line = split[1]
+				styleGuideValidationsReportDetails.Column = split[2]
+			}
+			if styleGuideValidationsReportDetails.Note == "" && styleGuideValidationsReportDetails.Line == "" {
+				continue
+			}
+			if styleGuideValidationsReportDetails.Note == "" && len(styleGuideValidationsReportDetailsList) >= 1 {
+				styleGuideValidationsReportDetailsList[len(styleGuideValidationsReportDetailsList)-1].Line = styleGuideValidationsReportDetails.Line
+				styleGuideValidationsReportDetailsList[len(styleGuideValidationsReportDetailsList)-1].Column = styleGuideValidationsReportDetails.Column
+			} else {
+				styleGuideValidationsReportDetailsList = append(styleGuideValidationsReportDetailsList, styleGuideValidationsReportDetails)
+			}
 			successFlag = false
 		}
-		details := model.NewContractCheckResultDetails(strings.Replace(info.Name(), consts.SuffixType, consts.SolFileSuffix, 1), result)
+		details := model.NewContractCheckResultDetails[[]model.ContractStyleGuideValidationsReportDetails](strings.Replace(info.Name(), consts.SuffixType, consts.SolFileSuffix, 1), len(styleGuideValidationsReportDetailsList), styleGuideValidationsReportDetailsList)
 		checkResultDetailsList = append(checkResultDetailsList, details)
 	}
 	var result string
@@ -148,8 +189,9 @@ func (a *MythRilAction) Post() error {
 	} else {
 		result = consts.CheckFail.Result
 	}
-	checkResult := model.NewContractCheckResult(consts.MythRil.Name, result, consts.MythRil.Tool, checkResultDetailsList)
+	checkResult := model.NewContractCheckResult(consts.ContractSecurityAnalysisReport.Name, result, consts.ContractSecurityAnalysisReport.Tool, checkResultDetailsList)
 	create, err := os.Create(path2.Join(a.path, consts.CheckResult))
+	fmt.Println(checkResult)
 	if err != nil {
 		return err
 	}

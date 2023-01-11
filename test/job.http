@@ -14,9 +14,9 @@ Access-Token: pAckUATfeIsxSq1qzIVIdJcKf3jIhRDmnchfAqIrU2xX4smOe4Hd2p3e3iZNnX0/
 }
 
 ### 执行检查
-POST http://localhost:8080/api/projects/5/check
+POST http://localhost:8080/api/projects/1/check
 Content-Type: application/json
-Access-Token: pAckUATfeIsxSq1qzIVIdJcKf3jIhRDmnchfAqIrU2xX4smOe4Hd2p3e3iZNnX0/
+Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
 
 
 ### create job

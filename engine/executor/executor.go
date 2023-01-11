@@ -173,6 +173,8 @@ func (e *Executor) Execute(id int, job *model2.Job) error {
 				ah = action.NewMythRilAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "slither-check" {
 				ah = action.NewSlitherAction(step, ctx, jobWrapper.Output)
+			} else if step.Uses == "check-aggregation" {
+				ah = action.NewCheckAggregationAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "deploy-ink-contract" {
 				ah = action.NewInkAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "workdir" {

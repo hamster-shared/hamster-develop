@@ -106,7 +106,7 @@ func (a *SolProfilerAction) Hook() (*model.ActionResult, error) {
 		Reports: []model.Report{
 			{
 				Id:   id,
-				Url:  path2.Join(a.path, consts.CheckResult),
+				Url:  "",
 				Type: 2,
 			},
 		},
@@ -128,7 +128,7 @@ func (a *SolProfilerAction) Post() error {
 		return errors.New("check result path is err")
 	}
 	fileInfos, err := open.Readdir(-1)
-	var checkResultDetailsList []model.ContractCheckResultDetails
+	var checkResultDetailsList []model.ContractCheckResultDetails[string]
 	for _, info := range fileInfos {
 		path := path2.Join(a.path, info.Name())
 		file, err := os.ReadFile(path)
@@ -136,10 +136,10 @@ func (a *SolProfilerAction) Post() error {
 			return errors.New("file open fail")
 		}
 		result := string(file)
-		details := model.NewContractCheckResultDetails(strings.Replace(info.Name(), consts.SuffixType, consts.SolFileSuffix, 1), result)
+		details := model.NewContractCheckResultDetails(strings.Replace(info.Name(), consts.SuffixType, consts.SolFileSuffix, 1), 0, result)
 		checkResultDetailsList = append(checkResultDetailsList, details)
 	}
-	checkResult := model.NewContractCheckResult(consts.SolProfiler.Name, consts.CheckSuccess.Result, consts.SolProfiler.Tool, checkResultDetailsList)
+	checkResult := model.NewContractCheckResult(consts.ContractMethodsPropertiesReport.Name, consts.CheckSuccess.Result, consts.ContractMethodsPropertiesReport.Tool, checkResultDetailsList)
 	create, err := os.Create(path2.Join(a.path, consts.CheckResult))
 	if err != nil {
 		return err

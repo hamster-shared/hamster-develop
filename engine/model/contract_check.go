@@ -1,14 +1,14 @@
 package model
 
-type ContractCheckResult struct {
+type ContractCheckResult[T ResultDetailType] struct {
 	Name    string
 	Result  string
 	Tool    string
-	Context []ContractCheckResultDetails
+	Context []ContractCheckResultDetails[T]
 }
 
-func NewContractCheckResult(name string, result string, tool string, context []ContractCheckResultDetails) ContractCheckResult {
-	return ContractCheckResult{
+func NewContractCheckResult[T ResultDetailType](name string, result string, tool string, context []ContractCheckResultDetails[T]) ContractCheckResult[T] {
+	return ContractCheckResult[T]{
 		Name:    name,
 		Result:  result,
 		Tool:    tool,
@@ -16,14 +16,40 @@ func NewContractCheckResult(name string, result string, tool string, context []C
 	}
 }
 
-type ContractCheckResultDetails struct {
-	Name    string
-	Message string
+type ResultDetailType interface {
+	string | []ContractStyleGuideValidationsReportDetails
 }
 
-func NewContractCheckResultDetails(name string, message string) ContractCheckResultDetails {
-	return ContractCheckResultDetails{
+type ContractCheckResultDetails[T ResultDetailType] struct {
+	Name    string
+	Issue   int
+	Message T
+}
+
+func NewContractCheckResultDetails[T ResultDetailType](name string, issue int, message T) ContractCheckResultDetails[T] {
+	return ContractCheckResultDetails[T]{
 		Name:    name,
+		Issue:   issue,
 		Message: message,
+	}
+}
+
+type ContractStyleGuideValidationsReportDetails struct {
+	Line         string
+	Column       string
+	Level        string
+	OriginalText string
+	Note         string
+	Tool         string
+}
+
+func NewContractStyleGuideValidationsReportDetails(line, column, level, originalText, note, tool string) ContractStyleGuideValidationsReportDetails {
+	return ContractStyleGuideValidationsReportDetails{
+		Line:         line,
+		Column:       column,
+		Level:        level,
+		OriginalText: originalText,
+		Note:         note,
+		Tool:         tool,
 	}
 }

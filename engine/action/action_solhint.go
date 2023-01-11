@@ -1,6 +1,7 @@
 package action
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/engine/output"
 	"github.com/hamster-shared/a-line/pkg/utils"
+	"io"
 	"os"
 	"os/exec"
 	path2 "path"
@@ -114,7 +116,7 @@ func (a *SolHintAction) Hook() (*model.ActionResult, error) {
 		Reports: []model.Report{
 			{
 				Id:   id,
-				Url:  path2.Join(a.path, consts.CheckResult),
+				Url:  "",
 				Type: 2,
 			},
 		},
@@ -136,19 +138,34 @@ func (a *SolHintAction) Post() error {
 		return errors.New("check result path is err")
 	}
 	fileInfos, err := open.Readdir(-1)
+	var checkResultDetailsList []model.ContractCheckResultDetails[[]model.ContractStyleGuideValidationsReportDetails]
 	successFlag := true
-	var checkResultDetailsList []model.ContractCheckResultDetails
 	for _, info := range fileInfos {
 		path := path2.Join(a.path, info.Name())
-		file, err := os.ReadFile(path)
+		var styleGuideValidationsReportDetailsList []model.ContractStyleGuideValidationsReportDetails
+		file, err := os.Open(path)
 		if err != nil {
 			return errors.New("file open fail")
 		}
-		result := string(file)
-		if !strings.Contains(result, "0 Errors") || !strings.Contains(result, "0 Warnings") {
-			successFlag = false
+		defer file.Close()
+
+		line := bufio.NewReader(file)
+		for {
+			content, _, err := line.ReadLine()
+			if err == io.EOF {
+				break
+			}
+			s := string(content)
+			if strings.Contains(s, "  ") {
+				split := strings.Split(s, "  ")
+				lineAndCol := strings.Split(strings.TrimSpace(split[1]), ":")
+				validationsReportDetails := model.NewContractStyleGuideValidationsReportDetails(lineAndCol[0], lineAndCol[1], split[2], "", strings.Join(split[3:len(split)-1], " "), consts.SolHintCheckOutputDir)
+				styleGuideValidationsReportDetailsList = append(styleGuideValidationsReportDetailsList, validationsReportDetails)
+				successFlag = false
+			}
 		}
-		details := model.NewContractCheckResultDetails(strings.Replace(info.Name(), consts.SuffixType, consts.SolFileSuffix, 1), result)
+
+		details := model.NewContractCheckResultDetails[[]model.ContractStyleGuideValidationsReportDetails](strings.Replace(info.Name(), consts.SuffixType, consts.SolFileSuffix, 1), len(styleGuideValidationsReportDetailsList), styleGuideValidationsReportDetailsList)
 		checkResultDetailsList = append(checkResultDetailsList, details)
 	}
 	var result string
@@ -157,7 +174,8 @@ func (a *SolHintAction) Post() error {
 	} else {
 		result = consts.CheckFail.Result
 	}
-	checkResult := model.NewContractCheckResult(consts.SolHint.Name, result, consts.SolHint.Tool, checkResultDetailsList)
+	checkResult := model.NewContractCheckResult(consts.ContractStyleGuideValidationsReport.Name, result, consts.ContractStyleGuideValidationsReport.Tool, checkResultDetailsList)
+	fmt.Println(checkResult)
 	create, err := os.Create(path2.Join(a.path, consts.CheckResult))
 	if err != nil {
 		return err

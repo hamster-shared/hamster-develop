@@ -14,9 +14,9 @@ func contractCheckResult(name string, tool string) ContractCheckEnum {
 }
 
 var (
-	SolHint     = contractCheckResult("Analysis of contract specifications", "Solhint")
-	SolProfiler = contractCheckResult("List all properties of contract methods", "sol-profiler")
-	MythRil     = contractCheckResult("Security analysis tool for EVM bytecodes", "mythril")
+	ContractMethodsPropertiesReport     = contractCheckResult("Contract Methods Properties Report", "sol-profiler")
+	ContractStyleGuideValidationsReport = contractCheckResult("Contract Style Guide validations Report", "Solhint")
+	ContractSecurityAnalysisReport      = contractCheckResult("Contract Security Analysis Report", "mythril")
 )
 
 type ContractCheckResultDetails struct {

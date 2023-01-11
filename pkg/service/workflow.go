@@ -147,28 +147,30 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 				logger.Errorf("Check result path is err")
 				return
 			}
-			var contractCheckResult model.ContractCheckResult
-			err = json.Unmarshal(file, &contractCheckResult)
+			var contractCheckResultList []model.ContractCheckResult[string]
+			err = json.Unmarshal(file, &contractCheckResultList)
 			if err != nil {
 				logger.Errorf("Check result get fail")
 			}
-			marshal, err := json.Marshal(contractCheckResult.Context)
-			if err != nil {
-				logger.Errorf("Check context conversion failed")
+			for _, contractCheckResult := range contractCheckResultList {
+				marshal, err := json.Marshal(contractCheckResult.Context)
+				if err != nil {
+					logger.Errorf("Check context conversion failed")
+				}
+				report := db.Report{
+					ProjectId:        projectId,
+					WorkflowId:       workflowId,
+					WorkflowDetailId: workflowDetail.Id,
+					Name:             contractCheckResult.Name,
+					Type:             uint(consts.Check),
+					CheckTool:        contractCheckResult.Tool,
+					Result:           contractCheckResult.Result,
+					CheckTime:        time.Now(),
+					ReportFile:       string(marshal),
+					CreateTime:       time.Now(),
+				}
+				reportList = append(reportList, report)
 			}
-			report := db.Report{
-				ProjectId:        projectId,
-				WorkflowId:       workflowId,
-				WorkflowDetailId: workflowDetail.Id,
-				Name:             contractCheckResult.Name,
-				Type:             uint(consts.Check),
-				CheckTool:        contractCheckResult.Tool,
-				Result:           contractCheckResult.Result,
-				CheckTime:        time.Now(),
-				ReportFile:       string(marshal),
-				CreateTime:       time.Now(),
-			}
-			reportList = append(reportList, report)
 		}
 		err = begin.Save(&reportList).Error
 		if err != nil {
