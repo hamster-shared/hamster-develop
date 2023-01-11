@@ -11,3 +11,6 @@ alter table t_contract
 
 alter table t_report
     modify project_id char(36) null comment '项目ID';
+
+alter table t_contract_deploy
+    modify project_id char(36) null comment '项目ID';

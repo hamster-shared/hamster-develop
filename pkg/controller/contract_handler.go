@@ -6,8 +6,8 @@ import (
 	"github.com/hamster-shared/a-line/pkg/db"
 	"github.com/hamster-shared/a-line/pkg/parameter"
 	"github.com/hamster-shared/a-line/pkg/service"
+	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
-	"strconv"
 	"time"
 )
 
@@ -16,12 +16,7 @@ func (h *HandlerServer) contractDeployInfo(g *gin.Context) {
 }
 
 func (h *HandlerServer) contractDeployDetailByVersion(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	version := gin.Query("version")
 	contractService := application.GetBean[*service.ContractService]("contractService")
 	data, err := contractService.QueryContractDeployByVersion(id, version)
@@ -33,12 +28,7 @@ func (h *HandlerServer) contractDeployDetailByVersion(gin *gin.Context) {
 }
 
 func (h *HandlerServer) contractInfo(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	version := gin.Param("version")
 	contractService := application.GetBean[*service.ContractService]("contractService")
 	data, err := contractService.QueryContractByVersion(id, version)
@@ -59,9 +49,15 @@ func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
+	projectId, err := uuid.FromString(entity.ProjectId)
+	if err != nil {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
 	copier.Copy(&contractDeploy, &entity)
 	contractService := application.GetBean[*service.ContractService]("contractService")
 	contractDeploy.DeployTime = time.Now()
+	contractDeploy.ProjectId = projectId
 	err = contractService.SaveDeploy(contractDeploy)
 	if err != nil {
 		Fail(err.Error(), g)
@@ -72,12 +68,7 @@ func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
 }
 
 func (h *HandlerServer) versionList(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	contractService := application.GetBean[*service.ContractService]("contractService")
 	data, err := contractService.QueryVersionList(id)
 	if err != nil {
@@ -88,12 +79,7 @@ func (h *HandlerServer) versionList(gin *gin.Context) {
 }
 
 func (h *HandlerServer) queryContractNameList(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	contractService := application.GetBean[*service.ContractService]("contractService")
 	data, err := contractService.QueryContractNameList(id)
 	if err != nil {
@@ -104,12 +90,7 @@ func (h *HandlerServer) queryContractNameList(gin *gin.Context) {
 }
 
 func (h *HandlerServer) queryNetworkList(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	contractService := application.GetBean[*service.ContractService]("contractService")
 	data, err := contractService.QueryNetworkList(id)
 	if err != nil {

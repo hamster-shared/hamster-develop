@@ -10,12 +10,7 @@ import (
 )
 
 func (h *HandlerServer) workflowList(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	pageStr := gin.DefaultQuery("page", "1")
 	sizeStr := gin.DefaultQuery("size", "10")
 	page, err := strconv.Atoi(pageStr)
@@ -167,12 +162,7 @@ func (h *HandlerServer) deleteWorkflow(gin *gin.Context) {
 }
 
 func (h *HandlerServer) queryReportCheckTools(gin *gin.Context) {
-	idStr := gin.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
+	id := gin.Param("id")
 	reportService := application.GetBean[*service.ReportService]("reportService")
 	data, err := reportService.QueryReportCheckTools(id)
 	if err != nil {

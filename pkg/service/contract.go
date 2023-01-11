@@ -37,7 +37,7 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
 	return err
 }
 
-func (c *ContractService) QueryContracts(projectId uint, query, version, network string, page int, size int) (vo.Page[db2.Contract], error) {
+func (c *ContractService) QueryContracts(projectId string, query, version, network string, page int, size int) (vo.Page[db2.Contract], error) {
 	var contracts []db2.Contract
 	var afterData []db2.Contract
 	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,byte_code,create_time from t_contract where project_id = ? ")
@@ -82,7 +82,7 @@ func (c *ContractService) QueryContractByWorkflow(workflowId, workflowDetailId i
 	return contracts, nil
 }
 
-func (c *ContractService) QueryContractByVersion(projectId int, version string) ([]vo.ContractVo, error) {
+func (c *ContractService) QueryContractByVersion(projectId string, version string) ([]vo.ContractVo, error) {
 	var contracts []db2.Contract
 	var data []vo.ContractVo
 	res := c.db.Model(db2.Contract{}).Where("project_id = ? and version = ?", projectId, version).Find(&contracts)
@@ -95,7 +95,7 @@ func (c *ContractService) QueryContractByVersion(projectId int, version string) 
 	return data, nil
 }
 
-func (c *ContractService) QueryContractDeployByVersion(projectId int, version string) (vo.ContractDeployInfoVo, error) {
+func (c *ContractService) QueryContractDeployByVersion(projectId string, version string) (vo.ContractDeployInfoVo, error) {
 	var data vo.ContractDeployInfoVo
 	var contractDeployData []db2.ContractDeploy
 	res := c.db.Model(db2.ContractDeploy{}).Where("project_id = ? and version = ?", projectId, version).Find(&contractDeployData)
@@ -130,7 +130,7 @@ func (c *ContractService) QueryContractDeployByVersion(projectId int, version st
 	return data, nil
 }
 
-func (c *ContractService) QueryVersionList(projectId int) ([]string, error) {
+func (c *ContractService) QueryVersionList(projectId string) ([]string, error) {
 	var data []string
 	res := c.db.Model(db2.Contract{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Find(&data)
 	if res.Error != nil {
@@ -139,7 +139,7 @@ func (c *ContractService) QueryVersionList(projectId int) ([]string, error) {
 	return data, nil
 }
 
-func (c *ContractService) QueryContractNameList(projectId int) ([]string, error) {
+func (c *ContractService) QueryContractNameList(projectId string) ([]string, error) {
 	var data []string
 	res := c.db.Model(db2.Contract{}).Distinct("name").Select("name").Where("project_id = ?", projectId).Find(&data)
 	if res.Error != nil {
@@ -148,7 +148,7 @@ func (c *ContractService) QueryContractNameList(projectId int) ([]string, error)
 	return data, nil
 }
 
-func (c *ContractService) QueryNetworkList(projectId int) ([]string, error) {
+func (c *ContractService) QueryNetworkList(projectId string) ([]string, error) {
 	var data []string
 	res := c.db.Model(db2.Contract{}).Distinct("network").Select("network").Where("project_id = ? and network != '' ", projectId).Find(&data)
 	if res.Error != nil {

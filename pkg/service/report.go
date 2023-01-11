@@ -18,7 +18,7 @@ func NewReportService() *ReportService {
 	}
 }
 
-func (c *ReportService) QueryReports(projectId uint, Type string, page int, size int) (vo.Page[db2.Report], error) {
+func (c *ReportService) QueryReports(projectId string, Type string, page int, size int) (vo.Page[db2.Report], error) {
 	var total int64
 	var reports []db2.Report
 	tx := c.db.Model(db2.Report{}).Where("project_id = ?", projectId)
@@ -46,7 +46,7 @@ func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int)
 	return data, nil
 }
 
-func (c *ReportService) QueryReportCheckTools(projectId int) ([]string, error) {
+func (c *ReportService) QueryReportCheckTools(projectId string) ([]string, error) {
 	var data []string
 	res := c.db.Model(db2.Report{}).Distinct("check_tool").Select("check_tool").Where("project_id = ?", projectId).Find(&data)
 	if res.Error != nil {

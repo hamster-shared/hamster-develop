@@ -210,8 +210,8 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 
 func (h *HandlerServer) projectContract(g *gin.Context) {
 
-	projectId, err := strconv.Atoi(g.Param("id"))
-	if err != nil {
+	projectId := g.Param("id")
+	if projectId == "" {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
@@ -224,7 +224,7 @@ func (h *HandlerServer) projectContract(g *gin.Context) {
 
 	contractService := application.GetBean[*service.ContractService]("contractService")
 
-	result, err := contractService.QueryContracts(uint(projectId), query, version, network, page, size)
+	result, err := contractService.QueryContracts(projectId, query, version, network, page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)
@@ -236,8 +236,8 @@ func (h *HandlerServer) projectContract(g *gin.Context) {
 }
 
 func (h *HandlerServer) projectReport(g *gin.Context) {
-	projectId, err := strconv.Atoi(g.Param("id"))
-	if err != nil {
+	projectId := g.Param("id")
+	if projectId == "" {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
@@ -248,7 +248,7 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 
 	reportService := application.GetBean[*service.ReportService]("reportService")
 
-	result, err := reportService.QueryReports(uint(projectId), Type, page, size)
+	result, err := reportService.QueryReports(projectId, Type, page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)

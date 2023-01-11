@@ -271,7 +271,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 	return nil
 }
 
-func (w *WorkflowService) GetWorkflowList(projectId, workflowType, page, size int) (*vo.WorkflowPage, error) {
+func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, size int) (*vo.WorkflowPage, error) {
 	var total int64
 	var data vo.WorkflowPage
 	var workflowData []vo.WorkflowVo
