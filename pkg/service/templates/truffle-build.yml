@@ -21,6 +21,7 @@ stages:
       - name: save artifactory
         uses: hamster-artifactory
         with:
+          name: contract-meta.zip
           compress: false
           path: |
             build/contracts/*.json
