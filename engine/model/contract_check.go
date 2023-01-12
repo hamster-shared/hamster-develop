@@ -1,5 +1,7 @@
 package model
 
+import "encoding/json"
+
 type ContractCheckResult[T ResultDetailType] struct {
 	Name    string
 	Result  string
@@ -17,7 +19,7 @@ func NewContractCheckResult[T ResultDetailType](name string, result string, tool
 }
 
 type ResultDetailType interface {
-	string | []ContractStyleGuideValidationsReportDetails
+	string | []ContractStyleGuideValidationsReportDetails | []ContractMethodsPropertiesReportDetails | json.RawMessage
 }
 
 type ContractCheckResultDetails[T ResultDetailType] struct {
@@ -51,5 +53,27 @@ func NewContractStyleGuideValidationsReportDetails(line, column, level, original
 		OriginalText: originalText,
 		Note:         note,
 		Tool:         tool,
+	}
+}
+
+type ContractMethodsPropertiesReportDetails struct {
+	Contract   string
+	Category   string
+	Function   string
+	Visibility string
+	ViewPure   string
+	Returns    string
+	Modifiers  string
+}
+
+func NewContractMethodsPropertiesReportDetails(contract, category, function, visibility, viewPure, returns, modifiers string) ContractMethodsPropertiesReportDetails {
+	return ContractMethodsPropertiesReportDetails{
+		Contract:   contract,
+		Category:   category,
+		Function:   function,
+		Visibility: visibility,
+		ViewPure:   viewPure,
+		Returns:    returns,
+		Modifiers:  modifiers,
 	}
 }

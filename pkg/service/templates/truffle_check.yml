@@ -33,15 +33,15 @@ stages:
         with:
           path: contracts
 
-#  mythril-check:
-#    needs:
-#      - solhint-check
-#    steps:
-#      - name: mythril-check
-#        uses: mythril-check
-#        with:
-#          path: contracts
-#          solc-version: 0.6.0
+  mythril-check:
+    needs:
+      - solhint-check
+    steps:
+      - name: mythril-check
+        uses: mythril-check
+        with:
+          path: contracts
+          solc-version: 0.6.0
 
   check-aggregation:
     needs:

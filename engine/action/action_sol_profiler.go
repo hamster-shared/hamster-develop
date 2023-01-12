@@ -1,6 +1,7 @@
 package action
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,9 +11,11 @@ import (
 	"github.com/hamster-shared/a-line/engine/model"
 	"github.com/hamster-shared/a-line/engine/output"
 	"github.com/hamster-shared/a-line/pkg/utils"
+	"io"
 	"os"
 	"os/exec"
 	path2 "path"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -128,19 +131,64 @@ func (a *SolProfilerAction) Post() error {
 		return errors.New("check result path is err")
 	}
 	fileInfos, err := open.Readdir(-1)
-	var checkResultDetailsList []model.ContractCheckResultDetails[string]
+	var checkResultDetailsList []model.ContractCheckResultDetails[[]model.ContractMethodsPropertiesReportDetails]
+	compile, err := regexp.Compile(`\[.{1,2}m`)
+	if err != nil {
+		logger.Errorf("regexp err %s", err)
+		return err
+	}
 	for _, info := range fileInfos {
 		path := path2.Join(a.path, info.Name())
-		file, err := os.ReadFile(path)
+		var methodsPropertiesReportDetailsList []model.ContractMethodsPropertiesReportDetails
+		file, err := os.Open(path)
 		if err != nil {
 			return errors.New("file open fail")
 		}
-		result := string(file)
-		details := model.NewContractCheckResultDetails(strings.Replace(info.Name(), consts.SuffixType, consts.SolFileSuffix, 1), 0, result)
+		defer file.Close()
+
+		line := bufio.NewReader(file)
+		for {
+			content, _, err := line.ReadLine()
+			if err == io.EOF {
+				break
+			}
+			contentSting := string(content)
+			s := compile.ReplaceAllString(contentSting, "")
+			if strings.Contains(s, "┌─") || strings.Contains(s, "├─") || strings.Contains(s, "└─") || strings.Contains(s, "Contract/Library/Interface") {
+				continue
+			}
+			if !strings.Contains(s, "│") {
+				continue
+			}
+			split := strings.Split(s, "│")
+			trimSpace := strings.TrimSpace(split[1])
+			if trimSpace == "" {
+				continue
+			}
+			var methodsPropertiesReportDetails model.ContractMethodsPropertiesReportDetails
+			if strings.Contains(trimSpace, "(library)") {
+				index := strings.Index(trimSpace, "(library)")
+				methodsPropertiesReportDetails.Contract = strings.TrimSpace(trimSpace[:index])
+				methodsPropertiesReportDetails.Category = "library"
+			} else {
+				methodsPropertiesReportDetails.Contract = trimSpace
+				methodsPropertiesReportDetails.Category = "Contract"
+			}
+			methodsPropertiesReportDetails.Function = strings.TrimSpace(split[2])
+			methodsPropertiesReportDetails.Visibility = strings.TrimSpace(split[3])
+			methodsPropertiesReportDetails.Visibility = strings.TrimSpace(split[4])
+			methodsPropertiesReportDetails.Returns = strings.TrimSpace(split[5])
+			methodsPropertiesReportDetails.Modifiers = strings.TrimSpace(split[6])
+			methodsPropertiesReportDetailsList = append(methodsPropertiesReportDetailsList, methodsPropertiesReportDetails)
+		}
+
+		details := model.NewContractCheckResultDetails[[]model.ContractMethodsPropertiesReportDetails](strings.Replace(info.Name(), consts.SuffixType, consts.SolFileSuffix, 1), 0, methodsPropertiesReportDetailsList)
 		checkResultDetailsList = append(checkResultDetailsList, details)
 	}
 	checkResult := model.NewContractCheckResult(consts.ContractMethodsPropertiesReport.Name, consts.CheckSuccess.Result, consts.ContractMethodsPropertiesReport.Tool, checkResultDetailsList)
+	fmt.Printf("%+v", checkResult)
 	create, err := os.Create(path2.Join(a.path, consts.CheckResult))
+	fmt.Println()
 	if err != nil {
 		return err
 	}

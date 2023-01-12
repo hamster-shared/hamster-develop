@@ -161,7 +161,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 				logger.Errorf("Check result path is err")
 				return
 			}
-			var contractCheckResultList []model.ContractCheckResult[string]
+			var contractCheckResultList []model.ContractCheckResult[json.RawMessage]
 			err = json.Unmarshal(file, &contractCheckResultList)
 			if err != nil {
 				logger.Errorf("Check result get fail")

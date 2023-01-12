@@ -62,8 +62,7 @@ func (a *CheckAggregationAction) Hook() (*model.ActionResult, error) {
 			return nil, err
 		}
 	}
-	var contractCheckResultList []model.ContractCheckResult[string]
-	var methodsPropertiesReport model.ContractCheckResult[string]
+	var contractCheckResultList []model.ContractCheckResult[json.RawMessage]
 	//var styleGuideValidationsReportList model.ContractCheckResult[[]model.ContractStyleGuideValidationsReportDetails]
 	//var securityAnalysisReportList model.ContractCheckResult[[]model.ContractStyleGuideValidationsReportDetails]
 	for _, path := range absPathList {
@@ -73,11 +72,29 @@ func (a *CheckAggregationAction) Hook() (*model.ActionResult, error) {
 		}
 		result := string(file)
 		if strings.Contains(result, consts.ContractMethodsPropertiesReport.Name) {
+			var methodsPropertiesReport model.ContractCheckResult[[]model.ContractMethodsPropertiesReportDetails]
 			err := json.Unmarshal(file, &methodsPropertiesReport)
 			if err != nil {
 				continue
 			}
-			contractCheckResultList = append(contractCheckResultList, methodsPropertiesReport)
+			var methodsPropertiesReportRaw model.ContractCheckResult[json.RawMessage]
+			methodsPropertiesReportRaw.Tool = methodsPropertiesReport.Tool
+			methodsPropertiesReportRaw.Name = methodsPropertiesReport.Name
+			methodsPropertiesReportRaw.Result = methodsPropertiesReport.Result
+			var contractCheckResultDetailsList []model.ContractCheckResultDetails[json.RawMessage]
+			for _, report := range methodsPropertiesReport.Context {
+				var contractCheckResultDetails model.ContractCheckResultDetails[json.RawMessage]
+				contractCheckResultDetails.Name = report.Name
+				contractCheckResultDetails.Issue = report.Issue
+				marshal, err := json.Marshal(report.Message)
+				if err != nil {
+					continue
+				}
+				contractCheckResultDetails.Message = []byte(strings.ReplaceAll(string(marshal), "\\u001b", ""))
+				contractCheckResultDetailsList = append(contractCheckResultDetailsList, contractCheckResultDetails)
+			}
+			methodsPropertiesReportRaw.Context = contractCheckResultDetailsList
+			contractCheckResultList = append(contractCheckResultList, methodsPropertiesReportRaw)
 		}
 		if strings.Contains(result, consts.ContractStyleGuideValidationsReport.Name) {
 			var styleGuideValidationsReport model.ContractCheckResult[[]model.ContractStyleGuideValidationsReportDetails]
@@ -85,24 +102,24 @@ func (a *CheckAggregationAction) Hook() (*model.ActionResult, error) {
 			if err != nil {
 				continue
 			}
-			var styleGuideValidationsReportString model.ContractCheckResult[string]
-			styleGuideValidationsReportString.Tool = styleGuideValidationsReport.Tool
-			styleGuideValidationsReportString.Name = styleGuideValidationsReport.Name
-			styleGuideValidationsReportString.Result = styleGuideValidationsReport.Result
-			var contractCheckResultDetailsList []model.ContractCheckResultDetails[string]
+			var styleGuideValidationsReportRaw model.ContractCheckResult[json.RawMessage]
+			styleGuideValidationsReportRaw.Tool = styleGuideValidationsReport.Tool
+			styleGuideValidationsReportRaw.Name = styleGuideValidationsReport.Name
+			styleGuideValidationsReportRaw.Result = styleGuideValidationsReport.Result
+			var contractCheckResultDetailsList []model.ContractCheckResultDetails[json.RawMessage]
 			for _, report := range styleGuideValidationsReport.Context {
-				var contractCheckResultDetails model.ContractCheckResultDetails[string]
+				var contractCheckResultDetails model.ContractCheckResultDetails[json.RawMessage]
 				contractCheckResultDetails.Name = report.Name
 				contractCheckResultDetails.Issue = report.Issue
 				marshal, err := json.Marshal(report.Message)
 				if err != nil {
 					continue
 				}
-				contractCheckResultDetails.Message = string(marshal)
+				contractCheckResultDetails.Message = marshal
 				contractCheckResultDetailsList = append(contractCheckResultDetailsList, contractCheckResultDetails)
 			}
-			styleGuideValidationsReportString.Context = contractCheckResultDetailsList
-			contractCheckResultList = append(contractCheckResultList, styleGuideValidationsReportString)
+			styleGuideValidationsReportRaw.Context = contractCheckResultDetailsList
+			contractCheckResultList = append(contractCheckResultList, styleGuideValidationsReportRaw)
 		}
 		if strings.Contains(result, consts.ContractSecurityAnalysisReport.Name) {
 			var securityAnalysisReport model.ContractCheckResult[[]model.ContractStyleGuideValidationsReportDetails]
@@ -110,24 +127,24 @@ func (a *CheckAggregationAction) Hook() (*model.ActionResult, error) {
 			if err != nil {
 				continue
 			}
-			var securityAnalysisReportString model.ContractCheckResult[string]
-			securityAnalysisReportString.Tool = securityAnalysisReport.Tool
-			securityAnalysisReportString.Name = securityAnalysisReport.Name
-			securityAnalysisReportString.Result = securityAnalysisReport.Result
-			var contractCheckResultDetailsList []model.ContractCheckResultDetails[string]
+			var securityAnalysisReportRaw model.ContractCheckResult[json.RawMessage]
+			securityAnalysisReportRaw.Tool = securityAnalysisReport.Tool
+			securityAnalysisReportRaw.Name = securityAnalysisReport.Name
+			securityAnalysisReportRaw.Result = securityAnalysisReport.Result
+			var contractCheckResultDetailsList []model.ContractCheckResultDetails[json.RawMessage]
 			for _, report := range securityAnalysisReport.Context {
-				var contractCheckResultDetails model.ContractCheckResultDetails[string]
+				var contractCheckResultDetails model.ContractCheckResultDetails[json.RawMessage]
 				contractCheckResultDetails.Name = report.Name
 				contractCheckResultDetails.Issue = report.Issue
 				marshal, err := json.Marshal(report.Message)
 				if err != nil {
 					continue
 				}
-				contractCheckResultDetails.Message = string(marshal)
+				contractCheckResultDetails.Message = marshal
 				contractCheckResultDetailsList = append(contractCheckResultDetailsList, contractCheckResultDetails)
 			}
-			securityAnalysisReportString.Context = contractCheckResultDetailsList
-			contractCheckResultList = append(contractCheckResultList, securityAnalysisReportString)
+			securityAnalysisReportRaw.Context = contractCheckResultDetailsList
+			contractCheckResultList = append(contractCheckResultList, securityAnalysisReportRaw)
 		}
 	}
 	a.path = path2.Join(destDir, consts.CheckAggregationResult)
