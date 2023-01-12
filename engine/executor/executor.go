@@ -143,7 +143,7 @@ func (e *Executor) Execute(id int, job *model2.Job) error {
 		jobWrapper.Output.NewStage(stageWapper.Name)
 		e.jobService.SaveJobDetail(jobWrapper.Name, jobWrapper)
 
-		for _, step := range stageWapper.Stage.Steps {
+		for index, step := range stageWapper.Stage.Steps {
 			var ah action.ActionHandler
 			if step.RunsOn != "" {
 				ah = action.NewDockerEnv(step, ctx, jobWrapper.Output)
@@ -152,7 +152,8 @@ func (e *Executor) Execute(id int, job *model2.Job) error {
 					break
 				}
 			}
-
+			stageWapper.Stage.Steps[index].StartTime = time.Now()
+			stageWapper.Stage.Steps[index].Status = model2.STATUS_RUNNING
 			if step.Uses == "" || step.Uses == "shell" {
 				ah = action.NewShellAction(step, ctx, jobWrapper.Output)
 			} else if step.Uses == "git-checkout" {
@@ -183,9 +184,13 @@ func (e *Executor) Execute(id int, job *model2.Job) error {
 				ah = action.NewRemoteAction(step, ctx)
 			}
 			err = executeAction(ah, jobWrapper)
+			dataTime := time.Now().Sub(stageWapper.Stage.Steps[index].StartTime)
+			stageWapper.Stage.Steps[index].Duration = dataTime.Milliseconds()
 			if err != nil {
+				stageWapper.Stage.Steps[index].Status = model2.STATUS_FAIL
 				break
 			}
+			stageWapper.Stage.Steps[index].Status = model2.STATUS_SUCCESS
 		}
 
 		for !stack.IsEmpty() {
