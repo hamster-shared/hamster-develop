@@ -1,7 +1,7 @@
 version: 1.0
 name: {{.Name}}
 stages:
-  git-clone:
+  Initialization:
     steps:
       - name: git-clone
         uses: git-checkout
@@ -9,7 +9,7 @@ stages:
           url: {{ .RepositoryUrl }}
           branch: main
 
-  sol-profiler-check:
+  Check by Sol-Profile...:
     needs:
       - git-clone
     steps:
@@ -21,7 +21,7 @@ stages:
         with:
           path: contracts
 
-  solhint-check:
+  Check by Solhint:
     needs:
       - sol-profiler-check
     steps:
@@ -33,7 +33,7 @@ stages:
         with:
           path: contracts
 
-  mythril-check:
+  Check by Mythril:
     needs:
       - solhint-check
     steps:
@@ -43,7 +43,7 @@ stages:
           path: contracts
           solc-version: 0.6.0
 
-  check-aggregation:
+  Output Results:
     needs:
       - solhint-check
     steps:
