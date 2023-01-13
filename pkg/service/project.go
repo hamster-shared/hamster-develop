@@ -155,10 +155,11 @@ func (p *ProjectService) UpdateProject(id string, updateData vo.UpdateProjectPar
 }
 
 func (p *ProjectService) DeleteProject(id string) error {
-	result := p.db.Debug().Where("id = ?", id).Delete(&db2.Project{})
+	//result := p.db.Debug().Where("id = ?", id).Delete(&db2.Project{})
+	deleteSql := "delete t,tw,twd,tc,tcd,tr from t_project t left join t_workflow tw on t.id = tw.project_id left join t_workflow_detail twd on t.id = twd.project_id  left join t_contract tc on t.id = tc.project_id left join t_contract_deploy tcd on t.id = tcd.project_id left join t_report tr on t.id = tr.project_id where t.id = ?"
+	result := p.db.Exec(deleteSql, id)
 	if result.Error != nil {
 		return result.Error
 	}
-	//todo delete workflow,workflow detail,contract,report
 	return nil
 }

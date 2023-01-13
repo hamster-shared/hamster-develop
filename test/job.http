@@ -108,13 +108,13 @@ Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
 GET http://localhost:8080/api/projects/48068104-d96a-4d4d-a107-4fe3e268408f
 
 ### build
-POST http://localhost:8080/api/projects/48068104-d96a-4d4d-a107-4fe3e268408f/build
+POST http://localhost:8080/api/projects/d3586e4f-41a3-4d51-b91e-5a108d5dc53d/build
 Content-Type: application/json
 Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
 
 
 ### check
-POST http://localhost:8080/api/projects/48068104-d96a-4d4d-a107-4fe3e268408f/check
+POST http://localhost:8080/api/projects/d3586e4f-41a3-4d51-b91e-5a108d5dc53d/check
 Content-Type: application/json
 Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
 
@@ -166,8 +166,8 @@ Content-Type: application/json
 }
 
 
-### query project detail
-DELETE http://localhost:8080/api/projects/2
+### delete project
+DELETE http://localhost:8080/api/projects/48068104-d96a-4d4d-a107-4fe3e268408f
 
 
 ### check name
