@@ -14,3 +14,5 @@ alter table t_report
 
 alter table t_contract_deploy
     modify project_id char(36) null comment '项目ID';
+
+alter table t_template add whether_display tinyint(1) comment '是否展示';

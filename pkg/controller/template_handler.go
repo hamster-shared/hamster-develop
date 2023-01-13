@@ -49,3 +49,18 @@ func (h *HandlerServer) templateDetail(gin *gin.Context) {
 	}
 	Success(data, gin)
 }
+
+func (h *HandlerServer) templateShow(gin *gin.Context) {
+	templateTypeStr := gin.Query("type")
+	templateType, err := strconv.Atoi(templateTypeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	data, err := h.templateService.TemplateShow(templateType)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
