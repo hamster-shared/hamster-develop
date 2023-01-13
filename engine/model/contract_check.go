@@ -3,10 +3,10 @@ package model
 import "encoding/json"
 
 type ContractCheckResult[T ResultDetailType] struct {
-	Name    string
-	Result  string
-	Tool    string
-	Context []ContractCheckResultDetails[T]
+	Name    string                          `json:"name"`
+	Result  string                          `json:"result"`
+	Tool    string                          `json:"tool"`
+	Context []ContractCheckResultDetails[T] `json:"context"`
 }
 
 func NewContractCheckResult[T ResultDetailType](name string, result string, tool string, context []ContractCheckResultDetails[T]) ContractCheckResult[T] {
@@ -23,9 +23,9 @@ type ResultDetailType interface {
 }
 
 type ContractCheckResultDetails[T ResultDetailType] struct {
-	Name    string
-	Issue   int
-	Message T
+	Name    string `json:"name"`
+	Issue   int    `json:"issue"`
+	Message T      `json:"message"`
 }
 
 func NewContractCheckResultDetails[T ResultDetailType](name string, issue int, message T) ContractCheckResultDetails[T] {
@@ -37,12 +37,12 @@ func NewContractCheckResultDetails[T ResultDetailType](name string, issue int, m
 }
 
 type ContractStyleGuideValidationsReportDetails struct {
-	Line         string
-	Column       string
-	Level        string
-	OriginalText string
-	Note         string
-	Tool         string
+	Line         string `json:"line"`
+	Column       string `json:"column"`
+	Level        string `json:"level"`
+	OriginalText string `json:"originalText"`
+	Note         string `json:"note"`
+	Tool         string `json:"tool"`
 }
 
 func NewContractStyleGuideValidationsReportDetails(line, column, level, originalText, note, tool string) ContractStyleGuideValidationsReportDetails {
@@ -57,13 +57,13 @@ func NewContractStyleGuideValidationsReportDetails(line, column, level, original
 }
 
 type ContractMethodsPropertiesReportDetails struct {
-	Contract   string
-	Category   string
-	Function   string
-	Visibility string
-	ViewPure   string
-	Returns    string
-	Modifiers  string
+	Contract   string `json:"contract"`
+	Category   string `json:"category"`
+	Function   string `json:"function"`
+	Visibility string `json:"visibility"`
+	ViewPure   string `json:"view_pure"`
+	Returns    string `json:"returns"`
+	Modifiers  string `json:"modifiers"`
 }
 
 func NewContractMethodsPropertiesReportDetails(contract, category, function, visibility, viewPure, returns, modifiers string) ContractMethodsPropertiesReportDetails {
