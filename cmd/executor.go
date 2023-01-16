@@ -15,7 +15,7 @@ var (
 // executorCmd represents the executor command
 var executorCmd = &cobra.Command{
 	Use:   "executor",
-	Short: "A brief description of your command",
+	Short: "run executor ",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 

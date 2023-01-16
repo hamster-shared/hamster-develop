@@ -76,7 +76,7 @@ func (a *RemoteAction) Hook() (*model2.ActionResult, error) {
 	var remoteAction model2.RemoteAction
 	err = yaml.Unmarshal(yamlFile, &remoteAction)
 
-	for envName, _ := range remoteAction.Input {
+	for envName, _ := range remoteAction.Inputs {
 		env = append(env, fmt.Sprintf("%s=%s", envName, a.args[envName]))
 	}
 

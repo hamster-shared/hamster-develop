@@ -4,7 +4,7 @@ type RemoteAction struct {
 	Name        string                    `yaml:"name"`
 	Description string                    `yaml:"description"`
 	Author      string                    `yaml:"author"`
-	Input       map[string]ActionInputArg `yaml:"input"`
+	Inputs      map[string]ActionInputArg `yaml:"inputs"`
 	Runs        ActionRun                 `yaml:"runs"`
 }
 

@@ -28,14 +28,11 @@ var (
 	Engine          = engine.NewEngine()
 	handlerServer   = controller.NewHandlerServer(Engine, templateService, projectService)
 	rootCmd         = &cobra.Command{
-		Use:   "a-line-cli",
-		Short: "A brief description of your application",
-		Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+		Use:   "aline",
+		Short: "aline is ci tool that can build and deploy",
+		Long: `Aline is the core execution engine of hamster. 
+It has a separate command line entry and can execute the 
+hamster pipeline file in the local environment.`,
 		// Uncomment the following line if your bare application
 		// has an action associated with it:
 		Run: func(cmd *cobra.Command, args []string) {
