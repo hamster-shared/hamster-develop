@@ -12,7 +12,6 @@ import (
 // GetFileCreateTime get file create time
 func GetFileCreateTime(path string) *time.Time {
 	var createTime time.Time
-	osType := runtime.GOOS
 	fileInfo, _ := os.Stat(path)
 	wFileSys := fileInfo.Sys().(*syscall.Win32FileAttributeData)
 	tNanSeconds := wFileSys.CreationTime.Nanoseconds()

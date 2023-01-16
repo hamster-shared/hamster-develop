@@ -38,6 +38,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
 	api.GET("/templates/:id", h.handlerServer.templateDetail)
+	api.GET("/templates/show", h.handlerServer.templateShow)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
 	api.POST("/projects", h.handlerServer.createProject) // 进行中

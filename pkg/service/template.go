@@ -5,7 +5,6 @@ import (
 	"github.com/hamster-shared/a-line/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
-	"log"
 )
 
 type ITemplateService interface {
@@ -15,6 +14,7 @@ type ITemplateService interface {
 	GetTemplatesByTypeId(templateTypeId int) (*[]vo.TemplateVo, error)
 	//GetTemplateDetail get template detail by template id
 	GetTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
+	TemplateShow(templateType int) (*[]vo.TemplateVo, error)
 }
 
 type TemplateService struct {
@@ -45,7 +45,6 @@ func (t *TemplateService) GetTemplateTypeList(templateType int) (*[]vo.TemplateT
 func (t *TemplateService) GetTemplatesByTypeId(templateTypeId int) (*[]vo.TemplateVo, error) {
 	var list []db2.Template
 	var listVo []vo.TemplateVo
-	log.Println(t.db)
 	result := t.db.Model(db2.Template{}).Where("template_type_id = ?", templateTypeId).Find(&list)
 	if result.Error != nil {
 		return &listVo, result.Error
@@ -65,4 +64,16 @@ func (t *TemplateService) GetTemplateDetail(templateId int) (*vo.TemplateDetailV
 	}
 	copier.Copy(&dataVo, &data)
 	return &dataVo, nil
+}
+
+func (t *TemplateService) TemplateShow(templateType int) (*[]vo.TemplateVo, error) {
+	var list []db2.Template
+	var listVo []vo.TemplateVo
+	sql := "select  t.*  from t_template t left join t_template_type ttt on t.template_type_id = ttt.id where ttt.type = ? and t.whether_display = 1"
+	res := t.db.Raw(sql, templateType).Scan(&list)
+	if res.Error != nil {
+		return &listVo, res.Error
+	}
+	copier.Copy(&listVo, &list)
+	return &listVo, nil
 }
