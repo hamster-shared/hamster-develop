@@ -83,7 +83,7 @@ func (a *MythRilAction) Hook() (*model.ActionResult, error) {
 			return nil, err
 		}
 		commandTemplate := consts.MythRilCheck
-		command := fmt.Sprintf(commandTemplate, basePath, redundantPath)
+		command := fmt.Sprintf(commandTemplate, workdir, path2.Join(a.path, redundantPath))
 		if a.solcVersion != "" {
 			command = command + " --solv " + a.solcVersion
 		}

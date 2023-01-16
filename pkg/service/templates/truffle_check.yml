@@ -11,11 +11,12 @@ stages:
 
   Check by Sol-Profile...:
     needs:
-      - git-clone
+      - Initialization
     steps:
       - name: sol-profiler-install
         run: |
           npm install --global sol-profiler
+          npm install
       - name: sol-profiler-check
         uses: sol-profiler-check
         with:
@@ -23,9 +24,9 @@ stages:
 
   Check by Solhint:
     needs:
-      - sol-profiler-check
+      - Check by Sol-Profile...
     steps:
-      - name: sol-profiler-install
+      - name: solhint-install
         run: |
           npm install -g solhint
       - name: solhint-check
@@ -35,17 +36,17 @@ stages:
 
   Check by Mythril:
     needs:
-      - solhint-check
+      - Check by Solhint
     steps:
       - name: mythril-check
         uses: mythril-check
         with:
           path: contracts
-          solc-version: 0.6.0
+          solc-version: 0.8.9
 
   Output Results:
     needs:
-      - solhint-check
+      - Check by Mythril
     steps:
       - name: check-aggregation
         uses: check-aggregation

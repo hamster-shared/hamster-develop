@@ -146,14 +146,21 @@ Content-Type: application/json
 Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
 
 {
-  "name": "webpack-guo-3",
+  "name": "ERC721CommunityStream-1",
   "type": 1,
-  "templateOwner": "jian-guo-s",
-  "templateRepo": "truffle-webpack",
+  "templateOwner": "hamster-contract",
+  "templateRepo": "ERC721CommunityStream",
   "frameType": 1,
   "repoOwner": "jian-guo-s",
   "userId": 53070354
 }
+
+
+
+### check project
+POST http://localhost:8080/api/projects/a5d11dfe-bd0a-4234-ac15-05a55b841721/check
+Content-Type: application/json
+Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
 
 
 ### update project
