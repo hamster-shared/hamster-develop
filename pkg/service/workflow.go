@@ -118,7 +118,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				WorkflowId:       workflowId,
 				WorkflowDetailId: workflowDetail.Id,
 				Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
-				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber+1),
 				BuildTime:        workflowDetail.CreateTime,
 				AbiInfo:          string(abi),
 				ByteCode:         bytecodeData.(string),
@@ -320,10 +320,10 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 
 	copier.Copy(&detail, &workflowDetail)
 	if workflowDetail.Status == vo.WORKFLOW_STATUS_RUNNING {
-		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.Id)
-		jobDetail := w.engine.GetJobHistory(workflowKey, workflowDetailId)
+		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.WorkflowId)
+		jobDetail := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
 		data, err := json.Marshal(jobDetail.Stages)
-		if err != nil {
+		if err == nil {
 			detail.StageInfo = string(data)
 			detail.Duration = jobDetail.Duration
 		}
@@ -415,7 +415,7 @@ func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.Wo
 	return input.String(), nil
 }
 
-func (w *WorkflowService) DeleteWorkflow(projectId, workflowId int) error {
+func (w *WorkflowService) DeleteWorkflow(projectId string, workflowId int) error {
 	err := w.db.Model(db2.Workflow{}).Where("project_id = ? and id = ?", projectId, workflowId).Delete(db2.Workflow{}).Error
 	if err != nil {
 		return err
