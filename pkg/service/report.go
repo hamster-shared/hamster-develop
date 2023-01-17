@@ -38,7 +38,7 @@ func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int)
 	var reports []db2.Report
 	var data []vo.ReportVo
 	var result [3]vo.ReportVo
-	res := c.db.Model(db2.Report{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("checkTime DESC").Find(&reports)
+	res := c.db.Model(db2.Report{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Find(&reports)
 	if res.Error != nil {
 		return result, res.Error
 	}
