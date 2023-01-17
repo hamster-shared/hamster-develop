@@ -34,17 +34,27 @@ func (c *ReportService) QueryReports(projectId string, Type string, page int, si
 	return vo.NewPage[db2.Report](reports, int(total), page, size), nil
 }
 
-func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int) ([]vo.ReportVo, error) {
+func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int) ([3]vo.ReportVo, error) {
 	var reports []db2.Report
 	var data []vo.ReportVo
+	var result [3]vo.ReportVo
 	res := c.db.Model(db2.Report{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("checkTime DESC").Find(&reports)
 	if res.Error != nil {
-		return data, res.Error
+		return result, res.Error
 	}
 	if len(reports) > 0 {
 		copier.Copy(&data, &reports)
+		for _, datum := range data {
+			if datum.Name == "Contract Security Analysis Report" {
+				result[0] = datum
+			} else if datum.Name == "Contract Style Guide validations Report" {
+				result[1] = datum
+			} else {
+				result[2] = datum
+			}
+		}
 	}
-	return data, nil
+	return result, nil
 }
 
 func (c *ReportService) QueryReportCheckTools(projectId string) ([]string, error) {

@@ -309,24 +309,9 @@ func (h *HandlerServer) deleteProject(gin *gin.Context) {
 	}
 	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	userService := application.GetBean[*service.UserService]("userService")
-	user, err := userService.GetUserByToken(token)
+	_, err := userService.GetUserByToken(token)
 	if err != nil {
 		Fail("get user info failed", gin)
-		return
-	}
-	project, err := h.projectService.GetProject(id)
-	if err != nil {
-		Fail("project not exist", gin)
-		return
-	}
-	githubService := application.GetBean[*service.GithubService]("githubService")
-	res, err := githubService.DeleteRepo(token, user.Username, project.Name)
-	if err != nil {
-		if res.StatusCode == http.StatusUnauthorized {
-			Failed(http.StatusUnauthorized, "access not authorized", gin)
-			return
-		}
-		Fail(err.Error(), gin)
 		return
 	}
 	err = h.projectService.DeleteProject(id)

@@ -140,11 +140,10 @@ func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 }
 
 func (h *HandlerServer) deleteWorkflow(gin *gin.Context) {
-	projectIdStr := gin.Param("id")
+	projectId := gin.Param("id")
 	workflowIdStr := gin.Param("workflowId")
-	projectId, err := strconv.Atoi(projectIdStr)
-	if err != nil {
-		Fail(err.Error(), gin)
+	if projectId == "" {
+		Fail("projectId is empty or invalid", gin)
 		return
 	}
 	workflowId, err := strconv.Atoi(workflowIdStr)
