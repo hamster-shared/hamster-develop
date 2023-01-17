@@ -17,6 +17,13 @@ stages:
           npm install -g truffle
           npm install
           truffle compile
+      - name: filter
+        run: |
+          mkdir -p build/artifacts
+          cd contracts
+          for i in `ls *.sol`;do
+            cp -R ../build/contracts/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
+          done;
 
       - name: save artifactory
         uses: hamster-artifactory
@@ -24,4 +31,4 @@ stages:
           name: contract-meta.zip
           compress: false
           path: |
-            build/contracts/*.json
+            build/artifacts/*.json
