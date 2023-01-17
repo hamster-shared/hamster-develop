@@ -79,7 +79,7 @@ func (c *ContractService) QueryContracts(projectId string, query, version, netwo
 
 func (c *ContractService) QueryContractByWorkflow(workflowId, workflowDetailId int) ([]db2.Contract, error) {
 	var contracts []db2.Contract
-	res := c.db.Model(db2.Contract{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Find(&contracts)
+	res := c.db.Model(db2.Contract{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&contracts)
 	if res != nil {
 		return contracts, res.Error
 	}
