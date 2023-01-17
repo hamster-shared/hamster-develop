@@ -1,22 +1,23 @@
 package db
 
 import (
+	"database/sql"
 	uuid "github.com/iris-contrib/go.uuid"
 	"time"
 )
 
 type Contract struct {
-	Id               uint      `gorm:"primaryKey" json:"id"`
-	ProjectId        uuid.UUID `json:"projectId"`
-	WorkflowId       uint      `json:"workflowId"`
-	WorkflowDetailId uint      `json:"workflowDetailId"`
-	Name             string    `json:"name"`
-	Version          string    `json:"version"`
-	Network          string    `json:"network"`
-	BuildTime        time.Time `json:"buildTime"`
-	AbiInfo          string    `json:"abiInfo"`
-	ByteCode         string    `json:"byteCode"`
-	CreateTime       time.Time `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
+	Id               uint           `gorm:"primaryKey" json:"id"`
+	ProjectId        uuid.UUID      `json:"projectId"`
+	WorkflowId       uint           `json:"workflowId"`
+	WorkflowDetailId uint           `json:"workflowDetailId"`
+	Name             string         `json:"name"`
+	Version          string         `json:"version"`
+	Network          sql.NullString `json:"network"`
+	BuildTime        time.Time      `json:"buildTime"`
+	AbiInfo          string         `json:"abiInfo"`
+	ByteCode         string         `json:"byteCode"`
+	CreateTime       time.Time      `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
 }
 
 type ContractDeploy struct {

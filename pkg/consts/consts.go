@@ -26,4 +26,7 @@ const (
 //const ClientSecrets = "a20f12e3ab2bd7228476d167a54a7ed279121955"
 
 // 34.232.105.81
-const ClientSecrets = "2923a2870379c3b7237d2703852828017ca1de9b"
+//const ClientSecrets = "2923a2870379c3b7237d2703852828017ca1de9b"
+
+// https://develop.alpha.hamsternet.io/
+const ClientSecrets = "c99eef44205a6dfe975a62556f0601957dc3df9c"

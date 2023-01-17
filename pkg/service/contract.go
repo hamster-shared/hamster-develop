@@ -1,6 +1,7 @@
 package service
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/goperate/convert/core/array"
 	"github.com/hamster-shared/a-line/pkg/application"
@@ -32,7 +33,10 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
 	if err != nil {
 		return err
 	}
-	contract.Network = entity.Network
+	contract.Network = sql.NullString{
+		String: entity.Network,
+		Valid:  true,
+	}
 	c.db.Save(&contract)
 	return err
 }
