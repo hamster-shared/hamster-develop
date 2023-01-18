@@ -78,7 +78,7 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size int)
 			data.RecentDeploy = recentDeploy
 			projectList = append(projectList, data)
 		}
-		p.db.Model(db2.Project{}).Where("user_id = ?", userId).Count(&total)
+		tx.Count(&total)
 	}
 	projectPage.Data = projectList
 	projectPage.Total = int(total)

@@ -26,7 +26,7 @@ func (c *ReportService) QueryReports(projectId string, Type string, page int, si
 		tx = tx.Where("check_tool = ?", Type)
 	}
 	result := tx.Offset((page - 1) * size).Limit(size).Find(&reports)
-	c.db.Model(db2.Report{}).Where("project_id = ?", projectId).Count(&total)
+	tx.Count(&total)
 	if result.Error != nil {
 		return vo.NewEmptyPage[db2.Report](), result.Error
 	}

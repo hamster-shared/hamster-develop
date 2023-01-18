@@ -297,7 +297,7 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 			resData.Id = datum.WorkflowId
 			workflowData = append(workflowData, resData)
 		}
-		w.db.Model(db2.WorkflowDetail{}).Where("project_id = ?", projectId).Count(&total)
+		tx.Count(&total)
 	}
 	data.Data = workflowData
 	data.Total = int(total)
