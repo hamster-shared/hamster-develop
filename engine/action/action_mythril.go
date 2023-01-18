@@ -37,6 +37,51 @@ func NewMythRilAction(step model.Step, ctx context.Context, output *output.Outpu
 }
 
 func (a *MythRilAction) Pre() error {
+	stack := a.ctx.Value(STACK).(map[string]interface{})
+	workdir, ok := stack["workdir"].(string)
+	if !ok {
+		return errors.New("workdir is empty")
+	}
+	nodeModules := path2.Join(workdir, "node_modules")
+	files, err := os.ReadDir(nodeModules)
+	fileContent := ""
+	var fileNameList []string
+	if err != nil {
+		mythRilSolcJson := consts.MythRilSolcJson
+		fileContent = strings.ReplaceAll(mythRilSolcJson, "%S", "")
+	} else {
+		for _, file := range files {
+			if file.IsDir() {
+				fileNameList = append(fileNameList, file.Name())
+			}
+		}
+		if len(fileNameList) > 0 {
+			var reMappings string
+			for i, name := range fileNameList {
+				mappings := consts.MythRilSolcJsonReMappings
+				sprintf := fmt.Sprintf(mappings, name, name)
+				if i == 0 {
+					reMappings = reMappings + sprintf
+				} else {
+					reMappings = reMappings + "," + sprintf
+				}
+			}
+			mythRilSolcJson := consts.MythRilSolcJson
+			fileContent = fmt.Sprintf(mythRilSolcJson, reMappings)
+		} else {
+			mythRilSolcJson := consts.MythRilSolcJson
+			fileContent = strings.ReplaceAll(mythRilSolcJson, "%S", "")
+		}
+	}
+	create, err := os.Create(path2.Join(workdir, consts.MythRilSolcJsonName))
+	if err != nil {
+		return err
+	}
+	_, err = create.WriteString(fileContent)
+	if err != nil {
+		return err
+	}
+	create.Close()
 	return nil
 }
 
@@ -83,7 +128,7 @@ func (a *MythRilAction) Hook() (*model.ActionResult, error) {
 			return nil, err
 		}
 		commandTemplate := consts.MythRilCheck
-		command := fmt.Sprintf(commandTemplate, workdir, path2.Join(a.path, redundantPath))
+		command := fmt.Sprintf(commandTemplate, workdir, path2.Join(a.path, redundantPath), consts.MythRilSolcJsonName)
 		if a.solcVersion != "" {
 			command = command + " --solv " + a.solcVersion
 		}

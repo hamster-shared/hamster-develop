@@ -6,7 +6,7 @@ stages:
       - name: git-clone
         uses: git-checkout
         with:
-          url: https://github.com/abing258/solidity_contracts.git
+          url: https://github.com/hamster-contract/Token.git
           branch: main
   mythril-check:
     needs:
@@ -16,4 +16,4 @@ stages:
         uses: mythril-check
         with:
           path:
-          solc-version: 0.8.13
+          solc-version: 0.8.9
