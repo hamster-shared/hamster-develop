@@ -22,7 +22,9 @@ stages:
           mkdir -p build/artifacts
           cd contracts
           for i in `ls *.sol`;do
-            cp -R ../build/contracts/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
+            if [ -e "../build/contracts/`echo $i|sed 's/\.sol//g'`.json" ]; then
+              cp -R ../build/contracts/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
+            fi
           done;
 
       - name: save artifactory
