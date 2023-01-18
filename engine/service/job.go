@@ -448,6 +448,8 @@ func (svc *JobService) ExecuteJob(name string) (*model2.JobDetail, error) {
 	if len(ids) > 0 {
 		sort.Sort(sort.Reverse(sort.IntSlice(ids)))
 		jobDetail.Id = ids[0] + 1
+	} else {
+		jobDetail.Id = 1
 	}
 	stageDetail, err := jobData.StageSort()
 	if err != nil {
