@@ -48,7 +48,7 @@ func (a *MythRilAction) Pre() error {
 	var fileNameList []string
 	if err != nil {
 		mythRilSolcJson := consts.MythRilSolcJson
-		fileContent = strings.ReplaceAll(mythRilSolcJson, "%S", "")
+		fileContent = strings.ReplaceAll(mythRilSolcJson, "%s", "")
 	} else {
 		for _, file := range files {
 			if file.IsDir() {
@@ -70,7 +70,7 @@ func (a *MythRilAction) Pre() error {
 			fileContent = fmt.Sprintf(mythRilSolcJson, reMappings)
 		} else {
 			mythRilSolcJson := consts.MythRilSolcJson
-			fileContent = strings.ReplaceAll(mythRilSolcJson, "%S", "")
+			fileContent = strings.ReplaceAll(mythRilSolcJson, "%s", "")
 		}
 	}
 	create, err := os.Create(path2.Join(workdir, consts.MythRilSolcJsonName))

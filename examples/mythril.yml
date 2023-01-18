@@ -12,8 +12,11 @@ stages:
     needs:
       - git-clone
     steps:
+      - name: solhint-install
+        run: |
+          npm install
       - name: mythril-check
         uses: mythril-check
         with:
-          path:
+          path: contracts
           solc-version: 0.8.9

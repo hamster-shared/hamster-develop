@@ -9,22 +9,22 @@ stages:
           url: {{ .RepositoryUrl }}
           branch: main
 
-  Check by Sol-Profile...:
-    needs:
-      - Initialization
-    steps:
-      - name: sol-profiler-install
-        run: |
-          npm install --global sol-profiler
-          npm install
-      - name: sol-profiler-check
-        uses: sol-profiler-check
-        with:
-          path: contracts
+#  Check by Sol-Profile...:
+#    needs:
+#      - Initialization
+#    steps:
+#      - name: sol-profiler-install
+#        run: |
+#          npm install --global sol-profiler
+#          npm install
+#      - name: sol-profiler-check
+#        uses: sol-profiler-check
+#        with:
+#          path: contracts
 
   Check by Solhint:
     needs:
-      - Check by Sol-Profile...
+      - Initialization
     steps:
       - name: solhint-install
         run: |
