@@ -280,8 +280,8 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	var total int64
 	var data vo.WorkflowPage
 	var workflowData []vo.WorkflowVo
-	var workflowList []db2.Workflow
-	tx := w.db.Model(db2.Workflow{}).Where("project_id = ?", projectId)
+	var workflowList []db2.WorkflowDetail
+	tx := w.db.Model(db2.WorkflowDetail{}).Where("project_id = ?", projectId)
 	if workflowType != 0 {
 		tx = tx.Where("type = ? ", workflowType)
 	}
@@ -291,17 +291,13 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	}
 	if len(workflowList) > 0 {
 		for _, datum := range workflowList {
-			var detailData db2.WorkflowDetail
-			res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and project_id = ?", datum.Id, datum.ProjectId).Order("start_time DESC").First(&detailData)
-			if res.Error == nil {
-				var resData vo.WorkflowVo
-				copier.Copy(&resData, &detailData)
-				copier.Copy(&resData, &datum)
-				resData.DetailId = detailData.Id
-				workflowData = append(workflowData, resData)
-			}
+			var resData vo.WorkflowVo
+			copier.Copy(&resData, &datum)
+			resData.DetailId = datum.Id
+			resData.Id = datum.WorkflowId
+			workflowData = append(workflowData, resData)
 		}
-		w.db.Model(db2.Workflow{}).Where("project_id = ?", projectId).Count(&total)
+		w.db.Model(db2.WorkflowDetail{}).Where("project_id = ?", projectId).Count(&total)
 	}
 	data.Data = workflowData
 	data.Total = int(total)
