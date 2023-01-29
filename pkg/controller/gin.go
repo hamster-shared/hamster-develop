@@ -4,6 +4,8 @@ import (
 	"embed"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/hamster-shared/hamster-develop/pkg/application"
+	"gorm.io/gorm"
 	"io/fs"
 	"net/http"
 	"os/exec"
@@ -28,6 +30,65 @@ func NewHttpService(handlerServer HandlerServer, port int) *HttpServer {
 func (h *HttpServer) StartHttpServer() {
 	r := gin.Default()
 	api := r.Group("/api")
+
+	api.POST("/login", h.handlerServer.loginWithGithub)
+	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
+	//api.Use(h.handlerServer.Authorize())
+	// project_template
+	api.GET("/templates-category", h.handlerServer.templatesCategory)
+	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
+	api.GET("/templates/:id", h.handlerServer.templateDetail)
+	api.GET("/templates/show", h.handlerServer.templateShow)
+	// project
+	api.GET("/projects", h.handlerServer.projectList)
+	api.POST("/projects", h.handlerServer.createProject) // 进行中
+	api.GET("/projects/:id", h.handlerServer.projectDetail)
+	api.PUT("/projects/:id", h.handlerServer.updateProject)
+	api.DELETE("projects/:id", h.handlerServer.deleteProject)
+	api.POST("/projects/check-name", h.handlerServer.checkName)
+
+	/*
+		创建项目返回项目ID
+		缺登录的接口
+		模版详情接口缺少返回字段
+		缺少仓库校验接口（根据project名称）
+		删除deploy接口
+		保存部署信息传参数有问题
+		Workflow详情返回字段缺少流水线类型（check, build）
+		查询workflow下的合约列表使用workflowDetailId
+		缺少项目日志接口使用ID
+		获取合约列表改为项目合约列表（改名字）
+		合约部署详情接口有问题
+		根据版本查询合约信息（返回abi信息和byte code）
+	*/
+	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/stop", h.handlerServer.stopWorkflow)
+	api.POST("/projects/:id/check", h.handlerServer.projectWorkflowCheck)
+	api.POST("/projects/:id/build", h.handlerServer.projectWorkflowBuild)
+	api.GET("/projects/:id/contract", h.handlerServer.projectContract)
+	api.GET("/projects/:id/reports", h.handlerServer.projectReport)
+	api.POST("/projects/:id/contract/deploy", h.handlerServer.saveContractDeployInfo)
+
+	//workflow
+	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)
+	api.DELETE("/projects/:id/workflows/:workflowId", h.handlerServer.deleteWorkflow)
+	api.GET("/workflows/:id/detail/:detailId", h.handlerServer.workflowDetail)
+	api.GET("/workflows/:id/detail/:detailId/contract", h.handlerServer.workflowContract)
+	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)
+
+	//contract
+	api.GET("/projects/:id/contract/:version", h.handlerServer.contractInfo)
+	api.GET("/projects/:id/contract/deploy/detail", h.handlerServer.contractDeployDetailByVersion)
+	api.GET("/projects/:id/versions", h.handlerServer.versionList)
+	api.GET("/projects/:id/contract/name", h.handlerServer.queryContractNameList)
+	api.GET("/projects/:id/contract/network", h.handlerServer.queryNetworkList)
+	api.GET("/projects/:id/check-tools", h.handlerServer.queryReportCheckTools)
+
+	//logs
+	api.GET("/workflows/:id/detail/:detailId/logs", h.handlerServer.getWorkflowLog)
+	api.GET("/workflows/:id/detail/:detailId/logs/:stageName", h.handlerServer.getWorkflowStageLog)
+
+	// ======== old api =========//
+	// pipeline
 	//create pipeline job
 	api.POST("/pipeline", h.handlerServer.createPipeline)
 	//update pipeline job
@@ -53,10 +114,13 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/pipeline/:name/logs/:id", h.handlerServer.getJobLog)
 	api.GET("/pipeline/:name/logs/:id/:stagename", h.handlerServer.getJobStageLog)
 	// get template list
-	api.GET("/pipeline/templates", h.handlerServer.getTemplates)
-	api.GET("/pipeline/template/:id", h.handlerServer.getTemplateDetail)
+	//api.GET("/pipeline/templates", h.handlerServer.getTemplates)
+	//api.GET("/pipeline/template/:id", h.handlerServer.getTemplateDetail)
 	api.GET("/pipeline/:name/detail/:id/artifactory", h.handlerServer.openArtifactoryDir)
 	api.GET("/ping", func(c *gin.Context) {
+
+		db := application.GetBean[*gorm.DB]("db")
+		fmt.Println(db)
 		//输出json结果给调用方
 		Success("", c)
 	})

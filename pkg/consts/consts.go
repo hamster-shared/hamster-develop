@@ -1,28 +1,32 @@
 package consts
 
-const (
-	PIPELINE_DIR_NAME       = "pipelines"
-	JOB_DIR_NAME            = "jobs"
-	JOB_DETAIL_DIR_NAME     = "job-details"
-	JOB_DETAIL_LOG_DIR_NAME = "job-details-log"
-)
+const SecretKey = "93dfe293a9c897c795a7e4ee737e5734"
+
+type TemplateType int
 
 const (
-	LANG_EN  = "en"
-	LANG_ZH  = "zh"
-	WEB_PORT = 8080
+	Solidity TemplateType = iota + 1
+	Ink
+	Move
+	Vue
+	Nuxt
+	Next
+	Vite
+	Angular
 )
 
-const (
-	TRIGGER_MODE = "Manual trigger"
-)
+type WorkflowType int
 
 const (
-	ArtifactoryName = "/artifactory"
-	ArtifactoryDir  = PIPELINE_DIR_NAME + "/" + JOB_DIR_NAME
+	Check WorkflowType = iota + 1
+	Build
 )
 
-const (
-	IpfsUploadUrl = "https://api.ipfs-gateway.cloud/upload"
-	CarVersion    = 1
-)
+// jian-guo
+//const ClientSecrets = "a20f12e3ab2bd7228476d167a54a7ed279121955"
+
+// 34.232.105.81
+//const ClientSecrets = "2923a2870379c3b7237d2703852828017ca1de9b"
+
+// https://develop.alpha.hamsternet.io/
+const ClientSecrets = "c99eef44205a6dfe975a62556f0601957dc3df9c"

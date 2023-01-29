@@ -8,11 +8,20 @@ stages:
         with:
           workdir: $HOME/my-erc20
 
-  contract-deploy:
+  contract-compile:
     needs:
       - template-init
     steps:
       - name: deploy
         run: |
           npm install -g truffle
-          truffle migrate
+          truffle compile
+
+  contract-upload:
+    needs:
+      - contract-compile
+    steps:
+      - name: upload
+        action: hamster/ipfs
+        with:
+          path: xxx

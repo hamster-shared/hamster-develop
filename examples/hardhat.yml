@@ -7,7 +7,7 @@ stages:
         uses: git-checkout
         with:
           url: https://github.com/mohaijiang/hardhat-example.git
-          branch: main
+          branch: ${{ param.branch }}
   code-compile:
     needs:
       - git-clone

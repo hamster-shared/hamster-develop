@@ -5,15 +5,16 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/hamster-shared/a-line/pkg/controller"
-	"github.com/hamster-shared/a-line/pkg/dispatcher"
-	"github.com/hamster-shared/a-line/pkg/executor"
-	"github.com/hamster-shared/a-line/pkg/logger"
-	"github.com/hamster-shared/a-line/pkg/model"
-	"github.com/hamster-shared/a-line/pkg/pipeline"
-	"github.com/hamster-shared/a-line/pkg/service"
+	engine "github.com/hamster-shared/aline-engine"
+	"github.com/hamster-shared/aline-engine/logger"
+	"github.com/hamster-shared/aline-engine/model"
+	"github.com/hamster-shared/aline-engine/pipeline"
+	"github.com/hamster-shared/hamster-develop/pkg/controller"
+	service2 "github.com/hamster-shared/hamster-develop/pkg/service"
+	"io"
 	"os"
 	"path"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -21,52 +22,51 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var (
 	port            = 8080
-	channel         = make(chan model.QueueMessage)
-	dispatch        = dispatcher.NewDispatcher(channel)
 	pipelineFile    string
-	jobService      = service.NewJobService()
-	templateService = service.NewTemplateService()
-	handlerServer   = controller.NewHandlerServer(jobService, dispatch, templateService)
+	templateService = service2.NewTemplateService()
+	projectService  = service2.NewProjectService()
+	Engine          = engine.NewEngine()
+	handlerServer   = controller.NewHandlerServer(Engine, templateService, projectService)
 	rootCmd         = &cobra.Command{
-		Use:   "a-line-cli",
-		Short: "A brief description of your application",
-		Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+		Use:   "aline",
+		Short: "aline is ci tool that can build and deploy",
+		Long: `Aline is the core execution engine of hamster. 
+It has a separate command line entry and can execute the 
+hamster pipeline file in the local environment.`,
 		// Uncomment the following line if your bare application
 		// has an action associated with it:
 		Run: func(cmd *cobra.Command, args []string) {
 			//wd, _ := os.Getwd()
 			cicdFile, err := os.Open(path.Join(pipelineFile))
+			defer cicdFile.Close()
 			if err != nil {
 				fmt.Println("file error")
 				return
 			}
 
 			// 启动executor
-
-			executeClient := executor.NewExecutorClient(channel, jobService)
-			defer close(channel)
-
-			job, _ := pipeline.GetJobFromReader(cicdFile)
-			jobService.SaveJobWithFile(pipelineFile, job.Name)
-			Stages, _ := job.StageSort()
-			jobDetail := &model.JobDetail{
-				Id:     1,
-				Job:    *job,
-				Status: model.STATUS_NOTRUN,
-				Stages: Stages,
+			yamlByte, err := io.ReadAll(cicdFile)
+			if err != nil {
+				fmt.Println(err)
+				return
 			}
-			jobService.SaveJobDetail(job.Name, jobDetail)
+			yaml := string(yamlByte)
 
-			err = executeClient.Execute(1, job)
+			job, _ := pipeline.GetJobFromYaml(yaml)
+
+			go Engine.Start()
+
+			err = Engine.CreateJob(job.Name, yaml)
+
+			jobDetail, err := Engine.ExecuteJob(job.Name)
 			if err != nil {
 				logger.Error("err:", err)
 			}
 
+			for jobDetail.Status <= model.STATUS_RUNNING {
+				time.Sleep(time.Second * 3)
+				jobDetail = Engine.GetJobHistory(jobDetail.Name, jobDetail.Id)
+			}
 		},
 	}
 )

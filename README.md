@@ -10,7 +10,7 @@
 <img src="https://img.shields.io/badge/vite-3.1.8-brightgreen"/>
 </div>
 
-[https://github.com/hamster-shared/a-line/tree/develop](https://vvbin.cn/next/)
+[https://github.com/hamster-shared/hamster-develop/tree/develop](https://vvbin.cn/next/)
 
 This template should help get you started developing with Vue 3 in Vite.
 
@@ -55,8 +55,8 @@ yarn build
 
 Thank you for considering your contribution to ALine!
 
-<a href="https://github.com/hamster-shared/a-line/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=hamster-shared/a-line" />
+<a href="https://github.com/hamster-shared/hamster-develop/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=hamster-shared/hamster-develop" />
 </a>
 
 ---
@@ -153,7 +153,7 @@ Thank you for considering your contribution to ALine!
 - 从远程仓库 clone 代码到本地
 
 ```shell
- git clone -b develop https://github.com/hamster-shared/a-line.git
+ git clone -b develop https://github.com/hamster-shared/hamster-develop.git
 ```
 
 - 编译构建
