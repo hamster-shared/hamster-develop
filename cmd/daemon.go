@@ -5,10 +5,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/hamster-shared/a-line/engine"
-	"github.com/hamster-shared/a-line/pkg/application"
-	"github.com/hamster-shared/a-line/pkg/controller"
-	"github.com/hamster-shared/a-line/pkg/service"
+	engine "github.com/hamster-shared/aline-engine"
+	"github.com/hamster-shared/hamster-develop/pkg/application"
+	"github.com/hamster-shared/hamster-develop/pkg/controller"
+	"github.com/hamster-shared/hamster-develop/pkg/service"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"

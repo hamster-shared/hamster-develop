@@ -3,9 +3,9 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/hamster-shared/a-line/pkg/consts"
-	db2 "github.com/hamster-shared/a-line/pkg/db"
-	"github.com/hamster-shared/a-line/pkg/vo"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
+	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
+	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"

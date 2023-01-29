@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"github.com/google/go-github/v48/github"
-	"github.com/hamster-shared/a-line/pkg/utils"
+	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"log"
 )
 

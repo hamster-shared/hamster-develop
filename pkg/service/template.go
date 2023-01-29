@@ -1,8 +1,8 @@
 package service
 
 import (
-	db2 "github.com/hamster-shared/a-line/pkg/db"
-	"github.com/hamster-shared/a-line/pkg/vo"
+	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
+	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 )

@@ -5,12 +5,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/hamster-shared/a-line/engine"
-	"github.com/hamster-shared/a-line/engine/logger"
-	"github.com/hamster-shared/a-line/engine/model"
-	"github.com/hamster-shared/a-line/engine/pipeline"
-	"github.com/hamster-shared/a-line/pkg/controller"
-	service2 "github.com/hamster-shared/a-line/pkg/service"
+	engine "github.com/hamster-shared/aline-engine"
+	"github.com/hamster-shared/aline-engine/logger"
+	"github.com/hamster-shared/aline-engine/model"
+	"github.com/hamster-shared/aline-engine/pipeline"
+	"github.com/hamster-shared/hamster-develop/pkg/controller"
+	service2 "github.com/hamster-shared/hamster-develop/pkg/service"
 	"io"
 	"os"
 	"path"

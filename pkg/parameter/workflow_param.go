@@ -1,7 +1,7 @@
 package parameter
 
 import (
-	"github.com/hamster-shared/a-line/pkg/consts"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	uuid "github.com/iris-contrib/go.uuid"
 )
 

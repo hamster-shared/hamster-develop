@@ -4,7 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/hamster-shared/a-line/pkg/controller"
+	"github.com/hamster-shared/hamster-develop/pkg/controller"
 	"github.com/spf13/cobra"
 )
 

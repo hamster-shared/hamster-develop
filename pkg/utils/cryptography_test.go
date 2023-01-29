@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/hamster-shared/a-line/pkg/consts"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	"log"
 	"testing"
 )

@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"github.com/hamster-shared/a-line/cmd"
+	"github.com/hamster-shared/hamster-develop/cmd"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"

@@ -4,7 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/hamster-shared/a-line/pkg/application"
+	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"gorm.io/gorm"
 	"io/fs"
 	"net/http"

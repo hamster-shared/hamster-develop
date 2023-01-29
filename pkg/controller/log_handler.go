@@ -2,10 +2,10 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/hamster-shared/a-line/engine"
-	"github.com/hamster-shared/a-line/engine/model"
-	"github.com/hamster-shared/a-line/pkg/application"
-	"github.com/hamster-shared/a-line/pkg/service"
+	engine "github.com/hamster-shared/aline-engine"
+	"github.com/hamster-shared/aline-engine/model"
+	"github.com/hamster-shared/hamster-develop/pkg/application"
+	"github.com/hamster-shared/hamster-develop/pkg/service"
 	"strconv"
 )
 

@@ -2,11 +2,11 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/hamster-shared/a-line/pkg/application"
-	"github.com/hamster-shared/a-line/pkg/consts"
-	"github.com/hamster-shared/a-line/pkg/parameter"
-	"github.com/hamster-shared/a-line/pkg/service"
-	"github.com/hamster-shared/a-line/pkg/utils"
+	"github.com/hamster-shared/hamster-develop/pkg/application"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
+	"github.com/hamster-shared/hamster-develop/pkg/parameter"
+	"github.com/hamster-shared/hamster-develop/pkg/service"
+	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"net/http"
 )
 
