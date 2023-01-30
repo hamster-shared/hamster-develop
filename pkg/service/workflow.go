@@ -382,11 +382,31 @@ func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {
 	return nil
 }
 
-func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.WorkflowType) (string, error) {
+func getTemplate(projectType uint, workflowType consts.WorkflowType) string {
 	filePath := "templates/truffle-build.yml"
-	if workflowType == consts.Check {
-		filePath = "templates/truffle_check.yml"
+	if projectType == uint(consts.CONTRACT) {
+		if workflowType == consts.Check {
+			filePath = "templates/truffle_check.yml"
+		} else if workflowType == consts.Build {
+			filePath = "templates/truffle-build.yml"
+		}
+	} else if projectType == uint(consts.FRONTEND) {
+		if workflowType == consts.Check {
+			filePath = "templates/frontend-check.yml"
+		} else if workflowType == consts.Build {
+			filePath = "templates/frontend-build.yml"
+		} else if workflowType == consts.Deploy {
+			filePath = "templates/frontend-deploy.yml"
+		}
 	}
+	return filePath
+}
+
+func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo, workflowType consts.WorkflowType) (string, error) {
+	if project == nil {
+		return "", errors.New("project is nil")
+	}
+	filePath := getTemplate(project.Type, workflowType)
 	content, err := temp.ReadFile(filePath)
 	if err != nil {
 		log.Println("read template file failed ", err.Error())
@@ -400,7 +420,7 @@ func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.Wo
 	}
 	templateData := parameter.TemplateCheck{
 		Name:          name,
-		RepositoryUrl: url,
+		RepositoryUrl: project.RepositoryUrl,
 	}
 	var input bytes.Buffer
 	err = tmpl.Execute(&input, templateData)

@@ -86,7 +86,13 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
+	project, err := h.projectService.GetProject(id.String())
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+
 	workflowCheckData := parameter.SaveWorkflowParam{
 		ProjectId:  id,
 		Type:       consts.Check,
@@ -99,7 +105,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
-	file, err := workflowService.TemplateParse(checkKey, *repo.CloneURL, consts.Check)
+	file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
 	if err == nil {
 		workflowCheckRes.ExecFile = file
 		workflowService.UpdateWorkflow(workflowCheckRes)
@@ -116,28 +122,33 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	buildKey := workflowService.GetWorkflowKey(id.String(), workflowBuildRes.Id)
-	file1, err := workflowService.TemplateParse(buildKey, *repo.CloneURL, consts.Build)
+	file1, err := workflowService.TemplateParse(buildKey, project, consts.Build)
 	if err == nil {
 		workflowBuildRes.ExecFile = file1
 		workflowService.UpdateWorkflow(workflowBuildRes)
 	}
+
+	if project.Type == uint(consts.FRONTEND) {
+		workflowDeployData := parameter.SaveWorkflowParam{
+			ProjectId:  id,
+			Type:       consts.Deploy,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowDeployRes, err := workflowService.SaveWorkflow(workflowDeployData)
+		if err != nil {
+			Success(id, g)
+			return
+		}
+		deployKey := workflowService.GetWorkflowKey(id.String(), workflowDeployRes.Id)
+		file1, err := workflowService.TemplateParse(deployKey, project, consts.Deploy)
+		if err == nil {
+			workflowDeployRes.ExecFile = file1
+			workflowService.UpdateWorkflow(workflowDeployRes)
+		}
+	}
+
 	Success(id, g)
-
-	// TODO ... 检查用户仓库是否被使用
-
-	//TODO ... github 导入仓库
-
-	//TODO ... 保存项目信息
-
-	//TODO ... 保存默认流水线
-	//fs, err := temp.Open("truffle_check.yml")
-	//template.New("check").
-	//workflow1 := db.Workflow{
-	//	ProjectId:  project.Id,
-	//	Type:       1,
-	//	ExecFile:   "",
-	//	LastExecId: 0,
-	//}
 }
 
 func (h *HandlerServer) projectDetail(gin *gin.Context) {

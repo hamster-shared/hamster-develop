@@ -20,6 +20,7 @@ type WorkflowType int
 const (
 	Check WorkflowType = iota + 1
 	Build
+	Deploy
 )
 
 // jian-guo
@@ -30,3 +31,11 @@ const (
 
 // https://develop.alpha.hamsternet.io/
 const ClientSecrets = "c99eef44205a6dfe975a62556f0601957dc3df9c"
+
+type ProjectType int
+
+const (
+	CONTRACT ProjectType = iota + 1
+	FRONTEND
+	BLOCKCHAIN
+)

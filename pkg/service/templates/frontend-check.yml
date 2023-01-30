@@ -1,0 +1,18 @@
+version: 1.0
+name: frontend
+stages:
+  Initialization:
+    steps:
+      - name: git-clone
+        uses: git-checkout
+        with:
+          url: {{ .RepositoryUrl }}
+          branch: main
+  code-check:
+    needs:
+      - Initialization
+    steps:
+      - name: code-compile
+        run: |
+          npm install
+          npm run lint
