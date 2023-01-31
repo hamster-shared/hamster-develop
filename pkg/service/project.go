@@ -42,7 +42,7 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size int)
 		tx = tx.Where("name like ? ", "%"+keyword+"%")
 	}
 
-	result := tx.Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&projects)
+	result := tx.Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&projects).Offset(-1).Limit(-1).Count(&total)
 	if result.Error != nil {
 		return &projectPage, result.Error
 	}
@@ -78,7 +78,6 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size int)
 			data.RecentDeploy = recentDeploy
 			projectList = append(projectList, data)
 		}
-		tx.Count(&total)
 	}
 	projectPage.Data = projectList
 	projectPage.Total = int(total)

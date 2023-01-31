@@ -285,7 +285,7 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	if workflowType != 0 {
 		tx = tx.Where("type = ? ", workflowType)
 	}
-	result := tx.Offset((page - 1) * size).Limit(size).Find(&workflowList)
+	result := tx.Offset((page - 1) * size).Limit(size).Find(&workflowList).Offset(-1).Limit(-1).Count(&total)
 	if result.Error != nil {
 		return &data, result.Error
 	}
@@ -297,7 +297,6 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 			resData.Id = datum.WorkflowId
 			workflowData = append(workflowData, resData)
 		}
-		tx.Count(&total)
 	}
 	data.Data = workflowData
 	data.Total = int(total)
