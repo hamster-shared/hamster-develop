@@ -14,6 +14,7 @@ type ITemplateService interface {
 	GetTemplatesByTypeId(templateTypeId int) (*[]vo.TemplateVo, error)
 	//GetTemplateDetail get template detail by template id
 	GetTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
+	GetFrontendTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
 	TemplateShow(templateType int) (*[]vo.TemplateVo, error)
 }
 
@@ -59,6 +60,17 @@ func (t *TemplateService) GetTemplateDetail(templateId int) (*vo.TemplateDetailV
 	var data db2.TemplateDetail
 	var dataVo vo.TemplateDetailVo
 	result := t.db.Where("template_id = ? ", templateId).First(&data)
+	if result.Error != nil {
+		return &dataVo, result.Error
+	}
+	copier.Copy(&dataVo, &data)
+	return &dataVo, nil
+}
+
+func (t *TemplateService) GetFrontendTemplateDetail(templateId int) (*vo.TemplateDetailVo, error) {
+	var data db2.TemplateDetail
+	var dataVo vo.TemplateDetailVo
+	result := t.db.Table("t_frontend_template_detail").Where("template_id = ? ", templateId).First(&data)
 	if result.Error != nil {
 		return &dataVo, result.Error
 	}
