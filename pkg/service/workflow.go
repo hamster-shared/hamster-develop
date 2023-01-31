@@ -112,7 +112,9 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 		CreateTime:       time.Now(),
 	}
 	err = w.db.Save(&frontendPackage).Error
-	log.Println("save frontend package failed: ", err.Error())
+	if err != nil {
+		log.Println("save frontend package failed: ", err.Error())
+	}
 }
 
 func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
