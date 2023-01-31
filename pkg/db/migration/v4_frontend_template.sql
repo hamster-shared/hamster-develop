@@ -31,7 +31,7 @@ values (
         5,
         'frontend',
         '',
-        5
+        2
     );
 -- 模板表插入数据
 DELETE FROM t_template
