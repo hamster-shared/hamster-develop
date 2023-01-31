@@ -33,6 +33,17 @@ func (c *ReportService) QueryReports(projectId string, Type string, page int, si
 	return vo.NewPage[db2.Report](reports, int(total), page, size), nil
 }
 
+func (c *ReportService) QueryFrontendReports(projectId string, page int, size int) (vo.Page[db2.Report], error) {
+	var total int64
+	var reports []db2.Report
+	tx := c.db.Model(db2.Report{}).Where("project_id = ?", projectId)
+	result := tx.Offset((page - 1) * size).Limit(size).Find(&reports).Offset(-1).Limit(-1).Count(&total)
+	if result.Error != nil {
+		return vo.NewEmptyPage[db2.Report](), result.Error
+	}
+	return vo.NewPage[db2.Report](reports, int(total), page, size), nil
+}
+
 func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int) ([3]vo.ReportVo, error) {
 	var reports []db2.Report
 	var data []vo.ReportVo

@@ -22,12 +22,18 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 	query := gin.Query("query")
 	pageStr := gin.DefaultQuery("page", "1")
 	sizeStr := gin.DefaultQuery("size", "10")
+	projectTypeStr := gin.DefaultQuery("type", "1")
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
 	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	projectType, err := strconv.Atoi(projectTypeStr)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -40,7 +46,7 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	userService := application.GetBean[*service.UserService]("userService")
 	user, err := userService.GetUserByToken(token)
-	data, err := h.projectService.GetProjects(int(user.Id), query, page, size)
+	data, err := h.projectService.GetProjects(int(user.Id), query, page, size, projectType)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -169,6 +175,10 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
 	accessToken := g.Request.Header.Get("Access-Token")
 	if accessToken == "" {
 		Failed(http.StatusUnauthorized, "No access", g)
@@ -217,6 +227,35 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 		return
 	}
 	Success("", g)
+}
+
+func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
+	projectIdStr := g.Param("id")
+	projectId, err := uuid.FromString(projectIdStr)
+	if err != nil {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	accessToken := g.Request.Header.Get("Access-Token")
+	if accessToken == "" {
+		Failed(http.StatusUnauthorized, "No access", g)
+		return
+	}
+	token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	userService := application.GetBean[*service.UserService]("userService")
+	var userVo vo.UserAuth
+	user, err := userService.GetUserByToken(token)
+	if err != nil {
+		Fail("get user info failed", g)
+		return
+	}
+	copier.Copy(&userVo, &user)
+	err = workflowService.ExecProjectDeployWorkflow(projectId, userVo)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
 }
 
 func (h *HandlerServer) projectContract(g *gin.Context) {
@@ -268,6 +307,41 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 
 	Success(result, g)
 
+}
+func (h *HandlerServer) projectFrontendReports(g *gin.Context) {
+	projectId := g.Param("id")
+	if projectId == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(g.DefaultQuery("size", "10"))
+	reportService := application.GetBean[*service.ReportService]("reportService")
+
+	result, err := reportService.QueryFrontendReports(projectId, page, size)
+
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+
+	Success(result, g)
+}
+func (h *HandlerServer) projectPackages(g *gin.Context) {
+	projectId := g.Param("id")
+	if projectId == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(g.DefaultQuery("size", "10"))
+	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
+	result, err := frontendPackageService.QueryFrontendPackages(projectId, page, size)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	Success(result, g)
 }
 
 func (h *HandlerServer) updateProject(gin *gin.Context) {

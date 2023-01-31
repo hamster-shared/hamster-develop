@@ -46,28 +46,28 @@ func (c *ContractService) QueryContracts(projectId string, query, version, netwo
 	var afterData []db2.Contract
 	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,byte_code,create_time from t_contract where project_id = ? ")
 	if query != "" && version != "" && network != "" {
-		sql = sql + "and name like CONCAT('%',?,'%') and version = ? and network = ? group by name,version"
+		sql = sql + "and name like CONCAT('%',?,'%') and version = ? and network = ? group by name,version order by create_time desc"
 		c.db.Raw(sql, projectId, query, version, network).Scan(&contracts)
 	} else if query != "" && version != "" {
-		sql = sql + "and name like CONCAT('%',?,'%') and version = ? group by name,version"
+		sql = sql + "and name like CONCAT('%',?,'%') and version = ? group by name,version order by create_time desc"
 		c.db.Raw(sql, projectId, query, version).Scan(&contracts)
 	} else if query != "" && network != "" {
-		sql = sql + "and name like CONCAT('%',?,'%') and network = ? group by name,version"
+		sql = sql + "and name like CONCAT('%',?,'%') and network = ? group by name,version order by create_time desc"
 		c.db.Raw(sql, projectId, query, network).Scan(&contracts)
 	} else if version != "" && network != "" {
-		sql = sql + "and version = ? and network = ? group by name,version"
+		sql = sql + "and version = ? and network = ? group by name,version order by create_time desc"
 		c.db.Raw(sql, projectId, version, network).Scan(&contracts)
 	} else if query != "" {
-		sql = sql + "and name like CONCAT('%',?,'%') group by name,version"
+		sql = sql + "and name like CONCAT('%',?,'%') group by name,version order by create_time desc"
 		c.db.Raw(sql, projectId, query).Scan(&contracts)
 	} else if network != "" {
-		sql = sql + "and network = ? group by name,version"
+		sql = sql + "and network = ? group by name,version order by create_time desc"
 		c.db.Raw(sql, projectId, network).Scan(&contracts)
 	} else if version != "" {
-		sql = sql + "and version = ? group by name,version"
+		sql = sql + "and version = ? group by name,version order by create_time desc"
 		c.db.Raw(sql, projectId, version).Scan(&contracts)
 	} else {
-		sql = sql + "group by name,version"
+		sql = sql + "group by name,version order by create_time desc"
 		c.db.Raw(sql, projectId).Scan(&contracts)
 	}
 	if len(contracts) > 0 {

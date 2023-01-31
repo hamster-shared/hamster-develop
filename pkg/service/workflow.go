@@ -82,6 +82,37 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 
 	w.SyncContract(message, workflowDetail)
 	w.SyncReport(message, workflowDetail)
+	w.SyncFrontendPackage(message, workflowDetail)
+}
+
+func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
+	projectIdStr, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
+	if err != nil {
+		return
+	}
+	projectId, err := uuid.FromString(projectIdStr)
+	if err != nil {
+		log.Println("UUID from string failed: ", err.Error())
+		return
+	}
+	var projectData db.Project
+	err = w.db.Model(db.Project{}).Where("id = ?", projectId).First(&projectData).Error
+	if err != nil {
+		log.Println("find project by id failed: ", err.Error())
+		return
+	}
+	frontendPackage := db.FrontendPackage{
+		ProjectId:        projectId,
+		WorkflowId:       workflowId,
+		WorkflowDetailId: workflowDetail.Id,
+		Name:             projectData.Name,
+		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+		Branch:           projectData.Branch,
+		BuildTime:        workflowDetail.CreateTime,
+		CreateTime:       time.Now(),
+	}
+	err = w.db.Save(&frontendPackage).Error
+	log.Println("save frontend package failed: ", err.Error())
 }
 
 func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
@@ -202,6 +233,10 @@ func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.
 
 func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
 	return w.ExecProjectWorkflow(projectId, user, 2)
+}
+
+func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
+	return w.ExecProjectWorkflow(projectId, user, 3)
 }
 
 func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserAuth, workflowType uint) error {

@@ -104,6 +104,28 @@ func (h *HandlerServer) workflowReport(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) workflowFrontendPackage(gin *gin.Context) {
+	idStr := gin.Param("id")
+	workflowDetailIdStr := gin.Param("detailId")
+	workflowId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowDetailId, err := strconv.Atoi(workflowDetailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
+	data, err := frontendPackageService.QueryPackageByWorkflow(workflowId, workflowDetailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 	projectIdStr := gin.Param("id")
 	projectId, err := uuid.FromString(projectIdStr)

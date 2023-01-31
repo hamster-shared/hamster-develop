@@ -29,13 +29,14 @@ type WorkflowVo struct {
 }
 
 type WorkflowDetailVo struct {
-	Id         uint      `json:"id"`
-	WorkflowId uint      `json:"workflowId"`
-	StageInfo  string    `json:"stageInfo"`
-	Status     uint      `json:"status"`
-	ExecNumber uint      `json:"execNumber"`
-	StartTime  time.Time `json:"startTime"`
-	Duration   int64     `json:"duration"`
+	Id          uint      `json:"id"`
+	WorkflowId  uint      `json:"workflowId"`
+	StageInfo   string    `json:"stageInfo"`
+	Status      uint      `json:"status"`
+	ExecNumber  uint      `json:"execNumber"`
+	StartTime   time.Time `json:"startTime"`
+	Duration    int64     `json:"duration"`
+	TriggerUser string    `json:"triggerUser"`
 }
 
 const WORKFLOW_STATUS_NOT_RUN uint = 0
