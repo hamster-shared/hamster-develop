@@ -67,6 +67,17 @@ func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int)
 	return result, nil
 }
 
+func (c *ReportService) QueryFrontendReportsByWorkflow(workflowId, workflowDetailId int) ([]vo.ReportVo, error) {
+	var reports []db2.Report
+	var data []vo.ReportVo
+	res := c.db.Model(db2.Report{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Find(&reports)
+	if res.Error != nil {
+		return data, res.Error
+	}
+	copier.Copy(&data, &reports)
+	return data, nil
+}
+
 func (c *ReportService) QueryReportCheckTools(projectId string) ([]string, error) {
 	var data []string
 	res := c.db.Model(db2.Report{}).Distinct("check_tool").Select("check_tool").Where("project_id = ?", projectId).Find(&data)

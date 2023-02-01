@@ -104,6 +104,28 @@ func (h *HandlerServer) workflowReport(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) workflowFrontendReports(gin *gin.Context) {
+	idStr := gin.Param("id")
+	workflowDetailIdStr := gin.Param("detailId")
+	workflowId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowDetailId, err := strconv.Atoi(workflowDetailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	reportService := application.GetBean[*service.ReportService]("reportService")
+	data, err := reportService.QueryFrontendReportsByWorkflow(workflowId, workflowDetailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) workflowFrontendPackage(gin *gin.Context) {
 	idStr := gin.Param("id")
 	workflowDetailIdStr := gin.Param("detailId")
@@ -119,6 +141,34 @@ func (h *HandlerServer) workflowFrontendPackage(gin *gin.Context) {
 	}
 	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
 	data, err := frontendPackageService.QueryPackageByWorkflow(workflowId, workflowDetailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) queryPackageById(gin *gin.Context) {
+	idStr := gin.Param("id")
+	workflowDetailIdStr := gin.Param("detailId")
+	packageIdStr := gin.Param("packageId")
+	workflowId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowDetailId, err := strconv.Atoi(workflowDetailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	packageId, err := strconv.Atoi(packageIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
+	data, err := frontendPackageService.QueryPackageById(packageId, workflowId, workflowDetailId)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

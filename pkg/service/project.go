@@ -37,7 +37,7 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 	var projectPage vo.ProjectPage
 	var projects []db2.Project
 	var projectList []vo.ProjectListVo
-	tx := p.db.Model(db2.Project{}).Where("user_id = ?", userId).Where("type = ?", projectType)
+	tx := p.db.Model(db2.Project{}).Where("user_id = ? and type = ?", userId, projectType)
 	if keyword != "" {
 		tx = tx.Where("name like ? ", "%"+keyword+"%")
 	}

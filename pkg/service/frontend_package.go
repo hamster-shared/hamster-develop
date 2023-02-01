@@ -37,3 +37,12 @@ func (f *FrontendPackageService) QueryPackageByWorkflow(workflowId, workflowDeta
 	}
 	return packages, nil
 }
+
+func (f *FrontendPackageService) QueryPackageById(id, workflowId, workflowDetailId int) (db2.FrontendPackage, error) {
+	var data db2.FrontendPackage
+	res := f.db.Model(db2.FrontendPackage{}).Where("id = ? and workflow_id = ? and workflow_detail_id = ?", id, workflowId, workflowDetailId).First(&data)
+	if res != nil {
+		return data, res.Error
+	}
+	return data, nil
+}

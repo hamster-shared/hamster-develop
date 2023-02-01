@@ -46,6 +46,10 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	userService := application.GetBean[*service.UserService]("userService")
 	user, err := userService.GetUserByToken(token)
+	if err != nil {
+		Failed(http.StatusUnauthorized, "user has no permission", gin)
+		return
+	}
 	data, err := h.projectService.GetProjects(int(user.Id), query, page, size, projectType)
 	if err != nil {
 		Fail(err.Error(), gin)
