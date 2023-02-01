@@ -1,0 +1,29 @@
+version: 1.0
+name: frontend-check
+stages:
+  Initialization:
+    steps:
+      - name: git-clone
+        uses: git-checkout
+        with:
+          url: https://github.com/abing258/frontend-Template.git
+          branch: master
+
+  Check FrontEnd :
+    needs:
+      - Initialization
+    steps:
+      - name: frontend-install
+        run: |
+          npm install
+      - name: frontend-check
+        uses: frontend-check
+        with:
+          path:
+
+  Output Results:
+    needs:
+      - Check FrontEnd
+    steps:
+      - name: check-aggregation
+        uses: check-aggregation
