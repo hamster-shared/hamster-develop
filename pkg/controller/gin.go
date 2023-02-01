@@ -38,6 +38,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
 	api.GET("/templates/:id", h.handlerServer.templateDetail)
+	api.GET("/frontend-templates/:id", h.handlerServer.frontendTemplateDetail)
 	api.GET("/templates/show", h.handlerServer.templateShow)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
@@ -64,8 +65,11 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/stop", h.handlerServer.stopWorkflow)
 	api.POST("/projects/:id/check", h.handlerServer.projectWorkflowCheck)
 	api.POST("/projects/:id/build", h.handlerServer.projectWorkflowBuild)
+	api.POST("/projects/:id/deploy", h.handlerServer.projectWorkflowDeploy)
 	api.GET("/projects/:id/contract", h.handlerServer.projectContract)
 	api.GET("/projects/:id/reports", h.handlerServer.projectReport)
+	api.GET("/projects/:id/frontend/reports", h.handlerServer.projectFrontendReports)
+	api.GET("/projects/:id/packages", h.handlerServer.projectPackages)
 	api.POST("/projects/:id/contract/deploy", h.handlerServer.saveContractDeployInfo)
 
 	//workflow
@@ -74,6 +78,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/workflows/:id/detail/:detailId", h.handlerServer.workflowDetail)
 	api.GET("/workflows/:id/detail/:detailId/contract", h.handlerServer.workflowContract)
 	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)
+	api.GET("/workflows/:id/detail/:detailId/package", h.handlerServer.workflowFrontendPackage)
 
 	//contract
 	api.GET("/projects/:id/contract/:version", h.handlerServer.contractInfo)

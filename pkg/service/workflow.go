@@ -82,6 +82,39 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 
 	w.SyncContract(message, workflowDetail)
 	w.SyncReport(message, workflowDetail)
+	w.SyncFrontendPackage(message, workflowDetail)
+}
+
+func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
+	projectIdStr, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
+	if err != nil {
+		return
+	}
+	projectId, err := uuid.FromString(projectIdStr)
+	if err != nil {
+		log.Println("UUID from string failed: ", err.Error())
+		return
+	}
+	var projectData db.Project
+	err = w.db.Model(db.Project{}).Where("id = ?", projectId).First(&projectData).Error
+	if err != nil {
+		log.Println("find project by id failed: ", err.Error())
+		return
+	}
+	frontendPackage := db.FrontendPackage{
+		ProjectId:        projectId,
+		WorkflowId:       workflowId,
+		WorkflowDetailId: workflowDetail.Id,
+		Name:             projectData.Name,
+		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+		Branch:           projectData.Branch,
+		BuildTime:        workflowDetail.CreateTime,
+		CreateTime:       time.Now(),
+	}
+	err = w.db.Save(&frontendPackage).Error
+	if err != nil {
+		log.Println("save frontend package failed: ", err.Error())
+	}
 }
 
 func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
@@ -204,6 +237,10 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	return w.ExecProjectWorkflow(projectId, user, 2)
 }
 
+func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
+	return w.ExecProjectWorkflow(projectId, user, 3)
+}
+
 func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserAuth, workflowType uint) error {
 
 	// query project workflow
@@ -285,7 +322,7 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	if workflowType != 0 {
 		tx = tx.Where("type = ? ", workflowType)
 	}
-	result := tx.Offset((page - 1) * size).Limit(size).Find(&workflowList)
+	result := tx.Offset((page - 1) * size).Limit(size).Find(&workflowList).Offset(-1).Limit(-1).Count(&total)
 	if result.Error != nil {
 		return &data, result.Error
 	}
@@ -297,7 +334,6 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 			resData.Id = datum.WorkflowId
 			workflowData = append(workflowData, resData)
 		}
-		tx.Count(&total)
 	}
 	data.Data = workflowData
 	data.Total = int(total)
@@ -382,11 +418,31 @@ func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {
 	return nil
 }
 
-func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.WorkflowType) (string, error) {
+func getTemplate(projectType uint, workflowType consts.WorkflowType) string {
 	filePath := "templates/truffle-build.yml"
-	if workflowType == consts.Check {
-		filePath = "templates/truffle_check.yml"
+	if projectType == uint(consts.CONTRACT) {
+		if workflowType == consts.Check {
+			filePath = "templates/truffle_check.yml"
+		} else if workflowType == consts.Build {
+			filePath = "templates/truffle-build.yml"
+		}
+	} else if projectType == uint(consts.FRONTEND) {
+		if workflowType == consts.Check {
+			filePath = "templates/frontend-check.yml"
+		} else if workflowType == consts.Build {
+			filePath = "templates/frontend-build.yml"
+		} else if workflowType == consts.Deploy {
+			filePath = "templates/frontend-deploy.yml"
+		}
 	}
+	return filePath
+}
+
+func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo, workflowType consts.WorkflowType) (string, error) {
+	if project == nil {
+		return "", errors.New("project is nil")
+	}
+	filePath := getTemplate(project.Type, workflowType)
 	content, err := temp.ReadFile(filePath)
 	if err != nil {
 		log.Println("read template file failed ", err.Error())
@@ -400,7 +456,7 @@ func (w *WorkflowService) TemplateParse(name, url string, workflowType consts.Wo
 	}
 	templateData := parameter.TemplateCheck{
 		Name:          name,
-		RepositoryUrl: url,
+		RepositoryUrl: project.RepositoryUrl,
 	}
 	var input bytes.Buffer
 	err = tmpl.Execute(&input, templateData)

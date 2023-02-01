@@ -13,7 +13,7 @@ import (
 )
 
 type IProjectService interface {
-	GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error)
+	GetProjects(userId int, keyword string, page, size, projectType int) (*vo.ProjectPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error)
 	GetProject(id string) (*vo.ProjectDetailVo, error)
 	UpdateProject(id string, updateData vo.UpdateProjectParam) error
@@ -32,17 +32,17 @@ func (p *ProjectService) Init(db *gorm.DB) {
 	p.db = db
 }
 
-func (p *ProjectService) GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error) {
+func (p *ProjectService) GetProjects(userId int, keyword string, page, size, projectType int) (*vo.ProjectPage, error) {
 	var total int64
 	var projectPage vo.ProjectPage
 	var projects []db2.Project
 	var projectList []vo.ProjectListVo
-	tx := p.db.Model(db2.Project{}).Where("user_id = ?", userId)
+	tx := p.db.Model(db2.Project{}).Where("user_id = ?", userId).Where("type = ?", projectType)
 	if keyword != "" {
 		tx = tx.Where("name like ? ", "%"+keyword+"%")
 	}
 
-	result := tx.Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&projects)
+	result := tx.Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&projects).Offset(-1).Limit(-1).Count(&total)
 	if result.Error != nil {
 		return &projectPage, result.Error
 	}
@@ -78,7 +78,6 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size int)
 			data.RecentDeploy = recentDeploy
 			projectList = append(projectList, data)
 		}
-		tx.Count(&total)
 	}
 	projectPage.Data = projectList
 	projectPage.Total = int(total)

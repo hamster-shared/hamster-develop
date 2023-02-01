@@ -1,0 +1,32 @@
+version: 1.0
+name: frontend
+stages:
+  Initialization:
+    steps:
+      - name: set workdir
+        uses: workdir
+        with:
+          workdir: /Users/mohaijiang/tmp/vercel/examples/vue
+  code-compile:
+    needs:
+      - Initialization
+    steps:
+      - name: code-compile
+        run: |
+          npm install
+          npm run build
+      - name: save artifactory
+        uses: hamster-artifactory
+        with:
+          name: frontend.zip
+          path: |
+            dist
+
+  ipfs:
+    needs:
+      - code-compile
+    steps:
+      - name: update ipfs
+        uses: hamster-ipfs
+        with:
+          path: dist
