@@ -30,7 +30,7 @@ to quickly create a Cobra application.`,
 
 		passwordFlag := cmd.Flags().Lookup("db_password")
 
-		DSN := fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local", passwordFlag.Value)
+		DSN := fmt.Sprintf("root:%s@tcp(127.0.0.1:3307)/aline?charset=utf8&parseTime=True&loc=Local", passwordFlag.Value)
 		//DSN := fmt.Sprintf("root:%s@tcp(34.232.105.81:3306)/aline?charset=utf8&parseTime=True&loc=Local", "Aline123456")
 
 		go Engine.Start()

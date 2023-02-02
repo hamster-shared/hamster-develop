@@ -13,28 +13,28 @@ type ProjectPage struct {
 }
 
 type ProjectListVo struct {
-	Id            uuid.UUID      `gorm:"primaryKey" json:"id"`
-	Name          string         `json:"name"`
-	UserId        int64          `json:"userId"`
-	Type          uint           `json:"type"`
-	RepositoryUrl string         `json:"repositoryUrl"`
-	FrameType     int            `json:"frameType"`
-	Branch        string         `json:"branch"`
-	RecentCheck   RecentCheckVo  `json:"recentCheck"`
-	RecentBuild   RecentBuildVo  `json:"recentBuild"`
-	RecentDeploy  RecentDeployVo `json:"recentDeploy"`
+	Id            uuid.UUID     `gorm:"primaryKey" json:"id"`
+	Name          string        `json:"name"`
+	UserId        int64         `json:"userId"`
+	Type          uint          `json:"type"`
+	RepositoryUrl string        `json:"repositoryUrl"`
+	FrameType     int           `json:"frameType"`
+	Branch        string        `json:"branch"`
+	RecentCheck   RecentCheckVo `json:"recentCheck"`
+	RecentBuild   RecentBuildVo `json:"recentBuild"`
+	RecentDeploy  interface{}   `json:"recentDeploy"`
 }
 
 type ProjectDetailVo struct {
-	Id            uuid.UUID      `json:"id"`
-	Name          string         `json:"name"`
-	Type          uint           `json:"type"`
-	RepositoryUrl string         `json:"repositoryUrl"`
-	FrameType     int            `json:"frameType"`
-	Branch        string         `json:"branch"`
-	RecentCheck   RecentCheckVo  `json:"recentCheck"`
-	RecentBuild   RecentBuildVo  `json:"recentBuild"`
-	RecentDeploy  RecentDeployVo `json:"recentDeploy"`
+	Id            uuid.UUID     `json:"id"`
+	Name          string        `json:"name"`
+	Type          uint          `json:"type"`
+	RepositoryUrl string        `json:"repositoryUrl"`
+	FrameType     int           `json:"frameType"`
+	Branch        string        `json:"branch"`
+	RecentCheck   RecentCheckVo `json:"recentCheck"`
+	RecentBuild   RecentBuildVo `json:"recentBuild"`
+	RecentDeploy  interface{}   `json:"recentDeploy"`
 }
 
 type RecentCheckVo struct {
@@ -56,6 +56,13 @@ type RecentDeployVo struct {
 	Id         uint      `json:"id"`
 	Version    string    `json:"version"`
 	DeployTime time.Time `json:"deployTime"`
+}
+
+type PackageDeployVo struct {
+	Id         uint      `json:"id"`
+	WorkflowId uint      `json:"workflowId"`
+	Status     uint      `json:"status"`
+	StartTime  time.Time `json:"startTime"`
 }
 
 type CreateProjectParam struct {

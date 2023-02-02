@@ -10,3 +10,5 @@ create table t_frontend_package (
                             build_time timestamp null comment 'build time',
                             create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment 'create time'
 ) comment 'frontend package table';
+
+alter table t_frontend_package add deploy_time timestamp null comment 'deploy time';

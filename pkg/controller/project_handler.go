@@ -251,7 +251,7 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 	var userVo vo.UserAuth
 	user, err := userService.GetUserByToken(token)
 	if err != nil {
-		Fail("get user info failed", g)
+		Failed(http.StatusUnauthorized, "No access", g)
 		return
 	}
 	copier.Copy(&userVo, &user)

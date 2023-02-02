@@ -101,19 +101,23 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 		log.Println("find project by id failed: ", err.Error())
 		return
 	}
-	frontendPackage := db.FrontendPackage{
-		ProjectId:        projectId,
-		WorkflowId:       workflowId,
-		WorkflowDetailId: workflowDetail.Id,
-		Name:             projectData.Name,
-		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-		Branch:           projectData.Branch,
-		BuildTime:        workflowDetail.CreateTime,
-		CreateTime:       time.Now(),
-	}
-	err = w.db.Save(&frontendPackage).Error
+	var data db.FrontendPackage
+	err = w.db.Model(db.FrontendPackage{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetail.Id).First(&data).Error
 	if err != nil {
-		log.Println("save frontend package failed: ", err.Error())
+		frontendPackage := db.FrontendPackage{
+			ProjectId:        projectId,
+			WorkflowId:       workflowId,
+			WorkflowDetailId: workflowDetail.Id,
+			Name:             projectData.Name,
+			Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+			Branch:           projectData.Branch,
+			BuildTime:        workflowDetail.CreateTime,
+			CreateTime:       time.Now(),
+		}
+		err = w.db.Save(&frontendPackage).Error
+		if err != nil {
+			log.Println("save frontend package failed: ", err.Error())
+		}
 	}
 }
 

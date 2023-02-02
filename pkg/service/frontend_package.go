@@ -29,20 +29,11 @@ func (f *FrontendPackageService) QueryFrontendPackages(projectId string, page in
 	return vo.NewPage[db2.FrontendPackage](packages, int(total), page, size), nil
 }
 
-func (f *FrontendPackageService) QueryPackageByWorkflow(workflowId, workflowDetailId int) ([]db2.FrontendPackage, error) {
-	var packages []db2.FrontendPackage
-	res := f.db.Model(db2.FrontendPackage{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&packages)
+func (f *FrontendPackageService) QueryPackageByWorkflow(workflowId, workflowDetailId int) (db2.FrontendPackage, error) {
+	var packages db2.FrontendPackage
+	res := f.db.Model(db2.FrontendPackage{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).First(&packages)
 	if res != nil {
 		return packages, res.Error
 	}
 	return packages, nil
-}
-
-func (f *FrontendPackageService) QueryPackageById(id, workflowId, workflowDetailId int) (db2.FrontendPackage, error) {
-	var data db2.FrontendPackage
-	res := f.db.Model(db2.FrontendPackage{}).Where("id = ? and workflow_id = ? and workflow_detail_id = ?", id, workflowId, workflowDetailId).First(&data)
-	if res != nil {
-		return data, res.Error
-	}
-	return data, nil
 }
