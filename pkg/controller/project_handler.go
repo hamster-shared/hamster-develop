@@ -240,6 +240,18 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
+	workflowIdStr := g.Param("workflowId")
+	detailIdStr := g.Param("detailId")
+	workflowId, err := strconv.Atoi(workflowIdStr)
+	if err != nil {
+		Fail("workflow id is empty or invalid", g)
+		return
+	}
+	detailId, err := strconv.Atoi(detailIdStr)
+	if err != nil {
+		Fail("detail id is empty or invalid", g)
+		return
+	}
 	accessToken := g.Request.Header.Get("Access-Token")
 	if accessToken == "" {
 		Failed(http.StatusUnauthorized, "No access", g)
@@ -255,7 +267,7 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 		return
 	}
 	copier.Copy(&userVo, &user)
-	err = workflowService.ExecProjectDeployWorkflow(projectId, userVo)
+	err = workflowService.ExecProjectDeployWorkflow(projectId, workflowId, detailId, userVo)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
@@ -423,4 +435,8 @@ func (h *HandlerServer) checkName(gin *gin.Context) {
 	githubService := application.GetBean[*service.GithubService]("githubService")
 	data := githubService.CheckName(token, checkData.Owner, checkData.Name)
 	Success(data, gin)
+}
+
+func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
+
 }

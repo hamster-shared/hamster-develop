@@ -249,7 +249,7 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	return w.ExecProjectWorkflow(projectId, user, 2)
 }
 
-func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
+func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, workflowId, detailId int, user vo.UserAuth) error {
 	return w.ExecProjectWorkflow(projectId, user, 3)
 }
 

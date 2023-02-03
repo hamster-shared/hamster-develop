@@ -11,6 +11,14 @@ type CreateProjectParam struct {
 	Branch        string `json:"branch"`
 }
 
+type CreateByCodeParam struct {
+	Name      string `json:"name"`
+	Type      int    `json:"type"`
+	FrameType int    `json:"frameType"`
+	FileName  string `json:"fileName"`
+	Content   string `json:"content"`
+}
+
 type CheckNameParam struct {
 	Owner string `json:"owner"`
 	Name  string `json:"name"`
