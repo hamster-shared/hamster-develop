@@ -83,6 +83,11 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 				err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Deploy).Order("start_time DESC").Limit(1).Find(&workflowDeployData).Error
 				if err == nil {
 					copier.Copy(&packageDeploy, workflowDeployData)
+					var packageData db2.FrontendPackage
+					err = p.db.Model(db2.FrontendPackage{}).Where("project_id = ? and domain != '' ", project.Id).Order("deploy_time DESC").Limit(1).Find(&packageData).Error
+					if err == nil {
+						packageDeploy.Version = packageData.Version
+					}
 				}
 				data.RecentDeploy = packageDeploy
 			}
@@ -158,6 +163,11 @@ func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 		err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Deploy).Order("start_time DESC").Limit(1).Find(&workflowDeployData).Error
 		if err == nil {
 			copier.Copy(&packageDeploy, workflowDeployData)
+			var packageData db2.FrontendPackage
+			err = p.db.Model(db2.FrontendPackage{}).Where("project_id = ? and domain != '' ", data.Id).Order("deploy_time DESC").Limit(1).Find(&packageData).Error
+			if err == nil {
+				packageDeploy.Version = packageData.Version
+			}
 		}
 		detail.RecentDeploy = packageDeploy
 	}

@@ -62,6 +62,7 @@ type PackageDeployVo struct {
 	Id         uint      `json:"id"`
 	WorkflowId uint      `json:"workflowId"`
 	Status     uint      `json:"status"`
+	Version    string    `json:"version"`
 	StartTime  time.Time `json:"startTime"`
 }
 

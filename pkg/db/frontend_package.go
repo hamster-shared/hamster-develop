@@ -15,5 +15,6 @@ type FrontendPackage struct {
 	Branch           string    `json:"branch"`
 	Domain           string    `json:"domain"`
 	BuildTime        time.Time `json:"buildTime"`
+	DeployTime       time.Time `json:"deployTime"`
 	CreateTime       time.Time `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
 }

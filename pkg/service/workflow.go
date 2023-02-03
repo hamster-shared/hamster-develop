@@ -104,19 +104,27 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 	var data db.FrontendPackage
 	err = w.db.Model(db.FrontendPackage{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetail.Id).First(&data).Error
 	if err != nil {
-		frontendPackage := db.FrontendPackage{
-			ProjectId:        projectId,
-			WorkflowId:       workflowId,
-			WorkflowDetailId: workflowDetail.Id,
-			Name:             projectData.Name,
-			Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-			Branch:           projectData.Branch,
-			BuildTime:        workflowDetail.CreateTime,
-			CreateTime:       time.Now(),
+		if workflowDetail.Type == uint(consts.Build) {
+			frontendPackage := db.FrontendPackage{
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
+				WorkflowDetailId: workflowDetail.Id,
+				Name:             projectData.Name,
+				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+				Branch:           projectData.Branch,
+				BuildTime:        workflowDetail.CreateTime,
+				CreateTime:       time.Now(),
+			}
+			err = w.db.Save(&frontendPackage).Error
+			if err != nil {
+				log.Println("save frontend package failed: ", err.Error())
+			}
 		}
-		err = w.db.Save(&frontendPackage).Error
-		if err != nil {
-			log.Println("save frontend package failed: ", err.Error())
+	} else {
+		if workflowDetail.Type == uint(consts.Deploy) {
+			data.DeployTime = workflowDetail.CreateTime
+			data.Domain = "www.baidu.com"
+			w.db.Save(&data)
 		}
 	}
 }
