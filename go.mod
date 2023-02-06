@@ -6,7 +6,6 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v48 v48.2.0
-	github.com/google/go-github/v50 v50.0.0
 	github.com/goperate/convert v0.0.7
 	github.com/hamster-shared/aline-engine v1.0.2
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible

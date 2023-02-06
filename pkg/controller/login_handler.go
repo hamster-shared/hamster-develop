@@ -60,6 +60,8 @@ func (h *HandlerServer) Authorize() gin.HandlerFunc {
 			Failed(http.StatusUnauthorized, "access not authorized", gin)
 			return
 		}
+		gin.Set("token", token)
+		gin.Set("user", user)
 		gin.Next()
 	}
 }

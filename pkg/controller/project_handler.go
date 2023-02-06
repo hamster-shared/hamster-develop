@@ -5,9 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
+	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
-	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
@@ -39,18 +39,8 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	accessToken := gin.Request.Header.Get("Access-Token")
-	if accessToken == "" {
-		Failed(http.StatusUnauthorized, "No access", gin)
-		return
-	}
-	token := utils.AesDecrypt(accessToken, consts.SecretKey)
-	userService := application.GetBean[*service.UserService]("userService")
-	user, err := userService.GetUserByToken(token)
-	if err != nil {
-		Failed(http.StatusUnauthorized, "user has no permission", gin)
-		return
-	}
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
 	data, err := h.projectService.GetProjects(int(user.Id), query, page, size, projectType)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -66,10 +56,11 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
-	accessToken := g.Request.Header.Get("Access-Token")
-	token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	tokenAny, _ := g.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := g.Get("user")
+	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-
 	repo, res, err := githubService.CreateRepo(token, createData.TemplateOwner, createData.TemplateRepo, createData.Name, createData.RepoOwner)
 	if err != nil {
 		if res != nil {
@@ -79,12 +70,6 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 			}
 		}
 		Fail(err.Error(), g)
-		return
-	}
-	userService := application.GetBean[*service.UserService]("userService")
-	user, err := userService.GetUserByToken(token)
-	if err != nil {
-		Fail("get user info failed", g)
 		return
 	}
 	data := vo.CreateProjectParam{
@@ -186,19 +171,9 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
-	accessToken := g.Request.Header.Get("Access-Token")
-	if accessToken == "" {
-		Failed(http.StatusUnauthorized, "No access", g)
-		return
-	}
-	token := utils.AesDecrypt(accessToken, consts.SecretKey)
-	userService := application.GetBean[*service.UserService]("userService")
+	userAny, _ := g.Get("user")
+	user, _ := userAny.(db2.User)
 	var userVo vo.UserAuth
-	user, err := userService.GetUserByToken(token)
-	if err != nil {
-		Fail("get user info failed", g)
-		return
-	}
 	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	_ = workflowService.ExecProjectCheckWorkflow(projectId, userVo)
@@ -213,20 +188,10 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-	accessToken := g.Request.Header.Get("Access-Token")
-	if accessToken == "" {
-		Failed(http.StatusUnauthorized, "No access", g)
-		return
-	}
-	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	userService := application.GetBean[*service.UserService]("userService")
 	var userVo vo.UserAuth
-	user, err := userService.GetUserByToken(token)
-	if err != nil {
-		Fail("get user info failed", g)
-		return
-	}
+	userAny, _ := g.Get("user")
+	user, _ := userAny.(db2.User)
 	copier.Copy(&userVo, &user)
 	err = workflowService.ExecProjectBuildWorkflow(projectId, userVo)
 	if err != nil {
@@ -255,20 +220,10 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 		Fail("detail id is empty or invalid", g)
 		return
 	}
-	accessToken := g.Request.Header.Get("Access-Token")
-	if accessToken == "" {
-		Failed(http.StatusUnauthorized, "No access", g)
-		return
-	}
-	token := utils.AesDecrypt(accessToken, consts.SecretKey)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	userService := application.GetBean[*service.UserService]("userService")
+	userAny, _ := g.Get("user")
+	user, _ := userAny.(db2.User)
 	var userVo vo.UserAuth
-	user, err := userService.GetUserByToken(token)
-	if err != nil {
-		Failed(http.StatusUnauthorized, "No access", g)
-		return
-	}
 	copier.Copy(&userVo, &user)
 	err = workflowService.ExecProjectDeployWorkflow(projectId, workflowId, detailId, userVo)
 	if err != nil {
@@ -371,14 +326,10 @@ func (h *HandlerServer) updateProject(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	accessToken := gin.Request.Header.Get("Access-Token")
-	if accessToken == "" {
-		Failed(http.StatusUnauthorized, "No access", gin)
-		return
-	}
-	token := utils.AesDecrypt(accessToken, consts.SecretKey)
-	userService := application.GetBean[*service.UserService]("userService")
-	user, err := userService.GetUserByToken(token)
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
 	updateData.UserId = int(user.Id)
 	project, err := h.projectService.GetProject(id)
 	if err != nil {
@@ -408,19 +359,7 @@ func (h *HandlerServer) updateProject(gin *gin.Context) {
 
 func (h *HandlerServer) deleteProject(gin *gin.Context) {
 	id := gin.Param("id")
-	accessToken := gin.Request.Header.Get("Access-Token")
-	if accessToken == "" {
-		Failed(http.StatusUnauthorized, "No access", gin)
-		return
-	}
-	token := utils.AesDecrypt(accessToken, consts.SecretKey)
-	userService := application.GetBean[*service.UserService]("userService")
-	_, err := userService.GetUserByToken(token)
-	if err != nil {
-		Fail("get user info failed", gin)
-		return
-	}
-	err = h.projectService.DeleteProject(id)
+	err := h.projectService.DeleteProject(id)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -435,8 +374,8 @@ func (h *HandlerServer) checkName(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	accessToken := gin.Request.Header.Get("Access-Token")
-	token := utils.AesDecrypt(accessToken, consts.SecretKey)
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
 	githubService := application.GetBean[*service.GithubService]("githubService")
 	data := githubService.CheckName(token, checkData.Owner, checkData.Name)
 	Success(data, gin)
@@ -449,14 +388,10 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	accessToken := gin.Request.Header.Get("Access-Token")
-	token := utils.AesDecrypt(accessToken, consts.SecretKey)
-	userService := application.GetBean[*service.UserService]("userService")
-	user, err := userService.GetUserByToken(token)
-	if err != nil {
-		Fail("get user info failed", gin)
-		return
-	}
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
 	//create repo
 	repo, res, err := githubService.CreateRepo(token, consts.TemplateOwner, consts.TemplateRepoName, createData.Name, user.Username)

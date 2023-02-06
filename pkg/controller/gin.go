@@ -33,7 +33,7 @@ func (h *HttpServer) StartHttpServer() {
 
 	api.POST("/login", h.handlerServer.loginWithGithub)
 	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
-	//api.Use(h.handlerServer.Authorize())
+	api.Use(h.handlerServer.Authorize())
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
