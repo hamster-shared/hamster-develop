@@ -8,6 +8,9 @@ stages:
         with:
           url: {{ .RepositoryUrl }}
           branch: main
+      - name: npm install
+        run: |
+            npm install
 
 #  Check by Sol-Profile...:
 #    needs:
