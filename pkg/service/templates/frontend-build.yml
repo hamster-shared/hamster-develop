@@ -1,5 +1,5 @@
 version: 1.0
-name: frontend
+name: {{.Name}}
 stages:
   Initialization:
     steps:

@@ -35,7 +35,7 @@ const (
 // https://develop.test.hamsternet.io/
 const ClientSecrets = "968331f48983b1521c8cb58ba78db313bb0143ce"
 
-type ProjectType int
+type ProjectType uint
 
 const (
 	CONTRACT ProjectType = iota + 1
