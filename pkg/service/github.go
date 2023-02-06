@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/google/go-github/v48/github"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"log"
@@ -76,4 +77,19 @@ func (g *GithubService) DeleteRepo(token, owner, repoName string) (*github.Respo
 		return res, err
 	}
 	return res, nil
+}
+
+func (g *GithubService) AddFile(token, owner, repoName, content, fileName string) (*github.RepositoryContentResponse, *github.Response, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	var fileOptions github.RepositoryContentFileOptions
+	path := fmt.Sprintf("contracts/%s.sol", fileName)
+	message := "Initial commit"
+	fileOptions.Message = &message
+	fileOptions.Content = []byte(content)
+	repoRes, res, err := client.Repositories.CreateFile(g.ctx, owner, repoName, path, &fileOptions)
+	if err != nil {
+		log.Println("add file failed: ", err.Error())
+		return repoRes, res, err
+	}
+	return repoRes, res, nil
 }

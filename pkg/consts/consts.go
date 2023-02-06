@@ -42,3 +42,8 @@ const (
 	FRONTEND
 	BLOCKCHAIN
 )
+
+const (
+	TemplateOwner    = "hamster-template"
+	TemplateRepoName = "truffle-frame"
+)
