@@ -1,0 +1,1 @@
+alter table t_frontend_package add deploy_info varchar(100) comment 'deploy info example:CID';
