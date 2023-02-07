@@ -34,6 +34,7 @@ to quickly create a Cobra application.`,
 
 		go Engine.Start()
 
+		port, _ = rootCmd.PersistentFlags().GetInt("port")
 		db, err := gorm.Open(mysql.New(mysql.Config{
 			DSN:                       DSN,   // data source name
 			DefaultStringSize:         256,   // default size for string fields
