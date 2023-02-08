@@ -60,6 +60,15 @@ func (f *FrontendPackageService) QueryFrontendDeployInfo(workflowId, workflowDet
 	return packageDeploy, nil
 }
 
+func (f *FrontendPackageService) QueryFrontendDeployById(id int) (db2.FrontendDeploy, error) {
+	var packageDeploy db2.FrontendDeploy
+	res := f.db.Model(db2.FrontendDeploy{}).Where("package_id = ?", id).First(&packageDeploy).Error
+	if res != nil {
+		return packageDeploy, res
+	}
+	return packageDeploy, nil
+}
+
 func (f *FrontendPackageService) DeleteFrontendDeploy(workflowId, workflowDetailId int) error {
 	err := f.db.Debug().Where("id = ?", workflowDetailId).Delete(&db2.WorkflowDetail{}).Error
 	if err != nil {

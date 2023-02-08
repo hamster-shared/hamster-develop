@@ -149,20 +149,14 @@ func (h *HandlerServer) workflowFrontendPackage(gin *gin.Context) {
 }
 
 func (h *HandlerServer) workflowFrontendPackageDetail(gin *gin.Context) {
-	idStr := gin.Param("id")
-	workflowDetailIdStr := gin.Param("detailId")
-	workflowId, err := strconv.Atoi(idStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
-	workflowDetailId, err := strconv.Atoi(workflowDetailIdStr)
+	packageIdStr := gin.Param("id")
+	packageId, err := strconv.Atoi(packageIdStr)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
 	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
-	data, err := frontendPackageService.QueryFrontendDeployInfo(workflowId, workflowDetailId)
+	data, err := frontendPackageService.QueryFrontendDeployById(packageId)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

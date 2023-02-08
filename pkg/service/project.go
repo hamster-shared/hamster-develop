@@ -81,11 +81,12 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 				var workflowDeployData db2.WorkflowDetail
 				var packageDeploy vo.PackageDeployVo
 				var deployData db2.FrontendDeploy
-				err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", workflowDeployData.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+				err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
 				if err == nil {
 					err = p.db.Model(db2.WorkflowDetail{}).Where("id = ?", deployData.WorkflowDetailId).First(&workflowDeployData).Error
 					if err == nil {
 						copier.Copy(&packageDeploy, workflowDeployData)
+						packageDeploy.PackageId = deployData.PackageId
 						packageDeploy.Version = deployData.Version
 					}
 				}
@@ -161,11 +162,12 @@ func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 		var workflowDeployData db2.WorkflowDetail
 		var packageDeploy vo.PackageDeployVo
 		var deployData db2.FrontendDeploy
-		err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", workflowDeployData.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+		err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
 		if err == nil {
 			err = p.db.Model(db2.WorkflowDetail{}).Where("id = ?", deployData.WorkflowDetailId).First(&workflowDeployData).Error
 			if err == nil {
 				copier.Copy(&packageDeploy, workflowDeployData)
+				packageDeploy.PackageId = deployData.PackageId
 				packageDeploy.Version = deployData.Version
 			}
 		}
