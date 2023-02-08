@@ -29,11 +29,42 @@ func (f *FrontendPackageService) QueryFrontendPackages(projectId string, page in
 	return vo.NewPage[db2.FrontendPackage](packages, int(total), page, size), nil
 }
 
-func (f *FrontendPackageService) QueryPackageByWorkflow(workflowId, workflowDetailId int) (db2.FrontendPackage, error) {
+func (f *FrontendPackageService) QueryPackageById(id int) (db2.FrontendPackage, error) {
 	var packages db2.FrontendPackage
-	res := f.db.Model(db2.FrontendPackage{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).First(&packages)
+	res := f.db.Model(db2.FrontendPackage{}).Where("id = ?", id).First(&packages).Error
 	if res != nil {
-		return packages, res.Error
+		return packages, res
 	}
 	return packages, nil
+}
+
+func (f *FrontendPackageService) QueryPackages(workflowId, workflowDetailId int) ([]db2.FrontendPackage, error) {
+	var packages []db2.FrontendPackage
+	res := f.db.Model(db2.FrontendPackage{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Find(&packages).Error
+	if res != nil {
+		return packages, res
+	}
+	return packages, nil
+}
+
+func (f *FrontendPackageService) UpdateFrontedPackage(data db2.FrontendPackage) error {
+	return f.db.Save(&data).Error
+}
+
+func (f *FrontendPackageService) QueryFrontendDeployInfo(workflowId, workflowDetailId int) (db2.FrontendDeploy, error) {
+	var packageDeploy db2.FrontendDeploy
+	res := f.db.Model(db2.FrontendDeploy{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).First(&packageDeploy).Error
+	if res != nil {
+		return packageDeploy, res
+	}
+	return packageDeploy, nil
+}
+
+func (f *FrontendPackageService) DeleteFrontendDeploy(workflowId, workflowDetailId int) error {
+	err := f.db.Debug().Where("id = ?", workflowDetailId).Delete(&db2.WorkflowDetail{}).Error
+	if err != nil {
+		return err
+	}
+	err = f.db.Debug().Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Delete(&db2.FrontendDeploy{}).Error
+	return err
 }

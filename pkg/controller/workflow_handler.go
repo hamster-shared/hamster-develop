@@ -140,7 +140,29 @@ func (h *HandlerServer) workflowFrontendPackage(gin *gin.Context) {
 		return
 	}
 	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
-	data, err := frontendPackageService.QueryPackageByWorkflow(workflowId, workflowDetailId)
+	data, err := frontendPackageService.QueryPackages(workflowId, workflowDetailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) workflowFrontendPackageDetail(gin *gin.Context) {
+	idStr := gin.Param("id")
+	workflowDetailIdStr := gin.Param("detailId")
+	workflowId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowDetailId, err := strconv.Atoi(workflowDetailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
+	data, err := frontendPackageService.QueryFrontendDeployInfo(workflowId, workflowDetailId)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -184,19 +206,20 @@ func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 }
 
 func (h *HandlerServer) deleteWorkflow(gin *gin.Context) {
-	projectId := gin.Param("id")
 	workflowIdStr := gin.Param("workflowId")
-	if projectId == "" {
-		Fail("projectId is empty or invalid", gin)
-		return
-	}
+	detailIdStr := gin.Param("detailId")
 	workflowId, err := strconv.Atoi(workflowIdStr)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
+	detailId, err := strconv.Atoi(detailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	err = workflowService.DeleteWorkflow(projectId, workflowId)
+	err = workflowService.DeleteWorkflow(workflowId, detailId)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -214,4 +237,38 @@ func (h *HandlerServer) queryReportCheckTools(gin *gin.Context) {
 	}
 	Success(data, gin)
 
+}
+
+func (h *HandlerServer) deleteWorkflowDeploy(gin *gin.Context) {
+	workflowIdStr := gin.Param("workflowId")
+	detailIdStr := gin.Param("detailId")
+	workflowId, err := strconv.Atoi(workflowIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	detailId, err := strconv.Atoi(detailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
+	deployData, err := frontendPackageService.QueryFrontendDeployInfo(workflowId, detailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	//sh := shell.NewShell(consts.IpfsUrl)
+	//err = sh.Unpin(deployData.DeployInfo)
+	//if err != nil {
+	//	Fail(err.Error(), gin)
+	//	return
+	//}
+	data, err := frontendPackageService.QueryPackageById(int(deployData.PackageId))
+	if err == nil {
+		data.Domain = ""
+		frontendPackageService.UpdateFrontedPackage(data)
+	}
+	frontendPackageService.DeleteFrontendDeploy(workflowId, detailId)
+	Success("", gin)
 }

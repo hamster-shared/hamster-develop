@@ -260,3 +260,14 @@ Access-Token: SkI5MW1BsDPrujDCUrRQdPbqUvuqwxxQupoppc+32RN9mUNl0E2SCTBieGENPVFL
   "fileName": "test-sol",
   "content": "// SPDX-License-Identifier: MIT\npragma solidity >=0.4.21 <0.7.0;\n\nlibrary ConvertLib {\n    function convert(uint amount,uint conversionRate) public pure returns (uint convertedAmount) {\n        return amount * conversionRate;\n    }\n}"
 }
+
+#### query frontend deploy detail
+GET http://localhost:8080/api/workflows/84/detail/80/frontend/deploy/detail
+Content-Type: application/json
+Access-Token: 8Bu8jYklS+53N/DYhS5LxnpcTqr3c9yeDYUdn49EA05Azw6LMMJUZe8+ppoxjMjs
+
+
+#### delete workflow
+DELETE http://localhost:8080/api/workflows/84/detail/80/deploy
+Content-Type: application/json
+Access-Token: 8Bu8jYklS+53N/DYhS5LxnpcTqr3c9yeDYUdn49EA05Azw6LMMJUZe8+ppoxjMjs

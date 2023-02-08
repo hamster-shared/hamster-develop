@@ -405,7 +405,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second * 3)
 	// add file
 	_, res, err = githubService.AddFile(token, user.Username, createData.Name, createData.Content, createData.FileName)
 	if err != nil {

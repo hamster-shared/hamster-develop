@@ -80,13 +80,13 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 			} else {
 				var workflowDeployData db2.WorkflowDetail
 				var packageDeploy vo.PackageDeployVo
-				err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Deploy).Order("start_time DESC").Limit(1).Find(&workflowDeployData).Error
+				var deployData db2.FrontendDeploy
+				err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", workflowDeployData.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
 				if err == nil {
-					copier.Copy(&packageDeploy, workflowDeployData)
-					var packageData db2.FrontendPackage
-					err = p.db.Model(db2.FrontendPackage{}).Where("project_id = ? and domain != '' ", project.Id).Order("deploy_time DESC").Limit(1).Find(&packageData).Error
+					err = p.db.Model(db2.WorkflowDetail{}).Where("id = ?", deployData.WorkflowDetailId).First(&workflowDeployData).Error
 					if err == nil {
-						packageDeploy.Version = packageData.Version
+						copier.Copy(&packageDeploy, workflowDeployData)
+						packageDeploy.Version = deployData.Version
 					}
 				}
 				data.RecentDeploy = packageDeploy
@@ -160,13 +160,13 @@ func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 	} else {
 		var workflowDeployData db2.WorkflowDetail
 		var packageDeploy vo.PackageDeployVo
-		err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Deploy).Order("start_time DESC").Limit(1).Find(&workflowDeployData).Error
+		var deployData db2.FrontendDeploy
+		err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", workflowDeployData.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
 		if err == nil {
-			copier.Copy(&packageDeploy, workflowDeployData)
-			var packageData db2.FrontendPackage
-			err = p.db.Model(db2.FrontendPackage{}).Where("project_id = ? and domain != '' ", data.Id).Order("deploy_time DESC").Limit(1).Find(&packageData).Error
+			err = p.db.Model(db2.WorkflowDetail{}).Where("id = ?", deployData.WorkflowDetailId).First(&workflowDeployData).Error
 			if err == nil {
-				packageDeploy.Version = packageData.Version
+				copier.Copy(&packageDeploy, workflowDeployData)
+				packageDeploy.Version = deployData.Version
 			}
 		}
 		detail.RecentDeploy = packageDeploy

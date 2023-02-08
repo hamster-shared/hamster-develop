@@ -66,6 +66,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/stop", h.handlerServer.stopWorkflow)
 	api.POST("/projects/:id/check", h.handlerServer.projectWorkflowCheck)
 	api.POST("/projects/:id/build", h.handlerServer.projectWorkflowBuild)
+	// frontend deploy
 	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/deploy", h.handlerServer.projectWorkflowDeploy)
 	api.GET("/projects/:id/contract", h.handlerServer.projectContract)
 	api.GET("/projects/:id/reports", h.handlerServer.projectReport)
@@ -75,12 +76,18 @@ func (h *HttpServer) StartHttpServer() {
 
 	//workflow
 	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)
-	api.DELETE("/projects/:id/workflows/:workflowId", h.handlerServer.deleteWorkflow)
+	api.DELETE("/workflows/:workflowId/detail/:detailId", h.handlerServer.deleteWorkflow)
 	api.GET("/workflows/:id/detail/:detailId", h.handlerServer.workflowDetail)
 	api.GET("/workflows/:id/detail/:detailId/contract", h.handlerServer.workflowContract)
+	//delete frontend deploy
+	api.DELETE("/workflows/:workflowId/detail/:detailId/deploy", h.handlerServer.deleteWorkflowDeploy)
 	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)
+	// frontend reports
 	api.GET("/workflows/:id/detail/:detailId/frontend/report", h.handlerServer.workflowFrontendReports)
+	//workflow frontend packages
 	api.GET("/workflows/:id/detail/:detailId/package", h.handlerServer.workflowFrontendPackage)
+	//deploy detail
+	api.GET("/workflows/:id/detail/:detailId/frontend/deploy/detail", h.handlerServer.workflowFrontendPackageDetail)
 
 	//contract
 	api.GET("/projects/:id/contract/:version", h.handlerServer.contractInfo)

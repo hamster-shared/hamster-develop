@@ -47,3 +47,5 @@ const (
 	TemplateOwner    = "hamster-template"
 	TemplateRepoName = "truffle-frame"
 )
+
+const IpfsUrl = "http://183.66.65.247:32509"

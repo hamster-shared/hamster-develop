@@ -110,7 +110,7 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 	if uint(consts.Build) == workflowDetail.Type {
 		w.syncFrontendBuild(jobDetail, workflowDetail, projectData)
 	} else if uint(consts.Deploy) == workflowDetail.Type {
-		w.syncFrontendDeploy(jobDetail)
+		w.syncFrontendDeploy(jobDetail, workflowDetail, projectData)
 	}
 }
 
@@ -123,10 +123,9 @@ func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDet
 				WorkflowDetailId: workflowDetail.Id,
 				Name:             arti.Name,
 				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-				Branch:           project.Branch,
+				Branch:           workflowDetail.CodeInfo,
 				BuildTime:        workflowDetail.CreateTime,
 				CreateTime:       time.Now(),
-				DeployTime:       sql.NullTime{},
 			}
 			err := w.db.Save(&frontendPackage).Error
 			if err != nil {
@@ -136,7 +135,7 @@ func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDet
 	}
 }
 
-func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail) {
+func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDetail db2.WorkflowDetail, project db.Project) {
 
 	if len(detail.ActionResult.Deploys) > 0 {
 		buildWorkflowDetailIdStr := detail.Parameter["buildWorkflowDetailId"]
@@ -152,12 +151,27 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail) {
 			err := w.db.Model(db.FrontendPackage{}).Where("workflow_detail_id = ?", buildWorkflowDetailId).First(&data).Error
 			if err == nil {
 				data.Domain = deploy.Url
-				data.DeployInfo = deploy.Cid
-				data.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
 				err := w.db.Save(&data).Error
 				if err != nil {
 					log.Println("save frontend package failed: ", err.Error())
 				}
+				var packageDeploy db.FrontendDeploy
+				packageDeploy.ProjectId = project.Id
+				packageDeploy.WorkflowId = workflowDetail.WorkflowId
+				packageDeploy.WorkflowDetailId = workflowDetail.Id
+				packageDeploy.PackageId = data.Id
+				packageDeploy.DeployInfo = deploy.Cid
+				packageDeploy.Domain = deploy.Url
+				packageDeploy.Version = data.Version
+				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
+				packageDeploy.Name = data.Name
+				packageDeploy.Branch = workflowDetail.CodeInfo
+				packageDeploy.CreateTime = time.Now()
+				err = w.db.Save(&packageDeploy).Error
+				if err != nil {
+					log.Println("save frontend deploy failed: ", err.Error())
+				}
+
 			}
 		}
 	}
@@ -552,11 +566,10 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	return input.String(), nil
 }
 
-func (w *WorkflowService) DeleteWorkflow(projectId string, workflowId int) error {
-	err := w.db.Model(db2.Workflow{}).Where("project_id = ? and id = ?", projectId, workflowId).Delete(db2.Workflow{}).Error
+func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int) error {
+	err := w.db.Debug().Where("id = ? and workflow_id = ?", detailId, workflowId).Delete(&db2.WorkflowDetail{}).Error
 	if err != nil {
 		return err
 	}
-	w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ?", workflowId).Delete(db2.WorkflowDetail{})
 	return nil
 }
