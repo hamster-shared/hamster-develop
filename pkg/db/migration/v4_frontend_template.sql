@@ -47,16 +47,16 @@ INSERT INTO t_template (
         logo
     )
 VALUES
-    (
-        5,
-        'Nuxt.js',
-        'A Nuxt.app, bootstrapped with create-nuxt-app.',
-        1,
-        '1.0.0',
-        1,
-        'https://develop-images.api.hamsternet.io/nuxt.png',
-        'https://nuxt.com/assets/design-kit/logo/icon-green.png'
-    ),
+#     (
+#         5,
+#         'Nuxt.js',
+#         'A Nuxt.app, bootstrapped with create-nuxt-app.',
+#         1,
+#         '1.0.0',
+#         1,
+#         'https://develop-images.api.hamsternet.io/nuxt.png',
+#         'https://nuxt.com/assets/design-kit/logo/icon-green.png'
+#     ),
     (
         5,
         'Vue.js',
@@ -91,67 +91,68 @@ INSERT INTO t_frontend_template_detail (
         audited,
         description
     )
-VALUES(
-        (
-            SELECT id
-            FROM t_template
-            WHERE name = 'Nuxt.js'
-        ),
-        'Nuxt.js',
-        'examples',
-        'hamster-template',
-        'https://github.com/hamster-template/nuxtjs.git',
-        'nuxtjs',
-        'main',
-        '1.0.0',
-        1,
-        '## Nuxt Example
-
-Deploy your [Nuxt](https://nuxt.com/) project to hamster with zero configuration.
-
-*Live Example: [https://nuxtjs-template.hamster.app](https://nuxtjs-template.hamster.app/)*
-
-Look at the [Nuxt 3 documentation](https://v3.nuxtjs.org/) to learn more.
-
-### Setup
-
-Make sure to install the dependencies:
-
-```
+VALUES
+# (
+#         (
+#             SELECT id
+#             FROM t_template
+#             WHERE name = 'Nuxt.js'
+#         ),
+#         'Nuxt.js',
+#         'examples',
+#         'hamster-template',
+#         'https://github.com/hamster-template/nuxtjs.git',
+#         'nuxtjs',
+#         'main',
+#         '1.0.0',
+#         1,
+#         '## Nuxt Example
+#
+# Deploy your [Nuxt](https://nuxt.com/) project to hamster with zero configuration.
+#
+# *Live Example: [https://nuxtjs-template.hamster.app](https://nuxtjs-template.hamster.app/)*
+#
+# Look at the [Nuxt 3 documentation](https://v3.nuxtjs.org/) to learn more.
+#
+# ### Setup
+#
+# Make sure to install the dependencies:
+#
+# ```
+# # yarn
 # yarn
-yarn
-
-# npm
-npm install
-
-# pnpm
-pnpm install --shamefully-hoist
-```
-
-### Development Server
-
-Start the development server on http://localhost:3000
-
-```
-npm run dev
-```
-
-### Production
-
-Build the application for production:
-
-```
-npm run build
-```
-
-Locally preview production build:
-
-```
-npm run preview
-```
-
-Checkout the [deployment documentation](https://v3.nuxtjs.org/guide/deploy/presets) for more information.'
-    ),
+#
+# # npm
+# npm install
+#
+# # pnpm
+# pnpm install --shamefully-hoist
+# ```
+#
+# ### Development Server
+#
+# Start the development server on http://localhost:3000
+#
+# ```
+# npm run dev
+# ```
+#
+# ### Production
+#
+# Build the application for production:
+#
+# ```
+# npm run build
+# ```
+#
+# Locally preview production build:
+#
+# ```
+# npm run preview
+# ```
+#
+# Checkout the [deployment documentation](https://v3.nuxtjs.org/guide/deploy/presets) for more information.'
+#     ),
     (
         (
             SELECT id

@@ -80,7 +80,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/workflows/:id/detail/:detailId", h.handlerServer.workflowDetail)
 	api.GET("/workflows/:id/detail/:detailId/contract", h.handlerServer.workflowContract)
 	//delete frontend deploy
-	api.DELETE("/workflows/:workflowId/detail/:detailId/deploy", h.handlerServer.deleteWorkflowDeploy)
+	api.DELETE("/package/:id/deploy-info", h.handlerServer.deleteWorkflowDeploy)
 	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)
 	// frontend reports
 	api.GET("/workflows/:id/detail/:detailId/frontend/report", h.handlerServer.workflowFrontendReports)

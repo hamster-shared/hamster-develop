@@ -256,35 +256,24 @@ func (h *HandlerServer) queryReportCheckTools(gin *gin.Context) {
 }
 
 func (h *HandlerServer) deleteWorkflowDeploy(gin *gin.Context) {
-	workflowIdStr := gin.Param("workflowId")
-	detailIdStr := gin.Param("detailId")
-	workflowId, err := strconv.Atoi(workflowIdStr)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
-	detailId, err := strconv.Atoi(detailIdStr)
+	packageIdStr := gin.Param("id")
+	packageId, err := strconv.Atoi(packageIdStr)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
 	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
-	deployData, err := frontendPackageService.QueryFrontendDeployInfo(workflowId, detailId)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
 	//sh := shell.NewShell(consts.IpfsUrl)
 	//err = sh.Unpin(deployData.DeployInfo)
 	//if err != nil {
 	//	Fail(err.Error(), gin)
 	//	return
 	//}
-	data, err := frontendPackageService.QueryPackageById(int(deployData.PackageId))
+	data, err := frontendPackageService.QueryPackageById(packageId)
 	if err == nil {
 		data.Domain = ""
 		frontendPackageService.UpdateFrontedPackage(data)
 	}
-	frontendPackageService.DeleteFrontendDeploy(workflowId, detailId)
+	frontendPackageService.DeleteFrontendDeploy(packageId)
 	Success("", gin)
 }

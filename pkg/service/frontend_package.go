@@ -69,11 +69,11 @@ func (f *FrontendPackageService) QueryFrontendDeployById(id int) (db2.FrontendDe
 	return packageDeploy, nil
 }
 
-func (f *FrontendPackageService) DeleteFrontendDeploy(workflowId, workflowDetailId int) error {
-	err := f.db.Debug().Where("id = ?", workflowDetailId).Delete(&db2.WorkflowDetail{}).Error
-	if err != nil {
-		return err
-	}
-	err = f.db.Debug().Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Delete(&db2.FrontendDeploy{}).Error
+func (f *FrontendPackageService) DeleteFrontendDeploy(id int) error {
+	//err := f.db.Debug().Where("id = ?", workflowDetailId).Delete(&db2.WorkflowDetail{}).Error
+	//if err != nil {
+	//	return err
+	//}
+	err := f.db.Debug().Where("id = ? ", id).Delete(&db2.FrontendDeploy{}).Error
 	return err
 }
