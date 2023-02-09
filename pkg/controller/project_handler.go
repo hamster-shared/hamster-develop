@@ -225,11 +225,12 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 	user, _ := userAny.(db2.User)
 	var userVo vo.UserAuth
 	copier.Copy(&userVo, &user)
-	err = workflowService.ExecProjectDeployWorkflow(projectId, workflowId, detailId, userVo)
+	data, err := workflowService.ExecProjectDeployWorkflow(projectId, workflowId, detailId, userVo)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
+	Success(data, g)
 }
 
 func (h *HandlerServer) projectContract(g *gin.Context) {

@@ -290,25 +290,27 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 }
 
 func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
-	return w.ExecProjectWorkflow(projectId, user, 1, nil)
+	_, err := w.ExecProjectWorkflow(projectId, user, 1, nil)
+	return err
 }
 
 func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
-	return w.ExecProjectWorkflow(projectId, user, 2, nil)
+	_, err := w.ExecProjectWorkflow(projectId, user, 2, nil)
+	return err
 }
 
-func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth) error {
+func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth) (vo.DeployResultVo, error) {
 	buildWorkflowKey := w.GetWorkflowKey(projectId.String(), uint(buildWorkflowId))
 
 	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId)
 	if err != nil {
 		logger.Info("workflow ")
-		return err
+		return vo.DeployResultVo{}, err
 	}
 	buildJobDetail := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
 
 	if len(buildJobDetail.ActionResult.Artifactorys) == 0 {
-		return errors.New("No Artifacts")
+		return vo.DeployResultVo{}, errors.New("No Artifacts")
 	}
 
 	params := make(map[string]string)
@@ -318,19 +320,19 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 	return w.ExecProjectWorkflow(projectId, user, 3, params)
 }
 
-func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserAuth, workflowType uint, params map[string]string) error {
+func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserAuth, workflowType uint, params map[string]string) (vo.DeployResultVo, error) {
 
 	// query project workflow
 
 	var workflow db.Workflow
-
+	var deployResult vo.DeployResultVo
 	w.db.Where(&db.Workflow{
 		ProjectId: projectId,
 		Type:      workflowType,
 	}).First(&workflow)
 
 	if &workflow == nil {
-		return errors.New("no check workflow in the project ")
+		return deployResult, errors.New("no check workflow in the project ")
 	}
 
 	workflowKey := w.GetWorkflowKey(projectId.String(), workflow.Id)
@@ -347,7 +349,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 
 		err = w.engine.CreateJob(workflowKey, workflow.ExecFile)
 		if err != nil {
-			return err
+			return deployResult, err
 		}
 		job = w.engine.GetJob(workflowKey)
 	}
@@ -362,18 +364,18 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 		err := w.engine.SaveJobParams(job.Name, params)
 		if err != nil {
-			return err
+			return deployResult, err
 		}
 	}
 
 	detail, err := w.engine.ExecuteJob(workflowKey)
 
 	if err != nil {
-		return err
+		return deployResult, err
 	}
 	stageInfo, err := json.Marshal(detail.Stages)
 	if err != nil {
-		return err
+		return deployResult, err
 	}
 
 	dbDetail := db.WorkflowDetail{
@@ -398,10 +400,11 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 	})
 
 	if err != nil {
-		return err
+		return deployResult, err
 	}
-
-	return nil
+	deployResult.WorkflowId = workflow.Id
+	deployResult.DetailId = dbDetail.Id
+	return deployResult, nil
 }
 
 func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, size int) (*vo.WorkflowPage, error) {
