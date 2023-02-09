@@ -2,6 +2,7 @@ package controller
 
 import (
 	"embed"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
@@ -13,7 +14,6 @@ import (
 	"github.com/jinzhu/copier"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 //go:embed templates
@@ -406,7 +406,22 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	time.Sleep(time.Second * 3)
+	for {
+		index := 1
+		if index > 35 {
+			err = errors.New("create project by code failed")
+			break
+		}
+		_, res, err = githubService.GetCommitInfo(token, user.Username, createData.Name, repo.GetDefaultBranch())
+		if res.StatusCode == 200 {
+			break
+		}
+		index = index + 1
+	}
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	// add file
 	_, res, err = githubService.AddFile(token, user.Username, createData.Name, createData.Content, createData.FileName)
 	if err != nil {

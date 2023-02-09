@@ -93,3 +93,9 @@ func (g *GithubService) AddFile(token, owner, repoName, content, fileName string
 	}
 	return repoRes, res, nil
 }
+
+func (g *GithubService) GetCommitInfo(token, owner, repo, ref string) (string, *github.Response, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	hash, res, err := client.Repositories.GetCommitSHA1(g.ctx, owner, repo, ref, "")
+	return hash, res, err
+}
