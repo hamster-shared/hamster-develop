@@ -116,12 +116,12 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 
 func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDetail db2.WorkflowDetail, project db.Project) {
 	if len(detail.ActionResult.Artifactorys) > 0 {
-		for _, arti := range detail.ActionResult.Artifactorys {
+		for range detail.ActionResult.Artifactorys {
 			frontendPackage := db.FrontendPackage{
 				ProjectId:        workflowDetail.ProjectId,
 				WorkflowId:       workflowDetail.WorkflowId,
 				WorkflowDetailId: workflowDetail.Id,
-				Name:             arti.Name,
+				Name:             project.Name,
 				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
 				Branch:           workflowDetail.CodeInfo,
 				BuildTime:        workflowDetail.CreateTime,
@@ -146,6 +146,12 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		if err != nil {
 			return
 		}
+		var image string
+		if project.FrameType == 1 {
+			image = "https://develop-images.api.hamsternet.io/vue.png"
+		} else {
+			image = "https://develop-images.api.hamsternet.io/react.png"
+		}
 		for _, deploy := range detail.ActionResult.Deploys {
 			var data db.FrontendPackage
 			err := w.db.Model(db.FrontendPackage{}).Where("workflow_detail_id = ?", buildWorkflowDetailId).First(&data).Error
@@ -164,9 +170,10 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 				packageDeploy.Domain = deploy.Url
 				packageDeploy.Version = data.Version
 				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
-				packageDeploy.Name = data.Name
-				packageDeploy.Branch = workflowDetail.CodeInfo
+				packageDeploy.Name = project.Name
+				packageDeploy.Branch = data.Branch
 				packageDeploy.CreateTime = time.Now()
+				packageDeploy.Image = image
 				err = w.db.Save(&packageDeploy).Error
 				if err != nil {
 					log.Println("save frontend deploy failed: ", err.Error())

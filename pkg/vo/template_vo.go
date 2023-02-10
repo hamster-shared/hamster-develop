@@ -34,5 +34,6 @@ type TemplateDetailVo struct {
 	Branch           string `json:"branch"`
 	CodeSources      string `json:"codeSources"`
 	Title            string `json:"title"`
+	TemplateType     string `json:"templateType"`
 	TitleDescription string `json:"titleDescription"`
 }

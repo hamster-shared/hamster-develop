@@ -15,6 +15,7 @@ type FrontendTemplateDetail struct {
 	Author         string       `json:"author"`
 	RepositoryUrl  string       `json:"repositoryUrl"`
 	RepositoryName string       `json:"repositoryName"`
+	TemplateType   uint         `json:"templateType"`
 	Version        string       `json:"version"`
 	Branch         string       `json:"branch"`
 	CreateTime     time.Time    `gorm:"column:create_time;default:current_timestamp" json:"create_time"`

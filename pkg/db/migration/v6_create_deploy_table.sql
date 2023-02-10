@@ -5,6 +5,7 @@ create table t_frontend_deploy (
                             workflow_detail_id int comment 'workflow detail id',
                             package_id        int  comment 'frontend package id',
                             name varchar(100) not null comment 'package name',
+                            image varchar(200) comment 'deploy images',
                             version varchar(50) comment 'package version',
                             branch  varchar(100) comment 'build code info',
                             domain  varchar(100) null comment 'frontend deploy domains',

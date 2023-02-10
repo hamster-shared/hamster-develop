@@ -13,6 +13,7 @@ create table t_frontend_template_detail (
     author varchar(50) comment '模板仓库作者',
     repository_url varchar(200) comment '模板仓库地址',
     repository_name varchar(200) comment '模板仓库名称',
+    template_type tinyint(1) comment 'template type,1:vue;2:react',
     branch varchar(50),
     version varchar(50),
     audited boolean not null default 0 comment '是否审核通过',
@@ -89,6 +90,7 @@ INSERT INTO t_frontend_template_detail (
         branch,
         version,
         audited,
+        template_type,
         description
     )
 VALUES
@@ -167,6 +169,7 @@ VALUES
         'main',
         '1.0.0',
         1,
+        1,
         '### Deploy Your Own
 
 Deploy your own Vue.js project with hamster.
@@ -213,6 +216,7 @@ yarn lint
         'main',
         '1.0.0',
         1,
+        2,
         '### Deploy Your Own
 
 Deploy your own Create React App project with Vercel.

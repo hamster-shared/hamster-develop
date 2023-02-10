@@ -14,6 +14,7 @@ type FrontendDeploy struct {
 	WorkflowId       uint           `json:"workflowId"`
 	WorkflowDetailId uint           `json:"workflowDetailId"`
 	Name             string         `json:"name"`
+	Image            string         `json:"image"`
 	Version          string         `json:"version"`
 	Branch           string         `json:"branch"`
 	Domain           string         `json:"domain"`
