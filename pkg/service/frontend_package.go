@@ -74,6 +74,6 @@ func (f *FrontendPackageService) DeleteFrontendDeploy(id int) error {
 	//if err != nil {
 	//	return err
 	//}
-	err := f.db.Debug().Where("id = ? ", id).Delete(&db2.FrontendDeploy{}).Error
+	err := f.db.Debug().Where("package_id = ? ", id).Delete(&db2.FrontendDeploy{}).Error
 	return err
 }

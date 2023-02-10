@@ -53,5 +53,6 @@ type TemplateDetail struct {
 	DeleteTime       sql.NullTime `json:"delete_time"`
 	Title            string       `json:"title"`
 	TemplateType     string       `json:"templateType"`
+	ShowUrl          string       `json:"showUrl"`
 	TitleDescription string       `json:"titleDescription"`
 }

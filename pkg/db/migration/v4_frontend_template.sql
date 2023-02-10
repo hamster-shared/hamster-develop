@@ -13,6 +13,7 @@ create table t_frontend_template_detail (
     author varchar(50) comment '模板仓库作者',
     repository_url varchar(200) comment '模板仓库地址',
     repository_name varchar(200) comment '模板仓库名称',
+    show_url      varchar(200) comment 'show url',
     template_type tinyint(1) comment 'template type,1:vue;2:react',
     branch varchar(50),
     version varchar(50),
@@ -91,6 +92,7 @@ INSERT INTO t_frontend_template_detail (
         version,
         audited,
         template_type,
+        show_url,
         description
     )
 VALUES
@@ -170,6 +172,7 @@ VALUES
         '1.0.0',
         1,
         1,
+        'http://g.develop.hamsternet.io/ipfs/QmTaSjCsdopHeiDrGfdXJk8xxxf8tdkNK7SWazae2LtnWu',
         '### Deploy Your Own
 
 Deploy your own Vue.js project with hamster.
@@ -217,6 +220,7 @@ yarn lint
         '1.0.0',
         1,
         2,
+        'http://g.develop.hamsternet.io/ipfs/QmaLiWfqL4Km1JkuDXhHoP4ruKgUXd1KnZi21Ujrf7SUq6',
         '### Deploy Your Own
 
 Deploy your own Create React App project with Vercel.
