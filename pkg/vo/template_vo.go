@@ -14,6 +14,7 @@ type TemplateVo struct {
 	Audited        bool   `json:"audited"`
 	LastVersion    string `json:"lastVersion"`
 	Logo           string `json:"logo"`
+	Image          string `json:"image"`
 }
 
 type TemplateDetailVo struct {
@@ -33,5 +34,7 @@ type TemplateDetailVo struct {
 	Branch           string `json:"branch"`
 	CodeSources      string `json:"codeSources"`
 	Title            string `json:"title"`
+	TemplateType     string `json:"templateType"`
+	ShowUrl          string `json:"showUrl"`
 	TitleDescription string `json:"titleDescription"`
 }

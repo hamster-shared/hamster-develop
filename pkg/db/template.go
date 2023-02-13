@@ -2,8 +2,9 @@ package db
 
 import (
 	"database/sql"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type TemplateType struct {
@@ -24,6 +25,7 @@ type Template struct {
 	Audited        bool         `json:"audited"`
 	LastVersion    string       `json:"last_version"`
 	Logo           string       `json:"logo"`
+	Image          string       `json:"image"`
 	CreateTime     time.Time    `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
 	UpdateTime     time.Time    `json:"update_time"`
 	DeleteTime     sql.NullTime `json:"delete_time"`
@@ -50,5 +52,7 @@ type TemplateDetail struct {
 	UpdateTime       time.Time    `json:"update_time"`
 	DeleteTime       sql.NullTime `json:"delete_time"`
 	Title            string       `json:"title"`
+	TemplateType     string       `json:"templateType"`
+	ShowUrl          string       `json:"showUrl"`
 	TitleDescription string       `json:"titleDescription"`
 }

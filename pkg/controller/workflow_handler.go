@@ -104,6 +104,88 @@ func (h *HandlerServer) workflowReport(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) workflowFrontendReports(gin *gin.Context) {
+	idStr := gin.Param("id")
+	workflowDetailIdStr := gin.Param("detailId")
+	workflowId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowDetailId, err := strconv.Atoi(workflowDetailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	reportService := application.GetBean[*service.ReportService]("reportService")
+	data, err := reportService.QueryFrontendReportsByWorkflow(workflowId, workflowDetailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) workflowFrontendPackage(gin *gin.Context) {
+	idStr := gin.Param("id")
+	workflowDetailIdStr := gin.Param("detailId")
+	workflowId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowDetailId, err := strconv.Atoi(workflowDetailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
+	data, err := frontendPackageService.QueryPackages(workflowId, workflowDetailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) workflowFrontendPackageDetail(gin *gin.Context) {
+	packageIdStr := gin.Param("id")
+	packageId, err := strconv.Atoi(packageIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
+	data, err := frontendPackageService.QueryFrontendDeployById(packageId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) workflowFrontendDeployInfo(gin *gin.Context) {
+	idStr := gin.Param("id")
+	workflowDetailIdStr := gin.Param("detailId")
+	workflowId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowDetailId, err := strconv.Atoi(workflowDetailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
+	data, err := frontendPackageService.QueryFrontendDeployInfo(workflowId, workflowDetailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 	projectIdStr := gin.Param("id")
 	projectId, err := uuid.FromString(projectIdStr)
@@ -140,19 +222,20 @@ func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 }
 
 func (h *HandlerServer) deleteWorkflow(gin *gin.Context) {
-	projectId := gin.Param("id")
 	workflowIdStr := gin.Param("workflowId")
-	if projectId == "" {
-		Fail("projectId is empty or invalid", gin)
-		return
-	}
+	detailIdStr := gin.Param("detailId")
 	workflowId, err := strconv.Atoi(workflowIdStr)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
+	detailId, err := strconv.Atoi(detailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	err = workflowService.DeleteWorkflow(projectId, workflowId)
+	err = workflowService.DeleteWorkflow(workflowId, detailId)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -170,4 +253,27 @@ func (h *HandlerServer) queryReportCheckTools(gin *gin.Context) {
 	}
 	Success(data, gin)
 
+}
+
+func (h *HandlerServer) deleteWorkflowDeploy(gin *gin.Context) {
+	packageIdStr := gin.Param("id")
+	packageId, err := strconv.Atoi(packageIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	frontendPackageService := application.GetBean[*service.FrontendPackageService]("frontendPackageService")
+	//sh := shell.NewShell(consts.IpfsUrl)
+	//err = sh.Unpin(deployData.DeployInfo)
+	//if err != nil {
+	//	Fail(err.Error(), gin)
+	//	return
+	//}
+	data, err := frontendPackageService.QueryPackageById(packageId)
+	if err == nil {
+		data.Domain = ""
+		frontendPackageService.UpdateFrontedPackage(data)
+	}
+	frontendPackageService.DeleteFrontendDeploy(packageId)
+	Success("", gin)
 }

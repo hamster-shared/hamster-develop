@@ -14,6 +14,10 @@ linux:
 	go mod tidy
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build -o aline
 
+linux-test:
+	go mod tidy
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build -o aline-test
+
 windows:
 	go mod tidy
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64  go build -o aline.exe

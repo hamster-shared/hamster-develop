@@ -1,0 +1,12 @@
+version: 1.0
+name: [[.Name]]
+stages:
+  ipfs :
+    steps:
+      - name: artifactory
+        uses: hamster-ipfs
+        with:
+          api: http://183.66.65.247:32509
+          arti_url: ${{ param.ArtifactUrl }}
+          gateway: http://g.develop.hamsternet.io
+          base_dir: ${{ param.baseDir }}

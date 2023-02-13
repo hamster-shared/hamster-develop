@@ -20,6 +20,7 @@ type WorkflowType int
 const (
 	Check WorkflowType = iota + 1
 	Build
+	Deploy
 )
 
 // jian-guo
@@ -30,3 +31,21 @@ const (
 
 // https://develop.alpha.hamsternet.io/
 const ClientSecrets = "c99eef44205a6dfe975a62556f0601957dc3df9c"
+
+// https://develop.test.hamsternet.io/
+//const ClientSecrets = "968331f48983b1521c8cb58ba78db313bb0143ce"
+
+type ProjectType uint
+
+const (
+	CONTRACT ProjectType = iota + 1
+	FRONTEND
+	BLOCKCHAIN
+)
+
+const (
+	TemplateOwner    = "hamster-template"
+	TemplateRepoName = "truffle-frame"
+)
+
+const IpfsUrl = "http://183.66.65.247:32509"

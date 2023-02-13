@@ -1,8 +1,9 @@
 package controller
 
 import (
-	"github.com/gin-gonic/gin"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (h *HandlerServer) templatesCategory(gin *gin.Context) {
@@ -50,6 +51,20 @@ func (h *HandlerServer) templateDetail(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) frontendTemplateDetail(gin *gin.Context) {
+	idStr := gin.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	data, err := h.templateService.GetFrontendTemplateDetail(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
 func (h *HandlerServer) templateShow(gin *gin.Context) {
 	templateTypeStr := gin.Query("type")
 	templateType, err := strconv.Atoi(templateTypeStr)

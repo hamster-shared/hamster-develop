@@ -33,5 +33,5 @@ type WorkflowDetail struct {
 	Duration    int64
 	CreateTime  time.Time      `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
 	UpdateTime  time.Time      `json:"update_time"`
-	DeleteTime  gorm.DeletedAt `json:"delete_time"`
+	DeleteTime  gorm.DeletedAt `gorm:"index;column:delete_time;" json:"delete_time"`
 }

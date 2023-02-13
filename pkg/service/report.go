@@ -25,12 +25,22 @@ func (c *ReportService) QueryReports(projectId string, Type string, page int, si
 	if Type != "" {
 		tx = tx.Where("check_tool = ?", Type)
 	}
-	result := tx.Offset((page - 1) * size).Limit(size).Find(&reports)
-	tx.Count(&total)
+	result := tx.Offset((page - 1) * size).Limit(size).Find(&reports).Offset(-1).Limit(-1).Count(&total)
 	if result.Error != nil {
 		return vo.NewEmptyPage[db2.Report](), result.Error
 	}
 
+	return vo.NewPage[db2.Report](reports, int(total), page, size), nil
+}
+
+func (c *ReportService) QueryFrontendReports(projectId string, page int, size int) (vo.Page[db2.Report], error) {
+	var total int64
+	var reports []db2.Report
+	tx := c.db.Model(db2.Report{}).Where("project_id = ?", projectId)
+	result := tx.Offset((page - 1) * size).Limit(size).Find(&reports).Offset(-1).Limit(-1).Count(&total)
+	if result.Error != nil {
+		return vo.NewEmptyPage[db2.Report](), result.Error
+	}
 	return vo.NewPage[db2.Report](reports, int(total), page, size), nil
 }
 
@@ -55,6 +65,17 @@ func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int)
 		}
 	}
 	return result, nil
+}
+
+func (c *ReportService) QueryFrontendReportsByWorkflow(workflowId, workflowDetailId int) ([]vo.ReportVo, error) {
+	var reports []db2.Report
+	var data []vo.ReportVo
+	res := c.db.Model(db2.Report{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Find(&reports)
+	if res.Error != nil {
+		return data, res.Error
+	}
+	copier.Copy(&data, &reports)
+	return data, nil
 }
 
 func (c *ReportService) QueryReportCheckTools(projectId string) ([]string, error) {

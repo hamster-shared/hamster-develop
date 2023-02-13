@@ -33,15 +33,17 @@ func (h *HttpServer) StartHttpServer() {
 
 	api.POST("/login", h.handlerServer.loginWithGithub)
 	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
-	//api.Use(h.handlerServer.Authorize())
+	api.Use(h.handlerServer.Authorize())
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
 	api.GET("/templates/:id", h.handlerServer.templateDetail)
+	api.GET("/frontend-templates/:id", h.handlerServer.frontendTemplateDetail)
 	api.GET("/templates/show", h.handlerServer.templateShow)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
 	api.POST("/projects", h.handlerServer.createProject) // 进行中
+	api.POST("/projects/code", h.handlerServer.createProjectByCode)
 	api.GET("/projects/:id", h.handlerServer.projectDetail)
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)
@@ -64,16 +66,29 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/stop", h.handlerServer.stopWorkflow)
 	api.POST("/projects/:id/check", h.handlerServer.projectWorkflowCheck)
 	api.POST("/projects/:id/build", h.handlerServer.projectWorkflowBuild)
+	// frontend deploy
+	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/deploy", h.handlerServer.projectWorkflowDeploy)
 	api.GET("/projects/:id/contract", h.handlerServer.projectContract)
 	api.GET("/projects/:id/reports", h.handlerServer.projectReport)
+	api.GET("/projects/:id/frontend/reports", h.handlerServer.projectFrontendReports)
+	api.GET("/projects/:id/packages", h.handlerServer.projectPackages)
 	api.POST("/projects/:id/contract/deploy", h.handlerServer.saveContractDeployInfo)
 
 	//workflow
 	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)
-	api.DELETE("/projects/:id/workflows/:workflowId", h.handlerServer.deleteWorkflow)
+	api.DELETE("/workflows/:workflowId/detail/:detailId", h.handlerServer.deleteWorkflow)
 	api.GET("/workflows/:id/detail/:detailId", h.handlerServer.workflowDetail)
 	api.GET("/workflows/:id/detail/:detailId/contract", h.handlerServer.workflowContract)
+	//delete frontend deploy
+	api.DELETE("/package/:id/deploy-info", h.handlerServer.deleteWorkflowDeploy)
 	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)
+	// frontend reports
+	api.GET("/workflows/:id/detail/:detailId/frontend/report", h.handlerServer.workflowFrontendReports)
+	//workflow frontend packages
+	api.GET("/workflows/:id/detail/:detailId/package", h.handlerServer.workflowFrontendPackage)
+	api.GET("/workflows/:id/detail/:detailId/deploy-info", h.handlerServer.workflowFrontendDeployInfo)
+	//deploy detail
+	api.GET("/package/:id/deploy/detail", h.handlerServer.workflowFrontendPackageDetail)
 
 	//contract
 	api.GET("/projects/:id/contract/:version", h.handlerServer.contractInfo)

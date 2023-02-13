@@ -13,7 +13,7 @@ import (
 )
 
 type IProjectService interface {
-	GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error)
+	GetProjects(userId int, keyword string, page, size, projectType int) (*vo.ProjectPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error)
 	GetProject(id string) (*vo.ProjectDetailVo, error)
 	UpdateProject(id string, updateData vo.UpdateProjectParam) error
@@ -32,17 +32,17 @@ func (p *ProjectService) Init(db *gorm.DB) {
 	p.db = db
 }
 
-func (p *ProjectService) GetProjects(userId int, keyword string, page, size int) (*vo.ProjectPage, error) {
+func (p *ProjectService) GetProjects(userId int, keyword string, page, size, projectType int) (*vo.ProjectPage, error) {
 	var total int64
 	var projectPage vo.ProjectPage
 	var projects []db2.Project
 	var projectList []vo.ProjectListVo
-	tx := p.db.Model(db2.Project{}).Where("user_id = ?", userId)
+	tx := p.db.Model(db2.Project{}).Where("user_id = ? and type = ?", userId, projectType)
 	if keyword != "" {
 		tx = tx.Where("name like ? ", "%"+keyword+"%")
 	}
 
-	result := tx.Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&projects)
+	result := tx.Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&projects).Offset(-1).Limit(-1).Count(&total)
 	if result.Error != nil {
 		return &projectPage, result.Error
 	}
@@ -62,23 +62,40 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size int)
 			err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Build).Order("start_time DESC").Limit(1).Find(&workflowBuildData).Error
 			if err == nil {
 				copier.Copy(&recentBuild, &workflowBuildData)
-				var contractData db2.Contract
-				err = p.db.Model(db2.Contract{}).Where("project_id = ?", project.Id).Order("build_time DESC").Limit(1).Find(&contractData).Error
-				if err == nil {
-					recentBuild.Version = contractData.Version
+				if projectType == int(consts.CONTRACT) {
+					var contractData db2.Contract
+					err = p.db.Model(db2.Contract{}).Where("project_id = ?", project.Id).Order("build_time DESC").Limit(1).Find(&contractData).Error
+					if err == nil {
+						recentBuild.Version = contractData.Version
+					}
 				}
 			}
-			var deployData db2.ContractDeploy
-			err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
-			if err == nil {
-				copier.Copy(&recentDeploy, &deployData)
+			if projectType == int(consts.CONTRACT) {
+				var deployData db2.ContractDeploy
+				err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+				if err == nil {
+					copier.Copy(&recentDeploy, &deployData)
+				}
+				data.RecentDeploy = recentDeploy
+			} else {
+				var workflowDeployData db2.WorkflowDetail
+				var packageDeploy vo.PackageDeployVo
+				var deployData db2.FrontendDeploy
+				err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+				if err == nil {
+					err = p.db.Model(db2.WorkflowDetail{}).Where("id = ?", deployData.WorkflowDetailId).First(&workflowDeployData).Error
+					if err == nil {
+						copier.Copy(&packageDeploy, workflowDeployData)
+						packageDeploy.PackageId = deployData.PackageId
+						packageDeploy.Version = deployData.Version
+					}
+				}
+				data.RecentDeploy = packageDeploy
 			}
 			data.RecentBuild = recentBuild
 			data.RecentCheck = recentCheck
-			data.RecentDeploy = recentDeploy
 			projectList = append(projectList, data)
 		}
-		tx.Count(&total)
 	}
 	projectPage.Data = projectList
 	projectPage.Total = int(total)
@@ -126,20 +143,38 @@ func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 	err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Build).Order("start_time DESC").Limit(1).Find(&workflowBuildData).Error
 	if err == nil {
 		copier.Copy(&recentBuild, &workflowBuildData)
-		var contractData db2.Contract
-		err = p.db.Model(db2.Contract{}).Where("project_id = ?", data.Id).Order("build_time DESC").Limit(1).Find(&contractData).Error
-		if err == nil {
-			recentBuild.Version = contractData.Version
+		if data.Type == uint(consts.CONTRACT) {
+			var contractData db2.Contract
+			err = p.db.Model(db2.Contract{}).Where("project_id = ?", data.Id).Order("build_time DESC").Limit(1).Find(&contractData).Error
+			if err == nil {
+				recentBuild.Version = contractData.Version
+			}
 		}
 	}
-	var deployData db2.ContractDeploy
-	err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
-	if err == nil {
-		copier.Copy(&recentDeploy, &deployData)
+	if data.Type == uint(consts.CONTRACT) {
+		var deployData db2.ContractDeploy
+		err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+		if err == nil {
+			copier.Copy(&recentDeploy, &deployData)
+		}
+		detail.RecentDeploy = recentDeploy
+	} else {
+		var workflowDeployData db2.WorkflowDetail
+		var packageDeploy vo.PackageDeployVo
+		var deployData db2.FrontendDeploy
+		err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+		if err == nil {
+			err = p.db.Model(db2.WorkflowDetail{}).Where("id = ?", deployData.WorkflowDetailId).First(&workflowDeployData).Error
+			if err == nil {
+				copier.Copy(&packageDeploy, workflowDeployData)
+				packageDeploy.PackageId = deployData.PackageId
+				packageDeploy.Version = deployData.Version
+			}
+		}
+		detail.RecentDeploy = packageDeploy
 	}
 	detail.RecentBuild = recentBuild
 	detail.RecentCheck = recentCheck
-	detail.RecentDeploy = recentDeploy
 	return &detail, nil
 }
 
