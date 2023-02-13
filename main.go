@@ -1,9 +1,8 @@
 package main
 
 import (
-	"github.com/hamster-shared/a-line/cmd"
-	"github.com/hamster-shared/a-line/pkg/logger"
-
+	"github.com/hamster-shared/aline-engine/logger"
+	"github.com/hamster-shared/hamster-develop/cmd"
 	"github.com/sirupsen/logrus"
 )
 

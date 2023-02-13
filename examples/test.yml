@@ -1,0 +1,10 @@
+version: 1.0
+name: 1_1
+stages:
+
+  deploy:
+    steps:
+      - name: deploy
+        run: |
+          echo "abc"
+          echo "${{ param.ip }}"

@@ -1,0 +1,9 @@
+version: 1.0
+name: remote-action
+stages:
+  remote-action:
+    steps:
+      - name: remote hello world action
+        uses: mohaijiang/hello-world-action
+        with:
+          name: aline

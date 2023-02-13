@@ -1,123 +1,91 @@
 package service
 
 import (
-	"embed"
-	"fmt"
-	"github.com/hamster-shared/a-line/pkg/consts"
-	"github.com/hamster-shared/a-line/pkg/model"
+	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
+	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
-	"gopkg.in/yaml.v2"
-	"log"
-	"path/filepath"
-	"strings"
+	"gorm.io/gorm"
 )
-
-const (
-	// TemplateDesPath template description path
-	TemplateDesPath = "template/des"
-
-	//TemplatePath  templates path
-	TemplatePath = "template/templates"
-)
-
-//go:embed template/des
-var TemplateDes embed.FS
-
-//go:embed template/templates
-var TemplateDir embed.FS
 
 type ITemplateService interface {
-	//GetTemplates get template list
-	GetTemplates(lang string) *[]model.Template
-
-	//GetTemplateDetail  get template detail
-	GetTemplateDetail(id int) (*model.TemplateDetail, error)
+	//GetTemplateTypeList get template type list
+	GetTemplateTypeList(templateType int) (*[]vo.TemplateTypeVo, error)
+	//GetTemplatesByTypeId get templates by template type id
+	GetTemplatesByTypeId(templateTypeId int) (*[]vo.TemplateVo, error)
+	//GetTemplateDetail get template detail by template id
+	GetTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
+	GetFrontendTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
+	TemplateShow(templateType int) (*[]vo.TemplateVo, error)
 }
 
 type TemplateService struct {
+	db *gorm.DB
 }
 
 func NewTemplateService() *TemplateService {
 	return &TemplateService{}
 }
 
-// GetTemplates get template list
-func (t *TemplateService) GetTemplates(lang string) *[]model.Template {
-	var list []model.Template
-	files, err := TemplateDes.ReadDir(TemplateDesPath)
-	if err != nil {
-		log.Println("read template des dir failed ", err.Error())
-		return &list
-	}
-	for _, file := range files {
-		var templateData model.Template
-		desPath := filepath.Join(TemplateDesPath, file.Name())
-		fileContent, err := TemplateDes.ReadFile(desPath)
-		if err != nil {
-			log.Println("get templates failed", err.Error())
-			continue
-		}
-		if consts.LANG_EN == lang {
-			var template model.TemplateEnglish
-			err = yaml.Unmarshal(fileContent, &template)
-			if err != nil {
-				log.Println("get templates failed", err.Error())
-				continue
-			}
-			copier.Copy(&templateData, &template)
-			templateData.Description = template.DescriptionEnglish
-		}
-		if consts.LANG_ZH == lang {
-			var template model.TemplateChinese
-			err = yaml.Unmarshal(fileContent, &template)
-			if err != nil {
-				log.Println("get templates failed", err.Error())
-				continue
-			}
-			copier.Copy(&templateData, &template)
-			templateData.Description = template.DescriptionChinese
-		}
-
-		list = append(list, templateData)
-	}
-	return &list
+func (t *TemplateService) Init(db *gorm.DB) {
+	t.db = db
 }
 
-// GetTemplateDetail get template detail
-func (t *TemplateService) GetTemplateDetail(id int) (*model.TemplateDetail, error) {
-	var detailData model.TemplateDetail
-	//template description path
-	files, err := TemplateDes.ReadDir(TemplateDesPath)
-	if err != nil {
-		log.Println("get template detail failed ", err.Error())
-		return &detailData, err
+func (t *TemplateService) GetTemplateTypeList(templateType int) (*[]vo.TemplateTypeVo, error) {
+	var list []db2.TemplateType
+	var listVo []vo.TemplateTypeVo
+	result := t.db.Model(db2.TemplateType{}).Where("type = ?", templateType).Find(&list)
+	if result.Error != nil {
+		return &listVo, result.Error
 	}
-	//get template file name
-	for _, file := range files {
-		var templateData model.TemplateVo
-		desPath := filepath.Join(TemplateDesPath, file.Name())
-		fileContent, err := TemplateDes.ReadFile(desPath)
-		if err != nil {
-			log.Println("get templates failed", err.Error())
-			continue
-		}
-		err = yaml.Unmarshal(fileContent, &templateData)
-		if err != nil {
-			log.Println("get templates failed", err.Error())
-			continue
-		}
-		// Determine if it starts with id_
-		if strings.HasPrefix(file.Name(), fmt.Sprintf("%d_", id)) {
-			copier.Copy(&detailData, &templateData)
-			templatePath := filepath.Join(TemplatePath, templateData.Template)
-			templateContent, err := TemplateDir.ReadFile(templatePath)
-			if err != nil {
-				log.Println("get templates yaml content failed", err.Error())
-				break
-			}
-			detailData.Yaml = string(templateContent)
-			break
-		}
+	if len(list) > 0 {
+		copier.Copy(&listVo, &list)
 	}
-	return &detailData, err
+	return &listVo, nil
+}
+
+func (t *TemplateService) GetTemplatesByTypeId(templateTypeId int) (*[]vo.TemplateVo, error) {
+	var list []db2.Template
+	var listVo []vo.TemplateVo
+	result := t.db.Model(db2.Template{}).Where("template_type_id = ?", templateTypeId).Find(&list)
+	if result.Error != nil {
+		return &listVo, result.Error
+	}
+	if len(list) > 0 {
+		copier.Copy(&listVo, &list)
+	}
+	return &listVo, nil
+}
+
+func (t *TemplateService) GetTemplateDetail(templateId int) (*vo.TemplateDetailVo, error) {
+	var data db2.TemplateDetail
+	var dataVo vo.TemplateDetailVo
+	result := t.db.Where("template_id = ? ", templateId).First(&data)
+	if result.Error != nil {
+		return &dataVo, result.Error
+	}
+	copier.Copy(&dataVo, &data)
+	return &dataVo, nil
+}
+
+func (t *TemplateService) GetFrontendTemplateDetail(templateId int) (*vo.TemplateDetailVo, error) {
+	var data db2.TemplateDetail
+	var dataVo vo.TemplateDetailVo
+	result := t.db.Table("t_frontend_template_detail").Where("template_id = ? ", templateId).First(&data)
+	if result.Error != nil {
+		return &dataVo, result.Error
+	}
+	copier.Copy(&dataVo, &data)
+	return &dataVo, nil
+}
+
+func (t *TemplateService) TemplateShow(templateType int) (*[]vo.TemplateVo, error) {
+	var list []db2.Template
+	var listVo []vo.TemplateVo
+	sql := "select  t.*  from t_template t left join t_template_type ttt on t.template_type_id = ttt.id where ttt.type = ? and t.whether_display = 1"
+	res := t.db.Raw(sql, templateType).Scan(&list)
+	if res.Error != nil {
+		return &listVo, res.Error
+	}
+	copier.Copy(&listVo, &list)
+	return &listVo, nil
 }

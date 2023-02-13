@@ -34,3 +34,4 @@ coverage
 /.vscode
 
 go.sum
+hamster-develop

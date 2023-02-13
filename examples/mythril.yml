@@ -1,0 +1,22 @@
+version: 1.0
+name: mythril-check
+stages:
+  git-clone:
+    steps:
+      - name: git-clone
+        uses: git-checkout
+        with:
+          url: https://github.com/hamster-contract/Token.git
+          branch: main
+  mythril-check:
+    needs:
+      - git-clone
+    steps:
+      - name: solhint-install
+        run: |
+          npm install
+      - name: mythril-check
+        uses: mythril-check
+        with:
+          path: contracts
+          solc-version: 0.8.9
