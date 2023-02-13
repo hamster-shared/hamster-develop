@@ -30,10 +30,10 @@ const (
 //const ClientSecrets = "2923a2870379c3b7237d2703852828017ca1de9b"
 
 // https://develop.alpha.hamsternet.io/
-//const ClientSecrets = "c99eef44205a6dfe975a62556f0601957dc3df9c"
+const ClientSecrets = "c99eef44205a6dfe975a62556f0601957dc3df9c"
 
 // https://develop.test.hamsternet.io/
-const ClientSecrets = "968331f48983b1521c8cb58ba78db313bb0143ce"
+//const ClientSecrets = "968331f48983b1521c8cb58ba78db313bb0143ce"
 
 type ProjectType uint
 
