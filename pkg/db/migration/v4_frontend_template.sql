@@ -46,7 +46,8 @@ INSERT INTO t_template (
         last_version,
         whether_display,
         image,
-        logo
+        logo,
+        language_type
     )
 VALUES
 #     (
@@ -67,7 +68,8 @@ VALUES
         '1.0.0',
         1,
         'https://develop-images.api.hamsternet.io/vue.png',
-        'https://vuejs.org/logo.svg'
+        'https://vuejs.org/logo.svg',
+        0
     ),
     (
         5,
@@ -77,7 +79,8 @@ VALUES
         '1.0.0',
         1,
         'https://develop-images.api.hamsternet.io/react.png',
-        'https://reactjs.org/favicon.ico'
+        'https://reactjs.org/favicon.ico',
+        0
     );
 -- 向前端模板详情表插入数据
 DELETE FROM t_frontend_template_detail;

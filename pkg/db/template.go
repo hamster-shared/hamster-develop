@@ -26,6 +26,7 @@ type Template struct {
 	LastVersion    string       `json:"last_version"`
 	Logo           string       `json:"logo"`
 	Image          string       `json:"image"`
+	LanguageType   int          `json:"languageType"`
 	CreateTime     time.Time    `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
 	UpdateTime     time.Time    `json:"update_time"`
 	DeleteTime     sql.NullTime `json:"delete_time"`

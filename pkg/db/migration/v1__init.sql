@@ -107,6 +107,7 @@ create table t_template (
                             audited tinyint(1) comment '是否审计 0: false, 1: true ',
                             last_version varchar(20) comment '模板版本',
                             logo    varchar(50)  comment '模板图标',
+                            language_type tinyint(1) comment 'language type 1:EVM;2:aptos;3:ton;4:starkware',
                             create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '创建时间',
                             update_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '更新时间',
                             delete_time timestamp NULL comment '删除时间'

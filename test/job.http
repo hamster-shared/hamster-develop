@@ -94,7 +94,14 @@ Content-Type: application/json
 GET http://localhost:8080/api/templates-category?type=1
 
 ### query templates
-GET http://localhost:8080/api/templates-category/1/templates
+GET http://34.232.105.81:8088/api/templates-category/1/templates?languageType=1
+Content-Type: application/json
+Access-Token: Aq7I04y2uh+0fWXjRq8V3MSIcBCvJMn/bILGq3xvJzFW1WcWxpjmExDMmbJoT6Qu
+
+### query templates
+GET http://34.232.105.81:8088/api/templates/show?type=1&languageType=4
+Content-Type: application/json
+Access-Token: Aq7I04y2uh+0fWXjRq8V3MSIcBCvJMn/bILGq3xvJzFW1WcWxpjmExDMmbJoT6Qu
 
 ### query template detail
 GET http://localhost:8080/api/templates/1
