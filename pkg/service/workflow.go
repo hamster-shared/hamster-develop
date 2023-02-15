@@ -519,13 +519,17 @@ func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {
 	return nil
 }
 
-func getTemplate(projectType uint, workflowType consts.WorkflowType) string {
+func getTemplate(projectType, projectFrameType uint, workflowType consts.WorkflowType) string {
 	filePath := "templates/truffle-build.yml"
 	if projectType == uint(consts.CONTRACT) {
 		if workflowType == consts.Check {
 			filePath = "templates/truffle_check.yml"
 		} else if workflowType == consts.Build {
-			filePath = "templates/truffle-build.yml"
+			if projectFrameType == uint(consts.StarkWare) {
+				filePath = "templates/stark-ware-build.yml"
+			} else {
+				filePath = "templates/truffle-build.yml"
+			}
 		}
 	} else if projectType == uint(consts.FRONTEND) {
 		if workflowType == consts.Check {
@@ -543,7 +547,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	if project == nil {
 		return "", errors.New("project is nil")
 	}
-	filePath := getTemplate(project.Type, workflowType)
+	filePath := getTemplate(project.Type, uint(project.FrameType), workflowType)
 	content, err := temp.ReadFile(filePath)
 	if err != nil {
 		log.Println("read template file failed ", err.Error())

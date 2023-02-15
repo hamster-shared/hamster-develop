@@ -1,0 +1,28 @@
+version: 1.0
+name: {{.Name}}
+stages:
+
+  git-clone:
+    steps:
+      - name: git-clone
+        uses: git-checkout
+        with:
+          url: {{ .RepositoryUrl }}
+          branch: main
+
+  starknet-compile:
+    needs:
+      - git-clone
+    steps:
+      - name: starknet-compile
+        runs-on: jlvihv/cairo-anaconda-env:0.1.1
+        run: |
+          bash compile.sh
+
+      - name: save artifactory
+        uses: hamster-artifactory
+        with:
+          name: some.zip
+          compress: false
+          path: |
+            /cairo-project/*.json

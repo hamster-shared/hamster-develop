@@ -48,4 +48,14 @@ const (
 	TemplateRepoName = "truffle-frame"
 )
 
+type ProjectFrameType uint
+
+// project frame type
+const (
+	Evm int = iota + 1
+	Aptos
+	Ton
+	StarkWare
+)
+
 const IpfsUrl = "http://183.66.65.247:32509"
