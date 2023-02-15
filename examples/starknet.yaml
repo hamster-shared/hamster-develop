@@ -15,7 +15,7 @@ stages:
       - git-clone
     steps:
       - name: starknet-compile
-        runs-on: jlvihv/cairo-anaconda-env:0.1.1
+        runs-on: jlvihv/cairo-anaconda-env:0.1.4
         run: |
           bash compile.sh
 
@@ -25,4 +25,4 @@ stages:
           name: some.zip
           compress: false
           path: |
-            /cairo-project/*.json
+            /cairo-project/*.starknet.output.json

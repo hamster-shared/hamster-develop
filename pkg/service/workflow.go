@@ -7,6 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"path"
+	"strconv"
+	"strings"
+	"text/template"
+	"time"
+
 	engine "github.com/hamster-shared/aline-engine"
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/aline-engine/model"
@@ -20,13 +28,6 @@ import (
 	"github.com/jinzhu/copier"
 	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
-	"log"
-	"os"
-	"path"
-	"strconv"
-	"strings"
-	"text/template"
-	"time"
 )
 
 //go:embed templates
@@ -200,6 +201,18 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 
 		for _, arti := range jobDetail.Artifactorys {
 
+			// 判断是不是 starknet 合约
+			isStarknetContract := false
+			starknetContractClassHash := ""
+			if !strings.HasSuffix(arti.Url, "starknet.output.json") {
+				isStarknetContract = true
+				// 获取 starknet 合约的 class hash，写在了文件名里
+				// 先以 / 为分隔符，获取最后一个元素
+				// 再以 . 为分隔符，获取第一个元素
+				starknetContractClassHash = strings.Split(arti.Url, "/")[len(strings.Split(arti.Url, "/"))-1]
+				starknetContractClassHash = strings.Split(starknetContractClassHash, ".")[0]
+			}
+
 			data, _ := os.ReadFile(arti.Url)
 			m := make(map[string]any)
 
@@ -207,10 +220,21 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			if err != nil {
 				continue
 			}
+			
 			abi, err := json.Marshal(m["abi"])
-			bytecodeData, ok := m["bytecode"]
-			if !ok {
+			if err != nil {
 				continue
+			}
+
+			var bytecodeData string
+			if !isStarknetContract {
+				var ok bool
+				bytecodeData, ok = m["bytecode"].(string)
+				if !ok {
+					continue
+				}
+			} else {
+				bytecodeData = starknetContractClassHash
 			}
 
 			contract := db.Contract{
@@ -221,7 +245,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
 				BuildTime:        workflowDetail.CreateTime,
 				AbiInfo:          string(abi),
-				ByteCode:         bytecodeData.(string),
+				ByteCode:         bytecodeData,
 				CreateTime:       time.Now(),
 			}
 			err = w.db.Save(&contract).Error
