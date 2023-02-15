@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	"github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
@@ -54,10 +55,18 @@ func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-	copier.Copy(&contractDeploy, &entity)
+
+	project, err := h.projectService.GetProject(projectId.String())
+
+	_ = copier.Copy(&contractDeploy, &entity)
 	contractService := application.GetBean[*service.ContractService]("contractService")
 	contractDeploy.DeployTime = time.Now()
 	contractDeploy.ProjectId = projectId
+
+	if project.FrameType == consts.Evm {
+		contractDeploy.Status = consts.STATUS_SUCCESS
+	}
+
 	err = contractService.SaveDeploy(contractDeploy)
 	if err != nil {
 		Fail(err.Error(), g)

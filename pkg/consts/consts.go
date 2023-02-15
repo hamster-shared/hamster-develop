@@ -59,3 +59,9 @@ const (
 )
 
 const IpfsUrl = "http://183.66.65.247:32509"
+
+const (
+	STATUS_RUNNING = 1
+	STATUS_SUCCESS = 2
+	STATUS_FAIL    = 3
+)
