@@ -33,5 +33,5 @@ type ContractDeploy struct {
 	Type          uint      `json:"type"` // see #consts.ProjectFrameType
 	DeclareTxHash string    `json:"declareTxHash"`
 	DeployTxHash  string    `json:"deployTxHash"`
-	Status        string    `json:"status"` // 1: deploying, 2: success , 3: fail
+	Status        uint      `json:"status"` // 1: deploying, 2: success , 3: fail
 }

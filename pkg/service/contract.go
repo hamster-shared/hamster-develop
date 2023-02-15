@@ -1,24 +1,32 @@
 package service
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"github.com/dontpanicdao/caigo/gateway"
+	"github.com/dontpanicdao/caigo/types"
 	"github.com/goperate/convert/core/array"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"time"
 )
 
 type ContractService struct {
 	db *gorm.DB
+	gw *gateway.Gateway
 }
 
 func NewContractService() *ContractService {
+	gw := gateway.NewClient(gateway.WithChain(gateway.GOERLI_ID))
 	return &ContractService{
 		db: application.GetBean[*gorm.DB]("db"),
+		gw: gw,
 	}
 }
 
@@ -159,4 +167,47 @@ func (c *ContractService) QueryNetworkList(projectId string) ([]string, error) {
 		return data, res.Error
 	}
 	return data, nil
+}
+
+func (c *ContractService) SyncStarkWareContract() {
+
+	var contractDeploys []db2.ContractDeploy
+
+	const running = 1
+	err := c.db.Model(db2.ContractDeploy{}).Where("type=? and status = ?", consts.StarkWare, running).Find(&contractDeploys).Error
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, deploy := range contractDeploys {
+
+		if time.Since(deploy.DeployTime) > time.Minute*15 {
+			// fail
+			deploy.Status = 3
+		} else if deploy.DeployTxHash != "" {
+			receipt, err := c.gw.TransactionReceipt(context.Background(), deploy.DeployTxHash)
+			if err != nil {
+				continue
+			}
+			if receipt.Status == types.TransactionAcceptedOnL2 {
+				// success
+
+				// query contract address
+				if len(receipt.Events) > 0 {
+					event1 := receipt.Events[0].(map[string]interface{})
+					data := event1["data"].([]interface{})
+					if len(data) > 0 {
+						contractAddress := data[0].(string)
+						deploy.Address = contractAddress
+						deploy.Status = 1
+					}
+				}
+			}
+		}
+		err := c.db.Save(&deploy).Error
+		if err != nil {
+			fmt.Println("save contractDeploy error")
+		}
+	}
 }

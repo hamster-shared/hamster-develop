@@ -56,6 +56,7 @@ type RecentDeployVo struct {
 	Id         uint      `json:"id"`
 	Version    string    `json:"version"`
 	DeployTime time.Time `json:"deployTime"`
+	Status     uint      `json:"status"` // 1: deploying, 2: success , 3: fail
 }
 
 type PackageDeployVo struct {
