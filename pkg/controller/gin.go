@@ -48,6 +48,8 @@ func (h *HttpServer) StartHttpServer() {
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)
 	api.POST("/projects/check-name", h.handlerServer.checkName)
+	api.GET("/user", h.handlerServer.getUseInfo)
+	api.PUT("/user/first/state", h.handlerServer.updateFirstState)
 
 	/*
 		创建项目返回项目ID

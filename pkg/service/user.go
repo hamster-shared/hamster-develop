@@ -28,3 +28,7 @@ func (u *UserService) GetUserByToken(token string) (db2.User, error) {
 	}
 	return user, nil
 }
+
+func (u *UserService) UpdateUser(user db2.User) error {
+	return u.db.Save(&user).Error
+}

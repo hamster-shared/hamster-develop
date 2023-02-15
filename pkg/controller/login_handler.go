@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
+	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
@@ -64,4 +65,34 @@ func (h *HandlerServer) Authorize() gin.HandlerFunc {
 		gin.Set("user", user)
 		gin.Next()
 	}
+}
+
+func (h *HandlerServer) getUseInfo(gin *gin.Context) {
+	userAny, exit := gin.Get("user")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", gin)
+		return
+	}
+	user, _ := userAny.(db2.User)
+	Success(user, gin)
+}
+
+func (h *HandlerServer) updateFirstState(gin *gin.Context) {
+	userAny, exit := gin.Get("user")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", gin)
+		return
+	}
+	user, _ := userAny.(db2.User)
+	if user.FirstState == 0 {
+		userService := application.GetBean[*service.UserService]("userService")
+		user.FirstState = 1
+		err := userService.UpdateUser(user)
+		if err != nil {
+			Fail(err.Error(), gin)
+			return
+		}
+		gin.Set("user", user)
+	}
+	Success("", gin)
 }

@@ -1,0 +1,1 @@
+alter table t_user add first_state tinyint(1) default 0 comment 'Whether to log in for the first time';
