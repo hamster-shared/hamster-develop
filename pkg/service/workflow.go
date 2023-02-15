@@ -204,13 +204,14 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			// 判断是不是 starknet 合约
 			isStarknetContract := false
 			starknetContractClassHash := ""
-			if !strings.HasSuffix(arti.Url, "starknet.output.json") {
+			if strings.HasSuffix(arti.Url, "starknet.output.json") {
 				isStarknetContract = true
 				// 获取 starknet 合约的 class hash，写在了文件名里
 				// 先以 / 为分隔符，获取最后一个元素
 				// 再以 . 为分隔符，获取第一个元素
 				starknetContractClassHash = strings.Split(arti.Url, "/")[len(strings.Split(arti.Url, "/"))-1]
 				starknetContractClassHash = strings.Split(starknetContractClassHash, ".")[0]
+				logger.Trace("starknet contract class hash: ", starknetContractClassHash)
 			}
 
 			data, _ := os.ReadFile(arti.Url)
@@ -218,11 +219,13 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 
 			err := json.Unmarshal(data, &m)
 			if err != nil {
+				logger.Errorf("unmarshal contract abi failed: %s", err.Error())
 				continue
 			}
-			
+
 			abi, err := json.Marshal(m["abi"])
 			if err != nil {
+				logger.Errorf("marshal contract abi failed: %s", err.Error())
 				continue
 			}
 
@@ -231,6 +234,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				var ok bool
 				bytecodeData, ok = m["bytecode"].(string)
 				if !ok {
+					logger.Errorf("contract bytecode is not string")
 					continue
 				}
 			} else {
@@ -249,7 +253,11 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				CreateTime:       time.Now(),
 			}
 			err = w.db.Save(&contract).Error
-			fmt.Println(err)
+			if err != nil {
+				logger.Errorf("save contract to database failed: %s", err.Error())
+				continue
+			}
+			logger.Trace("save contract to database success: ", contract.Name)
 		}
 
 	}
