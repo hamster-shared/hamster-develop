@@ -249,6 +249,13 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				bytecodeData = starknetContractClassHash
 			}
 
+			var contractType int
+			if !isStarknetContract {
+				contractType = consts.Evm
+			} else {
+				contractType = consts.StarkWare
+			}
+
 			contract := db.Contract{
 				ProjectId:        projectId,
 				WorkflowId:       workflowId,
@@ -259,6 +266,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				AbiInfo:          abi,
 				ByteCode:         bytecodeData,
 				CreateTime:       time.Now(),
+				Type:             uint(contractType),
 			}
 			err = w.db.Save(&contract).Error
 			if err != nil {

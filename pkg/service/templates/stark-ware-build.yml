@@ -17,7 +17,6 @@ stages:
       - name: starknet-compile
         runs-on: jlvihv/cairo-anaconda-env:0.1.4
         run: |
-          shopt -s nullglob
           cd cairo-project
           for f in *.cairo; do
             echo "Compiling $f..."
