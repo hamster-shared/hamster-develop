@@ -17,7 +17,12 @@ stages:
       - name: starknet-compile
         runs-on: jlvihv/cairo-anaconda-env:0.1.4
         run: |
-          bash compile.sh
+          shopt -s nullglob
+          cd cairo-project
+          for f in *.cairo; do
+            echo "Compiling $f..."
+            starknet-compile $f > $f.starknet.output.json
+          done
 
       - name: save artifactory
         uses: hamster-artifactory
@@ -25,4 +30,4 @@ stages:
           name: some.zip
           compress: false
           path: |
-            /cairo-project/*.starknet.output.json
+            /cairo-project/*.output.json

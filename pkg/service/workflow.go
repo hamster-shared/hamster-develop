@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"strconv"
 	"strings"
@@ -206,11 +207,12 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			starknetContractClassHash := ""
 			if strings.HasSuffix(arti.Url, "starknet.output.json") {
 				isStarknetContract = true
-				// 获取 starknet 合约的 class hash，写在了文件名里
-				// 先以 / 为分隔符，获取最后一个元素
-				// 再以 . 为分隔符，获取第一个元素
-				starknetContractClassHash = strings.Split(arti.Url, "/")[len(strings.Split(arti.Url, "/"))-1]
-				starknetContractClassHash = strings.Split(starknetContractClassHash, ".")[0]
+				classHash, err := starkClassHash(arti.Url)
+				if err != nil {
+					logger.Errorf("starknet contract class hash failed: %s", err.Error())
+					continue
+				}
+				starknetContractClassHash = classHash
 				logger.Trace("starknet contract class hash: ", starknetContractClassHash)
 			}
 
@@ -223,10 +225,16 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				continue
 			}
 
-			abi, err := json.Marshal(m["abi"])
-			if err != nil {
-				logger.Errorf("marshal contract abi failed: %s", err.Error())
-				continue
+			var abi string
+			if !isStarknetContract {
+				abiByte, err := json.Marshal(m["abi"])
+				if err != nil {
+					logger.Errorf("marshal contract abi failed: %s", err.Error())
+					continue
+				}
+				abi = string(abiByte)
+			} else {
+				abi = string(data)
 			}
 
 			var bytecodeData string
@@ -248,7 +256,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
 				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
 				BuildTime:        workflowDetail.CreateTime,
-				AbiInfo:          string(abi),
+				AbiInfo:          abi,
 				ByteCode:         bytecodeData,
 				CreateTime:       time.Now(),
 			}
@@ -618,4 +626,16 @@ func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int) error {
 		return err
 	}
 	return nil
+}
+
+func starkClassHash(filename string) (string, error) {
+	cmdStr := "starkli class-hash " + filename
+	cmd := exec.Command("/bin/bash", "-c", cmdStr)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+	return out.String(), nil
 }
