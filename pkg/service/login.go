@@ -48,11 +48,14 @@ func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (db2.User, err
 	if err != nil {
 		return userData, err
 	}
-	userData.Id = uint(*userInfo.ID)
-	userData.Username = *userInfo.Login
-	userData.AvatarUrl = *userInfo.AvatarURL
-	userData.HtmlUrl = *userInfo.HTMLURL
-	userData.CreateTime = time.Now()
+	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.ID).First(&userData).Error
+	if err != nil {
+		userData.Id = uint(*userInfo.ID)
+		userData.Username = *userInfo.Login
+		userData.AvatarUrl = *userInfo.AvatarURL
+		userData.HtmlUrl = *userInfo.HTMLURL
+		userData.CreateTime = time.Now()
+	}
 	userData.Token = token.AccessToken
 	l.db.Save(&userData)
 	accessToken := utils.AesEncrypt(token.AccessToken, consts.SecretKey)
