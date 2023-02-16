@@ -267,6 +267,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				ByteCode:         bytecodeData,
 				CreateTime:       time.Now(),
 				Type:             uint(contractType),
+				Status:           consts.STATUS_SUCCESS,
 			}
 			err = w.db.Save(&contract).Error
 			if err != nil {

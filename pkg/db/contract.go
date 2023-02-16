@@ -18,7 +18,8 @@ type Contract struct {
 	AbiInfo          string         `json:"abiInfo"`
 	ByteCode         string         `json:"byteCode"`
 	CreateTime       time.Time      `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
-	Type             uint           `json:"type"` // see #consts.ProjectFrameType
+	Type             uint           `json:"type"`   // see #consts.ProjectFrameType
+	Status           uint           `json:"status"` // 1: deploying, 2: success , 3: fail
 }
 
 type ContractDeploy struct {
