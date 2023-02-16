@@ -30,4 +30,5 @@ type ContractVo struct {
 	Version          string    `json:"version"`
 	AbiInfo          string    `json:"abiInfo"`
 	ByteCode         string    `json:"byteCode"`
+	Type             uint      `json:"type"` // see #consts.ProjectFrameType
 }

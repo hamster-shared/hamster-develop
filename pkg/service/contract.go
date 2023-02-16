@@ -102,7 +102,7 @@ func (c *ContractService) QueryContractByVersion(projectId string, version strin
 		return data, res.Error
 	}
 	if len(contracts) > 0 {
-		copier.Copy(&data, &contracts)
+		_ = copier.Copy(&data, &contracts)
 	}
 	return data, nil
 }
