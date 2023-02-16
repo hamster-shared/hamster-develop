@@ -13,6 +13,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+	"time"
 )
 
 // daemonCmd represents the daemon command
@@ -69,6 +70,16 @@ to quickly create a Cobra application.`,
 		application.SetBean[*service.FrontendPackageService]("frontendPackageService", frontendPackageService)
 		templateService.Init(db)
 		projectService.Init(db)
+
+		// 定时同步starknet 合约部署状态
+		ticker := time.NewTicker(time.Minute * 2)
+		go func() {
+			for {
+				<-ticker.C
+				contractService.SyncStarkWareContract()
+			}
+		}()
+
 		controller.NewHttpService(*handlerServer, port).StartHttpServer()
 
 	},

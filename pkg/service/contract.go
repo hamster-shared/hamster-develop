@@ -56,6 +56,7 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
 		String: entity.Network,
 		Valid:  true,
 	}
+	contract.Status = entity.Status
 	c.db.Save(&contract)
 	return err
 }
@@ -212,6 +213,7 @@ func (c *ContractService) SyncStarkWareContract() {
 						contractAddress := data[0].(string)
 						deploy.Address = contractAddress
 						deploy.Status = 1
+
 					}
 				}
 			}
@@ -219,6 +221,15 @@ func (c *ContractService) SyncStarkWareContract() {
 		err := c.db.Save(&deploy).Error
 		if err != nil {
 			fmt.Println("save contractDeploy error")
+			continue
 		}
+		var contract db2.Contract
+		err = c.db.Model(db2.Contract{}).Where("id = ?", deploy.ContractId).First(&contract).Error
+		if err != nil {
+			fmt.Println("save Contract error")
+			continue
+		}
+		contract.Status = deploy.Status
+		c.db.Save(contract.Status)
 	}
 }
