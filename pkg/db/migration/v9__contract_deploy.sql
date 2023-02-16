@@ -13,3 +13,6 @@ alter table t_contract_deploy
 alter table t_contract_deploy
     add status int(1) default 2 null comment ' 1: deploying, 2: success , 3: fail';
 
+alter table t_contract
+    modify abi_info mediumtext null comment 'abi信息';
+
