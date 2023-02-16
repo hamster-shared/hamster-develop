@@ -278,3 +278,22 @@ Access-Token: 8Bu8jYklS+53N/DYhS5LxnpcTqr3c9yeDYUdn49EA05Azw6LMMJUZe8+ppoxjMjs
 DELETE http://localhost:8080/api/workflows/84/detail/80/deploy
 Content-Type: application/json
 Access-Token: 8Bu8jYklS+53N/DYhS5LxnpcTqr3c9yeDYUdn49EA05Azw6LMMJUZe8+ppoxjMjs
+
+
+### UPDATE contract Deploy
+POST http://localhost:8080/api/projects/9df7f308-80c1-4293-b802-8820499be125/contract/deploy
+Content-Type: application/json
+Access-Token: 57QEeUaskUR4UkiXxCCXsyUVZ1QHIQuEK4sy/CeOc+JBWMdgJoSuDM/aND9lePgE
+
+{
+  "contractId": 44,
+  "id": "9df7f308-80c1-4293-b802-8820499be125",
+  "projectId": "9df7f308-80c1-4293-b802-8820499be125",
+  "version": "1",
+  "network": "Testnet",
+  "declareTxHash": "0x68430771ac16e2d6dc214e957b9dcdfccc6f16c7d86dd536c883a4f66702af1",
+  "deployTxHash": "",
+  "status": 1,
+  "address": "",
+  "type": 4
+}
