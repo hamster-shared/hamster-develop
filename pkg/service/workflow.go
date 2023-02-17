@@ -249,7 +249,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				bytecodeData = starknetContractClassHash
 			}
 
-			var contractType int
+			var contractType uint
 			if !isStarknetContract {
 				contractType = consts.Evm
 			} else {

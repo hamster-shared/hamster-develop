@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/dontpanicdao/caigo/types"
@@ -14,6 +15,9 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"os"
+	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -28,6 +32,54 @@ func NewContractService() *ContractService {
 		db: application.GetBean[*gorm.DB]("db"),
 		gw: gw,
 	}
+}
+
+func (c *ContractService) doStarknetDeploy(compiledContract []byte) (txHash string, contractAddress string, err error) {
+	gw := gateway.NewClient(gateway.WithChain(gateway.GOERLI_ID))
+
+	ctx := context.Background()
+	var contractClass types.ContractClass
+
+	err = json.Unmarshal(compiledContract, &contractClass)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	declare, err := gw.Declare(ctx, contractClass, gateway.DeclareRequest{})
+	if err != nil {
+		return "", "", err
+	}
+
+	fmt.Println("declare.TransactionHash: ", declare.TransactionHash)
+	fmt.Println("declare.ClassHash: ", declare.ClassHash)
+
+	_, receipt, err := gw.WaitForTransaction(ctx, declare.TransactionHash, 3, 10)
+	if err != nil {
+		fmt.Printf("could not declare contract: %v\n", err)
+		return "", "", err
+	}
+	if receipt.Status != types.TransactionAcceptedOnL1 && receipt.Status != types.TransactionAcceptedOnL2 {
+		fmt.Printf("unexpected status: %s\n", receipt.Status)
+		return "", "", err
+	}
+
+	workdir := consts.STARKNET_DEPLOY_WORKDIR
+	cmd := exec.Command("node", "deploy_contract.js", declare.ClassHash)
+	cmd.Env = os.Environ()
+	cmd.Dir = workdir
+
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		fmt.Printf("exec deploy starknet contract fail :%v\n", err)
+		return "", "", err
+	}
+
+	splits := strings.Split(string(out), ",")
+	txHash = strings.TrimSpace(splits[0])
+	contractAddress = strings.TrimSpace(splits[1])
+	return txHash, contractAddress, nil
 }
 
 func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
@@ -45,6 +97,16 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
 	if err == nil {
 		entity.Id = savedContractDeploy.Id
 		entity.CreateTime = savedContractDeploy.CreateTime
+	}
+
+	if contract.Type == consts.StarkWare {
+		txHash, contractAddress, err := c.doStarknetDeploy([]byte(contract.AbiInfo))
+		if err != nil {
+			return err
+		}
+		entity.DeployTxHash = txHash
+		entity.Address = contractAddress
+		entity.Type = contract.Type
 	}
 
 	err = c.db.Save(&entity).Error

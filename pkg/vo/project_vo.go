@@ -30,7 +30,7 @@ type ProjectDetailVo struct {
 	Name          string        `json:"name"`
 	Type          uint          `json:"type"`
 	RepositoryUrl string        `json:"repositoryUrl"`
-	FrameType     int           `json:"frameType"`
+	FrameType     uint          `json:"frameType"`
 	Branch        string        `json:"branch"`
 	RecentCheck   RecentCheckVo `json:"recentCheck"`
 	RecentBuild   RecentBuildVo `json:"recentBuild"`

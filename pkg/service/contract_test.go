@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/dontpanicdao/caigo/gateway"
+	"github.com/hamster-shared/hamster-develop/pkg/db"
+	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -11,7 +13,7 @@ import (
 	"testing"
 )
 
-func TestQueryContract(t *testing.T) {
+func NewTestContractService() *ContractService {
 	DSN := fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local", "123456")
 	db, _ := gorm.Open(mysql.New(mysql.Config{
 		DSN:                       DSN,   // data source name
@@ -29,7 +31,12 @@ func TestQueryContract(t *testing.T) {
 	contractService := &ContractService{
 		db: db,
 	}
+	return contractService
+}
 
+func TestQueryContract(t *testing.T) {
+
+	contractService := NewTestContractService()
 	_, err := contractService.QueryContractByWorkflow(1, 1)
 	assert.NoError(t, err)
 }
@@ -45,4 +52,19 @@ func TestSync(t *testing.T) {
 	event1 := receipt.Events[0].(map[string]interface{})
 	data := event1["data"].([]interface{})
 	fmt.Println(data[0])
+}
+
+func TestDeployContract(t *testing.T) {
+	contractService := NewTestContractService()
+	projectId, _ := uuid.FromString("e3a02994-8c27-4539-a9d8-641a823cfaa1")
+	deploy := db.ContractDeploy{
+		ContractId: 55,
+		ProjectId:  projectId,
+	}
+	err := contractService.SaveDeploy(deploy)
+
+	if err != nil {
+		t.Fatalf("deploy contract fail :%v\n", err)
+	}
+
 }
