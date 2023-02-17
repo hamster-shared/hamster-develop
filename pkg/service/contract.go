@@ -82,11 +82,11 @@ func (c *ContractService) doStarknetDeploy(compiledContract []byte) (txHash stri
 	return txHash, contractAddress, nil
 }
 
-func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
+func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 	var contract db2.Contract
 	err := c.db.Model(db2.Contract{}).Where("id = ?", entity.ContractId).First(&contract).Error
 	if err != nil {
-		return err
+		return 0, err
 	}
 	entity.Type = contract.Type
 
@@ -102,7 +102,7 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
 	if contract.Type == consts.StarkWare {
 		txHash, contractAddress, err := c.doStarknetDeploy([]byte(contract.AbiInfo))
 		if err != nil {
-			return err
+			return 0, err
 		}
 		entity.DeployTxHash = txHash
 		entity.Address = contractAddress
@@ -111,7 +111,7 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
 
 	err = c.db.Save(&entity).Error
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	contract.Network = sql.NullString{
@@ -120,7 +120,7 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) error {
 	}
 	contract.Status = entity.Status
 	c.db.Save(&contract)
-	return err
+	return entity.Id, err
 }
 
 func (c *ContractService) QueryContracts(projectId string, query, version, network string, page int, size int) (vo.Page[db2.Contract], error) {
@@ -294,4 +294,10 @@ func (c *ContractService) SyncStarkWareContract() {
 		contract.Status = deploy.Status
 		c.db.Save(contract.Status)
 	}
+}
+
+func (c *ContractService) GetContractDeployInfo(id int) (db2.ContractDeploy, error) {
+	var result db2.ContractDeploy
+	err := c.db.Model(db2.ContractDeploy{}).First(&result, id).Error
+	return result, err
 }

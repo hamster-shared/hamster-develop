@@ -9,12 +9,9 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
+	"strconv"
 	"time"
 )
-
-func (h *HandlerServer) contractDeployInfo(g *gin.Context) {
-
-}
 
 func (h *HandlerServer) contractDeployDetailByVersion(gin *gin.Context) {
 	id := gin.Param("id")
@@ -67,15 +64,30 @@ func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
 		contractDeploy.Status = consts.STATUS_SUCCESS
 	}
 
-	err = contractService.SaveDeploy(contractDeploy)
+	contractDeployId, err := contractService.SaveDeploy(contractDeploy)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
 
-	Success("", g)
+	Success(contractDeployId, g)
 }
 
+func (h *HandlerServer) contractDeployInfo(gin *gin.Context) {
+	id := gin.Param("contractDeployId")
+	contractDeployId, err := strconv.Atoi(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	contractService := application.GetBean[*service.ContractService]("contractService")
+	contractDeployInfo, err := contractService.GetContractDeployInfo(contractDeployId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(contractDeployInfo, gin)
+}
 func (h *HandlerServer) versionList(gin *gin.Context) {
 	id := gin.Param("id")
 	contractService := application.GetBean[*service.ContractService]("contractService")
