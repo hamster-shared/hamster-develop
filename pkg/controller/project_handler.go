@@ -2,7 +2,6 @@ package controller
 
 import (
 	"embed"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
@@ -61,14 +60,24 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	userAny, _ := g.Get("user")
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	repo, res, err := githubService.CreateRepo(token, createData.TemplateOwner, createData.TemplateRepo, createData.Name, createData.RepoOwner)
+	repo, res, err := githubService.CreateRepository(token, createData.Name)
 	if err != nil {
 		if res != nil {
-			if res.StatusCode == http.StatusUnauthorized {
+			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 				Failed(http.StatusUnauthorized, "access not authorized", g)
 				return
 			}
 		}
+		Fail(err.Error(), g)
+		return
+	}
+	//email, err := githubService.GetUserEmail(token)
+	//if err != nil {
+	//	Fail(err.Error(), g)
+	//	return
+	//}
+	err = githubService.CommitAndPush(token, *repo.CloneURL, createData.RepoOwner, user.UserEmail, createData.TemplateRepo)
+	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
@@ -344,7 +353,7 @@ func (h *HandlerServer) updateProject(gin *gin.Context) {
 	repo, res, err := githubService.UpdateRepo(token, user.Username, project.Name, updateData.Name)
 	if err != nil {
 		if res != nil {
-			if res.StatusCode == http.StatusUnauthorized {
+			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 				Failed(http.StatusUnauthorized, "access not authorized", gin)
 				return
 			}
@@ -398,10 +407,10 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
 	//create repo
-	repo, res, err := githubService.CreateRepo(token, consts.TemplateOwner, consts.TemplateRepoName, createData.Name, user.Username)
+	repo, res, err := githubService.CreateRepository(token, createData.Name)
 	if err != nil {
 		if res != nil {
-			if res.StatusCode == http.StatusUnauthorized {
+			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 				Failed(http.StatusUnauthorized, "access not authorized", gin)
 				return
 			}
@@ -409,19 +418,24 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	for {
-		index := 1
-		if index > 35 {
-			err = errors.New("create project by code failed")
-			break
-		}
-		_, res, err = githubService.GetCommitInfo(token, user.Username, createData.Name, repo.GetDefaultBranch())
-		if res.StatusCode == 200 {
-			break
-		}
-		index = index + 1
-	}
+	//email, err := githubService.GetUserEmail(token)
+	//if err != nil {
+	//	Fail(err.Error(), gin)
+	//	return
+	//}
+	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateRepoName)
 	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	_, res, err = githubService.AddFile(token, user.Username, createData.Name, createData.Content, createData.FileName)
+	if err != nil {
+		if res != nil {
+			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+				Failed(http.StatusUnauthorized, "access not authorized", gin)
+				return
+			}
+		}
 		Fail(err.Error(), gin)
 		return
 	}
@@ -429,7 +443,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 	_, res, err = githubService.AddFile(token, user.Username, createData.Name, createData.Content, createData.FileName)
 	if err != nil {
 		if res != nil {
-			if res.StatusCode == http.StatusUnauthorized {
+			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 				Failed(http.StatusUnauthorized, "access not authorized", gin)
 				return
 			}

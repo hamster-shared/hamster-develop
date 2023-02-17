@@ -8,6 +8,8 @@ import (
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
+	"github.com/hamster-shared/hamster-develop/pkg/vo"
+	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"log"
 	"time"
@@ -28,9 +30,11 @@ func NewLoginService() *LoginService {
 	}
 }
 
-func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (db2.User, error) {
-	data.ClientSecret = consts.ClientSecrets
+func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (vo.UserVo, error) {
+	data.ClientSecret = consts.AppsClientSecrets
+	data.ClientId = consts.AppsClientId
 	var userData db2.User
+	var userVo vo.UserVo
 	var token parameter.Token
 	url := "https://github.com/login/oauth/access_token"
 	res, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
@@ -39,14 +43,18 @@ func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (db2.User, err
 		"code":          data.Code,
 	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
 	if res.StatusCode() != 200 {
-		return userData, err
+		return userVo, err
 	}
 	if err != nil {
-		return userData, err
+		return userVo, err
 	}
 	userInfo, err := l.githubService.GetUserInfo(token.AccessToken)
 	if err != nil {
-		return userData, err
+		return userVo, err
+	}
+	email, err := l.githubService.GetUserEmail(token.AccessToken)
+	if err != nil {
+		return userVo, err
 	}
 	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.ID).First(&userData).Error
 	if err != nil {
@@ -56,11 +64,13 @@ func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (db2.User, err
 		userData.HtmlUrl = *userInfo.HTMLURL
 		userData.CreateTime = time.Now()
 	}
+	userData.UserEmail = email
 	userData.Token = token.AccessToken
 	l.db.Save(&userData)
 	accessToken := utils.AesEncrypt(token.AccessToken, consts.SecretKey)
 	userData.Token = accessToken
-	return userData, nil
+	copier.Copy(&userVo, &userData)
+	return userVo, nil
 }
 
 func (l *LoginService) GithubRepoAuth(authData parameter.AuthParam) (string, error) {

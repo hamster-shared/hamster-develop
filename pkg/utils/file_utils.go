@@ -2,6 +2,8 @@ package utils
 
 import (
 	"errors"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
+	"log"
 	"os"
 	path2 "path"
 	"path/filepath"
@@ -94,4 +96,13 @@ func GetRedundantPath(shortPath string, longPath string) (err error, path string
 		}
 	}
 	return errors.New("path does not contain"), ""
+}
+
+func DefaultConfigDir() string {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Println("get user home dir failed", err.Error())
+		return consts.RepositoryDir + "."
+	}
+	return filepath.Join(userHomeDir, consts.RepositoryDir)
 }

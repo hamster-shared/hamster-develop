@@ -11,7 +11,7 @@ type Project struct {
 	Name          string         `json:"name"`
 	UserId        int64          `json:"UserId"`
 	Type          uint           `json:"type"`
-	RepositoryUrl string         `json:"RepositoryUrl"`
+	RepositoryUrl string         `json:"repositoryUrl"`
 	FrameType     int            `json:"frameType"`
 	Creator       int64          `json:"creator"`
 	DeleteUser    uint           `json:"deleteUser"`

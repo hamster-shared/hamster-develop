@@ -35,6 +35,12 @@ const (
 // https://develop.test.hamsternet.io/
 const ClientSecrets = "968331f48983b1521c8cb58ba78db313bb0143ce"
 
+// test
+const (
+	AppsClientId      = "Iv1.6d9972fa6afd1c02"
+	AppsClientSecrets = "90bb54dd864a215b860b933f705801f043e287a2"
+)
+
 type ProjectType uint
 
 const (
@@ -65,3 +71,5 @@ const (
 	STATUS_SUCCESS = 2
 	STATUS_FAIL    = 3
 )
+
+const RepositoryDir = "repository"
