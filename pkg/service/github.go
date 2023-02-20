@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/wujiangweiphp/go-curl"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -114,12 +115,30 @@ func (g *GithubService) CreateRepository(token, repoName string) (*github.Reposi
 	return client.Repositories.Create(g.ctx, "", &data)
 }
 
-func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateName string) error {
-	workdir := filepath.Join(utils.DefaultConfigDir(), templateName)
+func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl, templateName string) error {
+	cloneDir := filepath.Join(utils.DefaultConfigDir(), owner)
+	_, err := os.Stat(cloneDir)
+	if err != nil && os.IsNotExist(err) {
+		err = os.MkdirAll(cloneDir, os.ModePerm)
+		if err != nil {
+			log.Println("create workdir failed", err.Error())
+			return err
+		}
+	}
+	gitClone := exec.Command("git", "clone", templateUrl)
+	gitClone.Dir = cloneDir
+	err = gitClone.Run()
+	if err != nil {
+		deleteOwnerDir(owner)
+		log.Println("git clone failed", err.Error())
+		return err
+	}
+	workdir := filepath.Join(utils.DefaultConfigDir(), owner, templateName)
 	deleteGit := exec.Command("rm", "-rf", ".git")
 	deleteGit.Dir = workdir
-	err := deleteGit.Run()
+	err = deleteGit.Run()
 	if err != nil {
+		deleteOwnerDir(owner)
 		log.Println("delete .git failed", err.Error())
 		return err
 	}
@@ -127,6 +146,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateName
 	gitInit.Dir = workdir
 	err = gitInit.Run()
 	if err != nil {
+		deleteOwnerDir(owner)
 		log.Println("git init failed", err.Error())
 		return err
 	}
@@ -134,6 +154,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateName
 	configName.Dir = workdir
 	err = configName.Run()
 	if err != nil {
+		deleteOwnerDir(owner)
 		log.Println("config git user name failed", err.Error())
 		return err
 	}
@@ -141,6 +162,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateName
 	configEmail.Dir = workdir
 	err = configEmail.Run()
 	if err != nil {
+		deleteOwnerDir(owner)
 		log.Println("config git user email failed", err.Error())
 		return err
 	}
@@ -151,6 +173,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateName
 	addOrigin.Dir = workdir
 	err = addOrigin.Run()
 	if err != nil {
+		deleteOwnerDir(owner)
 		log.Println("git add origin failed", err.Error())
 		return err
 	}
@@ -158,6 +181,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateName
 	fileAdd.Dir = workdir
 	err = fileAdd.Run()
 	if err != nil {
+		deleteOwnerDir(owner)
 		log.Println("git file add failed", err.Error())
 		return err
 	}
@@ -165,6 +189,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateName
 	gitCommit.Dir = workdir
 	err = gitCommit.Run()
 	if err != nil {
+		deleteOwnerDir(owner)
 		log.Println("git commit failed", err.Error())
 		return err
 	}
@@ -172,7 +197,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateName
 	gitPush.Dir = workdir
 	err = gitPush.Run()
 	if err != nil {
-		log.Println(err.Error())
+		deleteOwnerDir(owner)
 		log.Println("git push failed", err.Error())
 		return err
 	}
@@ -207,4 +232,10 @@ func (g *GithubService) GetUserEmail(token string) (string, error) {
 		return data[0].Email, nil
 	}
 	return "", nil
+}
+
+func deleteOwnerDir(owner string) {
+	deleteCmd := exec.Command("rm", "-rf", owner)
+	deleteCmd.Dir = utils.DefaultConfigDir()
+	deleteCmd.Start()
 }

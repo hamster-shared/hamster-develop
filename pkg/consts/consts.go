@@ -52,6 +52,7 @@ const (
 const (
 	TemplateOwner    = "hamster-template"
 	TemplateRepoName = "truffle-frame"
+	TemplateUrl      = "https://github.com/hamster-template/truffle-frame.git"
 )
 
 type ProjectFrameType uint

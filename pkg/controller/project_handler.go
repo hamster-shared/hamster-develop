@@ -76,7 +76,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	//	Fail(err.Error(), g)
 	//	return
 	//}
-	err = githubService.CommitAndPush(token, *repo.CloneURL, createData.RepoOwner, user.UserEmail, createData.TemplateRepo)
+	err = githubService.CommitAndPush(token, *repo.CloneURL, createData.RepoOwner, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
@@ -423,7 +423,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 	//	Fail(err.Error(), gin)
 	//	return
 	//}
-	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateRepoName)
+	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateUrl, consts.TemplateRepoName)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
