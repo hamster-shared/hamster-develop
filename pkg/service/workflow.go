@@ -646,5 +646,6 @@ func starkClassHash(filename string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return out.String(), nil
+	classHash := strings.TrimSpace(out.String())
+	return classHash, nil
 }
