@@ -201,6 +201,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 		log.Println("git push failed", err.Error())
 		return err
 	}
+	deleteOwnerDir(owner)
 	return nil
 }
 
