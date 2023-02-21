@@ -116,7 +116,7 @@ func (g *GithubService) CreateRepository(token, repoName string) (*github.Reposi
 }
 
 func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl, templateName string) error {
-	cloneDir := filepath.Join(utils.DefaultConfigDir(), owner)
+	cloneDir := filepath.Join(utils.DefaultRepoDir(), owner)
 	_, err := os.Stat(cloneDir)
 	if err != nil && os.IsNotExist(err) {
 		err = os.MkdirAll(cloneDir, os.ModePerm)
@@ -133,7 +133,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 		log.Println("git clone failed", err.Error())
 		return err
 	}
-	workdir := filepath.Join(utils.DefaultConfigDir(), owner, templateName)
+	workdir := filepath.Join(utils.DefaultRepoDir(), owner, templateName)
 	deleteGit := exec.Command("rm", "-rf", ".git")
 	deleteGit.Dir = workdir
 	err = deleteGit.Run()
@@ -236,6 +236,6 @@ func (g *GithubService) GetUserEmail(token string) (string, error) {
 
 func deleteOwnerDir(owner string) {
 	deleteCmd := exec.Command("rm", "-rf", owner)
-	deleteCmd.Dir = utils.DefaultConfigDir()
+	deleteCmd.Dir = utils.DefaultRepoDir()
 	deleteCmd.Start()
 }

@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
+	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"os/exec"
+	"path/filepath"
 	"time"
 )
 
@@ -198,5 +201,15 @@ func (p *ProjectService) DeleteProject(id string) error {
 	if result.Error != nil {
 		return result.Error
 	}
+	filePath := fmt.Sprintf("%s*", id)
+	//delete workdir
+	deleteWorkCmd := exec.Command("rm", "-rf", filePath)
+	deleteWorkCmd.Dir = utils.DefaultWorkDir()
+	deleteWorkCmd.Start()
+	//delete pipelines
+	pipelinePath := filepath.Join(utils.DefaultPipelineDir(), consts.JOB_DIR_NAME)
+	deletePipeCmd := exec.Command("rm", "-rf", filePath)
+	deletePipeCmd.Dir = pipelinePath
+	deletePipeCmd.Start()
 	return nil
 }

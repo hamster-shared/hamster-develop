@@ -74,3 +74,9 @@ const (
 )
 
 const RepositoryDir = "repository"
+
+const (
+	PIPELINE_DIR_NAME = "pipelines"
+	JOB_DIR_NAME      = "jobs"
+	WORK_DIR_NAME     = "workdir"
+)

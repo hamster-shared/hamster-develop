@@ -101,24 +101,22 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 
-	if project.FrameType == consts.Evm {
-		workflowCheckData := parameter.SaveWorkflowParam{
-			ProjectId:  id,
-			Type:       consts.Check,
-			ExecFile:   "",
-			LastExecId: 0,
-		}
-		workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
-		if err != nil {
-			Success(id, g)
-			return
-		}
-		checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
-		file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
-		if err == nil {
-			workflowCheckRes.ExecFile = file
-			workflowService.UpdateWorkflow(workflowCheckRes)
-		}
+	workflowCheckData := parameter.SaveWorkflowParam{
+		ProjectId:  id,
+		Type:       consts.Check,
+		ExecFile:   "",
+		LastExecId: 0,
+	}
+	workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+	if err != nil {
+		Success(id, g)
+		return
+	}
+	checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
+	file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
+	if err == nil {
+		workflowCheckRes.ExecFile = file
+		workflowService.UpdateWorkflow(workflowCheckRes)
 	}
 
 	workflowBuildData := parameter.SaveWorkflowParam{
@@ -419,11 +417,6 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	//email, err := githubService.GetUserEmail(token)
-	//if err != nil {
-	//	Fail(err.Error(), gin)
-	//	return
-	//}
 	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateUrl, consts.TemplateRepoName)
 	if err != nil {
 		Fail(err.Error(), gin)

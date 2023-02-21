@@ -61,6 +61,10 @@ func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (vo.UserVo, er
 		l.db.Save(&userData)
 	}
 	copier.Copy(&userVo, &userData)
+	if userData.Token != "" {
+		accessToken := utils.AesEncrypt(userData.Token, consts.SecretKey)
+		userVo.Token = accessToken
+	}
 	return userVo, nil
 }
 
@@ -97,7 +101,6 @@ func (l *LoginService) GithubInstall(code string) (string, error) {
 	userData.Token = token.AccessToken
 	l.db.Save(&userData)
 	accessToken := utils.AesEncrypt(token.AccessToken, consts.SecretKey)
-	log.Println(accessToken)
 	return accessToken, nil
 }
 

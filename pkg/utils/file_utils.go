@@ -98,11 +98,31 @@ func GetRedundantPath(shortPath string, longPath string) (err error, path string
 	return errors.New("path does not contain"), ""
 }
 
-func DefaultConfigDir() string {
+func DefaultRepoDir() string {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Println("get user home dir failed", err.Error())
 		return consts.RepositoryDir + "."
 	}
 	return filepath.Join(userHomeDir, consts.RepositoryDir)
+}
+
+func DefaultPipelineDir() string {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Println("get user home dir failed", err.Error())
+		return consts.PIPELINE_DIR_NAME + "."
+	}
+	dir := filepath.Join(userHomeDir, consts.PIPELINE_DIR_NAME)
+	return dir
+}
+
+func DefaultWorkDir() string {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Println("get user home dir failed", err.Error())
+		return consts.WORK_DIR_NAME + "."
+	}
+	dir := filepath.Join(userHomeDir, consts.WORK_DIR_NAME)
+	return dir
 }
