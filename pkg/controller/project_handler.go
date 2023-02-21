@@ -78,6 +78,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	//}
 	err = githubService.CommitAndPush(token, *repo.CloneURL, createData.RepoOwner, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
 	if err != nil {
+		githubService.DeleteRepo(token, createData.RepoOwner, createData.Name)
 		Fail(err.Error(), g)
 		return
 	}
@@ -419,23 +420,14 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 	}
 	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateUrl, consts.TemplateRepoName)
 	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
-	_, res, err = githubService.AddFile(token, user.Username, createData.Name, createData.Content, createData.FileName)
-	if err != nil {
-		if res != nil {
-			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
-				Failed(http.StatusUnauthorized, "access not authorized", gin)
-				return
-			}
-		}
+		githubService.DeleteRepo(token, user.Username, createData.Name)
 		Fail(err.Error(), gin)
 		return
 	}
 	// add file
 	_, res, err = githubService.AddFile(token, user.Username, createData.Name, createData.Content, createData.FileName)
 	if err != nil {
+		githubService.DeleteRepo(token, user.Username, createData.Name)
 		if res != nil {
 			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 				Failed(http.StatusUnauthorized, "access not authorized", gin)
