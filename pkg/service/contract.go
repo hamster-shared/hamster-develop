@@ -31,7 +31,7 @@ func NewContractService() *ContractService {
 	}
 }
 
-func (c *ContractService) doStarknetDeclare(compiledContract []byte) (txHash string, err error) {
+func (c *ContractService) DoStarknetDeclare(compiledContract []byte) (txHash string, err error) {
 	gw := gateway.NewClient(gateway.WithChain(gateway.GOERLI_ID))
 
 	ctx := context.Background()
@@ -79,15 +79,6 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 	if err == nil {
 		entity.Id = savedContractDeploy.Id
 		entity.CreateTime = savedContractDeploy.CreateTime
-	}
-
-	if contract.Type == consts.StarkWare {
-		txHash, err := c.doStarknetDeclare([]byte(contract.AbiInfo))
-		if err != nil {
-			return 0, err
-		}
-		entity.DeclareTxHash = txHash
-		entity.Type = contract.Type
 	}
 
 	err = c.db.Save(&entity).Error

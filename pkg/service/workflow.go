@@ -270,11 +270,22 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				Status:           consts.STATUS_SUCCESS,
 			}
 			err = w.db.Save(&contract).Error
+
 			if err != nil {
 				logger.Errorf("save contract to database failed: %s", err.Error())
 				continue
 			}
 			logger.Trace("save contract to database success: ", contract.Name)
+
+			// declare classHash
+			if isStarknetContract {
+				contractService := application.GetBean[*ContractService]("contractService")
+				go func() {
+					_, err := contractService.DoStarknetDeclare([]byte(contract.AbiInfo))
+					logger.Trace("declare starknet abi error:", err.Error())
+				}()
+			}
+
 		}
 
 	}
