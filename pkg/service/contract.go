@@ -15,9 +15,6 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
-	"os"
-	"os/exec"
-	"strings"
 	"time"
 )
 
@@ -34,7 +31,7 @@ func NewContractService() *ContractService {
 	}
 }
 
-func (c *ContractService) doStarknetDeploy(compiledContract []byte) (txHash string, contractAddress string, err error) {
+func (c *ContractService) doStarknetDeclare(compiledContract []byte) (txHash string, err error) {
 	gw := gateway.NewClient(gateway.WithChain(gateway.GOERLI_ID))
 
 	ctx := context.Background()
@@ -43,12 +40,12 @@ func (c *ContractService) doStarknetDeploy(compiledContract []byte) (txHash stri
 	err = json.Unmarshal(compiledContract, &contractClass)
 
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	declare, err := gw.Declare(ctx, contractClass, gateway.DeclareRequest{})
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	fmt.Println("declare.TransactionHash: ", declare.TransactionHash)
@@ -57,29 +54,14 @@ func (c *ContractService) doStarknetDeploy(compiledContract []byte) (txHash stri
 	_, receipt, err := gw.WaitForTransaction(ctx, declare.TransactionHash, 3, 10)
 	if err != nil {
 		fmt.Printf("could not declare contract: %v\n", err)
-		return "", "", err
+		return "", err
 	}
 	if receipt.Status != types.TransactionAcceptedOnL1 && receipt.Status != types.TransactionAcceptedOnL2 {
 		fmt.Printf("unexpected status: %s\n", receipt.Status)
-		return "", "", err
+		return "", err
 	}
 
-	workdir := consts.STARKNET_DEPLOY_WORKDIR
-	cmd := exec.Command("node", "deploy_contract.js", declare.ClassHash)
-	cmd.Env = os.Environ()
-	cmd.Dir = workdir
-
-	out, err := cmd.CombinedOutput()
-
-	if err != nil {
-		fmt.Printf("exec deploy starknet contract fail :%v\n", err)
-		return "", "", err
-	}
-
-	splits := strings.Split(string(out), ",")
-	txHash = strings.TrimSpace(splits[0])
-	contractAddress = strings.TrimSpace(splits[1])
-	return txHash, contractAddress, nil
+	return txHash, nil
 }
 
 func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
@@ -100,12 +82,11 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 	}
 
 	if contract.Type == consts.StarkWare {
-		txHash, contractAddress, err := c.doStarknetDeploy([]byte(contract.AbiInfo))
+		txHash, err := c.doStarknetDeclare([]byte(contract.AbiInfo))
 		if err != nil {
 			return 0, err
 		}
-		entity.DeployTxHash = txHash
-		entity.Address = contractAddress
+		entity.DeclareTxHash = txHash
 		entity.Type = contract.Type
 	}
 
