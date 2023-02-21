@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"testing"
 )
@@ -20,12 +19,4 @@ func Test_GetRedundantPath(t *testing.T) {
 			fmt.Println(relativePath)
 		}
 	}
-}
-
-func Test_Path(t *testing.T) {
-	dir, err := DefaultConfigDir()
-	if err != nil {
-		log.Println(err.Error())
-	}
-	log.Println(dir)
 }

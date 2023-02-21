@@ -90,6 +90,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
+		githubService.DeleteRepo(token, createData.RepoOwner, createData.Name)
 		Fail(err.Error(), g)
 		return
 	}
@@ -461,6 +462,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
+		githubService.DeleteRepo(token, user.Username, createData.Name)
 		Fail(err.Error(), gin)
 		return
 	}
