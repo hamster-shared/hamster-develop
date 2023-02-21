@@ -1,0 +1,63 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hamster-aline
+spec:
+  selector:
+    app: hamster-aline
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30302
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hamster-aline
+  labels:
+    app: hamster-aline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hamster-aline
+  template:
+    metadata:
+      labels:
+        app: hamster-aline
+    spec:
+      containers:
+        - name: hamster-aline
+          image: hamstershare/hamster-develop:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DB_HOST
+              value: mysql
+            - name: DB_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: db_password
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: /root/pipelines
+              name: aline-pipelines
+            - mountPath: /root/workdir
+              name: aline-workdir
+            - mountPath: /var/run/docker.sock
+              name: docker-socket
+      volumes:
+        - name: aline-pipelines
+          persistentVolumeClaim:
+            claimName: aline-pipelines
+        - name: aline-workdir
+          persistentVolumeClaim:
+            claimName: aline-workdir
+        - name: docker-socket
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
