@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: hamster-aline
-          image: hamstershare/hamster-develop:latest
+          image: hamstershare/hamster-develop:${PIPELINE_ID}
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOST
