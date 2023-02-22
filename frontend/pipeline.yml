@@ -1,0 +1,29 @@
+version: "1"
+name: pipeline
+stages:
+  init:
+    steps:
+      - name: git clone
+        uses: git-checkout
+        with:
+          url: https://github.com/hamster-shared/hamster-frontend.git
+          branch: develop
+  build:
+    needs:
+      - init
+    steps:
+      - name: build
+        run: |
+          npm install
+          npm run build:staging 
+          docker build -t hamstershare/hamster-frontend:${PIPELINE_ID} .
+          docker push hamstershare/hamster-frontend:${PIPELINE_ID}
+
+  deploy:
+    needs:
+      - init
+    steps:
+      - name: deploy
+        run: |
+          envsubst < deploy.yml | kubectl -n hamster apply -f -
+
