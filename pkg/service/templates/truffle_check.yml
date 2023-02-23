@@ -53,3 +53,10 @@ stages:
     steps:
       - name: check-aggregation
         uses: check-aggregation
+
+  openai check:
+    needs:
+      - Output Results
+    steps:
+      - name: openai ask
+        uses: openai

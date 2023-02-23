@@ -315,34 +315,54 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 		var reportList []db.Report
 		begin := w.db.Begin()
 		for _, report := range jobDetail.Reports {
-			if report.Url == "" {
-				continue
-			}
-			file, err := os.ReadFile(report.Url)
-			if err != nil {
-				logger.Errorf("Check result path is err")
-				return
-			}
-			var contractCheckResultList []model.ContractCheckResult[json.RawMessage]
-			err = json.Unmarshal(file, &contractCheckResultList)
-			if err != nil {
-				logger.Errorf("Check result get fail")
-			}
-			for _, contractCheckResult := range contractCheckResultList {
-				marshal, err := json.Marshal(contractCheckResult.Context)
-				if err != nil {
-					logger.Errorf("Check context conversion failed")
+
+			// contract check
+			if report.Type == 2 {
+				if report.Url == "" {
+					continue
 				}
+				file, err := os.ReadFile(report.Url)
+				if err != nil {
+					logger.Errorf("Check result path is err")
+					return
+				}
+				var contractCheckResultList []model.ContractCheckResult[json.RawMessage]
+				err = json.Unmarshal(file, &contractCheckResultList)
+				if err != nil {
+					logger.Errorf("Check result get fail")
+				}
+				for _, contractCheckResult := range contractCheckResultList {
+					marshal, err := json.Marshal(contractCheckResult.Context)
+					if err != nil {
+						logger.Errorf("Check context conversion failed")
+					}
+					report := db.Report{
+						ProjectId:        projectId,
+						WorkflowId:       workflowId,
+						WorkflowDetailId: workflowDetail.Id,
+						Name:             contractCheckResult.Name,
+						Type:             uint(consts.Check),
+						CheckTool:        contractCheckResult.Tool,
+						Result:           contractCheckResult.Result,
+						CheckTime:        time.Now(),
+						ReportFile:       string(marshal),
+						CreateTime:       time.Now(),
+					}
+					reportList = append(reportList, report)
+				}
+			}
+			// openai report
+			if report.Type == 3 {
 				report := db.Report{
 					ProjectId:        projectId,
 					WorkflowId:       workflowId,
 					WorkflowDetailId: workflowDetail.Id,
-					Name:             contractCheckResult.Name,
+					Name:             "openai suggest",
 					Type:             uint(consts.Check),
-					CheckTool:        contractCheckResult.Tool,
-					Result:           contractCheckResult.Result,
+					CheckTool:        "openai",
+					Result:           "success",
 					CheckTime:        time.Now(),
-					ReportFile:       string(marshal),
+					ReportFile:       string(report.Content),
 					CreateTime:       time.Now(),
 				}
 				reportList = append(reportList, report)
