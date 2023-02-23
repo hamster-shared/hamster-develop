@@ -282,7 +282,9 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				contractService := application.GetBean[*ContractService]("contractService")
 				go func() {
 					_, err := contractService.DoStarknetDeclare([]byte(contract.AbiInfo))
-					logger.Trace("declare starknet abi error:", err.Error())
+					if err != nil {
+						logger.Trace("declare starknet abi error:", err.Error())
+					}
 				}()
 			}
 
