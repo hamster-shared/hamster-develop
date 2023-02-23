@@ -343,6 +343,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 						Name:             contractCheckResult.Name,
 						Type:             uint(consts.Check),
 						CheckTool:        contractCheckResult.Tool,
+						CheckVersion:     contractCheckResult.SolcVersion,
 						Result:           contractCheckResult.Result,
 						CheckTime:        time.Now(),
 						ReportFile:       string(marshal),

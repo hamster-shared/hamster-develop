@@ -1,0 +1,1 @@
+alter table t_report add check_version varchar(100) comment '检查代码的编译版本' after check_tool;
