@@ -1,0 +1,36 @@
+version: 1.0
+name: eth-gas-reporter
+stages:
+  git-clone:
+    steps:
+      - name: git-clone
+        uses: git-checkout
+        with:
+          url: https://github.com/hamster-contract/Token.git
+          branch: main
+  eth-gas-reporter:
+    needs:
+      - git-clone
+    steps:
+      - name: gas-install
+        run: |
+          npm install
+      - name: start-local-chain
+        run: |
+          npm install -g ganache
+          if [ -f "command.pid" ]; then
+            kill -9 `cat command.pid`  || (echo 'No such process ')
+          fi
+          nohup ganache > ganache.log 2>&1& echo $! > command.pid
+          sleep 2
+      - name: eth-gas-reporter
+        uses: eth-gas-reporter
+        with:
+          solc-version:
+
+  Output Results:
+    needs:
+      - eth-gas-reporter
+    steps:
+      - name: check-aggregation
+        uses: check-aggregation
