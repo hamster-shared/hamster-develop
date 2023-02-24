@@ -47,7 +47,7 @@ stages:
           path: contracts
           solc-version: 0.8.9
 
-  Check by eth-gas-...:
+  Check by eth-gas-reporter:
     needs:
       - Check by Mythril
     steps:
@@ -69,12 +69,12 @@ stages:
 
   Output Results:
     needs:
-      - Check by eth-gas-...
+      - Check by eth-gas-reporter
     steps:
       - name: check-aggregation
         uses: check-aggregation
 
-  openai check:
+  Check by AI:
     needs:
       - Output Results
     steps:
