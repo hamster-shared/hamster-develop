@@ -47,14 +47,13 @@ func (c *ReportService) QueryFrontendReports(projectId string, page int, size in
 
 func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int) ([]vo.ReportVo, error) {
 	var reports []db2.Report
-	var data []vo.ReportVo
 	var result []vo.ReportVo
 	res := c.db.Model(db2.Report{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Find(&reports)
 	if res.Error != nil {
 		return result, res.Error
 	}
 	if len(reports) > 0 {
-		copier.Copy(&data, &reports)
+		copier.Copy(&result, &reports)
 	}
 	return result, nil
 }
