@@ -30,15 +30,21 @@ const (
 //const ClientSecrets = "2923a2870379c3b7237d2703852828017ca1de9b"
 
 // https://develop.alpha.hamsternet.io/
-//const ClientSecrets = "c99eef44205a6dfe975a62556f0601957dc3df9c"
+const ClientSecrets = "c99eef44205a6dfe975a62556f0601957dc3df9c"
 
 // https://develop.test.hamsternet.io/
-const ClientSecrets = "968331f48983b1521c8cb58ba78db313bb0143ce"
+//const ClientSecrets = "968331f48983b1521c8cb58ba78db313bb0143ce"
 
 // test
+//const (
+//	AppsClientId      = "Iv1.6d9972fa6afd1c02"
+//	AppsClientSecrets = "90bb54dd864a215b860b933f705801f043e287a2"
+//)
+
+// al
 const (
-	AppsClientId      = "Iv1.6d9972fa6afd1c02"
-	AppsClientSecrets = "90bb54dd864a215b860b933f705801f043e287a2"
+	AppsClientId      = "Iv1.84a628b1689aab9d"
+	AppsClientSecrets = "9c5ffca3481fd02c6520e57486bd7948338089d0"
 )
 
 type ProjectType uint
