@@ -67,16 +67,18 @@ stages:
         with:
           solc-version:
 
-  Output Results:
+  Check by AI:
     needs:
       - Check by eth-gas-reporter
+    steps:
+      - name: openai ask
+        uses: openai
+
+
+  Output Results:
+    needs:
+      - Check by AI
     steps:
       - name: check-aggregation
         uses: check-aggregation
 
-  Check by AI:
-    needs:
-      - Output Results
-    steps:
-      - name: openai ask
-        uses: openai
