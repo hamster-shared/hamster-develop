@@ -41,6 +41,12 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: db_password
+            - name: DOCKER_HOST
+              value: tcp://docker:2376
+            - name: DOCKER_CERT_PATH
+              value: /certs/client
+            - name: DOCKER_TLS_VERIFY
+              value: "1"
           ports:
             - containerPort: 8080
           volumeMounts:
@@ -48,8 +54,9 @@ spec:
               name: aline-pipelines
             - mountPath: /root/workdir
               name: aline-workdir
-            - mountPath: /var/run/docker.sock
-              name: docker-socket
+            - mountPath: /certs
+              name: docker-tls
+              readOnly: true
       volumes:
         - name: aline-pipelines
           persistentVolumeClaim:
@@ -57,7 +64,68 @@ spec:
         - name: aline-workdir
           persistentVolumeClaim:
             claimName: aline-workdir
-        - name: docker-socket
-          hostPath:
-            path: /var/run/docker.sock
-            type: Socket
+        - name: docker-tls
+          persistentVolumeClaim:
+            claimName: docker-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker
+spec:
+  selector:
+    app: docker
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 2376
+      targetPort: 2376
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker
+  labels:
+    app: docker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker
+  template:
+    metadata:
+      labels:
+        app: docker
+    spec:
+      containers:
+        - name: docker
+          image: docker:dind
+          imagePullPolicy: IfNotPresent
+          args:
+            - --storage-driver
+            - overlay2
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: /certs
+          ports:
+            - containerPort: 2376
+          volumeMounts:
+            - mountPath: /root/pipelines
+              name: aline-pipelines
+            - mountPath: /root/workdir
+              name: aline-workdir
+            - mountPath: /certs
+              name: docker-tls
+          securityContext:
+            privileged: true
+      volumes:
+        - name: aline-pipelines
+          persistentVolumeClaim:
+            claimName: aline-pipelines
+        - name: aline-workdir
+          persistentVolumeClaim:
+            claimName: aline-workdir
+        - name: docker-tls
+          persistentVolumeClaim:
+            claimName: docker-tls
+
