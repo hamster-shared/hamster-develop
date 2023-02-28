@@ -13,6 +13,7 @@ type Report struct {
 	Name             string    `json:"name"`
 	Type             uint      `json:"type"`
 	CheckTool        string    `json:"checkTool"`
+	CheckVersion     string    `json:"checkVersion"`
 	Result           string    `json:"result"`
 	CheckTime        time.Time `json:"checkTime"`
 	ReportFile       string    `json:"reportFile"`

@@ -17,7 +17,7 @@ func TestGithubCreateRepo(t *testing.T) {
 	client := utils.NewGithubClient(ctx, token)
 
 	owner := "mohaijiang"
-	repoName := "my-vue-frontend3"
+	repoName := "my-starknet"
 
 	_, resp, _ := client.Repositories.Get(ctx, owner, repoName)
 	if resp.StatusCode == 200 {
@@ -72,4 +72,15 @@ func deleteRepo(ctx context.Context, client *github.Client, owner, repo string) 
 		fmt.Println(string(data))
 		return
 	}
+}
+
+func TestDeleteRepo(t *testing.T) {
+	ctx := context.Background()
+	token := "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"
+	client := utils.NewGithubClient(ctx, token)
+
+	owner := "mohaijiang"
+	repoName := "my-starknet"
+
+	deleteRepo(ctx, client, owner, repoName)
 }

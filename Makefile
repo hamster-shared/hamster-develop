@@ -22,6 +22,10 @@ windows:
 	go mod tidy
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64  go build -o aline.exe
 
+docker: linux-test
+	docker build -t hamstershare/hamster-develop:latest .
+	docker push hamstershare/hamster-develop:latest
+
 
 deploy: linux
 	scp ./aline ubuntu@ec2-34-232-105-81.compute-1.amazonaws.com:/home/ubuntu/

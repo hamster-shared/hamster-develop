@@ -1,27 +1,12 @@
-FROM golang:1.19 as builder
+FROM docker.io/hamstershare/debian_docker_cli:20220227
 
-ADD . /app
+COPY ./aline-test /usr/local/bin/aline-test
 
-WORKDIR /app
-
-ENV GO111MODULE on
-ENV GOPROXY https://goproxy.cn
-
-RUN go mod tidy && go build -o a-line-cli
-
-
-FROM ubuntu:latest
-RUN apt update &&\
-    apt install -y apt-transport-https ca-certificates curl git gnupg
-
-RUN curl -fsSL "https://download.docker.com/linux/ubuntu/gpg" | gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
-RUN chmod a+r /etc/apt/keyrings/docker.gpg
-RUN echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu bionic stable" > /etc/apt/sources.list.d/docker.list
-RUN apt-get update && \
-    apt-get install -y -qq --no-install-recommends docker-ce-cli
-
-COPY --from=builder /app/a-line-cli /usr/local/bin/
-
-EXPOSE 8080
-
-CMD ["/usr/local/bin/a-line-cli","daemon"]
+ENV PORT=8080
+ENV DB_USER=root
+ENV DB_PASSWORD=123456
+ENV DB_HOST=127.0.0.1
+ENV DB_PORT=3306
+ENV DB_NAME=aline
+EXPOSE ${PORT}
+CMD /usr/local/bin/aline-test daemon -p ${PORT} --db_user ${DB_USER} --db_password ${DB_PASSWORD} --db_host ${DB_HOST} --db_port ${DB_PORT} --db_name ${DB_NAME}

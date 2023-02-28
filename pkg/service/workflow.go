@@ -7,6 +7,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"path"
+	"strconv"
+	"strings"
+	"text/template"
+	"time"
+
 	engine "github.com/hamster-shared/aline-engine"
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/aline-engine/model"
@@ -20,13 +29,6 @@ import (
 	"github.com/jinzhu/copier"
 	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
-	"log"
-	"os"
-	"path"
-	"strconv"
-	"strings"
-	"text/template"
-	"time"
 )
 
 //go:embed templates
@@ -200,17 +202,58 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 
 		for _, arti := range jobDetail.Artifactorys {
 
+			// 判断是不是 starknet 合约
+			isStarknetContract := false
+			starknetContractClassHash := ""
+			if strings.HasSuffix(arti.Url, "starknet.output.json") {
+				isStarknetContract = true
+				classHash, err := starkClassHash(arti.Url)
+				if err != nil {
+					logger.Errorf("starknet contract class hash failed: %s", err.Error())
+					continue
+				}
+				starknetContractClassHash = classHash
+				logger.Trace("starknet contract class hash: ", starknetContractClassHash)
+			}
+
 			data, _ := os.ReadFile(arti.Url)
 			m := make(map[string]any)
 
 			err := json.Unmarshal(data, &m)
 			if err != nil {
+				logger.Errorf("unmarshal contract abi failed: %s", err.Error())
 				continue
 			}
-			abi, err := json.Marshal(m["abi"])
-			bytecodeData, ok := m["bytecode"]
-			if !ok {
-				continue
+
+			var abi string
+			if !isStarknetContract {
+				abiByte, err := json.Marshal(m["abi"])
+				if err != nil {
+					logger.Errorf("marshal contract abi failed: %s", err.Error())
+					continue
+				}
+				abi = string(abiByte)
+			} else {
+				abi = string(data)
+			}
+
+			var bytecodeData string
+			if !isStarknetContract {
+				var ok bool
+				bytecodeData, ok = m["bytecode"].(string)
+				if !ok {
+					logger.Errorf("contract bytecode is not string")
+					continue
+				}
+			} else {
+				bytecodeData = starknetContractClassHash
+			}
+
+			var contractType uint
+			if !isStarknetContract {
+				contractType = consts.Evm
+			} else {
+				contractType = consts.StarkWare
 			}
 
 			contract := db.Contract{
@@ -220,12 +263,31 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
 				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
 				BuildTime:        workflowDetail.CreateTime,
-				AbiInfo:          string(abi),
-				ByteCode:         bytecodeData.(string),
+				AbiInfo:          abi,
+				ByteCode:         bytecodeData,
 				CreateTime:       time.Now(),
+				Type:             uint(contractType),
+				Status:           consts.STATUS_SUCCESS,
 			}
 			err = w.db.Save(&contract).Error
-			fmt.Println(err)
+
+			if err != nil {
+				logger.Errorf("save contract to database failed: %s", err.Error())
+				continue
+			}
+			logger.Trace("save contract to database success: ", contract.Name)
+
+			// declare classHash
+			if isStarknetContract {
+				contractService := application.GetBean[*ContractService]("contractService")
+				go func() {
+					_, err := contractService.DoStarknetDeclare([]byte(contract.AbiInfo))
+					if err != nil {
+						logger.Trace("declare starknet abi error:", err.Error())
+					}
+				}()
+			}
+
 		}
 
 	}
@@ -253,34 +315,55 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 		var reportList []db.Report
 		begin := w.db.Begin()
 		for _, report := range jobDetail.Reports {
-			if report.Url == "" {
-				continue
-			}
-			file, err := os.ReadFile(report.Url)
-			if err != nil {
-				logger.Errorf("Check result path is err")
-				return
-			}
-			var contractCheckResultList []model.ContractCheckResult[json.RawMessage]
-			err = json.Unmarshal(file, &contractCheckResultList)
-			if err != nil {
-				logger.Errorf("Check result get fail")
-			}
-			for _, contractCheckResult := range contractCheckResultList {
-				marshal, err := json.Marshal(contractCheckResult.Context)
-				if err != nil {
-					logger.Errorf("Check context conversion failed")
+
+			// contract check
+			if report.Type == 2 {
+				if report.Url == "" {
+					continue
 				}
+				file, err := os.ReadFile(report.Url)
+				if err != nil {
+					logger.Errorf("Check result path is err")
+					return
+				}
+				var contractCheckResultList []model.ContractCheckResult[json.RawMessage]
+				err = json.Unmarshal(file, &contractCheckResultList)
+				if err != nil {
+					logger.Errorf("Check result get fail")
+				}
+				for _, contractCheckResult := range contractCheckResultList {
+					marshal, err := json.Marshal(contractCheckResult.Context)
+					if err != nil {
+						logger.Errorf("Check context conversion failed")
+					}
+					report := db.Report{
+						ProjectId:        projectId,
+						WorkflowId:       workflowId,
+						WorkflowDetailId: workflowDetail.Id,
+						Name:             contractCheckResult.Name,
+						Type:             uint(consts.Check),
+						CheckTool:        contractCheckResult.Tool,
+						CheckVersion:     contractCheckResult.SolcVersion,
+						Result:           contractCheckResult.Result,
+						CheckTime:        time.Now(),
+						ReportFile:       string(marshal),
+						CreateTime:       time.Now(),
+					}
+					reportList = append(reportList, report)
+				}
+			}
+			// openai report
+			if report.Type == 3 {
 				report := db.Report{
 					ProjectId:        projectId,
 					WorkflowId:       workflowId,
 					WorkflowDetailId: workflowDetail.Id,
-					Name:             contractCheckResult.Name,
+					Name:             "AI Analysis Report",
 					Type:             uint(consts.Check),
-					CheckTool:        contractCheckResult.Tool,
-					Result:           contractCheckResult.Result,
+					CheckTool:        "OpenAI",
+					Result:           "success",
 					CheckTime:        time.Now(),
-					ReportFile:       string(marshal),
+					ReportFile:       string(report.Content),
 					CreateTime:       time.Now(),
 				}
 				reportList = append(reportList, report)
@@ -519,13 +602,17 @@ func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {
 	return nil
 }
 
-func getTemplate(projectType uint, workflowType consts.WorkflowType) string {
+func getTemplate(projectType, projectFrameType uint, workflowType consts.WorkflowType) string {
 	filePath := "templates/truffle-build.yml"
 	if projectType == uint(consts.CONTRACT) {
 		if workflowType == consts.Check {
 			filePath = "templates/truffle_check.yml"
 		} else if workflowType == consts.Build {
-			filePath = "templates/truffle-build.yml"
+			if projectFrameType == uint(consts.StarkWare) {
+				filePath = "templates/stark-ware-build.yml"
+			} else {
+				filePath = "templates/truffle-build.yml"
+			}
 		}
 	} else if projectType == uint(consts.FRONTEND) {
 		if workflowType == consts.Check {
@@ -543,7 +630,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	if project == nil {
 		return "", errors.New("project is nil")
 	}
-	filePath := getTemplate(project.Type, workflowType)
+	filePath := getTemplate(project.Type, uint(project.FrameType), workflowType)
 	content, err := temp.ReadFile(filePath)
 	if err != nil {
 		log.Println("read template file failed ", err.Error())
@@ -582,4 +669,17 @@ func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int) error {
 		return err
 	}
 	return nil
+}
+
+func starkClassHash(filename string) (string, error) {
+	cmdStr := "starkli class-hash " + filename
+	cmd := exec.Command("/bin/bash", "-c", cmdStr)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+	classHash := strings.TrimSpace(out.String())
+	return classHash, nil
 }
