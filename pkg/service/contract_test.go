@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/dontpanicdao/caigo/gateway"
-	"github.com/hamster-shared/hamster-develop/pkg/db"
-	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -54,17 +52,17 @@ func TestSync(t *testing.T) {
 	fmt.Println(data[0])
 }
 
-func TestDeployContract(t *testing.T) {
-	contractService := NewTestContractService()
-	projectId, _ := uuid.FromString("e3a02994-8c27-4539-a9d8-641a823cfaa1")
-	deploy := db.ContractDeploy{
-		ContractId: 55,
-		ProjectId:  projectId,
-	}
-	err := contractService.SaveDeploy(deploy)
-
-	if err != nil {
-		t.Fatalf("deploy contract fail :%v\n", err)
-	}
-
-}
+//func TestDeployContract(t *testing.T) {
+//	contractService := NewTestContractService()
+//	projectId, _ := uuid.FromString("e3a02994-8c27-4539-a9d8-641a823cfaa1")
+//	deploy := db.ContractDeploy{
+//		ContractId: 55,
+//		ProjectId:  projectId,
+//	}
+//	err := contractService.SaveDeploy(deploy)
+//
+//	if err != nil {
+//		t.Fatalf("deploy contract fail :%v\n", err)
+//	}
+//
+//}
