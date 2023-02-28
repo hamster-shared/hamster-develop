@@ -3,17 +3,15 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	"github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
+	"strconv"
 	"time"
 )
-
-func (h *HandlerServer) contractDeployInfo(g *gin.Context) {
-
-}
 
 func (h *HandlerServer) contractDeployDetailByVersion(gin *gin.Context) {
 	id := gin.Param("id")
@@ -54,19 +52,42 @@ func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-	copier.Copy(&contractDeploy, &entity)
+
+	project, err := h.projectService.GetProject(projectId.String())
+
+	_ = copier.Copy(&contractDeploy, &entity)
 	contractService := application.GetBean[*service.ContractService]("contractService")
 	contractDeploy.DeployTime = time.Now()
 	contractDeploy.ProjectId = projectId
-	err = contractService.SaveDeploy(contractDeploy)
+
+	if project.FrameType == consts.Evm {
+		contractDeploy.Status = consts.STATUS_SUCCESS
+	}
+
+	contractDeployId, err := contractService.SaveDeploy(contractDeploy)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
 
-	Success("", g)
+	Success(contractDeployId, g)
 }
 
+func (h *HandlerServer) contractDeployInfo(gin *gin.Context) {
+	id := gin.Param("contractDeployId")
+	contractDeployId, err := strconv.Atoi(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	contractService := application.GetBean[*service.ContractService]("contractService")
+	contractDeployInfo, err := contractService.GetContractDeployInfo(contractDeployId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(contractDeployInfo, gin)
+}
 func (h *HandlerServer) versionList(gin *gin.Context) {
 	id := gin.Param("id")
 	contractService := application.GetBean[*service.ContractService]("contractService")

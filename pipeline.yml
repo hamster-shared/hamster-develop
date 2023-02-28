@@ -1,0 +1,25 @@
+version: "1"
+name: pipeline
+stages:
+  init:
+    steps:
+      - name: set workdir
+        uses: workdir
+        with:
+          workdir: /Users/sunjianguo/GolandProjects/hamster-develop
+  build:
+    steps:
+      - name: build
+        run: |
+          make linux-test
+          docker build -t hamstershare/hamster-develop:${PIPELINE_ID} .
+          docker push hamstershare/hamster-develop:${PIPELINE_ID}
+
+  deploy:
+    needs:
+      - init
+    steps:
+      - name: deploy
+        run: |
+          envsubst < deploy.yml | kubectl -n hamster apply -f -
+

@@ -28,7 +28,13 @@ func (h *HandlerServer) templates(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	data, err := h.templateService.GetTemplatesByTypeId(id)
+	languageTypeStr := gin.DefaultQuery("languageType", "1")
+	languageType, err := strconv.Atoi(languageTypeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	data, err := h.templateService.GetTemplatesByTypeId(id, languageType)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -72,7 +78,16 @@ func (h *HandlerServer) templateShow(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	data, err := h.templateService.TemplateShow(templateType)
+	languageTypeStr := gin.DefaultQuery("languageType", "1")
+	if templateType == 2 {
+		languageTypeStr = gin.DefaultQuery("languageType", "0")
+	}
+	languageType, err := strconv.Atoi(languageTypeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	data, err := h.templateService.TemplateShow(templateType, languageType)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

@@ -13,6 +13,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+	"time"
 )
 
 // daemonCmd represents the daemon command
@@ -29,8 +30,13 @@ to quickly create a Cobra application.`,
 		fmt.Println("daemon called")
 
 		passwordFlag := cmd.Flags().Lookup("db_password")
+		userFlag := cmd.Flags().Lookup("db_user")
+		hostFlag := cmd.Flags().Lookup("db_host")
+		portFlag := cmd.Flags().Lookup("db_port")
+		nameFlag := cmd.Flags().Lookup("db_name")
 
-		DSN := fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local", passwordFlag.Value)
+		DSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
+			userFlag.Value, passwordFlag.Value, hostFlag.Value, portFlag.Value, nameFlag.Value)
 
 		go Engine.Start()
 
@@ -69,6 +75,16 @@ to quickly create a Cobra application.`,
 		application.SetBean[*service.FrontendPackageService]("frontendPackageService", frontendPackageService)
 		templateService.Init(db)
 		projectService.Init(db)
+
+		// 定时同步starknet 合约部署状态
+		ticker := time.NewTicker(time.Minute * 2)
+		go func() {
+			for {
+				<-ticker.C
+				contractService.SyncStarkWareContract()
+			}
+		}()
+
 		controller.NewHttpService(*handlerServer, port).StartHttpServer()
 
 	},
@@ -86,4 +102,8 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	daemonCmd.Flags().String("db_password", "123456", "database password")
+	daemonCmd.Flags().String("db_user", "root", "database user")
+	daemonCmd.Flags().String("db_host", "127.0.0.1", "database host")
+	daemonCmd.Flags().String("db_port", "3307", "database port")
+	daemonCmd.Flags().String("db_name", "aline", "database name")
 }

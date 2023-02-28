@@ -58,7 +58,7 @@ create table t_contract (
                             version varchar(50) comment '合约版本',
                             network varchar(50) comment '部署网络',
                             build_time timestamp null comment '构建时间',
-                            abi_info text comment 'abi信息',
+                            abi_info mediumtext comment 'abi信息',
                             byte_code text comment '合约字节码',
                             create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '创建时间'
 ) comment '合约表';
@@ -107,6 +107,7 @@ create table t_template (
                             audited tinyint(1) comment '是否审计 0: false, 1: true ',
                             last_version varchar(20) comment '模板版本',
                             logo    varchar(50)  comment '模板图标',
+                            language_type tinyint(1) comment 'language type 1:EVM;2:aptos;3:ton;4:starkware',
                             create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '创建时间',
                             update_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '更新时间',
                             delete_time timestamp NULL comment '删除时间'
@@ -121,7 +122,7 @@ create table t_template_detail (
                                    description varchar(255) comment '模板描述',
                                    examples    varchar(255),
                                    resources   varchar(255),
-                                   abi_info    text,
+                                   abi_info    mediumtext,
                                    byte_code   text,
                                    author      varchar(50) comment '模板仓库作者',
                                    repository_url  varchar(200)    comment '模板仓库地址',

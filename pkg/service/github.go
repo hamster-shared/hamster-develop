@@ -2,10 +2,18 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/google/go-github/v48/github"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
+	"github.com/hamster-shared/hamster-develop/pkg/vo"
+	"github.com/pkg/errors"
+	"github.com/wujiangweiphp/go-curl"
 	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
 type IGithubService interface {
@@ -98,4 +106,137 @@ func (g *GithubService) GetCommitInfo(token, owner, repo, ref string) (string, *
 	client := utils.NewGithubClient(g.ctx, token)
 	hash, res, err := client.Repositories.GetCommitSHA1(g.ctx, owner, repo, ref, "")
 	return hash, res, err
+}
+
+func (g *GithubService) CreateRepository(token, repoName string) (*github.Repository, *github.Response, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	var data github.Repository
+	data.Name = &repoName
+	return client.Repositories.Create(g.ctx, "", &data)
+}
+
+func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl, templateName string) error {
+	cloneDir := filepath.Join(utils.DefaultRepoDir(), owner)
+	_, err := os.Stat(cloneDir)
+	if err != nil && os.IsNotExist(err) {
+		err = os.MkdirAll(cloneDir, os.ModePerm)
+		if err != nil {
+			log.Println("create workdir failed", err.Error())
+			return err
+		}
+	}
+	gitClone := exec.Command("git", "clone", templateUrl)
+	gitClone.Dir = cloneDir
+	err = gitClone.Run()
+	if err != nil {
+		deleteOwnerDir(owner)
+		log.Println("git clone failed", err.Error())
+		return err
+	}
+	workdir := filepath.Join(utils.DefaultRepoDir(), owner, templateName)
+	deleteGit := exec.Command("rm", "-rf", ".git")
+	deleteGit.Dir = workdir
+	err = deleteGit.Run()
+	if err != nil {
+		deleteOwnerDir(owner)
+		log.Println("delete .git failed", err.Error())
+		return err
+	}
+	gitInit := exec.Command("git", "init", "-b", "main")
+	gitInit.Dir = workdir
+	err = gitInit.Run()
+	if err != nil {
+		deleteOwnerDir(owner)
+		log.Println("git init failed", err.Error())
+		return err
+	}
+	configName := exec.Command("git", "config", "user.name", owner)
+	configName.Dir = workdir
+	err = configName.Run()
+	if err != nil {
+		deleteOwnerDir(owner)
+		log.Println("config git user name failed", err.Error())
+		return err
+	}
+	configEmail := exec.Command("git", "config", "user.email", email)
+	configEmail.Dir = workdir
+	err = configEmail.Run()
+	if err != nil {
+		deleteOwnerDir(owner)
+		log.Println("config git user email failed", err.Error())
+		return err
+	}
+	first := strings.Index(repoUrl, "/")
+	index := first + 2
+	originUrl := repoUrl[:index] + fmt.Sprintf("%s@", token) + repoUrl[index:]
+	addOrigin := exec.Command("git", "remote", "add", "origin", originUrl)
+	addOrigin.Dir = workdir
+	err = addOrigin.Run()
+	if err != nil {
+		deleteOwnerDir(owner)
+		log.Println("git add origin failed", err.Error())
+		return err
+	}
+	fileAdd := exec.Command("git", "add", ".")
+	fileAdd.Dir = workdir
+	err = fileAdd.Run()
+	if err != nil {
+		deleteOwnerDir(owner)
+		log.Println("git file add failed", err.Error())
+		return err
+	}
+	gitCommit := exec.Command("git", "commit", "-m", "Initial commit")
+	gitCommit.Dir = workdir
+	err = gitCommit.Run()
+	if err != nil {
+		deleteOwnerDir(owner)
+		log.Println("git commit failed", err.Error())
+		return err
+	}
+	gitPush := exec.Command("git", "push", "origin", "main")
+	gitPush.Dir = workdir
+	err = gitPush.Run()
+	if err != nil {
+		deleteOwnerDir(owner)
+		log.Println("git push failed", err.Error())
+		return err
+	}
+	deleteOwnerDir(owner)
+	return nil
+}
+
+func (g *GithubService) GetUserEmail(token string) (string, error) {
+	var data []vo.GithubEmail
+	auth := fmt.Sprintf("Bearer %s", token)
+	headers := map[string]string{
+		"Accept":               "application/vnd.github+json",
+		"Authorization":        auth,
+		"X-GitHub-Api-Version": "2022-11-28",
+	}
+	req := curl.NewRequest()
+	resp, err := req.
+		SetUrl("https://api.github.com/user/emails").
+		SetHeaders(headers).
+		Get()
+	if err != nil {
+		log.Println("github email request failed: ", err.Error())
+		return "", err
+	} else {
+		if resp.IsOk() {
+			json.Unmarshal([]byte(resp.Body), &data)
+		} else {
+			log.Printf("%v\n", resp.Raw)
+			return "", errors.New("github email request failed")
+		}
+	}
+	if len(data) > 0 {
+		return data[0].Email, nil
+	}
+	return "", nil
+}
+
+func deleteOwnerDir(owner string) {
+	deleteCmd := exec.Command("rm", "-rf", owner)
+	deleteCmd.Dir = utils.DefaultRepoDir()
+	deleteCmd.Start()
 }

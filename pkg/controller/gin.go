@@ -32,7 +32,9 @@ func (h *HttpServer) StartHttpServer() {
 	api := r.Group("/api")
 
 	api.POST("/login", h.handlerServer.loginWithGithub)
+	api.POST("/github/install", h.handlerServer.githubInstall)
 	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
+	api.POST("/github/webhook", h.handlerServer.githubWebHook)
 	api.Use(h.handlerServer.Authorize())
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
@@ -48,6 +50,8 @@ func (h *HttpServer) StartHttpServer() {
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)
 	api.POST("/projects/check-name", h.handlerServer.checkName)
+	api.GET("/user", h.handlerServer.getUseInfo)
+	api.PUT("/user/first/state", h.handlerServer.updateFirstState)
 
 	/*
 		创建项目返回项目ID
@@ -73,6 +77,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/frontend/reports", h.handlerServer.projectFrontendReports)
 	api.GET("/projects/:id/packages", h.handlerServer.projectPackages)
 	api.POST("/projects/:id/contract/deploy", h.handlerServer.saveContractDeployInfo)
+	api.GET("/projects/:id/contract/deploy/:contractDeployId", h.handlerServer.contractDeployInfo)
 
 	//workflow
 	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)

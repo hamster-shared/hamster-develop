@@ -25,6 +25,7 @@ func (c *ReportService) QueryReports(projectId string, Type string, page int, si
 	if Type != "" {
 		tx = tx.Where("check_tool = ?", Type)
 	}
+	tx = tx.Order("create_time desc")
 	result := tx.Offset((page - 1) * size).Limit(size).Find(&reports).Offset(-1).Limit(-1).Count(&total)
 	if result.Error != nil {
 		return vo.NewEmptyPage[db2.Report](), result.Error
@@ -53,7 +54,7 @@ func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int)
 		return result, res.Error
 	}
 	if len(reports) > 0 {
-		copier.Copy(&data, &reports)
+		_ = copier.Copy(&data, &reports)
 		for _, datum := range data {
 			if datum.Name == "Contract Security Analysis Report" {
 				result[0] = datum
@@ -74,7 +75,7 @@ func (c *ReportService) QueryFrontendReportsByWorkflow(workflowId, workflowDetai
 	if res.Error != nil {
 		return data, res.Error
 	}
-	copier.Copy(&data, &reports)
+	_ = copier.Copy(&data, &reports)
 	return data, nil
 }
 

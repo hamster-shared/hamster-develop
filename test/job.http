@@ -94,7 +94,14 @@ Content-Type: application/json
 GET http://localhost:8080/api/templates-category?type=1
 
 ### query templates
-GET http://localhost:8080/api/templates-category/1/templates
+GET http://34.232.105.81:8088/api/templates-category/1/templates?languageType=1
+Content-Type: application/json
+Access-Token: Aq7I04y2uh+0fWXjRq8V3MSIcBCvJMn/bILGq3xvJzFW1WcWxpjmExDMmbJoT6Qu
+
+### query templates
+GET http://34.232.105.81:8088/api/templates/show?type=1&languageType=4
+Content-Type: application/json
+Access-Token: Aq7I04y2uh+0fWXjRq8V3MSIcBCvJMn/bILGq3xvJzFW1WcWxpjmExDMmbJoT6Qu
 
 ### query template detail
 GET http://localhost:8080/api/templates/1
@@ -271,3 +278,22 @@ Access-Token: 8Bu8jYklS+53N/DYhS5LxnpcTqr3c9yeDYUdn49EA05Azw6LMMJUZe8+ppoxjMjs
 DELETE http://localhost:8080/api/workflows/84/detail/80/deploy
 Content-Type: application/json
 Access-Token: 8Bu8jYklS+53N/DYhS5LxnpcTqr3c9yeDYUdn49EA05Azw6LMMJUZe8+ppoxjMjs
+
+
+### UPDATE contract Deploy
+POST http://localhost:8080/api/projects/9df7f308-80c1-4293-b802-8820499be125/contract/deploy
+Content-Type: application/json
+Access-Token: 57QEeUaskUR4UkiXxCCXsyUVZ1QHIQuEK4sy/CeOc+JBWMdgJoSuDM/aND9lePgE
+
+{
+  "contractId": 44,
+  "id": "9df7f308-80c1-4293-b802-8820499be125",
+  "projectId": "9df7f308-80c1-4293-b802-8820499be125",
+  "version": "1",
+  "network": "Testnet",
+  "declareTxHash": "0x68430771ac16e2d6dc214e957b9dcdfccc6f16c7d86dd536c883a4f66702af1",
+  "deployTxHash": "",
+  "status": 1,
+  "address": "",
+  "type": 4
+}
