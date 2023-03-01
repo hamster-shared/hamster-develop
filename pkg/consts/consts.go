@@ -41,6 +41,12 @@ const (
 	AppsClientSecrets = "90bb54dd864a215b860b933f705801f043e287a2"
 )
 
+// al
+//const (
+//	AppsClientId      = "Iv1.84a628b1689aab9d"
+//	AppsClientSecrets = "9c5ffca3481fd02c6520e57486bd7948338089d0"
+//)
+
 type ProjectType uint
 
 const (
