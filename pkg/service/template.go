@@ -70,7 +70,7 @@ func (t *TemplateService) GetTemplateDetail(templateId int) (*vo.TemplateDetailV
 func (t *TemplateService) GetFrontendTemplateDetail(templateId int) (*vo.TemplateDetailVo, error) {
 	var data db2.TemplateDetail
 	var dataVo vo.TemplateDetailVo
-	result := t.db.Table("t_frontend_template_detail").Where("id = ? ", templateId).First(&data)
+	result := t.db.Table("t_frontend_template_detail").Where("template_id = ? ", templateId).First(&data)
 	if result.Error != nil {
 		return &dataVo, result.Error
 	}
