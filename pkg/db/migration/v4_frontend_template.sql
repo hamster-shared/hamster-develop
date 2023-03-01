@@ -223,7 +223,7 @@ yarn lint
         '1.0.0',
         1,
         2,
-        'http://g.develop.hamsternet.io/ipfs/QmaLiWfqL4Km1JkuDXhHoP4ruKgUXd1KnZi21Ujrf7SUq6',
+        'http://g.develop.hamsternet.io/ipfs/QmRZMRqvCE1qLBzvC4HHvGSAyKcTEqYgj3Mq3fFwjBd1XB',
         '### Deploy Your Own
 
 Deploy your own Create React App project with Vercel.
