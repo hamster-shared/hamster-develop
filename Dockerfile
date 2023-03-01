@@ -1,4 +1,4 @@
-FROM docker.io/hamstershare/debian_docker_cli:20220227
+FROM docker.io/hamstershare/debian_docker_cli:20220301
 
 COPY ./aline-test /usr/local/bin/aline-test
 
