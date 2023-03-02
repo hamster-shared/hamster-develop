@@ -15,9 +15,7 @@ stages:
       - name: build
         run: |
           npm install
-          npm run build:staging 
-          docker buildx build -t {{ .Image }} --platform=linux/amd64 .
-          docker push {{ .Image }}
+          npm run build
 
   deploy:
     steps:
@@ -25,9 +23,8 @@ stages:
         uses: k8s-frontend-deploy
         with:
           gateway: http://61.172.179.6
-          namespace: ${{ param.Namespace }}
+          namespace: {{ param.Namespace }}
           containers: ${{ param.Containers }}
-          project_name: ${{ param.ProjectName }}
+          project_name: {{ param.ProjectName }}
           service_ports: ${{ param.ServicePorts }}
-
-
+          image: ${{ param.ServicePorts }}
