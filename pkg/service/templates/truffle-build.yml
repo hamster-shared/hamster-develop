@@ -14,9 +14,8 @@ stages:
     steps:
       - name: code-compile
         run: |
-          npm install -g truffle
-          npm install
-          truffle compile
+          yarn install
+          yarn compile
       - name: filter
         run: |
           mkdir -p build/artifacts

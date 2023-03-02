@@ -36,3 +36,4 @@ coverage
 
 go.sum
 hamster-develop
+/.env
