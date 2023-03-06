@@ -1,0 +1,6 @@
+FROM docker.io/hamstershare/debian_docker_cli:20220301
+
+COPY ./aline-worker-test /usr/local/bin/aline-worker-test
+
+ENV MASTER_ADDRESS=hamster-aline-master:50001
+CMD /usr/local/bin/aline-worker-test -master ${MASTER_ADDRESS}
