@@ -86,3 +86,5 @@ const (
 	JOB_DIR_NAME      = "jobs"
 	WORK_DIR_NAME     = "workdir"
 )
+
+const DockerHubName = "hamstershare"

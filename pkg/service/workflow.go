@@ -385,7 +385,20 @@ func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.
 }
 
 func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
-	_, err := w.ExecProjectWorkflow(projectId, user, 2, nil)
+	var project db2.Project
+	err := w.db.Model(db2.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	if err != nil {
+		logger.Info("project is not exit ")
+		return err
+	}
+	params := make(map[string]string)
+	if project.Type == uint(consts.FRONTEND) {
+		image := fmt.Sprintf("%s/%s:%d", consts.DockerHubName, user.Username, time.Now().Unix())
+		params["imageName"] = image
+	} else {
+		params = nil
+	}
+	_, err = w.ExecProjectWorkflow(projectId, user, 2, params)
 	return err
 }
 
@@ -407,6 +420,33 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 	params["baseDir"] = "dist"
 	params["ArtifactUrl"] = "file://" + buildJobDetail.Artifactorys[0].Url
 	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
+	return w.ExecProjectWorkflow(projectId, user, 3, params)
+}
+
+func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth, deployParam parameter.K8sDeployParam) (vo.DeployResultVo, error) {
+	var project db2.Project
+	err := w.db.Model(db2.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	if err != nil {
+		logger.Info("project is not exit ")
+		return vo.DeployResultVo{}, err
+	}
+	buildWorkflowKey := w.GetWorkflowKey(projectId.String(), uint(buildWorkflowId))
+
+	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId)
+	if err != nil {
+		logger.Info("workflow ")
+		return vo.DeployResultVo{}, err
+	}
+	buildJobDetail := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
+	if len(buildJobDetail.ActionResult.BuildData) == 0 {
+		return vo.DeployResultVo{}, errors.New("No Image")
+	}
+	params := make(map[string]string)
+	params["namespace"] = user.Username
+	params["projectName"] = project.Name
+	params["servicePorts"] = deployParam.ServicePorts
+	params["containers"] = deployParam.Containers
+	params["image"] = buildJobDetail.ActionResult.BuildData[0].ImageName
 	return w.ExecProjectWorkflow(projectId, user, 3, params)
 }
 
@@ -443,7 +483,6 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 		job = w.engine.GetJob(workflowKey)
 	}
-
 	if params != nil {
 		if job.Parameter == nil {
 			job.Parameter = params
@@ -620,7 +659,8 @@ func getTemplate(projectType, projectFrameType uint, workflowType consts.Workflo
 		} else if workflowType == consts.Build {
 			filePath = "templates/frontend-build.yml"
 		} else if workflowType == consts.Deploy {
-			filePath = "templates/frontend-deploy.yml"
+			//filePath = "templates/frontend-deploy.yml"
+			filePath = "templates/frontend-k8s-deploy.yml"
 		}
 	}
 	return filePath
@@ -640,6 +680,9 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 
 	tmpl := template.New("test")
 	if workflowType == consts.Deploy {
+		tmpl = tmpl.Delims("[[", "]]")
+	}
+	if project.Type == uint(consts.FRONTEND) && workflowType == consts.Build {
 		tmpl = tmpl.Delims("[[", "]]")
 	}
 
