@@ -115,6 +115,12 @@ func (g *GithubService) CreateRepository(token, repoName string) (*github.Reposi
 	return client.Repositories.Create(g.ctx, "", &data)
 }
 
+func (g *GithubService) GetRepo(token, owner, repoName string) (*github.Repository, *github.Response, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	repo, res, err := client.Repositories.Get(g.ctx, owner, repoName)
+	return repo, res, err
+}
+
 func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl, templateName string) error {
 	cloneDir := filepath.Join(utils.DefaultRepoDir(), owner)
 	_, err := os.Stat(cloneDir)
