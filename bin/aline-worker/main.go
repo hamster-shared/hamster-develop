@@ -24,5 +24,6 @@ func main() {
 func parseArgs() string {
 	var masterAddress string
 	flag.StringVar(&masterAddress, "master", "0.0.0.0:50001", "master address")
+	flag.Parse()
 	return masterAddress
 }

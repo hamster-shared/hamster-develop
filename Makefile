@@ -9,6 +9,7 @@ build: web
 macos:
 	go mod tidy
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64  go build -ldflags="-s -w" -o aline
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64  go build -ldflags="-s -w" -o aline-worker ./bin/aline-worker
 
 linux:
 	go mod tidy
@@ -23,6 +24,7 @@ linux-test:
 windows:
 	go mod tidy
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64  go build -ldflags="-s -w" -o aline.exe
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64  go build -ldflags="-s -w" -o aline-worker.exe ./bin/aline-worker
 
 docker: linux-test
 	docker build -t hamstershare/hamster-develop:latest .
