@@ -8,7 +8,7 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
-	github.com/hamster-shared/aline-engine v1.0.3-0.20230306082902-a28b623773da
+	github.com/hamster-shared/aline-engine v1.0.3-0.20230306085710-36cf5a40be5b
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/pkg/errors v0.9.1
@@ -89,4 +89,4 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 )
 
-replace github.com/hamster-shared/aline-engine => github.com/hamster-shared/aline-engine v1.0.3-0.20230306082902-a28b623773da
+replace github.com/hamster-shared/aline-engine => github.com/hamster-shared/aline-engine v1.0.3-0.20230306085710-36cf5a40be5b

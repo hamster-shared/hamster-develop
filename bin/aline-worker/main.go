@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"time"
 
 	engine "github.com/hamster-shared/aline-engine"
 	"github.com/hamster-shared/aline-engine/logger"
@@ -13,10 +14,16 @@ func main() {
 	logger.Init().ToStdoutAndFile().SetLevel(logrus.TraceLevel)
 	masterAddress := parseArgs()
 
-	_, err := engine.NewWorkerEngine(masterAddress)
-	if err != nil {
-		panic(err)
+	for {
+		_, err := engine.NewWorkerEngine(masterAddress)
+		if err != nil {
+			logger.Errorf("new worker engine failed, err: %v", err)
+			time.Sleep(time.Second * 5)
+		} else {
+			break
+		}
 	}
+
 	<-done
 }
 
