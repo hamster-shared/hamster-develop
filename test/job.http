@@ -150,14 +150,14 @@ GET http://localhost:8080/api/projects/1/contract/deploy/detail
 ### create projects
 POST http://localhost:8080/api/projects
 Content-Type: application/json
-Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 
 {
-  "name": "ERC721CommunityStream-1",
-  "type": 1,
-  "templateOwner": "hamster-contract",
-  "templateRepo": "ERC721CommunityStream",
+  "name": "k8s-data-37",
+  "type": 2,
   "frameType": 1,
+  "templateUrl": "https://github.com/hamster-template/vuejs.git",
+  "templateRepo": "vuejs",
   "repoOwner": "jian-guo-s",
   "userId": 53070354
 }
@@ -296,4 +296,20 @@ Access-Token: 57QEeUaskUR4UkiXxCCXsyUVZ1QHIQuEK4sy/CeOc+JBWMdgJoSuDM/aND9lePgE
   "status": 1,
   "address": "",
   "type": 4
+}
+
+### build
+POST http://localhost:8080/api/projects/736d4714-142f-4323-9a9f-e2e496e5c594/build
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
+
+### container deploy
+POST http://localhost:8080/api/projects/736d4714-142f-4323-9a9f-e2e496e5c594/workflows/353/detail/413/container/deploy
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
+{
+  "containers": "[{\"name\":\"jian-guo-s-test\",\"ports\":[{\"containerPort\":8082}],\"resources\":{}}]",
+  "servicePorts": "[{\"protocol\":\"TCP\",\"port\":8082,\"targetPort\":8088,\"nodePort\":30318}]"
 }

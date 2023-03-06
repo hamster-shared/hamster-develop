@@ -24,3 +24,8 @@ type CheckNameParam struct {
 	Owner string `json:"owner"`
 	Name  string `json:"name"`
 }
+
+type K8sDeployParam struct {
+	Containers   string `json:"containers"`
+	ServicePorts string `json:"servicePorts"`
+}
