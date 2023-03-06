@@ -36,16 +36,16 @@ var temp embed.FS
 
 type WorkflowService struct {
 	db     *gorm.DB
-	engine *engine.Engine
+	engine engine.Engine
 }
 
 func NewWorkflowService() *WorkflowService {
 	workflowService := &WorkflowService{
 		db:     application.GetBean[*gorm.DB]("db"),
-		engine: application.GetBean[*engine.Engine]("engine"),
+		engine: application.GetBean[engine.Engine]("engine"),
 	}
 
-	go workflowService.engine.RegisterStatusChangeHook(workflowService.SyncStatus)
+	// go workflowService.engine.RegisterStatusChangeHook(workflowService.SyncStatus)
 
 	return workflowService
 }
@@ -57,7 +57,10 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 		return
 	}
 
-	jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
+	if err != nil {
+		return
+	}
 
 	var workflowDetail db.WorkflowDetail
 
@@ -77,7 +80,7 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	}
 	workflowDetail.StageInfo = string(stageInfo)
 	workflowDetail.UpdateTime = time.Now()
-	workflowDetail.CodeInfo = w.engine.GetCodeInfo(message.JobName, message.JobId)
+	workflowDetail.CodeInfo, err = w.engine.GetCodeInfo(message.JobName, message.JobId)
 	workflowDetail.Duration = jobDetail.Duration
 
 	tx := w.db.Save(&workflowDetail)
@@ -108,7 +111,10 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 	if uint(consts.FRONTEND) != projectData.Type {
 		return
 	}
-	jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
+	if err != nil {
+		return
+	}
 	if uint(consts.Build) == workflowDetail.Type {
 		w.syncFrontendBuild(jobDetail, workflowDetail, projectData)
 	} else if uint(consts.Deploy) == workflowDetail.Type {
@@ -196,7 +202,10 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		log.Println("UUID from string failed: ", err.Error())
 		return
 	}
-	jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
+	if err != nil {
+		return
+	}
 
 	if len(jobDetail.Artifactorys) > 0 {
 
@@ -311,7 +320,10 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 	if message.Status == model.STATUS_SUCCESS {
 		//TODO.... 实现同步报告
 		fmt.Println(projectId, workflowId, workflowExecNumber)
-		jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+		jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
+		if err != nil {
+			return
+		}
 		var reportList []db.Report
 		begin := w.db.Begin()
 		for _, report := range jobDetail.Reports {
@@ -343,7 +355,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 						Name:             contractCheckResult.Name,
 						Type:             uint(consts.Check),
 						CheckTool:        contractCheckResult.Tool,
-						CheckVersion:     contractCheckResult.SolcVersion,
+						// CheckVersion:     contractCheckResult.SolcVersion,
 						Result:           contractCheckResult.Result,
 						CheckTime:        time.Now(),
 						ReportFile:       string(marshal),
@@ -363,7 +375,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 					CheckTool:        "OpenAI",
 					Result:           "success",
 					CheckTime:        time.Now(),
-					ReportFile:       string(report.Content),
+					// ReportFile:       string(report.Content),
 					CreateTime:       time.Now(),
 				}
 				reportList = append(reportList, report)
@@ -397,7 +409,10 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 		logger.Info("workflow ")
 		return vo.DeployResultVo{}, err
 	}
-	buildJobDetail := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
+	buildJobDetail, err := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
+	if err != nil {
+		return vo.DeployResultVo{}, err
+	}
 
 	if len(buildJobDetail.ActionResult.Artifactorys) == 0 {
 		return vo.DeployResultVo{}, errors.New("No Artifacts")
@@ -427,8 +442,8 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 
 	workflowKey := w.GetWorkflowKey(projectId.String(), workflow.Id)
 
-	job := w.engine.GetJob(workflowKey)
-	if job == nil {
+	job, err := w.engine.GetJob(workflowKey)
+	if err != nil {
 		var jobModel model.Job
 		err := yaml.Unmarshal([]byte((workflow.ExecFile)), &jobModel)
 		if jobModel.Name != workflowKey {
@@ -441,7 +456,10 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		if err != nil {
 			return deployResult, err
 		}
-		job = w.engine.GetJob(workflowKey)
+		job, err = w.engine.GetJob(workflowKey)
+		if err != nil {
+			return deployResult, err
+		}
 	}
 
 	if params != nil {
@@ -458,7 +476,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 	}
 
-	detail, err := w.engine.ExecuteJob(workflowKey)
+	detail, err := w.engine.CreateJobDetail(workflowKey)
 
 	if err != nil {
 		return deployResult, err
@@ -537,7 +555,7 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	_ = copier.Copy(&detail, &workflowDetail)
 	if workflowDetail.Status == vo.WORKFLOW_STATUS_RUNNING {
 		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.WorkflowId)
-		jobDetail := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
+		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
 		data, err := json.Marshal(jobDetail.Stages)
 		if err == nil {
 			detail.StageInfo = string(data)

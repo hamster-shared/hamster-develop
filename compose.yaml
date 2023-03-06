@@ -16,7 +16,7 @@ services:
     depends_on:
       - mysql
     restart: always
-    image: jlvihv/aline-test:0.1.0
+    image: aline-test
     environment:
       DB_HOST: mysql
     ports:
@@ -27,6 +27,6 @@ services:
     depends_on:
       - aline-test
     restart: always
-    image: jlvihv/aline-frontend:0.1.0
+    image: aline-frontend
     ports:
       - 80:80

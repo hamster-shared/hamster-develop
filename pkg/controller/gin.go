@@ -1,19 +1,17 @@
 package controller
 
 import (
-	"embed"
 	"fmt"
+	"os/exec"
+	"runtime"
+
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"gorm.io/gorm"
-	"io/fs"
-	"net/http"
-	"os/exec"
-	"runtime"
 )
 
-//go:embed dist
-var content embed.FS
+// go:embed dist
+// var content embed.FS
 
 type HttpServer struct {
 	handlerServer HandlerServer
@@ -54,18 +52,18 @@ func (h *HttpServer) StartHttpServer() {
 	api.PUT("/user/first/state", h.handlerServer.updateFirstState)
 
 	/*
-		创建项目返回项目ID
+		创建项目返回项目 ID
 		缺登录的接口
 		模版详情接口缺少返回字段
-		缺少仓库校验接口（根据project名称）
-		删除deploy接口
+		缺少仓库校验接口（根据 project 名称）
+		删除 deploy 接口
 		保存部署信息传参数有问题
-		Workflow详情返回字段缺少流水线类型（check, build）
-		查询workflow下的合约列表使用workflowDetailId
-		缺少项目日志接口使用ID
+		Workflow 详情返回字段缺少流水线类型（check, build）
+		查询 workflow 下的合约列表使用 workflowDetailId
+		缺少项目日志接口使用 ID
 		获取合约列表改为项目合约列表（改名字）
 		合约部署详情接口有问题
-		根据版本查询合约信息（返回abi信息和byte code）
+		根据版本查询合约信息（返回 abi 信息和 byte code）
 	*/
 	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/stop", h.handlerServer.stopWorkflow)
 	api.POST("/projects/:id/check", h.handlerServer.projectWorkflowCheck)
@@ -141,11 +139,11 @@ func (h *HttpServer) StartHttpServer() {
 
 		db := application.GetBean[*gorm.DB]("db")
 		fmt.Println(db)
-		//输出json结果给调用方
+		//输出 json 结果给调用方
 		Success("", c)
 	})
-	fe, _ := fs.Sub(content, "dist")
-	r.NoRoute(gin.WrapH(http.FileServer(http.FS(fe))))
+	// fe, _ := fs.Sub(content, "dist")
+	// r.NoRoute(gin.WrapH(http.FileServer(http.FS(fe))))
 	r.Run(fmt.Sprintf(":%d", h.port)) // listen and serve on
 }
 

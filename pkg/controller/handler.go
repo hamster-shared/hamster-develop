@@ -16,12 +16,12 @@ import (
 )
 
 type HandlerServer struct {
-	Engine          *engine.Engine
+	Engine          engine.Engine
 	templateService service2.ITemplateService
 	projectService  service2.IProjectService
 }
 
-func NewHandlerServer(engine *engine.Engine, templateService service2.ITemplateService, projectService service2.IProjectService) *HandlerServer {
+func NewHandlerServer(engine engine.Engine, templateService service2.ITemplateService, projectService service2.IProjectService) *HandlerServer {
 	return &HandlerServer{
 		Engine:          engine,
 		templateService: templateService,
@@ -71,7 +71,11 @@ func (h *HandlerServer) updatePipeline(gin *gin.Context) {
 // getPipeline get pipeline job
 func (h *HandlerServer) getPipeline(gin *gin.Context) {
 	name := gin.Param("name")
-	pipelineData := h.Engine.GetJob(name)
+	pipelineData, err := h.Engine.GetJob(name)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	Success(pipelineData, gin)
 }
 
@@ -101,7 +105,11 @@ func (h *HandlerServer) pipelineList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	jobData := h.Engine.GetJobs(query, page, size)
+	jobData, err := h.Engine.GetJobs(query, page, size)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	Success(jobData, gin)
 }
 
@@ -114,7 +122,11 @@ func (h *HandlerServer) getPipelineDetail(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	jobDetailData := h.Engine.GetJobHistory(name, id)
+	jobDetailData, err := h.Engine.GetJobHistory(name, id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	Success(jobDetailData, gin)
 }
 
@@ -150,7 +162,11 @@ func (h *HandlerServer) getPipelineDetailList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	jobDetailPage := h.Engine.GetJobHistorys(name, page, size)
+	jobDetailPage, err := h.Engine.GetJobHistorys(name, page, size)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	Success(jobDetailPage, gin)
 }
 
@@ -207,8 +223,16 @@ func (h *HandlerServer) getJobLog(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	jobDetail := h.Engine.GetJobHistory(name, id)
-	data := h.Engine.GetJobHistoryLog(name, id)
+	jobDetail, err := h.Engine.GetJobHistory(name, id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	data, err := h.Engine.GetJobHistoryLog(name, id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 
 	gin.Writer.Header().Set("LastLine", strconv.Itoa(data.LastLine))
 	gin.Writer.Header().Set("End", strconv.FormatBool(jobDetail.Status != model.STATUS_RUNNING))
@@ -228,7 +252,11 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 		return
 	}
 	start, _ := strconv.Atoi(startStr)
-	data := h.Engine.GetJobHistoryStageLog(name, id, stageName, start)
+	data, err := h.Engine.GetJobHistoryStageLog(name, id, stageName, start)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 
 	gin.Writer.Header().Set("LastLine", strconv.Itoa(data.LastLine))
 	gin.Writer.Header().Set("End", strconv.FormatBool(data.End))
