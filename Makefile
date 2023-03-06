@@ -13,10 +13,12 @@ macos:
 linux:
 	go mod tidy
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build -ldflags="-s -w" -o aline
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build -ldflags="-s -w" -o aline-worker ./bin/aline-worker
 
 linux-test:
 	go mod tidy
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build -ldflags="-s -w" -o aline-test
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build -ldflags="-s -w" -o aline-worker-test ./bin/aline-worker
 
 windows:
 	go mod tidy
