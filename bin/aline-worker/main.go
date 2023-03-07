@@ -10,21 +10,28 @@ import (
 )
 
 func main() {
-	var done = make(chan bool)
+	var wait = make(chan bool)
 	logger.Init().ToStdoutAndFile().SetLevel(logrus.TraceLevel)
 	masterAddress := parseArgs()
 
 	for {
-		_, err := engine.NewWorkerEngine(masterAddress)
-		if err != nil {
-			logger.Errorf("new worker engine failed, err: %v", err)
-			time.Sleep(time.Second * 5)
-		} else {
-			break
+		for {
+			_, err := engine.NewWorkerEngine(masterAddress)
+			if err != nil {
+				logger.Errorf("new worker engine failed, err: %v", err)
+				time.Sleep(time.Second * 5)
+			} else {
+				break
+			}
 		}
+		time.Sleep(time.Second * 5)
+		err := recover()
+		if err != nil {
+			logger.Errorf("worker engine panic, err: %v", err)
+			wait <- true
+		}
+		<-wait
 	}
-
-	<-done
 }
 
 // 解析命令行参数
