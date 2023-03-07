@@ -2,7 +2,11 @@ package controller
 
 import (
 	"embed"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
@@ -11,8 +15,6 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
-	"net/http"
-	"strconv"
 )
 
 //go:embed templates
@@ -172,14 +174,12 @@ func (h *HandlerServer) projectDetail(gin *gin.Context) {
 }
 
 func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
+	logger.Tracef("projectWorkflowCheck")
 
 	projectIdStr := g.Param("id")
 	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
-		Fail("projectId is empty or invalid", g)
-		return
-	}
-	if err != nil {
+		logger.Errorf("projectWorkflowCheck error: %s", err.Error())
 		Fail(err.Error(), g)
 		return
 	}
@@ -188,15 +188,21 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 	var userVo vo.UserAuth
 	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectCheckWorkflow(projectId, userVo)
+	err = workflowService.ExecProjectCheckWorkflow(projectId, userVo)
+	if err != nil {
+		logger.Errorf("projectWorkflowCheck error: %s", err.Error())
+		Fail(err.Error(), g)
+		return
+	}
 	Success("", g)
 }
 
 func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
-
+	logger.Tracef("projectWorkflowBuild")
 	projectIdStr := g.Param("id")
 	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
+		logger.Errorf("projectWorkflowBuild error: %s", err.Error())
 		Fail("projectId is empty or invalid", g)
 		return
 	}

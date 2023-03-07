@@ -356,10 +356,10 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 						Type:             uint(consts.Check),
 						CheckTool:        contractCheckResult.Tool,
 						// CheckVersion:     contractCheckResult.SolcVersion,
-						Result:           contractCheckResult.Result,
-						CheckTime:        time.Now(),
-						ReportFile:       string(marshal),
-						CreateTime:       time.Now(),
+						Result:     contractCheckResult.Result,
+						CheckTime:  time.Now(),
+						ReportFile: string(marshal),
+						CreateTime: time.Now(),
 					}
 					reportList = append(reportList, report)
 				}
@@ -376,7 +376,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 					Result:           "success",
 					CheckTime:        time.Now(),
 					// ReportFile:       string(report.Content),
-					CreateTime:       time.Now(),
+					CreateTime: time.Now(),
 				}
 				reportList = append(reportList, report)
 			}
@@ -442,10 +442,16 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 
 	workflowKey := w.GetWorkflowKey(projectId.String(), workflow.Id)
 
+	logger.Tracef("workflow key is %s", workflowKey)
 	job, err := w.engine.GetJob(workflowKey)
 	if err != nil {
+		logger.Tracef("job is not exist, create job: %s", workflowKey)
 		var jobModel model.Job
 		err := yaml.Unmarshal([]byte((workflow.ExecFile)), &jobModel)
+		if err != nil {
+			logger.Errorf("Unmarshal job fail, err is %s", err.Error())
+			return deployResult, err
+		}
 		if jobModel.Name != workflowKey {
 			jobModel.Name = workflowKey
 			execFile, _ := yaml.Marshal(jobModel)
@@ -458,8 +464,10 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 		job, err = w.engine.GetJob(workflowKey)
 		if err != nil {
+			logger.Errorf("Get job fail, err is %s", err.Error())
 			return deployResult, err
 		}
+		logger.Tracef("create job success, job name is %s", job.Name)
 	}
 
 	if params != nil {
@@ -476,13 +484,15 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 	}
 
-	detail, err := w.engine.CreateJobDetail(workflowKey)
+	detail, err := w.engine.ExecuteJob(workflowKey)
 
 	if err != nil {
+		logger.Errorf("Create job detail fail, err is %s", err.Error())
 		return deployResult, err
 	}
 	stageInfo, err := json.Marshal(detail.Stages)
 	if err != nil {
+		logger.Errorf("Marshal stage info fail, err is %s", err.Error())
 		return deployResult, err
 	}
 
@@ -508,10 +518,12 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 	})
 
 	if err != nil {
+		logger.Errorf("Save workflow detail fail, err is %s", err.Error())
 		return deployResult, err
 	}
 	deployResult.WorkflowId = workflow.Id
 	deployResult.DetailId = dbDetail.Id
+	logger.Tracef("create job detail success, job detail id is %d", detail.Id)
 	return deployResult, nil
 }
 

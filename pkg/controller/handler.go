@@ -1,9 +1,13 @@
 package controller
 
 import (
+	"path/filepath"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	engine "github.com/hamster-shared/aline-engine"
 	"github.com/hamster-shared/aline-engine/consts"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/aline-engine/model"
 	"github.com/hamster-shared/aline-engine/utils"
 	"github.com/hamster-shared/aline-engine/utils/platform"
@@ -11,8 +15,6 @@ import (
 	service2 "github.com/hamster-shared/hamster-develop/pkg/service"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"gopkg.in/yaml.v3"
-	"path/filepath"
-	"strconv"
 )
 
 type HandlerServer struct {
@@ -34,11 +36,13 @@ func (h *HandlerServer) createPipeline(gin *gin.Context) {
 	createData := parameters.CreatePipeline{}
 	err := gin.BindJSON(&createData)
 	if err != nil {
+		logger.Error("create pipeline error:", err)
 		Fail(err.Error(), gin)
 		return
 	}
 	err = h.Engine.CreateJob(createData.Name, createData.Yaml)
 	if err != nil {
+		logger.Error("create pipeline job error:", err)
 		Fail(err.Error(), gin)
 		return
 	}
@@ -51,17 +55,20 @@ func (h *HandlerServer) updatePipeline(gin *gin.Context) {
 	updateData := parameters.UpdatePipeline{}
 	err := gin.BindJSON(&updateData)
 	if err != nil {
+		logger.Error("update pipeline error:", err)
 		Fail(err.Error(), gin)
 		return
 	}
 	var jobData model.Job
 	err = yaml.Unmarshal([]byte(updateData.Yaml), &jobData)
 	if err != nil {
+		logger.Error("update pipeline error:", err)
 		Fail(err.Error(), gin)
 		return
 	}
 	err = h.Engine.UpdateJob(oldName, updateData.NewName, updateData.Yaml)
 	if err != nil {
+		logger.Error("update pipeline job error:", err)
 		Fail(err.Error(), gin)
 		return
 	}
@@ -73,6 +80,7 @@ func (h *HandlerServer) getPipeline(gin *gin.Context) {
 	name := gin.Param("name")
 	pipelineData, err := h.Engine.GetJob(name)
 	if err != nil {
+		logger.Errorf("get pipeline job error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
@@ -84,6 +92,7 @@ func (h *HandlerServer) deletePipeline(gin *gin.Context) {
 	name := gin.Param("name")
 	err := h.Engine.DeleteJob(name)
 	if err != nil {
+		logger.Errorf("delete pipeline job error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
@@ -97,16 +106,19 @@ func (h *HandlerServer) pipelineList(gin *gin.Context) {
 	sizeStr := gin.DefaultQuery("size", "10")
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
+		logger.Errorf("get pipeline job list error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
 	size, err := strconv.Atoi(sizeStr)
 	if err != nil {
+		logger.Errorf("get pipeline job list error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
 	jobData, err := h.Engine.GetJobs(query, page, size)
 	if err != nil {
+		logger.Errorf("get pipeline job list error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
@@ -119,11 +131,13 @@ func (h *HandlerServer) getPipelineDetail(gin *gin.Context) {
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		logger.Errorf("get pipeline job detail error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
 	jobDetailData, err := h.Engine.GetJobHistory(name, id)
 	if err != nil {
+		logger.Errorf("get pipeline job detail error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
@@ -136,11 +150,13 @@ func (h *HandlerServer) deleteJobDetail(gin *gin.Context) {
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		logger.Errorf("delete job detail error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
 	err = h.Engine.DeleteJobHistory(name, id)
 	if err != nil {
+		logger.Errorf("delete job detail error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
@@ -154,16 +170,19 @@ func (h *HandlerServer) getPipelineDetailList(gin *gin.Context) {
 	sizeStr := gin.DefaultQuery("size", "10")
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
+		logger.Errorf("get pipeline job detail list error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
 	size, err := strconv.Atoi(sizeStr)
 	if err != nil {
+		logger.Errorf("get pipeline job detail list error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
 	jobDetailPage, err := h.Engine.GetJobHistorys(name, page, size)
 	if err != nil {
+		logger.Errorf("get pipeline job detail list error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
@@ -176,6 +195,7 @@ func (h *HandlerServer) execPipeline(gin *gin.Context) {
 	_, err := h.Engine.ExecuteJob(name)
 
 	if err != nil {
+		logger.Errorf("exec pipeline job error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
@@ -188,6 +208,7 @@ func (h *HandlerServer) reExecuteJob(gin *gin.Context) {
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		logger.Errorf("re exec pipeline job detail error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
@@ -206,6 +227,7 @@ func (h *HandlerServer) stopJobDetail(gin *gin.Context) {
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		logger.Errorf("stop pipeline job error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
@@ -220,16 +242,19 @@ func (h *HandlerServer) getJobLog(gin *gin.Context) {
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		logger.Errorf("get job log error: %s", err.Error)
 		Fail(err.Error(), gin)
 		return
 	}
 	jobDetail, err := h.Engine.GetJobHistory(name, id)
 	if err != nil {
+		logger.Errorf("get job log error: %s", err.Error)
 		Fail(err.Error(), gin)
 		return
 	}
 	data, err := h.Engine.GetJobHistoryLog(name, id)
 	if err != nil {
+		logger.Errorf("get job log error: %s", err.Error)
 		Fail(err.Error(), gin)
 		return
 	}
@@ -248,12 +273,14 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 	startStr := gin.DefaultQuery("start", "0")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		logger.Errorf("get job stage log error: %s", err.Error)
 		Fail(err.Error(), gin)
 		return
 	}
 	start, _ := strconv.Atoi(startStr)
 	data, err := h.Engine.GetJobHistoryStageLog(name, id, stageName, start)
 	if err != nil {
+		logger.Errorf("get job stage log error: %s", err.Error)
 		Fail(err.Error(), gin)
 		return
 	}
@@ -293,6 +320,7 @@ func (h *HandlerServer) openArtifactoryDir(gin *gin.Context) {
 	artifactoryDir := filepath.Join(utils.DefaultConfigDir(), consts.JOB_DIR_NAME, name, consts.ArtifactoryDir, idStr)
 	err := platform.OpenDir(artifactoryDir)
 	if err != nil {
+		logger.Errorf("open artifactory dir error: %s", err.Error())
 		Fail(err.Error(), gin)
 		return
 	}
@@ -302,13 +330,13 @@ func (h *HandlerServer) openArtifactoryDir(gin *gin.Context) {
 
 func (h *HandlerServer) getUserInfo(gin *gin.Context) vo.UserAuth {
 
-	// token 是什么东西?，方案1：我们自己的jwt token, 方案2: github token
+	// token 是什么东西？，方案 1：我们自己的 jwt token, 方案 2: github token
 	token := gin.GetHeader("access_token")
 
 	//TODO...
 	//token = db_replace(token)
 
-	// TODO ... 根据token 获取用户信息
+	// TODO ... 根据 token 获取用户信息
 	return vo.UserAuth{
 		Id:       1,
 		Username: "admin",
