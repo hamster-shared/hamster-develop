@@ -406,8 +406,8 @@ func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.
 }
 
 func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
-	var project db2.Project
-	err := w.db.Model(db2.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	var project db.Project
+	err := w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
 	if err != nil {
 		logger.Info("project is not exit ")
 		return err
@@ -448,8 +448,8 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 }
 
 func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth, deployParam parameter.K8sDeployParam) (vo.DeployResultVo, error) {
-	var project db2.Project
-	err := w.db.Model(db2.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	var project db.Project
+	err := w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
 	if err != nil {
 		logger.Info("project is not exit ")
 		return vo.DeployResultVo{}, err
@@ -458,10 +458,13 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 
 	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId)
 	if err != nil {
-		logger.Info("workflow ")
+		logger.Errorf("GetWorkflowDetail err: %s", err.Error())
 		return vo.DeployResultVo{}, err
 	}
-	buildJobDetail := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
+	buildJobDetail, err := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
+	if err != nil {
+		logger.Errorf("GetJobHistory err: %s", err.Error())
+	}
 	if len(buildJobDetail.ActionResult.BuildData) == 0 {
 		return vo.DeployResultVo{}, errors.New("No Image")
 	}
