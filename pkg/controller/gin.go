@@ -109,7 +109,6 @@ func (h *HttpServer) StartHttpServer() {
 	//logs
 	api.GET("/workflows/:id/detail/:detailId/logs", h.handlerServer.getWorkflowLog)
 	api.GET("/workflows/:id/detail/:detailId/logs/:stageName", h.handlerServer.getWorkflowStageLog)
-	api.GET("")
 
 	// ======== old api =========//
 	// pipeline
