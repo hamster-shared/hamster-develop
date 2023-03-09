@@ -35,6 +35,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/github/install", h.handlerServer.githubInstall)
 	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
 	api.POST("/github/webhook", h.handlerServer.githubWebHook)
+	api.GET("/projects/:id/frontend/logs", h.handlerServer.getDeployFrontendLog)
 	api.Use(h.handlerServer.Authorize())
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
@@ -73,6 +74,7 @@ func (h *HttpServer) StartHttpServer() {
 	// frontend deploy
 	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/deploy", h.handlerServer.projectWorkflowDeploy)
 	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/container/deploy", h.handlerServer.containerDeploy)
+	api.GET("/projects/:id/workflows/:workflowId/container/check", h.handlerServer.configContainerDeploy)
 	api.GET("/projects/:id/contract", h.handlerServer.projectContract)
 	api.GET("/projects/:id/reports", h.handlerServer.projectReport)
 	api.GET("/projects/:id/frontend/reports", h.handlerServer.projectFrontendReports)
@@ -107,6 +109,7 @@ func (h *HttpServer) StartHttpServer() {
 	//logs
 	api.GET("/workflows/:id/detail/:detailId/logs", h.handlerServer.getWorkflowLog)
 	api.GET("/workflows/:id/detail/:detailId/logs/:stageName", h.handlerServer.getWorkflowStageLog)
+	api.GET("")
 
 	// ======== old api =========//
 	// pipeline

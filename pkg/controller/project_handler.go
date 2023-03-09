@@ -95,6 +95,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Type:        createData.Type,
 		TemplateUrl: *repo.CloneURL,
 		FrameType:   createData.FrameType,
+		DeployType:  createData.DeployType,
 		UserId:      int64(user.Id),
 	}
 	id, err := h.projectService.CreateProject(data)
@@ -251,6 +252,22 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 	}
 	Success(data, g)
 }
+func (h *HandlerServer) configContainerDeploy(g *gin.Context) {
+	projectIdStr := g.Param("id")
+	if projectIdStr == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	workflowIdStr := g.Param("workflowId")
+	workflowId, err := strconv.Atoi(workflowIdStr)
+	if err != nil {
+		Fail("workflow id is empty or invalid", g)
+		return
+	}
+	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+	data := containerDeployService.CheckDeployParam(projectIdStr, workflowId)
+	Success(data, g)
+}
 
 func (h *HandlerServer) containerDeploy(g *gin.Context) {
 	projectIdStr := g.Param("id")
@@ -271,11 +288,22 @@ func (h *HandlerServer) containerDeploy(g *gin.Context) {
 		Fail("detail id is empty or invalid", g)
 		return
 	}
+	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
 	deployParam := parameter.K8sDeployParam{}
 	err = g.BindJSON(&deployParam)
 	if err != nil {
-		Fail(err.Error(), g)
-		return
+		deployData, err := containerDeployService.QueryDeployParam(projectIdStr, workflowId)
+		if err != nil {
+			Fail("deploy param is empty", g)
+			return
+		}
+		copier.Copy(&deployParam, &deployData)
+	} else {
+		err = containerDeployService.SaveDeployParam(projectId, workflowId, deployParam)
+		if err != nil {
+			Fail("save deploy param failed", g)
+			return
+		}
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	userAny, _ := g.Get("user")
