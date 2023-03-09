@@ -12,7 +12,6 @@ import (
 	"runtime"
 )
 
-//go:embed dist
 var content embed.FS
 
 type HttpServer struct {
