@@ -6,7 +6,7 @@ stages:
       - name: set workdir
         uses: workdir
         with:
-          workdir: /Users/mohaijiang/IdeaProjects/blockchain/a-line
+          workdir: /Users/sunjianguo/GolandProjects/hamster-develop
   build:
     steps:
       - name: build

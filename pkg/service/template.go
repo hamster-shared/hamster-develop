@@ -15,7 +15,7 @@ type ITemplateService interface {
 	//GetTemplateDetail get template detail by template id
 	GetTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
 	GetFrontendTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
-	TemplateShow(templateType, languageType int) (*[]vo.TemplateVo, error)
+	TemplateShow(templateType, languageType, deploymentType int) (*[]vo.TemplateVo, error)
 }
 
 type TemplateService struct {
@@ -78,13 +78,22 @@ func (t *TemplateService) GetFrontendTemplateDetail(templateId int) (*vo.Templat
 	return &dataVo, nil
 }
 
-func (t *TemplateService) TemplateShow(templateType, languageType int) (*[]vo.TemplateVo, error) {
+func (t *TemplateService) TemplateShow(templateType, languageType, deploymentType int) (*[]vo.TemplateVo, error) {
 	var list []db2.Template
 	var listVo []vo.TemplateVo
-	sql := "select  t.*  from t_template t left join t_template_type ttt on t.template_type_id = ttt.id where ttt.type = ? and t.whether_display = 1 and t.language_type = ?"
-	res := t.db.Raw(sql, templateType, languageType).Scan(&list)
-	if res.Error != nil {
-		return &listVo, res.Error
+	sql := ""
+	if deploymentType == 1 {
+		sql = "select  t.*  from t_template t left join t_template_type ttt on t.template_type_id = ttt.id where ttt.type = ? and t.whether_display = 1 and t.language_type = ? and t.deploy_type = ?"
+		res := t.db.Raw(sql, templateType, languageType, deploymentType).Scan(&list)
+		if res.Error != nil {
+			return &listVo, res.Error
+		}
+	} else {
+		sql = "select  t.*  from t_template t left join t_template_type ttt on t.template_type_id = ttt.id where ttt.type = ? and t.whether_display = 1 and t.language_type = ?"
+		res := t.db.Raw(sql, templateType, languageType).Scan(&list)
+		if res.Error != nil {
+			return &listVo, res.Error
+		}
 	}
 	copier.Copy(&listVo, &list)
 	return &listVo, nil

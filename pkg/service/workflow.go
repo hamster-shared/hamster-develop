@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"log"
 	"os"
 	"os/exec"
@@ -164,11 +166,13 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 					log.Println("save frontend package failed: ", err.Error())
 				}
 				var packageDeploy db.FrontendDeploy
+				if project.DeployType == int(consts.IPFS) {
+					packageDeploy.DeployInfo = deploy.Cid
+				}
 				packageDeploy.ProjectId = project.Id
 				packageDeploy.WorkflowId = workflowDetail.WorkflowId
 				packageDeploy.WorkflowDetailId = workflowDetail.Id
 				packageDeploy.PackageId = data.Id
-				packageDeploy.DeployInfo = deploy.Cid
 				packageDeploy.Domain = deploy.Url
 				packageDeploy.Version = data.Version
 				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
@@ -393,9 +397,12 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 		return err
 	}
 	params := make(map[string]string)
-	if project.Type == uint(consts.FRONTEND) {
+	if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.CONTAINER) {
 		image := fmt.Sprintf("%s/%s:%d", consts.DockerHubName, user.Username, time.Now().Unix())
 		params["imageName"] = image
+		if project.FrameType == 1 || project.FrameType == 2 {
+			params["runBuild"] = "true"
+		}
 	} else {
 		params = nil
 	}
@@ -442,12 +449,53 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 	if len(buildJobDetail.ActionResult.BuildData) == 0 {
 		return vo.DeployResultVo{}, errors.New("No Image")
 	}
+	var containers []corev1.Container
+	var ports []corev1.ContainerPort
+	port := corev1.ContainerPort{
+		ContainerPort: deployParam.ContainerPort,
+	}
+	resources := corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("500m"),
+			corev1.ResourceMemory: resource.MustParse("500Mi"),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("500m"),
+			corev1.ResourceMemory: resource.MustParse("500Mi"),
+		},
+	}
+	ports = append(ports, port)
+	container1 := corev1.Container{
+		Name:      fmt.Sprintf("%s-%s", user.Username, project.Name),
+		Image:     buildJobDetail.ActionResult.BuildData[0].ImageName,
+		Ports:     ports,
+		Resources: resources,
+	}
+	containers = append(containers, container1)
+	containerStr, err := json.Marshal(containers)
+	if err != nil {
+		logger.Info("containers json marshal failed ")
+		return vo.DeployResultVo{}, err
+	}
+	var servicePorts []parameter.ServicePort
+	servicePort := parameter.ServicePort{
+		Protocol:   deployParam.ServiceProtocol,
+		Port:       deployParam.ServicePort,
+		TargetPort: deployParam.ServiceTargetPort,
+	}
+	servicePorts = append(servicePorts, servicePort)
+	serviceStr, err := json.Marshal(servicePorts)
+	if err != nil {
+		logger.Info("services json marshal failed ")
+		return vo.DeployResultVo{}, err
+	}
 	params := make(map[string]string)
 	params["namespace"] = user.Username
 	params["projectName"] = project.Name
-	params["servicePorts"] = deployParam.ServicePorts
-	params["containers"] = deployParam.Containers
-	params["image"] = buildJobDetail.ActionResult.BuildData[0].ImageName
+	params["servicePorts"] = string(serviceStr)
+	params["containers"] = string(containerStr)
+	params["gateway"] = consts.Gateway
+	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
 	return w.ExecProjectWorkflow(projectId, user, 3, params)
 }
 
@@ -642,26 +690,33 @@ func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {
 	return nil
 }
 
-func getTemplate(projectType, projectFrameType uint, workflowType consts.WorkflowType) string {
+func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) string {
 	filePath := "templates/truffle-build.yml"
-	if projectType == uint(consts.CONTRACT) {
+	if project.Type == uint(consts.CONTRACT) {
 		if workflowType == consts.Check {
 			filePath = "templates/truffle_check.yml"
 		} else if workflowType == consts.Build {
-			if projectFrameType == uint(consts.StarkWare) {
+			if project.FrameType == uint(consts.StarkWare) {
 				filePath = "templates/stark-ware-build.yml"
 			} else {
 				filePath = "templates/truffle-build.yml"
 			}
 		}
-	} else if projectType == uint(consts.FRONTEND) {
+	} else if project.Type == uint(consts.FRONTEND) {
 		if workflowType == consts.Check {
 			filePath = "templates/frontend-check.yml"
 		} else if workflowType == consts.Build {
-			filePath = "templates/frontend-build.yml"
+			if project.DeployType == int(consts.IPFS) {
+				filePath = "templates/frontend-build.yml"
+			} else {
+				filePath = "templates/frontend-image-build.yml"
+			}
 		} else if workflowType == consts.Deploy {
-			//filePath = "templates/frontend-deploy.yml"
-			filePath = "templates/frontend-k8s-deploy.yml"
+			if project.DeployType == int(consts.IPFS) {
+				filePath = "templates/frontend-deploy.yml"
+			} else {
+				filePath = "templates/frontend-k8s-deploy.yml"
+			}
 		}
 	}
 	return filePath
@@ -671,7 +726,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	if project == nil {
 		return "", errors.New("project is nil")
 	}
-	filePath := getTemplate(project.Type, uint(project.FrameType), workflowType)
+	filePath := getTemplate(project, workflowType)
 	content, err := temp.ReadFile(filePath)
 	if err != nil {
 		log.Println("read template file failed ", err.Error())
@@ -683,7 +738,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	if workflowType == consts.Deploy {
 		tmpl = tmpl.Delims("[[", "]]")
 	}
-	if project.Type == uint(consts.FRONTEND) && workflowType == consts.Build {
+	if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.CONTAINER) && workflowType == consts.Build {
 		tmpl = tmpl.Delims("[[", "]]")
 	}
 

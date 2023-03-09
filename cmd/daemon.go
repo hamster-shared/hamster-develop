@@ -71,6 +71,8 @@ to quickly create a Cobra application.`,
 		application.SetBean[*service.GithubService]("githubService", githubService)
 		loginService := service.NewLoginService()
 		application.SetBean[*service.LoginService]("loginService", loginService)
+		containerDeployService := service.NewContainerDeployService()
+		application.SetBean[*service.ContainerDeployService]("containerDeployService", containerDeployService)
 		frontendPackageService := service.NewFrontendPackageService()
 		application.SetBean[*service.FrontendPackageService]("frontendPackageService", frontendPackageService)
 		templateService.Init(db)

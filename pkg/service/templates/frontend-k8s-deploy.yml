@@ -1,14 +1,23 @@
 version: "1"
 name: [[.Name]]
 stages:
-  k8s-deploy:
+  Deploy FrontEnd by K8s:
     steps:
       - name: deploy
         uses: k8s-frontend-deploy
         with:
-          gateway: http://61.172.179.6
           namespace: ${{ param.namespace }}
           containers: ${{ param.containers }}
           project_name: ${{ param.projectName }}
           service_ports: ${{ param.servicePorts }}
-          image: ${{ param.image }}
+  Assigning Domains:
+    needs:
+      - Deploy FrontEnd by K8s
+    steps:
+      - name: assign-domain
+        uses: k8s-assign-domain
+        with:
+          gateway: ${{ param.gateway }}
+          namespace: ${{ param.namespace }}
+          project_name: ${{ param.projectName }}
+          service_ports: ${{ param.servicePorts }}
