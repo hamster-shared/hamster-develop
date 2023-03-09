@@ -8,7 +8,8 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
-	github.com/hamster-shared/aline-engine v1.0.3-0.20230309064329-970cf3a9297a
+	github.com/gorilla/websocket v1.4.2
+	github.com/hamster-shared/aline-engine v1.0.3-0.20230308093832-4d0e91f80b9c
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/pkg/errors v0.9.1
@@ -20,6 +21,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.4.4
 	gorm.io/gorm v1.24.2
+	k8s.io/api v0.26.2
+	k8s.io/apimachinery v0.26.2
 )
 
 require (
@@ -30,10 +33,6 @@ require (
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/ethereum/go-ethereum v1.10.17 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
-	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/jsonreference v0.20.0 // indirect
-	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
@@ -96,8 +95,6 @@ require (
 	google.golang.org/grpc v1.53.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/api v0.26.2 // indirect
-	k8s.io/apimachinery v0.26.2 // indirect
 	k8s.io/client-go v0.26.2 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect

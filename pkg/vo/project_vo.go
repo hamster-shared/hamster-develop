@@ -20,6 +20,7 @@ type ProjectListVo struct {
 	RepositoryUrl string        `json:"repositoryUrl"`
 	FrameType     int           `json:"frameType"`
 	Branch        string        `json:"branch"`
+	DeployType    int           `json:"deployType"`
 	RecentCheck   RecentCheckVo `json:"recentCheck"`
 	RecentBuild   RecentBuildVo `json:"recentBuild"`
 	RecentDeploy  interface{}   `json:"recentDeploy"`
@@ -32,6 +33,7 @@ type ProjectDetailVo struct {
 	RepositoryUrl string        `json:"repositoryUrl"`
 	FrameType     uint          `json:"frameType"`
 	Branch        string        `json:"branch"`
+	DeployType    int           `json:"deployType"`
 	RecentCheck   RecentCheckVo `json:"recentCheck"`
 	RecentBuild   RecentBuildVo `json:"recentBuild"`
 	RecentDeploy  interface{}   `json:"recentDeploy"`
@@ -74,6 +76,7 @@ type CreateProjectParam struct {
 	Branch      string `json:"branch"`
 	TemplateUrl string `json:"templateUrl"`
 	FrameType   int    `json:"frameType"`
+	DeployType  int    `json:"deployType"`
 	UserId      int64  `json:"userId"`
 }
 
