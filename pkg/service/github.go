@@ -133,42 +133,47 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 	}
 	gitClone := exec.Command("git", "clone", templateUrl)
 	gitClone.Dir = cloneDir
-	err = gitClone.Run()
+	out, err := gitClone.CombinedOutput()
 	if err != nil {
 		deleteOwnerDir(owner)
+		log.Println(string(out))
 		log.Println("git clone failed", err.Error())
 		return err
 	}
 	workdir := filepath.Join(utils.DefaultRepoDir(), owner, templateName)
 	deleteGit := exec.Command("rm", "-rf", ".git")
 	deleteGit.Dir = workdir
-	err = deleteGit.Run()
+	out, err = deleteGit.CombinedOutput()
 	if err != nil {
 		deleteOwnerDir(owner)
+		log.Println(string(out))
 		log.Println("delete .git failed", err.Error())
 		return err
 	}
 	gitInit := exec.Command("git", "init", "-b", "main")
 	gitInit.Dir = workdir
-	err = gitInit.Run()
+	out, err = gitInit.CombinedOutput()
 	if err != nil {
 		deleteOwnerDir(owner)
+		log.Println(string(out))
 		log.Println("git init failed", err.Error())
 		return err
 	}
 	configName := exec.Command("git", "config", "user.name", owner)
 	configName.Dir = workdir
-	err = configName.Run()
+	out, err = configName.CombinedOutput()
 	if err != nil {
 		deleteOwnerDir(owner)
+		log.Println(string(out))
 		log.Println("config git user name failed", err.Error())
 		return err
 	}
 	configEmail := exec.Command("git", "config", "user.email", email)
 	configEmail.Dir = workdir
-	err = configEmail.Run()
+	out, err = configEmail.CombinedOutput()
 	if err != nil {
 		deleteOwnerDir(owner)
+		log.Println(string(out))
 		log.Println("config git user email failed", err.Error())
 		return err
 	}
@@ -177,33 +182,37 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 	originUrl := repoUrl[:index] + fmt.Sprintf("%s@", token) + repoUrl[index:]
 	addOrigin := exec.Command("git", "remote", "add", "origin", originUrl)
 	addOrigin.Dir = workdir
-	err = addOrigin.Run()
+	out, err = addOrigin.CombinedOutput()
 	if err != nil {
 		deleteOwnerDir(owner)
+		log.Println(string(out))
 		log.Println("git add origin failed", err.Error())
 		return err
 	}
 	fileAdd := exec.Command("git", "add", ".")
 	fileAdd.Dir = workdir
-	err = fileAdd.Run()
+	out, err = fileAdd.CombinedOutput()
 	if err != nil {
 		deleteOwnerDir(owner)
+		log.Println(string(out))
 		log.Println("git file add failed", err.Error())
 		return err
 	}
 	gitCommit := exec.Command("git", "commit", "-m", "Initial commit")
 	gitCommit.Dir = workdir
-	err = gitCommit.Run()
+	out, err = gitCommit.CombinedOutput()
 	if err != nil {
 		deleteOwnerDir(owner)
+		log.Println(string(out))
 		log.Println("git commit failed", err.Error())
 		return err
 	}
 	gitPush := exec.Command("git", "push", "origin", "main")
 	gitPush.Dir = workdir
-	err = gitPush.Run()
+	out, err = gitPush.CombinedOutput()
 	if err != nil {
 		deleteOwnerDir(owner)
+		log.Println(string(out))
 		log.Println("git push failed", err.Error())
 		return err
 	}
