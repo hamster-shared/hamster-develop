@@ -324,44 +324,6 @@ func (h *HandlerServer) containerDeploy(g *gin.Context) {
 	Success(data, g)
 }
 
-func (h *HandlerServer) containerDeploy(g *gin.Context) {
-	projectIdStr := g.Param("id")
-	projectId, err := uuid.FromString(projectIdStr)
-	if err != nil {
-		Fail("projectId is empty or invalid", g)
-		return
-	}
-	workflowIdStr := g.Param("workflowId")
-	detailIdStr := g.Param("detailId")
-	workflowId, err := strconv.Atoi(workflowIdStr)
-	if err != nil {
-		Fail("workflow id is empty or invalid", g)
-		return
-	}
-	detailId, err := strconv.Atoi(detailIdStr)
-	if err != nil {
-		Fail("detail id is empty or invalid", g)
-		return
-	}
-	deployParam := parameter.K8sDeployParam{}
-	err = g.BindJSON(&deployParam)
-	if err != nil {
-		Fail(err.Error(), g)
-		return
-	}
-	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	userAny, _ := g.Get("user")
-	user, _ := userAny.(db2.User)
-	var userVo vo.UserAuth
-	copier.Copy(&userVo, &user)
-	data, err := workflowService.ExecContainerDeploy(projectId, workflowId, detailId, userVo, deployParam)
-	if err != nil {
-		Fail(err.Error(), g)
-		return
-	}
-	Success(data, g)
-}
-
 func (h *HandlerServer) projectContract(g *gin.Context) {
 
 	projectId := g.Param("id")
