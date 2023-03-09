@@ -103,8 +103,14 @@ func (h *HandlerServer) getDeployFrontendLog(gin *gin.Context) {
 		Fail("projectId is empty or invalid", gin)
 		return
 	}
+	username := gin.Param("username")
+	if username == "" {
+		Fail("username is empty or invalid", gin)
+		return
+	}
 	//userAny, _ := gin.Get("user")
 	//user, _ := userAny.(db2.User)
+
 	project, err := h.projectService.GetProject(projectIdStr)
 	if err != nil {
 		log.Println("get project failed", err.Error())
@@ -117,8 +123,8 @@ func (h *HandlerServer) getDeployFrontendLog(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	name := fmt.Sprintf("%s-%s", "jian-guo-s", project.Name)
-	req, err := utils.GetPodLogs(name, name, "jian-guo-s")
+	name := fmt.Sprintf("%s-%s", username, project.Name)
+	req, err := utils.GetPodLogs(name, name, username)
 	if err != nil {
 		log.Println("get pod logs failed", err.Error())
 		Fail(err.Error(), gin)

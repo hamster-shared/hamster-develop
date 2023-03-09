@@ -85,7 +85,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	//	Fail(err.Error(), g)
 	//	return
 	//}
-	err = githubService.CommitAndPush(token, *repo.CloneURL, createData.RepoOwner, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
+	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
