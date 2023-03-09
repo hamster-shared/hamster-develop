@@ -82,6 +82,7 @@ func (h *HandlerServer) Authorize() gin.HandlerFunc {
 		accessToken := gin.Request.Header.Get("Access-Token")
 		if accessToken == "" {
 			Failed(http.StatusUnauthorized, "access not authorized", gin)
+			gin.Abort()
 			return
 		}
 		token := utils.AesDecrypt(accessToken, consts.SecretKey)
@@ -89,10 +90,12 @@ func (h *HandlerServer) Authorize() gin.HandlerFunc {
 		user, err := userService.GetUserByToken(token)
 		if err != nil {
 			Failed(http.StatusUnauthorized, err.Error(), gin)
+			gin.Abort()
 			return
 		}
 		if user.Token == "" {
 			Failed(http.StatusUnauthorized, "access not authorized", gin)
+			gin.Abort()
 			return
 		}
 		user.Token = accessToken

@@ -1,30 +1,14 @@
 version: "1"
-name: {{.Name}}
+name: [[.Name]]
 stages:
-  init:
-    steps:
-      - name: git clone
-        uses: git-checkout
-        with:
-          url: {{ .RepositoryUrl }}
-          branch: main
-  build:
-    needs:
-      - init
-    steps:
-      - name: build
-        run: |
-          npm install
-          npm run build
-
-  deploy:
+  k8s-deploy:
     steps:
       - name: deploy
         uses: k8s-frontend-deploy
         with:
           gateway: http://61.172.179.6
-          namespace: {{ param.Namespace }}
-          containers: ${{ param.Containers }}
-          project_name: {{ param.ProjectName }}
-          service_ports: ${{ param.ServicePorts }}
-          image: ${{ param.ServicePorts }}
+          namespace: ${{ param.namespace }}
+          containers: ${{ param.containers }}
+          project_name: ${{ param.projectName }}
+          service_ports: ${{ param.servicePorts }}
+          image: ${{ param.image }}

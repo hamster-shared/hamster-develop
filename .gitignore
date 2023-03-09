@@ -33,6 +33,8 @@ coverage
 /aline-test
 /aline-worker-test
 /aline-worker
+/aline-worker
+/aline-worker-test
 
 /.vscode
 

@@ -70,6 +70,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/:id/build", h.handlerServer.projectWorkflowBuild)
 	// frontend deploy
 	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/deploy", h.handlerServer.projectWorkflowDeploy)
+	api.POST("/projects/:id/workflows/:workflowId/detail/:detailId/container/deploy", h.handlerServer.containerDeploy)
 	api.GET("/projects/:id/contract", h.handlerServer.projectContract)
 	api.GET("/projects/:id/reports", h.handlerServer.projectReport)
 	api.GET("/projects/:id/frontend/reports", h.handlerServer.projectFrontendReports)
