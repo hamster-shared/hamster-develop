@@ -8,8 +8,8 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
-	github.com/gorilla/websocket v1.4.2
-	github.com/hamster-shared/aline-engine v1.0.3-0.20230308093832-4d0e91f80b9c
+	github.com/gorilla/websocket v1.5.0
+	github.com/hamster-shared/aline-engine v1.0.3-0.20230309090347-fc3b7f63c295
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/pkg/errors v0.9.1
@@ -115,4 +115,4 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 )
 
-replace github.com/hamster-shared/aline-engine => github.com/hamster-shared/aline-engine v1.0.3-0.20230309064329-970cf3a9297a
+replace github.com/hamster-shared/aline-engine => github.com/hamster-shared/aline-engine v1.0.3-0.20230309090347-fc3b7f63c295
