@@ -116,20 +116,20 @@ spec:
             - name: DOCKER_TLS_VERIFY
               value: "1"
           volumeMounts:
-            - mountPath: /root/pipelines
-              name: aline-pipelines
-            - mountPath: /root/workdir
-              name: aline-workdir
+            # - mountPath: /root/pipelines
+            # name: aline-pipelines
+            # - mountPath: /root/workdir
+            #   name: aline-workdir
             - mountPath: /certs
               name: docker-tls
               readOnly: true
       volumes:
-        - name: aline-pipelines
-          persistentVolumeClaim:
-            claimName: aline-pipelines
-        - name: aline-workdir
-          persistentVolumeClaim:
-            claimName: aline-workdir
+        # - name: aline-pipelines
+        #   persistentVolumeClaim:
+        #     claimName: aline-pipelines
+        # - name: aline-workdir
+        #   persistentVolumeClaim:
+        #     claimName: aline-workdir
         - name: docker-tls
           persistentVolumeClaim:
             claimName: docker-tls
@@ -195,4 +195,3 @@ spec:
         - name: docker-tls
           persistentVolumeClaim:
             claimName: docker-tls
-

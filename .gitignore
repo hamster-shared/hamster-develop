@@ -32,9 +32,11 @@ coverage
 /aline
 /aline-test
 /aline-worker-test
+/aline-worker
 
 /.vscode
 
 go.sum
 hamster-develop
 /.env
+

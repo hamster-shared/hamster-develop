@@ -11,7 +11,7 @@ import (
 
 func main() {
 	var wait = make(chan bool)
-	logger.Init().ToStdoutAndFile().SetLevel(logrus.TraceLevel)
+	logger.Init().ToStdoutAndFile().SetLevel(logrus.DebugLevel)
 	masterAddress := parseArgs()
 
 	for {

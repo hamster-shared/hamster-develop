@@ -17,12 +17,12 @@ import (
 	"time"
 
 	engine "github.com/hamster-shared/aline-engine"
+	jober "github.com/hamster-shared/aline-engine/job"
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/aline-engine/model"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	"github.com/hamster-shared/hamster-develop/pkg/db"
-	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
@@ -45,12 +45,13 @@ func NewWorkflowService() *WorkflowService {
 		engine: application.GetBean[engine.Engine]("engine"),
 	}
 
-	// go workflowService.engine.RegisterStatusChangeHook(workflowService.SyncStatus)
+	go workflowService.engine.RegisterStatusChangeHook(workflowService.SyncStatus)
 
 	return workflowService
 }
 
 func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
+	logger.Debugf("SyncStatus: %v", message)
 
 	_, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
 	if err != nil {
@@ -81,6 +82,9 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	workflowDetail.StageInfo = string(stageInfo)
 	workflowDetail.UpdateTime = time.Now()
 	workflowDetail.CodeInfo, err = w.engine.GetCodeInfo(message.JobName, message.JobId)
+	if err != nil {
+		logger.Warnf("get code info failed: %v", err)
+	}
 	workflowDetail.Duration = jobDetail.Duration
 
 	tx := w.db.Save(&workflowDetail)
@@ -122,7 +126,7 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 	}
 }
 
-func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDetail db2.WorkflowDetail, project db.Project) {
+func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDetail db.WorkflowDetail, project db.Project) {
 	if len(detail.ActionResult.Artifactorys) > 0 {
 		for range detail.ActionResult.Artifactorys {
 			frontendPackage := db.FrontendPackage{
@@ -143,7 +147,7 @@ func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDet
 	}
 }
 
-func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDetail db2.WorkflowDetail, project db.Project) {
+func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDetail db.WorkflowDetail, project db.Project) {
 
 	if len(detail.ActionResult.Deploys) > 0 {
 		buildWorkflowDetailIdStr := detail.Parameter["buildWorkflowDetailId"]
@@ -322,8 +326,12 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 		fmt.Println(projectId, workflowId, workflowExecNumber)
 		jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
 		if err != nil {
+			logger.Errorf("Get job history fail, jobName: %s, jobId: %d", message.JobName, message.JobId)
 			return
 		}
+		logger.Tracef("Get job history success, jobName: %s, jobId: %d", message.JobName, message.JobId)
+		logger.Tracef("len jobDetail.Reports: %d", len(jobDetail.Reports))
+		logger.Tracef("jobDetail file path: %s", jober.GetJobDetailFilePath(message.JobName, message.JobId))
 		var reportList []db.Report
 		begin := w.db.Begin()
 		for _, report := range jobDetail.Reports {
@@ -381,6 +389,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 				reportList = append(reportList, report)
 			}
 		}
+		logger.Tracef("len(reportList): %d ", len(reportList))
 		err = begin.Save(&reportList).Error
 		if err != nil {
 			logger.Errorf("Save report fail, err is %s", err.Error())
@@ -531,8 +540,8 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	var total int64
 	var data vo.WorkflowPage
 	var workflowData []vo.WorkflowVo
-	var workflowList []db2.WorkflowDetail
-	tx := w.db.Model(db2.WorkflowDetail{}).Where("project_id = ?", projectId)
+	var workflowList []db.WorkflowDetail
+	tx := w.db.Model(db.WorkflowDetail{}).Where("project_id = ?", projectId)
 	if workflowType != 0 {
 		tx = tx.Where("type = ? ", workflowType)
 	}
@@ -557,9 +566,9 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 }
 
 func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*vo.WorkflowDetailVo, error) {
-	var workflowDetail db2.WorkflowDetail
+	var workflowDetail db.WorkflowDetail
 	var detail vo.WorkflowDetailVo
-	res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
+	res := w.db.Model(db.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
 	if res.Error != nil {
 		return &detail, res.Error
 	}
@@ -568,6 +577,9 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	if workflowDetail.Status == vo.WORKFLOW_STATUS_RUNNING {
 		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.WorkflowId)
 		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
+		if err != nil {
+			logger.Warnf("get job history fail, err is %s", err.Error())
+		}
 		data, err := json.Marshal(jobDetail.Stages)
 		if err == nil {
 			detail.StageInfo = string(data)
@@ -577,18 +589,18 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	return &detail, nil
 }
 
-func (w *WorkflowService) QueryWorkflowDetail(workflowId, workflowDetailId int) (*db2.WorkflowDetail, error) {
-	var workflowDetail db2.WorkflowDetail
-	res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
+func (w *WorkflowService) QueryWorkflowDetail(workflowId, workflowDetailId int) (*db.WorkflowDetail, error) {
+	var workflowDetail db.WorkflowDetail
+	res := w.db.Model(db.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
 	if res.Error != nil {
 		return &workflowDetail, res.Error
 	}
 	return &workflowDetail, nil
 }
 
-func (w *WorkflowService) QueryWorkflow(workflowId int) (*db2.Workflow, error) {
-	var workflow db2.Workflow
-	res := w.db.Model(db2.Workflow{}).Where("id = ?", workflowId).First(&workflow)
+func (w *WorkflowService) QueryWorkflow(workflowId int) (*db.Workflow, error) {
+	var workflow db.Workflow
+	res := w.db.Model(db.Workflow{}).Where("id = ?", workflowId).First(&workflow)
 	if res.Error != nil {
 		return &workflow, res.Error
 	}
@@ -609,8 +621,8 @@ func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (string, uint, er
 
 }
 
-func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db2.Workflow, error) {
-	var workflow db2.Workflow
+func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db.Workflow, error) {
+	var workflow db.Workflow
 	workflow.Type = uint(saveData.Type)
 	workflow.CreateTime = time.Now()
 	workflow.UpdateTime = time.Now()
@@ -624,7 +636,7 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db
 	return workflow, nil
 }
 
-func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {
+func (w *WorkflowService) UpdateWorkflow(data db.Workflow) error {
 	res := w.db.Save(&data)
 	if res.Error != nil {
 		return res.Error
@@ -694,7 +706,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 }
 
 func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int) error {
-	err := w.db.Debug().Where("id = ? and workflow_id = ?", detailId, workflowId).Delete(&db2.WorkflowDetail{}).Error
+	err := w.db.Debug().Where("id = ? and workflow_id = ?", detailId, workflowId).Delete(&db.WorkflowDetail{}).Error
 	if err != nil {
 		return err
 	}
