@@ -264,15 +264,31 @@ func (h *HandlerServer) configContainerDeploy(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-	workflowIdStr := g.Param("workflowId")
-	workflowId, err := strconv.Atoi(workflowIdStr)
+	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+	data := containerDeployService.CheckDeployParam(projectIdStr)
+	Success(data, g)
+}
+
+func (h *HandlerServer) updateContainerDeploy(g *gin.Context) {
+	projectIdStr := g.Param("id")
+	if projectIdStr == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	deployParam := parameter.K8sDeployParam{}
+	err := g.BindJSON(&deployParam)
 	if err != nil {
-		Fail("workflow id is empty or invalid", g)
+		Fail(err.Error(), g)
 		return
 	}
 	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
-	data := containerDeployService.CheckDeployParam(projectIdStr, workflowId)
-	Success(data, g)
+	err = containerDeployService.UpdateContainerDeploy(projectIdStr, deployParam)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	Success("", g)
+
 }
 
 func (h *HandlerServer) containerDeploy(g *gin.Context) {
@@ -298,7 +314,7 @@ func (h *HandlerServer) containerDeploy(g *gin.Context) {
 	deployParam := parameter.K8sDeployParam{}
 	err = g.BindJSON(&deployParam)
 	if err != nil {
-		deployData, err := containerDeployService.QueryDeployParam(projectIdStr, workflowId)
+		deployData, err := containerDeployService.QueryDeployParam(projectIdStr)
 		if err != nil {
 			Fail("deploy param is empty", g)
 			return

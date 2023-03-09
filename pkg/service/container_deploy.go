@@ -36,17 +36,30 @@ func (c *ContainerDeployService) SaveDeployParam(projectId uuid.UUID, workflowId
 	return nil
 }
 
-func (c *ContainerDeployService) QueryDeployParam(projectId string, workflowId int) (db.ContainerDeployParam, error) {
+func (c *ContainerDeployService) QueryDeployParam(projectId string) (db.ContainerDeployParam, error) {
 	var containerDeploy db.ContainerDeployParam
-	err := c.db.Where("project_id = ? and workflow_id = ? ", projectId, workflowId).First(&containerDeploy).Error
+	err := c.db.Where("project_id = ?", projectId).First(&containerDeploy).Error
 	return containerDeploy, err
 }
 
-func (c *ContainerDeployService) CheckDeployParam(projectId string, workflowId int) bool {
+func (c *ContainerDeployService) CheckDeployParam(projectId string) bool {
 	var containerDeploy db.ContainerDeployParam
-	err := c.db.Where("project_id = ? and workflow_id = ? ", projectId, workflowId).First(&containerDeploy).Error
+	err := c.db.Where("project_id = ?", projectId).First(&containerDeploy).Error
 	if err != nil {
 		return false
 	}
 	return true
+}
+
+func (c *ContainerDeployService) UpdateContainerDeploy(projectId string, data parameter.K8sDeployParam) error {
+	var containerDeploy db.ContainerDeployParam
+	err := c.db.Where("project_id = ? ", projectId).First(&containerDeploy).Error
+	if err != nil {
+		return err
+	}
+	containerDeploy.ContainerPort = data.ContainerPort
+	containerDeploy.ServicePort = data.ServicePort
+	containerDeploy.ServiceProtocol = data.ServiceProtocol
+	containerDeploy.ServiceTargetPort = data.ServiceTargetPort
+	return c.db.Save(containerDeploy).Error
 }
