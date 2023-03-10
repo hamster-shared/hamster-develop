@@ -275,20 +275,36 @@ func (h *HandlerServer) updateContainerDeploy(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
+	projectId, err := uuid.FromString(projectIdStr)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
 	deployParam := parameter.K8sDeployParam{}
-	err := g.BindJSON(&deployParam)
+	err = g.BindJSON(&deployParam)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
 	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
-	err = containerDeployService.UpdateContainerDeploy(projectIdStr, deployParam)
+	err = containerDeployService.UpdateContainerDeploy(projectId, deployParam)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
 	Success("", g)
 
+}
+
+func (h *HandlerServer) getContainerDeploy(g *gin.Context) {
+	projectIdStr := g.Param("id")
+	if projectIdStr == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+	data := containerDeployService.GetContainerDeploy(projectIdStr)
+	Success(data, g)
 }
 
 func (h *HandlerServer) containerDeploy(g *gin.Context) {

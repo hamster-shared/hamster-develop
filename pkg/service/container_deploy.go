@@ -5,7 +5,9 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	uuid "github.com/iris-contrib/go.uuid"
+	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"time"
 )
 
 type ContainerDeployService struct {
@@ -28,6 +30,7 @@ func (c *ContainerDeployService) SaveDeployParam(projectId uuid.UUID, workflowId
 		containerDeploy.ServiceTargetPort = data.ServiceTargetPort
 		containerDeploy.ProjectId = projectId
 		containerDeploy.WorkflowId = workflowId
+		containerDeploy.UpdateTime = time.Now()
 		err = c.db.Create(&containerDeploy).Error
 		if err != nil {
 			return err
@@ -51,15 +54,27 @@ func (c *ContainerDeployService) CheckDeployParam(projectId string) bool {
 	return true
 }
 
-func (c *ContainerDeployService) UpdateContainerDeploy(projectId string, data parameter.K8sDeployParam) error {
+func (c *ContainerDeployService) UpdateContainerDeploy(projectId uuid.UUID, data parameter.K8sDeployParam) error {
 	var containerDeploy db.ContainerDeployParam
-	err := c.db.Where("project_id = ? ", projectId).First(&containerDeploy).Error
+	err := c.db.Where("project_id = ? ", projectId.String()).First(&containerDeploy).Error
 	if err != nil {
-		return err
+		containerDeploy.ProjectId = projectId
 	}
 	containerDeploy.ContainerPort = data.ContainerPort
 	containerDeploy.ServicePort = data.ServicePort
 	containerDeploy.ServiceProtocol = data.ServiceProtocol
 	containerDeploy.ServiceTargetPort = data.ServiceTargetPort
-	return c.db.Save(containerDeploy).Error
+	containerDeploy.UpdateTime = time.Now()
+	return c.db.Save(&containerDeploy).Error
+}
+
+func (c *ContainerDeployService) GetContainerDeploy(projectId string) db.ContainerDeployParamVo {
+	var containerDeploy db.ContainerDeployParam
+	var data db.ContainerDeployParamVo
+	err := c.db.Where("project_id = ? ", projectId).First(&containerDeploy).Error
+	if err != nil {
+		return data
+	}
+	copier.Copy(&data, &containerDeploy)
+	return data
 }
