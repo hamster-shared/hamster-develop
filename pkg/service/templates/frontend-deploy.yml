@@ -8,5 +8,5 @@ stages:
         with:
           api: http://34.232.105.81:5001
           arti_url: ${{ param.ArtifactUrl }}
-          gateway: http://g.develop.hamsternet.io
+          gateway: http://g.alpha.hamsternet.io
           base_dir: ${{ param.baseDir }}
