@@ -826,3 +826,22 @@ func starkClassHash(filename string) (string, error) {
 	classHash := strings.TrimSpace(out.String())
 	return classHash, nil
 }
+
+func (w *WorkflowService) CheckRunningJob() {
+
+	var workflowList []db2.WorkflowDetail
+	err := w.db.Model(db2.WorkflowDetail{}).Where("status = ?", vo.WORKFLOW_STATUS_RUNNING).Find(&workflowList).Error
+	if err != nil {
+		return
+	}
+
+	for _, flow := range workflowList {
+		workflowKey := w.GetWorkflowKey(flow.ProjectId.String(), uint(flow.WorkflowId))
+		jobDetail := w.engine.GetJobHistory(workflowKey, int(flow.ExecNumber))
+		if jobDetail.Status == model.STATUS_RUNNING {
+			// check it is really running
+
+		}
+	}
+
+}
