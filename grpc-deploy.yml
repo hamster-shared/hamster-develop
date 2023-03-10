@@ -62,6 +62,9 @@ spec:
             - mountPath: /certs
               name: docker-tls
               readOnly: true
+            - name: kubeconfig
+              mountPath: "/root/.kube"
+              readOnly: true
       volumes:
         - name: aline-pipelines
           persistentVolumeClaim:
@@ -72,6 +75,14 @@ spec:
         - name: docker-tls
           persistentVolumeClaim:
             claimName: docker-tls
+        - name: kubeconfig
+          configMap:
+            # Provide the name of the ConfigMap you want to mount.
+            name: kubeconfig
+            # An array of keys from the ConfigMap to create as files
+            items:
+              - key: "kubeconfig"
+                path: "config"
 ---
 apiVersion: apps/v1
 kind: Deployment
