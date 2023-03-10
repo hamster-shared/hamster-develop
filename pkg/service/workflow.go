@@ -471,6 +471,7 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 	buildJobDetail, err := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
 	if err != nil {
 		logger.Errorf("GetJobHistory err: %s", err.Error())
+		return vo.DeployResultVo{}, err
 	}
 	if len(buildJobDetail.ActionResult.BuildData) == 0 {
 		return vo.DeployResultVo{}, errors.New("No Image")

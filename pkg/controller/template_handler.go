@@ -34,7 +34,13 @@ func (h *HandlerServer) templates(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	data, err := h.templateService.GetTemplatesByTypeId(id, languageType)
+	deployTypeStr := gin.DefaultQuery("deployType", "0")
+	deployType, err := strconv.Atoi(deployTypeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	data, err := h.templateService.GetTemplatesByTypeId(id, languageType, deployType)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

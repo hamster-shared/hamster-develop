@@ -328,21 +328,12 @@ func (h *HandlerServer) containerDeploy(g *gin.Context) {
 	}
 	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
 	deployParam := parameter.K8sDeployParam{}
-	err = g.BindJSON(&deployParam)
+	deployData, err := containerDeployService.QueryDeployParam(projectIdStr)
 	if err != nil {
-		deployData, err := containerDeployService.QueryDeployParam(projectIdStr)
-		if err != nil {
-			Fail("deploy param is empty", g)
-			return
-		}
-		copier.Copy(&deployParam, &deployData)
-	} else {
-		err = containerDeployService.SaveDeployParam(projectId, workflowId, deployParam)
-		if err != nil {
-			Fail("save deploy param failed", g)
-			return
-		}
+		Fail("please config deploy param", g)
+		return
 	}
+	copier.Copy(&deployParam, &deployData)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	userAny, _ := g.Get("user")
 	user, _ := userAny.(db2.User)

@@ -20,16 +20,15 @@ func NewContainerDeployService() *ContainerDeployService {
 	}
 }
 
-func (c *ContainerDeployService) SaveDeployParam(projectId uuid.UUID, workflowId int, data parameter.K8sDeployParam) error {
+func (c *ContainerDeployService) SaveDeployParam(projectId uuid.UUID, data parameter.K8sDeployParam) error {
 	var containerDeploy db.ContainerDeployParam
-	err := c.db.Where("project_id = ? and workflow_id = ? ", projectId, workflowId).First(&containerDeploy).Error
+	err := c.db.Where("project_id = ?", projectId).First(&containerDeploy).Error
 	if err == gorm.ErrRecordNotFound {
 		containerDeploy.ContainerPort = data.ContainerPort
 		containerDeploy.ServicePort = data.ServicePort
 		containerDeploy.ServiceProtocol = data.ServiceProtocol
 		containerDeploy.ServiceTargetPort = data.ServiceTargetPort
 		containerDeploy.ProjectId = projectId
-		containerDeploy.WorkflowId = workflowId
 		containerDeploy.UpdateTime = time.Now()
 		err = c.db.Create(&containerDeploy).Error
 		if err != nil {
