@@ -52,6 +52,11 @@ spec:
               value: /certs/client
             - name: DOCKER_TLS_VERIFY
               value: "1"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: openai_api_key
           ports:
             - containerPort: 8080
           volumeMounts:
@@ -113,14 +118,31 @@ spec:
               value: /certs/client
             - name: DOCKER_TLS_VERIFY
               value: "1"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: openai_api_key
           volumeMounts:
             - mountPath: /certs
               name: docker-tls
+              readOnly: true
+            - name: kubeconfig
+              mountPath: "/root/.kube"
               readOnly: true
       volumes:
         - name: docker-tls
           persistentVolumeClaim:
             claimName: docker-tls
+        - name: kubeconfig
+          configMap:
+            # Provide the name of the ConfigMap you want to mount.
+            name: kubeconfig
+            # An array of keys from the ConfigMap to create as files
+            items:
+              - key: "kubeconfig"
+                path: "config"
+
 ---
 apiVersion: v1
 kind: Service
