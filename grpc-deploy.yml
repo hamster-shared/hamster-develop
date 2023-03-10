@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: hamster-aline
+  name: hamster-aline-master
 spec:
   selector:
-    app: hamster-aline
+    app: hamster-aline-master
   type: NodePort
   ports:
     - name: aline-master-web
@@ -21,21 +21,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hamster-aline
+  name: hamster-aline-master
   labels:
-    app: hamster-aline
+    app: hamster-aline-master
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: hamster-aline
+      app: hamster-aline-master
   template:
     metadata:
       labels:
-        app: hamster-aline
+        app: hamster-aline-master
     spec:
       containers:
-        - name: hamster-aline
+        - name: hamster-aline-master
           image: hamstershare/hamster-develop:${PIPELINE_ID}
           imagePullPolicy: Always
           env:
@@ -73,66 +73,43 @@ spec:
           persistentVolumeClaim:
             claimName: docker-tls
 ---
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  name: hamster-aline-worker
-#spec:
-#  selector:
-#    app: hamster-aline-worker
-#  ports:
-#    - name: aline-worker-port
-#      protocol: TCP
-#      port: 50001
-#      targetPort: 50001
----
-#apiVersion: apps/v1
-#kind: Deployment
-#metadata:
-#  name: hamster-aline-worker
-#  labels:
-#    app: hamster-aline-worker
-#spec:
-#  replicas: 1
-#  selector:
-#    matchLabels:
-#      app: hamster-aline-worker
-#  template:
-#    metadata:
-#      labels:
-#        app: hamster-aline-worker
-#    spec:
-#      containers:
-#        - name: hamster-aline
-#          image: hamstershare/hamster-develop-worker:${PIPELINE_ID}
-#          imagePullPolicy: Always
-#          env:
-#            - name: MASTER_ADDRESS
-#              value: hamster-aline:50001
-#            - name: DOCKER_HOST
-#              value: tcp://docker:2376
-#            - name: DOCKER_CERT_PATH
-#              value: /certs/client
-#            - name: DOCKER_TLS_VERIFY
-#              value: "1"
-#          volumeMounts:
-#            # - mountPath: /root/pipelines
-#            # name: aline-pipelines
-#            # - mountPath: /root/workdir
-#            #   name: aline-workdir
-#            - mountPath: /certs
-#              name: docker-tls
-#              readOnly: true
-#      volumes:
-#        # - name: aline-pipelines
-#        #   persistentVolumeClaim:
-#        #     claimName: aline-pipelines
-#        # - name: aline-workdir
-#        #   persistentVolumeClaim:
-#        #     claimName: aline-workdir
-#        - name: docker-tls
-#          persistentVolumeClaim:
-#            claimName: docker-tls
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hamster-aline-worker-1
+  labels:
+    app: hamster-aline-worker-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hamster-aline-worker-1
+  template:
+    metadata:
+      labels:
+        app: hamster-aline-worker-1
+    spec:
+      containers:
+        - name: hamster-aline-worker-1
+          image: hamstershare/hamster-develop-worker:${PIPELINE_ID}
+          imagePullPolicy: Always
+          env:
+            - name: MASTER_ADDRESS
+              value: hamster-aline:50001
+            - name: DOCKER_HOST
+              value: tcp://docker:2376
+            - name: DOCKER_CERT_PATH
+              value: /certs/client
+            - name: DOCKER_TLS_VERIFY
+              value: "1"
+          volumeMounts:
+            - mountPath: /certs
+              name: docker-tls
+              readOnly: true
+      volumes:
+        - name: docker-tls
+          persistentVolumeClaim:
+            claimName: docker-tls
 ---
 apiVersion: v1
 kind: Service
