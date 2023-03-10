@@ -337,7 +337,7 @@ func (h *HandlerServer) containerDeploy(g *gin.Context) {
 		}
 		copier.Copy(&deployParam, &deployData)
 	} else {
-		err = containerDeployService.SaveDeployParam(projectId, workflowId, deployParam)
+		err = containerDeployService.SaveDeployParam(projectId, deployParam)
 		if err != nil {
 			Fail("save deploy param failed", g)
 			return
