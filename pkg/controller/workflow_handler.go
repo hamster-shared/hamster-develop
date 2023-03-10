@@ -212,7 +212,7 @@ func (h *HandlerServer) stopWorkflow(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	engineService := application.GetBean[*engine.Engine]("engine")
+	engineService := application.GetBean[engine.Engine]("engine")
 	err = engineService.TerminalJob(workflowKey, int(detail.ExecNumber))
 	if err != nil {
 		Fail(err.Error(), gin)

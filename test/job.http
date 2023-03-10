@@ -98,21 +98,18 @@ GET http://34.232.105.81:8088/api/templates-category/1/templates?languageType=1
 Content-Type: application/json
 Access-Token: Aq7I04y2uh+0fWXjRq8V3MSIcBCvJMn/bILGq3xvJzFW1WcWxpjmExDMmbJoT6Qu
 
-### query templates
-GET http://34.232.105.81:8088/api/templates/show?type=1&languageType=4
-Content-Type: application/json
-Access-Token: Aq7I04y2uh+0fWXjRq8V3MSIcBCvJMn/bILGq3xvJzFW1WcWxpjmExDMmbJoT6Qu
-
 ### query template detail
 GET http://localhost:8080/api/templates/1
 
 ### query projects
-GET http://localhost:8080/api/projects?page=1&size=10
+GET http://61.172.179.6:30302/api/projects?page=1&size=10
 Content-Type: application/json
-Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 
 ### query project detail
-GET http://localhost:8080/api/projects/48068104-d96a-4d4d-a107-4fe3e268408f
+GET http://localhost:8080/api/projects/d67f12e7-6151-44f2-bfaf-ed84b188b92a
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 
 ### build
 POST http://localhost:8080/api/projects/d3586e4f-41a3-4d51-b91e-5a108d5dc53d/build
@@ -150,14 +147,15 @@ GET http://localhost:8080/api/projects/1/contract/deploy/detail
 ### create projects
 POST http://localhost:8080/api/projects
 Content-Type: application/json
-Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 
 {
-  "name": "ERC721CommunityStream-1",
-  "type": 1,
-  "templateOwner": "hamster-contract",
-  "templateRepo": "ERC721CommunityStream",
+  "name": "k8s-data-47",
+  "type": 2,
   "frameType": 1,
+  "templateUrl": "https://github.com/hamster-template/vuejs.git",
+  "deployType": 2,
+  "templateRepo": "vuejs",
   "repoOwner": "jian-guo-s",
   "userId": 53070354
 }
@@ -297,3 +295,43 @@ Access-Token: 57QEeUaskUR4UkiXxCCXsyUVZ1QHIQuEK4sy/CeOc+JBWMdgJoSuDM/aND9lePgE
   "address": "",
   "type": 4
 }
+
+### build
+POST http://localhost:8080/api/projects/3775dd75-5f25-42d6-9b44-303e8127fe10/build
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
+
+### container deploy
+POST http://localhost:8080/api/projects/3775dd75-5f25-42d6-9b44-303e8127fe10/workflows/469/detail/519/container/deploy
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
+{
+  "containerPort": 80,
+  "serviceProtocol": "TCP",
+  "servicePort": 8086,
+  "serviceTargetPort": 80
+}
+
+### query templates
+GET http://localhost:8080/api/templates/show?type=1&languageType=1
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
+####
+POST http://61.172.179.6:30302/api/projects/3775dd75-5f25-42d6-9b44-303e8127fe10/container/deploy
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
+{
+  "containerPort": 80,
+  "serviceProtocol": "TCP",
+  "servicePort": 8086,
+  "serviceTargetPort": 80
+}
+
+####
+GET http://61.172.179.6:30302/api/projects/3775dd75-5f25-42d6-9b44-303e8127fe10/container/deploy
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip

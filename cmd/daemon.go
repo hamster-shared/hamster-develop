@@ -38,7 +38,7 @@ to quickly create a Cobra application.`,
 		DSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 			userFlag.Value, passwordFlag.Value, hostFlag.Value, portFlag.Value, nameFlag.Value)
 
-		go Engine.Start()
+		// go Engine.Start()
 
 		port, _ = rootCmd.PersistentFlags().GetInt("port")
 		db, err := gorm.Open(mysql.New(mysql.Config{
@@ -58,7 +58,7 @@ to quickly create a Cobra application.`,
 			return
 		}
 		application.SetBean[*gorm.DB]("db", db)
-		application.SetBean[*engine.Engine]("engine", Engine)
+		application.SetBean[engine.Engine]("engine", Engine)
 		workflowService := service.NewWorkflowService()
 		application.SetBean[*service.WorkflowService]("workflowService", workflowService)
 		contractService := service.NewContractService()
@@ -71,6 +71,8 @@ to quickly create a Cobra application.`,
 		application.SetBean[*service.GithubService]("githubService", githubService)
 		loginService := service.NewLoginService()
 		application.SetBean[*service.LoginService]("loginService", loginService)
+		containerDeployService := service.NewContainerDeployService()
+		application.SetBean[*service.ContainerDeployService]("containerDeployService", containerDeployService)
 		frontendPackageService := service.NewFrontendPackageService()
 		application.SetBean[*service.FrontendPackageService]("frontendPackageService", frontendPackageService)
 		templateService.Init(db)
