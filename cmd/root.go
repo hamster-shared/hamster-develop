@@ -19,13 +19,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func getEngine() engine.Engine {
+	e, err := engine.NewMasterEngine(50001)
+	if err != nil {
+		logger.Error("启动引擎失败 err:", err)
+		panic(err)
+	}
+	return e
+}
+
 // rootCmd represents the base command when called without any subcommands
 var (
 	port            = 8080
 	pipelineFile    string
 	templateService = service2.NewTemplateService()
 	projectService  = service2.NewProjectService()
-	Engine          = engine.NewEngine()
+	Engine          = getEngine()
 	handlerServer   = controller.NewHandlerServer(Engine, templateService, projectService)
 	rootCmd         = &cobra.Command{
 		Use:   "aline",
@@ -44,7 +53,7 @@ hamster pipeline file in the local environment.`,
 				return
 			}
 
-			// 启动executor
+			// 启动 executor
 			yamlByte, err := io.ReadAll(cicdFile)
 			if err != nil {
 				fmt.Println(err)
@@ -54,7 +63,7 @@ hamster pipeline file in the local environment.`,
 
 			job, _ := pipeline.GetJobFromYaml(yaml)
 
-			go Engine.Start()
+			// go Engine.Start()
 
 			err = Engine.CreateJob(job.Name, yaml)
 
@@ -65,7 +74,10 @@ hamster pipeline file in the local environment.`,
 
 			for jobDetail.Status <= model.STATUS_RUNNING {
 				time.Sleep(time.Second * 3)
-				jobDetail = Engine.GetJobHistory(jobDetail.Name, jobDetail.Id)
+				jobDetail, err = Engine.GetJobHistory(jobDetail.Name, jobDetail.Id)
+				if err != nil {
+					logger.Error("err:", err)
+				}
 			}
 		},
 	}

@@ -31,7 +31,7 @@ func NewContractService() *ContractService {
 	}
 }
 
-func (c *ContractService) DoStarknetDeclare(compiledContract []byte) (txHash string, err error) {
+func (c *ContractService) DoStarknetDeclare(compiledContract []byte) (txHash string, classHash string, err error) {
 	gw := gateway.NewClient(gateway.WithChain(gateway.GOERLI_ID))
 
 	ctx := context.Background()
@@ -40,12 +40,12 @@ func (c *ContractService) DoStarknetDeclare(compiledContract []byte) (txHash str
 	err = json.Unmarshal(compiledContract, &contractClass)
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	declare, err := gw.Declare(ctx, contractClass, gateway.DeclareRequest{})
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	fmt.Println("declare.TransactionHash: ", declare.TransactionHash)
@@ -54,14 +54,14 @@ func (c *ContractService) DoStarknetDeclare(compiledContract []byte) (txHash str
 	_, receipt, err := gw.WaitForTransaction(ctx, declare.TransactionHash, 3, 10)
 	if err != nil {
 		fmt.Printf("could not declare contract: %v\n", err)
-		return "", err
+		return "", "", err
 	}
 	if receipt.Status != types.TransactionAcceptedOnL1 && receipt.Status != types.TransactionAcceptedOnL2 {
 		fmt.Printf("unexpected status: %s\n", receipt.Status)
-		return "", err
+		return "", "", err
 	}
 
-	return txHash, nil
+	return declare.TransactionHash, declare.ClassHash, nil
 }
 
 func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {

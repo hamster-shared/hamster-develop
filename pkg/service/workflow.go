@@ -19,12 +19,12 @@ import (
 	"time"
 
 	engine "github.com/hamster-shared/aline-engine"
+	jober "github.com/hamster-shared/aline-engine/job"
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/aline-engine/model"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	"github.com/hamster-shared/hamster-develop/pkg/db"
-	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
@@ -38,13 +38,13 @@ var temp embed.FS
 
 type WorkflowService struct {
 	db     *gorm.DB
-	engine *engine.Engine
+	engine engine.Engine
 }
 
 func NewWorkflowService() *WorkflowService {
 	workflowService := &WorkflowService{
 		db:     application.GetBean[*gorm.DB]("db"),
-		engine: application.GetBean[*engine.Engine]("engine"),
+		engine: application.GetBean[engine.Engine]("engine"),
 	}
 
 	go workflowService.engine.RegisterStatusChangeHook(workflowService.SyncStatus)
@@ -53,13 +53,17 @@ func NewWorkflowService() *WorkflowService {
 }
 
 func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
+	logger.Debugf("SyncStatus: %v", message)
 
 	_, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
 	if err != nil {
 		return
 	}
 
-	jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
+	if err != nil {
+		return
+	}
 
 	var workflowDetail db.WorkflowDetail
 
@@ -79,7 +83,10 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	}
 	workflowDetail.StageInfo = string(stageInfo)
 	workflowDetail.UpdateTime = time.Now()
-	workflowDetail.CodeInfo = w.engine.GetCodeInfo(message.JobName, message.JobId)
+	workflowDetail.CodeInfo, err = w.engine.GetCodeInfo(message.JobName, message.JobId)
+	if err != nil {
+		logger.Warnf("get code info failed: %v", err)
+	}
 	workflowDetail.Duration = jobDetail.Duration
 
 	tx := w.db.Save(&workflowDetail)
@@ -110,7 +117,10 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 	if uint(consts.FRONTEND) != projectData.Type {
 		return
 	}
-	jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
+	if err != nil {
+		return
+	}
 	if uint(consts.Build) == workflowDetail.Type {
 		w.syncFrontendBuild(jobDetail, workflowDetail, projectData)
 	} else if uint(consts.Deploy) == workflowDetail.Type {
@@ -118,7 +128,7 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 	}
 }
 
-func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDetail db2.WorkflowDetail, project db.Project) {
+func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDetail db.WorkflowDetail, project db.Project) {
 	if len(detail.ActionResult.Artifactorys) > 0 {
 		for range detail.ActionResult.Artifactorys {
 			frontendPackage := db.FrontendPackage{
@@ -139,7 +149,7 @@ func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDet
 	}
 }
 
-func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDetail db2.WorkflowDetail, project db.Project) {
+func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDetail db.WorkflowDetail, project db.Project) {
 
 	if len(detail.ActionResult.Deploys) > 0 {
 		buildWorkflowDetailIdStr := detail.Parameter["buildWorkflowDetailId"]
@@ -153,8 +163,12 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		var image string
 		if project.FrameType == 1 {
 			image = "https://develop-images.api.hamsternet.io/vue.png"
-		} else {
+		} else if project.FrameType == 2 {
 			image = "https://develop-images.api.hamsternet.io/react.png"
+		} else if project.FrameType == 3 {
+			image = "https://static.devops.hamsternet.io/ipfs/QmW8DNyCUrvDHaG4a4aKjkDNTbYDy9kwFxhFno2nKmgTKt"
+		} else {
+			image = "https://static.devops.hamsternet.io/ipfs/QmPsa61VtwQH3ixzZys7EF9VG1zV7LQHDYjEYBfZpnmPDy"
 		}
 		for _, deploy := range detail.ActionResult.Deploys {
 			var data db.FrontendPackage
@@ -200,7 +214,10 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		log.Println("UUID from string failed: ", err.Error())
 		return
 	}
-	jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
+	if err != nil {
+		return
+	}
 
 	if len(jobDetail.Artifactorys) > 0 {
 
@@ -316,7 +333,14 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 	if message.Status == model.STATUS_SUCCESS {
 		//TODO.... 实现同步报告
 		fmt.Println(projectId, workflowId, workflowExecNumber)
-		jobDetail := w.engine.GetJobHistory(message.JobName, message.JobId)
+		jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
+		if err != nil {
+			logger.Errorf("Get job history fail, jobName: %s, jobId: %d", message.JobName, message.JobId)
+			return
+		}
+		logger.Tracef("Get job history success, jobName: %s, jobId: %d", message.JobName, message.JobId)
+		logger.Tracef("len jobDetail.Reports: %d", len(jobDetail.Reports))
+		logger.Tracef("jobDetail file path: %s", jober.GetJobDetailFilePath(message.JobName, message.JobId))
 		var reportList []db.Report
 		begin := w.db.Begin()
 		for _, report := range jobDetail.Reports {
@@ -348,11 +372,11 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 						Name:             contractCheckResult.Name,
 						Type:             uint(consts.Check),
 						CheckTool:        contractCheckResult.Tool,
-						CheckVersion:     contractCheckResult.SolcVersion,
-						Result:           contractCheckResult.Result,
-						CheckTime:        time.Now(),
-						ReportFile:       string(marshal),
-						CreateTime:       time.Now(),
+						// CheckVersion:     contractCheckResult.SolcVersion,
+						Result:     contractCheckResult.Result,
+						CheckTime:  time.Now(),
+						ReportFile: string(marshal),
+						CreateTime: time.Now(),
 					}
 					reportList = append(reportList, report)
 				}
@@ -368,12 +392,13 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 					CheckTool:        "OpenAI",
 					Result:           "success",
 					CheckTime:        time.Now(),
-					ReportFile:       string(report.Content),
-					CreateTime:       time.Now(),
+					// ReportFile:       string(report.Content),
+					CreateTime: time.Now(),
 				}
 				reportList = append(reportList, report)
 			}
 		}
+		logger.Tracef("len(reportList): %d ", len(reportList))
 		err = begin.Save(&reportList).Error
 		if err != nil {
 			logger.Errorf("Save report fail, err is %s", err.Error())
@@ -390,8 +415,8 @@ func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.
 }
 
 func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
-	var project db2.Project
-	err := w.db.Model(db2.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	var project db.Project
+	err := w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
 	if err != nil {
 		logger.Info("project is not exit ")
 		return err
@@ -418,7 +443,10 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 		logger.Info("workflow ")
 		return vo.DeployResultVo{}, err
 	}
-	buildJobDetail := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
+	buildJobDetail, err := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
+	if err != nil {
+		return vo.DeployResultVo{}, err
+	}
 
 	if len(buildJobDetail.ActionResult.Artifactorys) == 0 {
 		return vo.DeployResultVo{}, errors.New("No Artifacts")
@@ -432,8 +460,8 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 }
 
 func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth, deployParam parameter.K8sDeployParam) (vo.DeployResultVo, error) {
-	var project db2.Project
-	err := w.db.Model(db2.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	var project db.Project
+	err := w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
 	if err != nil {
 		logger.Info("project is not exit ")
 		return vo.DeployResultVo{}, err
@@ -442,10 +470,14 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 
 	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId)
 	if err != nil {
-		logger.Info("workflow ")
+		logger.Errorf("GetWorkflowDetail err: %s", err.Error())
 		return vo.DeployResultVo{}, err
 	}
-	buildJobDetail := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
+	buildJobDetail, err := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
+	if err != nil {
+		logger.Errorf("GetJobHistory err: %s", err.Error())
+		return vo.DeployResultVo{}, err
+	}
 	if len(buildJobDetail.ActionResult.BuildData) == 0 {
 		return vo.DeployResultVo{}, errors.New("No Image")
 	}
@@ -460,8 +492,8 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 			corev1.ResourceMemory: resource.MustParse("500Mi"),
 		},
 		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("500m"),
-			corev1.ResourceMemory: resource.MustParse("500Mi"),
+			corev1.ResourceCPU:    resource.MustParse("50m"),
+			corev1.ResourceMemory: resource.MustParse("50Mi"),
 		},
 	}
 	ports = append(ports, port)
@@ -516,10 +548,16 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 
 	workflowKey := w.GetWorkflowKey(projectId.String(), workflow.Id)
 
-	job := w.engine.GetJob(workflowKey)
-	if job == nil {
+	logger.Tracef("workflow key is %s", workflowKey)
+	job, err := w.engine.GetJob(workflowKey)
+	if err != nil {
+		logger.Tracef("job is not exist, create job: %s", workflowKey)
 		var jobModel model.Job
 		err := yaml.Unmarshal([]byte((workflow.ExecFile)), &jobModel)
+		if err != nil {
+			logger.Errorf("Unmarshal job fail, err is %s", err.Error())
+			return deployResult, err
+		}
 		if jobModel.Name != workflowKey {
 			jobModel.Name = workflowKey
 			execFile, _ := yaml.Marshal(jobModel)
@@ -530,7 +568,12 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		if err != nil {
 			return deployResult, err
 		}
-		job = w.engine.GetJob(workflowKey)
+		job, err = w.engine.GetJob(workflowKey)
+		if err != nil {
+			logger.Errorf("Get job fail, err is %s", err.Error())
+			return deployResult, err
+		}
+		logger.Tracef("create job success, job name is %s", job.Name)
 	}
 	if params != nil {
 		if job.Parameter == nil {
@@ -549,10 +592,12 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 	detail, err := w.engine.ExecuteJob(workflowKey)
 
 	if err != nil {
+		logger.Errorf("Create job detail fail, err is %s", err.Error())
 		return deployResult, err
 	}
 	stageInfo, err := json.Marshal(detail.Stages)
 	if err != nil {
+		logger.Errorf("Marshal stage info fail, err is %s", err.Error())
 		return deployResult, err
 	}
 
@@ -578,10 +623,12 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 	})
 
 	if err != nil {
+		logger.Errorf("Save workflow detail fail, err is %s", err.Error())
 		return deployResult, err
 	}
 	deployResult.WorkflowId = workflow.Id
 	deployResult.DetailId = dbDetail.Id
+	logger.Tracef("create job detail success, job detail id is %d", detail.Id)
 	return deployResult, nil
 }
 
@@ -589,8 +636,8 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	var total int64
 	var data vo.WorkflowPage
 	var workflowData []vo.WorkflowVo
-	var workflowList []db2.WorkflowDetail
-	tx := w.db.Model(db2.WorkflowDetail{}).Where("project_id = ?", projectId)
+	var workflowList []db.WorkflowDetail
+	tx := w.db.Model(db.WorkflowDetail{}).Where("project_id = ?", projectId)
 	if workflowType != 0 {
 		tx = tx.Where("type = ? ", workflowType)
 	}
@@ -615,9 +662,9 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 }
 
 func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*vo.WorkflowDetailVo, error) {
-	var workflowDetail db2.WorkflowDetail
+	var workflowDetail db.WorkflowDetail
 	var detail vo.WorkflowDetailVo
-	res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
+	res := w.db.Model(db.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
 	if res.Error != nil {
 		return &detail, res.Error
 	}
@@ -625,7 +672,10 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	_ = copier.Copy(&detail, &workflowDetail)
 	if workflowDetail.Status == vo.WORKFLOW_STATUS_RUNNING {
 		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.WorkflowId)
-		jobDetail := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
+		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
+		if err != nil {
+			logger.Warnf("get job history fail, err is %s", err.Error())
+		}
 		data, err := json.Marshal(jobDetail.Stages)
 		if err == nil {
 			detail.StageInfo = string(data)
@@ -635,18 +685,18 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	return &detail, nil
 }
 
-func (w *WorkflowService) QueryWorkflowDetail(workflowId, workflowDetailId int) (*db2.WorkflowDetail, error) {
-	var workflowDetail db2.WorkflowDetail
-	res := w.db.Model(db2.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
+func (w *WorkflowService) QueryWorkflowDetail(workflowId, workflowDetailId int) (*db.WorkflowDetail, error) {
+	var workflowDetail db.WorkflowDetail
+	res := w.db.Model(db.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
 	if res.Error != nil {
 		return &workflowDetail, res.Error
 	}
 	return &workflowDetail, nil
 }
 
-func (w *WorkflowService) QueryWorkflow(workflowId int) (*db2.Workflow, error) {
-	var workflow db2.Workflow
-	res := w.db.Model(db2.Workflow{}).Where("id = ?", workflowId).First(&workflow)
+func (w *WorkflowService) QueryWorkflow(workflowId int) (*db.Workflow, error) {
+	var workflow db.Workflow
+	res := w.db.Model(db.Workflow{}).Where("id = ?", workflowId).First(&workflow)
 	if res.Error != nil {
 		return &workflow, res.Error
 	}
@@ -667,8 +717,8 @@ func GetProjectIdAndWorkflowIdByWorkflowKey(projectKey string) (string, uint, er
 
 }
 
-func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db2.Workflow, error) {
-	var workflow db2.Workflow
+func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db.Workflow, error) {
+	var workflow db.Workflow
 	workflow.Type = uint(saveData.Type)
 	workflow.CreateTime = time.Now()
 	workflow.UpdateTime = time.Now()
@@ -682,7 +732,7 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db
 	return workflow, nil
 }
 
-func (w *WorkflowService) UpdateWorkflow(data db2.Workflow) error {
+func (w *WorkflowService) UpdateWorkflow(data db.Workflow) error {
 	res := w.db.Save(&data)
 	if res.Error != nil {
 		return res.Error
@@ -763,7 +813,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 }
 
 func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int) error {
-	err := w.db.Debug().Where("id = ? and workflow_id = ?", detailId, workflowId).Delete(&db2.WorkflowDetail{}).Error
+	err := w.db.Debug().Where("id = ? and workflow_id = ?", detailId, workflowId).Delete(&db.WorkflowDetail{}).Error
 	if err != nil {
 		return err
 	}
@@ -781,4 +831,23 @@ func starkClassHash(filename string) (string, error) {
 	}
 	classHash := strings.TrimSpace(out.String())
 	return classHash, nil
+}
+
+func (w *WorkflowService) CheckRunningJob() {
+
+	var workflowList []db.WorkflowDetail
+	err := w.db.Model(db.WorkflowDetail{}).Where("status = ?", vo.WORKFLOW_STATUS_RUNNING).Find(&workflowList).Error
+	if err != nil {
+		return
+	}
+
+	for _, flow := range workflowList {
+		workflowKey := w.GetWorkflowKey(flow.ProjectId.String(), uint(flow.WorkflowId))
+		jobDetail, _ := w.engine.GetJobHistory(workflowKey, int(flow.ExecNumber))
+		if jobDetail.Status == model.STATUS_RUNNING {
+			// check it is really running
+
+		}
+	}
+
 }

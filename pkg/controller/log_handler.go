@@ -48,9 +48,17 @@ func (h *HandlerServer) getWorkflowLog(gin *gin.Context) {
 		return
 	}
 	logName := workflowService.GetWorkflowKey(workflow.ProjectId.String(), workflow.Id)
-	engine := application.GetBean[*engine.Engine]("engine")
-	jobDetail := engine.GetJobHistory(logName, int(workflowDetail.ExecNumber))
-	data := engine.GetJobHistoryLog(logName, int(workflowDetail.ExecNumber))
+	engine := application.GetBean[engine.Engine]("engine")
+	jobDetail, err := engine.GetJobHistory(logName, int(workflowDetail.ExecNumber))
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	data, err := engine.GetJobHistoryLog(logName, int(workflowDetail.ExecNumber))
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 
 	gin.Writer.Header().Set("LastLine", strconv.Itoa(data.LastLine))
 	gin.Writer.Header().Set("End", strconv.FormatBool(jobDetail.Status != model.STATUS_RUNNING))
@@ -78,7 +86,7 @@ func (h *HandlerServer) getWorkflowStageLog(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	engine := application.GetBean[*engine.Engine]("engine")
+	engine := application.GetBean[engine.Engine]("engine")
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	workflow, err := workflowService.QueryWorkflow(workflowId)
 	if err != nil {
@@ -91,7 +99,11 @@ func (h *HandlerServer) getWorkflowStageLog(gin *gin.Context) {
 		return
 	}
 	logName := workflowService.GetWorkflowKey(workflow.ProjectId.String(), workflow.Id)
-	data := engine.GetJobHistoryStageLog(logName, int(workflowDetail.ExecNumber), name, start)
+	data, err := engine.GetJobHistoryStageLog(logName, int(workflowDetail.ExecNumber), name, start)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
 	gin.Writer.Header().Set("LastLine", strconv.Itoa(data.LastLine))
 	gin.Writer.Header().Set("End", strconv.FormatBool(data.End))
 	Success(data, gin)

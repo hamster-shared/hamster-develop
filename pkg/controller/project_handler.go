@@ -2,7 +2,11 @@ package controller
 
 import (
 	"embed"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
@@ -11,8 +15,6 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
-	"net/http"
-	"strconv"
 )
 
 //go:embed templates
@@ -180,14 +182,12 @@ func (h *HandlerServer) projectDetail(gin *gin.Context) {
 }
 
 func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
+	logger.Tracef("projectWorkflowCheck")
 
 	projectIdStr := g.Param("id")
 	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
-		Fail("projectId is empty or invalid", g)
-		return
-	}
-	if err != nil {
+		logger.Errorf("projectWorkflowCheck error: %s", err.Error())
 		Fail(err.Error(), g)
 		return
 	}
@@ -196,15 +196,21 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 	var userVo vo.UserAuth
 	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectCheckWorkflow(projectId, userVo)
+	err = workflowService.ExecProjectCheckWorkflow(projectId, userVo)
+	if err != nil {
+		logger.Errorf("projectWorkflowCheck error: %s", err.Error())
+		Fail(err.Error(), g)
+		return
+	}
 	Success("", g)
 }
 
 func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
-
+	logger.Tracef("projectWorkflowBuild")
 	projectIdStr := g.Param("id")
 	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
+		logger.Errorf("projectWorkflowBuild error: %s", err.Error())
 		Fail("projectId is empty or invalid", g)
 		return
 	}
@@ -258,14 +264,46 @@ func (h *HandlerServer) configContainerDeploy(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-	workflowIdStr := g.Param("workflowId")
-	workflowId, err := strconv.Atoi(workflowIdStr)
+	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+	data := containerDeployService.CheckDeployParam(projectIdStr)
+	Success(data, g)
+}
+
+func (h *HandlerServer) updateContainerDeploy(g *gin.Context) {
+	projectIdStr := g.Param("id")
+	if projectIdStr == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
-		Fail("workflow id is empty or invalid", g)
+		Fail(err.Error(), g)
+		return
+	}
+	deployParam := parameter.K8sDeployParam{}
+	err = g.BindJSON(&deployParam)
+	if err != nil {
+		Fail(err.Error(), g)
 		return
 	}
 	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
-	data := containerDeployService.CheckDeployParam(projectIdStr, workflowId)
+	err = containerDeployService.UpdateContainerDeploy(projectId, deployParam)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	Success("", g)
+
+}
+
+func (h *HandlerServer) getContainerDeploy(g *gin.Context) {
+	projectIdStr := g.Param("id")
+	if projectIdStr == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+	data := containerDeployService.GetContainerDeploy(projectIdStr)
 	Success(data, g)
 }
 
@@ -290,21 +328,12 @@ func (h *HandlerServer) containerDeploy(g *gin.Context) {
 	}
 	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
 	deployParam := parameter.K8sDeployParam{}
-	err = g.BindJSON(&deployParam)
+	deployData, err := containerDeployService.QueryDeployParam(projectIdStr)
 	if err != nil {
-		deployData, err := containerDeployService.QueryDeployParam(projectIdStr, workflowId)
-		if err != nil {
-			Fail("deploy param is empty", g)
-			return
-		}
-		copier.Copy(&deployParam, &deployData)
-	} else {
-		err = containerDeployService.SaveDeployParam(projectId, workflowId, deployParam)
-		if err != nil {
-			Fail("save deploy param failed", g)
-			return
-		}
+		Fail("please config deploy param", g)
+		return
 	}
+	copier.Copy(&deployParam, &deployData)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	userAny, _ := g.Get("user")
 	user, _ := userAny.(db2.User)

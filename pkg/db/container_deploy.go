@@ -18,3 +18,11 @@ type ContainerDeployParam struct {
 	UpdateTime        time.Time      `json:"updateTime"`
 	DeleteTime        gorm.DeletedAt `json:"deleteTime"`
 }
+
+type ContainerDeployParamVo struct {
+	ProjectId         uuid.UUID `json:"projectId"`
+	ContainerPort     int32     `json:"containerPort"`
+	ServiceProtocol   string    `json:"serviceProtocol"`
+	ServicePort       int32     `json:"servicePort"`
+	ServiceTargetPort int32     `json:"serviceTargetPort"`
+}
