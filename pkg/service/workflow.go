@@ -410,7 +410,7 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	}
 	params := make(map[string]string)
 	if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.CONTAINER) {
-		image := fmt.Sprintf("%s/%s:%d", consts.DockerHubName, user.Username, time.Now().Unix())
+		image := fmt.Sprintf("%s/%s-%d:%d", consts.DockerHubName, strings.ToLower(user.Username), user.Id, time.Now().Unix())
 		params["imageName"] = image
 		if project.FrameType == 1 || project.FrameType == 2 {
 			params["runBuild"] = "true"
