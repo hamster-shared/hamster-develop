@@ -219,12 +219,12 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 	userAny, _ := g.Get("user")
 	user, _ := userAny.(db2.User)
 	copier.Copy(&userVo, &user)
-	err = workflowService.ExecProjectBuildWorkflow(projectId, userVo)
+	data, err := workflowService.ExecProjectBuildWorkflow(projectId, userVo)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
-	Success("", g)
+	Success(data, g)
 }
 
 func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
