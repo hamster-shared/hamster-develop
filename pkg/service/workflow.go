@@ -401,12 +401,12 @@ func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.
 	return err
 }
 
-func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
+func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.UserAuth) (vo.DeployResultVo, error) {
 	var project db.Project
 	err := w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
 	if err != nil {
 		logger.Info("project is not exit ")
-		return err
+		return vo.DeployResultVo{}, err
 	}
 	params := make(map[string]string)
 	if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.CONTAINER) {
@@ -418,8 +418,8 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	} else {
 		params = nil
 	}
-	_, err = w.ExecProjectWorkflow(projectId, user, 2, params)
-	return err
+	data, err := w.ExecProjectWorkflow(projectId, user, 2, params)
+	return data, err
 }
 
 func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth) (vo.DeployResultVo, error) {
