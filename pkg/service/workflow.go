@@ -225,16 +225,8 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 
 			// 判断是不是 starknet 合约
 			isStarknetContract := false
-			starknetContractClassHash := ""
 			if strings.HasSuffix(arti.Url, "starknet.output.json") {
 				isStarknetContract = true
-				classHash, err := starkClassHash(arti.Url)
-				if err != nil {
-					logger.Errorf("starknet contract class hash failed: %s", err.Error())
-					continue
-				}
-				starknetContractClassHash = classHash
-				logger.Trace("starknet contract class hash: ", starknetContractClassHash)
 			}
 
 			data, _ := os.ReadFile(arti.Url)
@@ -247,7 +239,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			}
 
 			var abi string
-			var starknetContractMatedata = ""
+			var starkNetContractMateData = ""
 			abiByte, err := json.Marshal(m["abi"])
 			if err != nil {
 				logger.Errorf("marshal contract abi failed: %s", err.Error())
@@ -256,7 +248,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			abi = string(abiByte)
 
 			if isStarknetContract {
-				starknetContractMatedata = string(data)
+				starkNetContractMateData = string(data)
 			}
 
 			var bytecodeData string
@@ -268,7 +260,14 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 					continue
 				}
 			} else {
-				bytecodeData = starknetContractClassHash
+				contractService := application.GetBean[*ContractService]("contractService")
+				_, classHash, err := contractService.DoStarknetDeclare([]byte(starkNetContractMateData))
+				if err != nil {
+					logger.Errorf("starknet contract class hash failed: %s", err.Error())
+					continue
+				}
+				logger.Trace("starknet contract class hash: ", classHash)
+				bytecodeData = classHash
 			}
 
 			var contractType uint
@@ -298,17 +297,6 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				continue
 			}
 			logger.Trace("save contract to database success: ", contract.Name)
-
-			// declare classHash
-			if isStarknetContract {
-				contractService := application.GetBean[*ContractService]("contractService")
-				go func() {
-					_, _, err := contractService.DoStarknetDeclare([]byte(starknetContractMatedata))
-					if err != nil {
-						logger.Trace("declare starknet abi error:", err.Error())
-					}
-				}()
-			}
 
 		}
 
