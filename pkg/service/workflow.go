@@ -163,8 +163,12 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		var image string
 		if project.FrameType == 1 {
 			image = "https://develop-images.api.hamsternet.io/vue.png"
-		} else {
+		} else if project.FrameType == 2 {
 			image = "https://develop-images.api.hamsternet.io/react.png"
+		} else if project.FrameType == 3 {
+			image = "https://static.devops.hamsternet.io/ipfs/QmW8DNyCUrvDHaG4a4aKjkDNTbYDy9kwFxhFno2nKmgTKt"
+		} else {
+			image = "https://static.devops.hamsternet.io/ipfs/QmPsa61VtwQH3ixzZys7EF9VG1zV7LQHDYjEYBfZpnmPDy"
 		}
 		for _, deploy := range detail.ActionResult.Deploys {
 			var data db.FrontendPackage
@@ -487,8 +491,8 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 			corev1.ResourceMemory: resource.MustParse("500Mi"),
 		},
 		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("500m"),
-			corev1.ResourceMemory: resource.MustParse("500Mi"),
+			corev1.ResourceCPU:    resource.MustParse("50m"),
+			corev1.ResourceMemory: resource.MustParse("50Mi"),
 		},
 	}
 	ports = append(ports, port)
