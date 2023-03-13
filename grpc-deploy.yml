@@ -111,7 +111,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: MASTER_ADDRESS
-              value: hamster-aline:50001
+              value: hamster-aline-master:50001
             - name: DOCKER_HOST
               value: tcp://docker:2376
             - name: DOCKER_CERT_PATH
