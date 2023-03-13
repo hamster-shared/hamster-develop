@@ -225,16 +225,8 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 
 			// 判断是不是 starknet 合约
 			isStarknetContract := false
-			starknetContractClassHash := ""
 			if strings.HasSuffix(arti.Url, "starknet.output.json") {
 				isStarknetContract = true
-				classHash, err := starkClassHash(arti.Url)
-				if err != nil {
-					logger.Errorf("starknet contract class hash failed: %s", err.Error())
-					continue
-				}
-				starknetContractClassHash = classHash
-				logger.Trace("starknet contract class hash: ", starknetContractClassHash)
 			}
 
 			data, _ := os.ReadFile(arti.Url)
@@ -267,7 +259,14 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 					continue
 				}
 			} else {
-				bytecodeData = starknetContractClassHash
+				contractService := application.GetBean[*ContractService]("contractService")
+				_, classHash, err := contractService.DoStarknetDeclare([]byte(abi))
+				if err != nil {
+					logger.Errorf("starknet contract class hash failed: %s", err.Error())
+					continue
+				}
+				logger.Trace("starknet contract class hash: ", classHash)
+				bytecodeData = classHash
 			}
 
 			var contractType uint
@@ -297,17 +296,6 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				continue
 			}
 			logger.Trace("save contract to database success: ", contract.Name)
-
-			// declare classHash
-			if isStarknetContract {
-				contractService := application.GetBean[*ContractService]("contractService")
-				go func() {
-					_, err := contractService.DoStarknetDeclare([]byte(contract.AbiInfo))
-					if err != nil {
-						logger.Trace("declare starknet abi error:", err.Error())
-					}
-				}()
-			}
 
 		}
 
@@ -830,4 +818,23 @@ func starkClassHash(filename string) (string, error) {
 	}
 	classHash := strings.TrimSpace(out.String())
 	return classHash, nil
+}
+
+func (w *WorkflowService) CheckRunningJob() {
+
+	var workflowList []db.WorkflowDetail
+	err := w.db.Model(db.WorkflowDetail{}).Where("status = ?", vo.WORKFLOW_STATUS_RUNNING).Find(&workflowList).Error
+	if err != nil {
+		return
+	}
+
+	for _, flow := range workflowList {
+		workflowKey := w.GetWorkflowKey(flow.ProjectId.String(), uint(flow.WorkflowId))
+		jobDetail, _ := w.engine.GetJobHistory(workflowKey, int(flow.ExecNumber))
+		if jobDetail.Status == model.STATUS_RUNNING {
+			// check it is really running
+
+		}
+	}
+
 }

@@ -16,8 +16,8 @@ where name = 'Uniswapper';
 
 update t_frontend_template_detail t
 set t.show_url = 'http://g.alpha.hamsternet.io/ipfs/QmZMP5jmafwZDeE98Hu9kdT9wDuPXDs7ygpwFVzQRD7iqP'
-where t.name = 'vuejs';
+where t.repository_name = 'vuejs';
 
 update t_frontend_template_detail t
 set t.show_url = 'http://g.alpha.hamsternet.io/ipfs/QmRZMRqvCE1qLBzvC4HHvGSAyKcTEqYgj3Mq3fFwjBd1XB'
-where t.name = 'reactjs';
+where t.repository_name = 'reactjs';
