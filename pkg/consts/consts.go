@@ -95,4 +95,9 @@ const (
 )
 
 const DockerHubName = "registry.g.develop.hamsternet.io"
+
+// test
 const Gateway = "authright.sh.newtouch.com"
+
+// al
+//const Gateway = "c.alpha.hamsternet.io"

@@ -64,7 +64,7 @@ VALUES
         '1.0.0',
         1,
         3,
-        '',
+        'http://nuxt.c.alpha.hamsternet.io',
         '## Nuxt Example
 
 Deploy your [Nuxt](https://nuxt.com/) project to hamster with zero configuration.
@@ -127,7 +127,7 @@ Checkout the [deployment documentation](https://v3.nuxtjs.org/guide/deploy/prese
     '1.0.0',
     1,
     4,
-    '',
+    'http://nextjs.c.alpha.hamsternet.io/',
     '### Deploy your own
 
 Deploy your own Next.js project with Hamster.
