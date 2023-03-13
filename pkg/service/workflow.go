@@ -239,15 +239,16 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			}
 
 			var abi string
-			if !isStarknetContract {
-				abiByte, err := json.Marshal(m["abi"])
-				if err != nil {
-					logger.Errorf("marshal contract abi failed: %s", err.Error())
-					continue
-				}
-				abi = string(abiByte)
-			} else {
-				abi = string(data)
+			var starkNetContractMateData = ""
+			abiByte, err := json.Marshal(m["abi"])
+			if err != nil {
+				logger.Errorf("marshal contract abi failed: %s", err.Error())
+				continue
+			}
+			abi = string(abiByte)
+
+			if isStarknetContract {
+				starkNetContractMateData = string(data)
 			}
 
 			var bytecodeData string
@@ -260,7 +261,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 				}
 			} else {
 				contractService := application.GetBean[*ContractService]("contractService")
-				_, classHash, err := contractService.DoStarknetDeclare([]byte(abi))
+				_, classHash, err := contractService.DoStarknetDeclare([]byte(starkNetContractMateData))
 				if err != nil {
 					logger.Errorf("starknet contract class hash failed: %s", err.Error())
 					continue
