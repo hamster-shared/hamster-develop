@@ -9,8 +9,8 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
-	github.com/gorilla/websocket v1.4.2
-	github.com/hamster-shared/aline-engine v1.0.3-0.20230314042037-ac9ac7ef8e26
+	github.com/gorilla/websocket v1.5.0
+	github.com/hamster-shared/aline-engine v1.0.3-0.20230314064927-fd61ca3888af
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/pkg/errors v0.9.1
