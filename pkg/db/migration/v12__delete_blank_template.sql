@@ -39,6 +39,6 @@ DELETE from aline.t_template_detail WHERE id IN (10,11,12,13,15,16,17);
 ------ end
 
 ----删掉的数据-alpha start
-DELETE from aline.t_template WHERE id IN (20,21,22,23,25,26,27);
-DELETE from aline.t_template_detail WHERE id IN (9,10,11,12,14,15,16);
+-- DELETE from aline.t_template WHERE id IN (20,21,22,23,25,26,27);
+-- DELETE from aline.t_template_detail WHERE id IN (9,10,11,12,14,15,16);
 ------ end
