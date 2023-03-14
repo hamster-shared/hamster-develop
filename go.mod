@@ -3,13 +3,14 @@ module github.com/hamster-shared/hamster-develop
 go 1.19
 
 require (
+	github.com/BurntSushi/toml v1.2.1
 	github.com/dontpanicdao/caigo v0.4.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
-	github.com/gorilla/websocket v1.5.0
-	github.com/hamster-shared/aline-engine v1.0.3-0.20230314030450-63b92e2615e2
+	github.com/gorilla/websocket v1.4.2
+	github.com/hamster-shared/aline-engine v1.0.3-0.20230314042037-ac9ac7ef8e26
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/pkg/errors v0.9.1

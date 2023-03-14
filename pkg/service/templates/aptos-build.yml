@@ -1,0 +1,27 @@
+version: 1.0
+name: {{.Name}}
+stages:
+  git-clone:
+    steps:
+      - name: git-clone
+        uses: git-checkout
+        with:
+          url: {{ .RepositoryUrl }}
+          branch: main
+  code-compile:
+    needs:
+      - git-clone
+    steps:
+      - name: code-compile
+        runs-on: docker.io/hamstershare/aptoslabs-tools:aptos-node-v1.3.0
+        run: |
+          aptos move compile --named-addresses ${{ param.aptos_param }}
+
+      - name: save artifactory
+        uses: hamster-artifactory
+        with:
+          name: aptos-meta.zip
+          compress: false
+          path: |
+            build/*/package-metadata.bcs
+            build/*/bytecode_modules/*.mv
