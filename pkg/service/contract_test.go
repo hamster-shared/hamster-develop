@@ -78,7 +78,6 @@ func TestReadToml(t *testing.T) {
 	}
 
 	for k, v := range config.Addresses {
-
 		if v == "_" {
 			fmt.Println(k)
 		}

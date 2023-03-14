@@ -20,8 +20,8 @@ stages:
         uses: hamster-artifactory
         with:
           name: some.zip
-          path:
-            - target/*.jar
+          path: |
+            target/*.jar
   build-image:
     needs:
       - code-compile

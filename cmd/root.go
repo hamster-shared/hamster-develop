@@ -63,13 +63,12 @@ hamster pipeline file in the local environment.`,
 
 			job, _ := pipeline.GetJobFromYaml(yaml)
 
-			// go Engine.Start()
-
 			err = Engine.CreateJob(job.Name, yaml)
 
 			jobDetail, err := Engine.ExecuteJob(job.Name)
 			if err != nil {
 				logger.Error("err:", err)
+				return
 			}
 
 			for jobDetail.Status <= model.STATUS_RUNNING {
