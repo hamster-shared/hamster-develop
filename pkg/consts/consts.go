@@ -23,6 +23,13 @@ const (
 	Deploy
 )
 
+type FrontendDeployType int
+
+const (
+	IPFS FrontendDeployType = iota + 1
+	CONTAINER
+)
+
 // jian-guo
 //const ClientSecrets = "a20f12e3ab2bd7228476d167a54a7ed279121955"
 
@@ -86,3 +93,11 @@ const (
 	JOB_DIR_NAME      = "jobs"
 	WORK_DIR_NAME     = "workdir"
 )
+
+const DockerHubName = "registry.g.develop.hamsternet.io"
+
+// test
+const Gateway = "authright.sh.newtouch.com"
+
+// al
+//const Gateway = "c.alpha.hamsternet.io"

@@ -76,11 +76,11 @@ func deleteRepo(ctx context.Context, client *github.Client, owner, repo string) 
 
 func TestDeleteRepo(t *testing.T) {
 	ctx := context.Background()
-	token := "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"
+	token := ""
 	client := utils.NewGithubClient(ctx, token)
 
 	owner := "mohaijiang"
-	repoName := "my-starknet"
+	repoName := "my-uniswapper"
 
 	deleteRepo(ctx, client, owner, repoName)
 }

@@ -2,7 +2,11 @@ package controller
 
 import (
 	"embed"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
@@ -11,8 +15,6 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
-	"net/http"
-	"strconv"
 )
 
 //go:embed templates
@@ -60,7 +62,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	userAny, _ := g.Get("user")
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	repo, res, err := githubService.CreateRepository(token, createData.Name)
+	repo, res, err := githubService.GetRepo(token, user.Username, createData.Name)
 	if err != nil {
 		if res != nil {
 			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
@@ -68,17 +70,25 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 				return
 			}
 		}
-		Fail(err.Error(), g)
-		return
+		repo, res, err = githubService.CreateRepository(token, createData.Name)
+		if err != nil {
+			if res != nil {
+				if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+					Failed(http.StatusUnauthorized, "access not authorized", g)
+					return
+				}
+			}
+			Fail(err.Error(), g)
+			return
+		}
 	}
 	//email, err := githubService.GetUserEmail(token)
 	//if err != nil {
 	//	Fail(err.Error(), g)
 	//	return
 	//}
-	err = githubService.CommitAndPush(token, *repo.CloneURL, createData.RepoOwner, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
+	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
 	if err != nil {
-		githubService.DeleteRepo(token, createData.RepoOwner, createData.Name)
 		Fail(err.Error(), g)
 		return
 	}
@@ -87,11 +97,11 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Type:        createData.Type,
 		TemplateUrl: *repo.CloneURL,
 		FrameType:   createData.FrameType,
+		DeployType:  createData.DeployType,
 		UserId:      int64(user.Id),
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
-		githubService.DeleteRepo(token, createData.RepoOwner, createData.Name)
 		Fail(err.Error(), g)
 		return
 	}
@@ -172,14 +182,12 @@ func (h *HandlerServer) projectDetail(gin *gin.Context) {
 }
 
 func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
+	logger.Tracef("projectWorkflowCheck")
 
 	projectIdStr := g.Param("id")
 	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
-		Fail("projectId is empty or invalid", g)
-		return
-	}
-	if err != nil {
+		logger.Errorf("projectWorkflowCheck error: %s", err.Error())
 		Fail(err.Error(), g)
 		return
 	}
@@ -188,15 +196,21 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 	var userVo vo.UserAuth
 	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	_ = workflowService.ExecProjectCheckWorkflow(projectId, userVo)
+	err = workflowService.ExecProjectCheckWorkflow(projectId, userVo)
+	if err != nil {
+		logger.Errorf("projectWorkflowCheck error: %s", err.Error())
+		Fail(err.Error(), g)
+		return
+	}
 	Success("", g)
 }
 
 func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
-
+	logger.Tracef("projectWorkflowBuild")
 	projectIdStr := g.Param("id")
 	projectId, err := uuid.FromString(projectIdStr)
 	if err != nil {
+		logger.Errorf("projectWorkflowBuild error: %s", err.Error())
 		Fail("projectId is empty or invalid", g)
 		return
 	}
@@ -205,12 +219,12 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 	userAny, _ := g.Get("user")
 	user, _ := userAny.(db2.User)
 	copier.Copy(&userVo, &user)
-	err = workflowService.ExecProjectBuildWorkflow(projectId, userVo)
+	data, err := workflowService.ExecProjectBuildWorkflow(projectId, userVo)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
-	Success("", g)
+	Success(data, g)
 }
 
 func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
@@ -238,6 +252,94 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 	var userVo vo.UserAuth
 	copier.Copy(&userVo, &user)
 	data, err := workflowService.ExecProjectDeployWorkflow(projectId, workflowId, detailId, userVo)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	Success(data, g)
+}
+func (h *HandlerServer) configContainerDeploy(g *gin.Context) {
+	projectIdStr := g.Param("id")
+	if projectIdStr == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+	data := containerDeployService.CheckDeployParam(projectIdStr)
+	Success(data, g)
+}
+
+func (h *HandlerServer) updateContainerDeploy(g *gin.Context) {
+	projectIdStr := g.Param("id")
+	if projectIdStr == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	projectId, err := uuid.FromString(projectIdStr)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	deployParam := parameter.K8sDeployParam{}
+	err = g.BindJSON(&deployParam)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+	err = containerDeployService.UpdateContainerDeploy(projectId, deployParam)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	Success("", g)
+
+}
+
+func (h *HandlerServer) getContainerDeploy(g *gin.Context) {
+	projectIdStr := g.Param("id")
+	if projectIdStr == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+	data := containerDeployService.GetContainerDeploy(projectIdStr)
+	Success(data, g)
+}
+
+func (h *HandlerServer) containerDeploy(g *gin.Context) {
+	projectIdStr := g.Param("id")
+	projectId, err := uuid.FromString(projectIdStr)
+	if err != nil {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	workflowIdStr := g.Param("workflowId")
+	detailIdStr := g.Param("detailId")
+	workflowId, err := strconv.Atoi(workflowIdStr)
+	if err != nil {
+		Fail("workflow id is empty or invalid", g)
+		return
+	}
+	detailId, err := strconv.Atoi(detailIdStr)
+	if err != nil {
+		Fail("detail id is empty or invalid", g)
+		return
+	}
+	containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+	deployParam := parameter.K8sDeployParam{}
+	deployData, err := containerDeployService.QueryDeployParam(projectIdStr)
+	if err != nil {
+		Fail("please config deploy param", g)
+		return
+	}
+	copier.Copy(&deployParam, &deployData)
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	userAny, _ := g.Get("user")
+	user, _ := userAny.(db2.User)
+	var userVo vo.UserAuth
+	copier.Copy(&userVo, &user)
+	data, err := workflowService.ExecContainerDeploy(projectId, workflowId, detailId, userVo, deployParam)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
@@ -406,8 +508,8 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 	userAny, _ := gin.Get("user")
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	//create repo
-	repo, res, err := githubService.CreateRepository(token, createData.Name)
+
+	repo, res, err := githubService.GetRepo(token, user.Username, createData.Name)
 	if err != nil {
 		if res != nil {
 			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
@@ -415,19 +517,26 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 				return
 			}
 		}
-		Fail(err.Error(), gin)
-		return
+		repo, res, err = githubService.CreateRepository(token, createData.Name)
+		if err != nil {
+			if res != nil {
+				if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+					Failed(http.StatusUnauthorized, "access not authorized", gin)
+					return
+				}
+			}
+			Fail(err.Error(), gin)
+			return
+		}
 	}
 	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateUrl, consts.TemplateRepoName)
 	if err != nil {
-		githubService.DeleteRepo(token, user.Username, createData.Name)
 		Fail(err.Error(), gin)
 		return
 	}
 	// add file
 	_, res, err = githubService.AddFile(token, user.Username, createData.Name, createData.Content, createData.FileName)
 	if err != nil {
-		githubService.DeleteRepo(token, user.Username, createData.Name)
 		if res != nil {
 			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 				Failed(http.StatusUnauthorized, "access not authorized", gin)
@@ -447,7 +556,6 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
-		githubService.DeleteRepo(token, user.Username, createData.Name)
 		Fail(err.Error(), gin)
 		return
 	}

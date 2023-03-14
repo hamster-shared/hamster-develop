@@ -31,8 +31,14 @@ coverage
 /a-line.exe
 /aline
 /aline-test
+/aline-worker-test
+/aline-worker
+/aline-worker
+/aline-worker-test
 
 /.vscode
 
 go.sum
 hamster-develop
+/.env
+

@@ -120,6 +120,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 		project.Type = uint(createData.Type)
 		project.RepositoryUrl = createData.TemplateUrl
 		project.Branch = "main"
+		project.DeployType = createData.DeployType
 		p.db.Create(&project)
 		return project.Id, nil
 	}
