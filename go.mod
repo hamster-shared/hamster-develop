@@ -9,7 +9,7 @@ require (
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
 	github.com/gorilla/websocket v1.4.2
-	github.com/hamster-shared/aline-engine v1.0.3-0.20230314023639-63942b3ca4a7
+	github.com/hamster-shared/aline-engine v1.0.3-0.20230314042037-ac9ac7ef8e26
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/pkg/errors v0.9.1
