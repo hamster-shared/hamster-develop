@@ -84,11 +84,11 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 				var workflowDeployData db2.WorkflowDetail
 				var packageDeploy vo.PackageDeployVo
 				var deployData db2.FrontendDeploy
-				err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+				err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
 				if err == nil {
-					err = p.db.Model(db2.WorkflowDetail{}).Where("id = ?", deployData.WorkflowDetailId).First(&workflowDeployData).Error
+					copier.Copy(&packageDeploy, workflowDeployData)
+					err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ? and workflow_detail_id = ? ", project.Id, workflowDeployData.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
 					if err == nil {
-						_ = copier.Copy(&packageDeploy, workflowDeployData)
 						packageDeploy.PackageId = deployData.PackageId
 						packageDeploy.Version = deployData.Version
 					}
@@ -166,11 +166,11 @@ func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 		var workflowDeployData db2.WorkflowDetail
 		var packageDeploy vo.PackageDeployVo
 		var deployData db2.FrontendDeploy
-		err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+		err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
 		if err == nil {
-			err = p.db.Model(db2.WorkflowDetail{}).Where("id = ?", deployData.WorkflowDetailId).First(&workflowDeployData).Error
+			copier.Copy(&packageDeploy, workflowDeployData)
+			err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ? and workflow_detail_id = ? ", data.Id, workflowDeployData.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
 			if err == nil {
-				_ = copier.Copy(&packageDeploy, workflowDeployData)
 				packageDeploy.PackageId = deployData.PackageId
 				packageDeploy.Version = deployData.Version
 			}
