@@ -3,6 +3,7 @@ module github.com/hamster-shared/hamster-develop
 go 1.19
 
 require (
+	github.com/BurntSushi/toml v1.2.1
 	github.com/dontpanicdao/caigo v0.4.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-resty/resty/v2 v2.7.0

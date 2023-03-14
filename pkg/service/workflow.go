@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"log"
 	"os"
-	"os/exec"
 	"path"
 	"strconv"
 	"strings"
@@ -808,19 +807,6 @@ func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int) error {
 	return nil
 }
 
-func starkClassHash(filename string) (string, error) {
-	cmdStr := "starkli class-hash " + filename
-	cmd := exec.Command("/bin/bash", "-c", cmdStr)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return "", err
-	}
-	classHash := strings.TrimSpace(out.String())
-	return classHash, nil
-}
-
 func (w *WorkflowService) CheckRunningJob() {
 
 	var workflowList []db.WorkflowDetail
@@ -829,13 +815,38 @@ func (w *WorkflowService) CheckRunningJob() {
 		return
 	}
 
+	stopList := make([]db.WorkflowDetail, 0)
 	for _, flow := range workflowList {
 		workflowKey := w.GetWorkflowKey(flow.ProjectId.String(), uint(flow.WorkflowId))
-		jobDetail, _ := w.engine.GetJobHistory(workflowKey, int(flow.ExecNumber))
+		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(flow.ExecNumber))
+
+		if err != nil {
+			stopList = append(stopList, flow)
+			continue
+		}
+
 		if jobDetail.Status == model.STATUS_RUNNING {
 			// check it is really running
-
+			status, err := w.engine.GetCurrentJobStatus(workflowKey, int(flow.ExecNumber))
+			if err != nil || status != model.STATUS_RUNNING {
+				_ = w.engine.TerminalJob(workflowKey, int(flow.ExecNumber))
+				stopList = append(stopList, flow)
+			}
 		}
 	}
 
+	for _, flow := range stopList {
+		workflowKey := w.GetWorkflowKey(flow.ProjectId.String(), flow.WorkflowId)
+		jobDetail, _ := w.engine.GetJobHistory(workflowKey, int(flow.ExecNumber))
+		flow.Status = vo.WORKFLOW_STATUS_CANCEL
+		if jobDetail != nil {
+			stageInfo, err := json.Marshal(jobDetail.Stages)
+			if err == nil {
+				flow.StageInfo = string(stageInfo)
+			}
+			flow.Duration = jobDetail.Duration
+		}
+		flow.UpdateTime = time.Now()
+		_ = w.db.Save(flow).Error
+	}
 }
