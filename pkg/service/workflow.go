@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"log"
 	"os"
 	"path"
@@ -16,6 +14,9 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	engine "github.com/hamster-shared/aline-engine"
 	jober "github.com/hamster-shared/aline-engine/job"
@@ -25,6 +26,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	"github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
+	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
@@ -218,88 +220,188 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		return
 	}
 
-	if len(jobDetail.Artifactorys) > 0 {
+	if len(jobDetail.Artifactorys) == 0 {
+		return
+	}
 
-		for _, arti := range jobDetail.Artifactorys {
-
-			// 判断是不是 starknet 合约
-			isStarknetContract := false
-			if strings.HasSuffix(arti.Url, "starknet.output.json") {
-				isStarknetContract = true
-			}
-
-			data, _ := os.ReadFile(arti.Url)
-			m := make(map[string]any)
-
-			err := json.Unmarshal(data, &m)
+	for _, arti := range jobDetail.Artifactorys {
+		// 如果是 starknet 合约
+		if strings.HasSuffix(arti.Url, "starknet.output.json") {
+			err := w.syncContractStarknet(projectId, workflowId, workflowDetail, arti)
 			if err != nil {
-				logger.Errorf("unmarshal contract abi failed: %s", err.Error())
-				continue
+				logger.Errorf("sync contract starknet failed: %s", err.Error())
 			}
-
-			var abi string
-			var starkNetContractMateData = ""
-			abiByte, err := json.Marshal(m["abi"])
-			if err != nil {
-				logger.Errorf("marshal contract abi failed: %s", err.Error())
-				continue
-			}
-			abi = string(abiByte)
-
-			if isStarknetContract {
-				starkNetContractMateData = string(data)
-			}
-
-			var bytecodeData string
-			if !isStarknetContract {
-				var ok bool
-				bytecodeData, ok = m["bytecode"].(string)
-				if !ok {
-					logger.Errorf("contract bytecode is not string")
-					continue
-				}
-			} else {
-				contractService := application.GetBean[*ContractService]("contractService")
-				_, classHash, err := contractService.DoStarknetDeclare([]byte(starkNetContractMateData))
-				if err != nil {
-					logger.Errorf("starknet contract class hash failed: %s", err.Error())
-					continue
-				}
-				logger.Trace("starknet contract class hash: ", classHash)
-				bytecodeData = classHash
-			}
-
-			var contractType uint
-			if !isStarknetContract {
-				contractType = consts.Evm
-			} else {
-				contractType = consts.StarkWare
-			}
-
-			contract := db.Contract{
-				ProjectId:        projectId,
-				WorkflowId:       workflowId,
-				WorkflowDetailId: workflowDetail.Id,
-				Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
-				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-				BuildTime:        workflowDetail.CreateTime,
-				AbiInfo:          abi,
-				ByteCode:         bytecodeData,
-				CreateTime:       time.Now(),
-				Type:             uint(contractType),
-				Status:           consts.STATUS_SUCCESS,
-			}
-			err = w.db.Save(&contract).Error
-
-			if err != nil {
-				logger.Errorf("save contract to database failed: %s", err.Error())
-				continue
-			}
-			logger.Trace("save contract to database success: ", contract.Name)
-
+			continue
 		}
 
+		// 如果以 .mv 或者 .bcs 结尾，认为是 aptos 合约，退出循环，在另一个函数中处理
+		if strings.HasSuffix(arti.Url, ".mv") || strings.HasSuffix(arti.Url, ".bcs") {
+			err := w.syncContractAptos(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+			if err != nil {
+				logger.Errorf("sync contract aptos failed: %s", err.Error())
+			}
+			return
+		}
+
+		// 其他作为 evm 合约处理
+		w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
 	}
+}
+
+func (w *WorkflowService) saveContractToDatabase(contract *db.Contract) error {
+	err := w.db.Save(contract).Error
+	if err != nil {
+		logger.Errorf("save contract to database failed: %s", err.Error())
+		return err
+	}
+	logger.Trace("save contract to database success: ", contract.Name)
+	return nil
+}
+
+func (w *WorkflowService) getEvmAbiInfoAndByteCode(arti model.Artifactory) (abiInfo string, byteCode string, err error) {
+	data, _ := os.ReadFile(arti.Url)
+	m := make(map[string]any)
+
+	err = json.Unmarshal(data, &m)
+	if err != nil {
+		logger.Errorf("unmarshal contract abi failed: %s", err.Error())
+		return "", "", err
+	}
+
+	abiByte, err := json.Marshal(m["abi"])
+	if err != nil {
+		logger.Errorf("marshal contract abi failed: %s", err.Error())
+		return "", "", err
+	}
+	abiInfo = string(abiByte)
+
+	byteCode, ok := m["bytecode"].(string)
+	if !ok {
+		logger.Errorf("contract bytecode is not string")
+		return "", "", err
+	}
+	return abiInfo, byteCode, nil
+}
+
+func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, arti model.Artifactory) error {
+	abiInfo, byteCode, err := w.getEvmAbiInfoAndByteCode(arti)
+	if err != nil {
+		return err
+	}
+
+	contract := db.Contract{
+		ProjectId:        projectId,
+		WorkflowId:       workflowId,
+		WorkflowDetailId: workflowDetail.Id,
+		Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
+		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+		BuildTime:        workflowDetail.CreateTime,
+		AbiInfo:          abiInfo,
+		ByteCode:         byteCode,
+		CreateTime:       time.Now(),
+		Type:             uint(consts.Evm),
+		Status:           consts.STATUS_SUCCESS,
+	}
+	return w.saveContractToDatabase(&contract)
+}
+
+func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (mv string, byteCode string, err error) {
+	for _, arti := range artis {
+		// 此处逻辑存疑
+		// 以 .bcs 结尾，认为是 byteCode
+		if strings.HasSuffix(arti.Url, ".bcs") {
+			byteCode, err = utils.FileToHexString(arti.Url)
+			if err != nil {
+				logger.Errorf("hex string failed: %s", err.Error())
+				return "", "", err
+			}
+			continue
+		}
+		// 以 .mv 结尾，认为是 abi
+		if strings.HasSuffix(arti.Url, ".bcs") {
+			mv, err = utils.FileToHexString(arti.Url)
+			if err != nil {
+				logger.Errorf("hex string failed: %s", err.Error())
+				return "", "", err
+			}
+			continue
+		}
+		logger.Warnf("aptos contract file name is not end with .bcs or .mv: %s", arti.Url)
+	}
+	return mv, byteCode, nil
+}
+
+func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
+	mv, byteCode, err := w.getAptosMvAndByteCode(artis)
+	if err != nil {
+		return err
+	}
+
+	contract := db.Contract{
+		ProjectId:        projectId,
+		WorkflowId:       workflowId,
+		WorkflowDetailId: workflowDetail.Id,
+		Name:             strings.TrimSuffix(artis[0].Name, path.Ext(artis[0].Name)),
+		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+		BuildTime:        workflowDetail.CreateTime,
+		AbiInfo:          "",
+		ByteCode:         byteCode,
+		AptosMv:          mv,
+		CreateTime:       time.Now(),
+		Type:             uint(consts.Aptos),
+		Status:           consts.STATUS_SUCCESS,
+	}
+
+	return w.saveContractToDatabase(&contract)
+}
+
+func (w *WorkflowService) getStarknetAbiInfoAndByteCode(artiUrl string) (abiInfo string, byteCode string, err error) {
+	data, err := os.ReadFile(artiUrl)
+	if err != nil {
+		return "", "", err
+	}
+	m := make(map[string]any)
+	err = json.Unmarshal(data, &m)
+	if err != nil {
+		return "", "", err
+	}
+	abiBytes, err := json.Marshal(m["abi"])
+	if err != nil {
+		return "", "", err
+	}
+	abiInfo = string(abiBytes)
+	contractService := application.GetBean[*ContractService]("contractService")
+	_, classHash, err := contractService.DoStarknetDeclare(data)
+	if err != nil {
+		logger.Errorf("starknet contract class hash failed: %s", err.Error())
+		return "", "", err
+	}
+	logger.Trace("starknet contract class hash: ", classHash)
+	byteCode = classHash
+	return
+}
+
+func (w *WorkflowService) syncContractStarknet(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, arti model.Artifactory) error {
+	abiInfo, byteCode, err := w.getStarknetAbiInfoAndByteCode(arti.Url)
+	if err != nil {
+		return err
+	}
+
+	contract := db.Contract{
+		ProjectId:        projectId,
+		WorkflowId:       workflowId,
+		WorkflowDetailId: workflowDetail.Id,
+		Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
+		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+		BuildTime:        workflowDetail.CreateTime,
+		AbiInfo:          abiInfo,
+		ByteCode:         byteCode,
+		CreateTime:       time.Now(),
+		Type:             uint(consts.StarkWare),
+		Status:           consts.STATUS_SUCCESS,
+	}
+
+	return w.saveContractToDatabase(&contract)
 }
 
 func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
