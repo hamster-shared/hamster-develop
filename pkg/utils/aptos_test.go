@@ -59,42 +59,6 @@ func TestParseMoveToml(t *testing.T) {
 	}
 }
 
-func TestFillKeyValueToMoveTomlForce(t *testing.T) {
-	type args struct {
-		tomlPath       string
-		keyValueString string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "test",
-			args: args{
-				tomlPath:       "./test_data/test.toml",
-				keyValueString: "Std=0x2",
-			},
-			wantErr: false,
-		},
-		{
-			name: "recover",
-			args: args{
-				tomlPath:       "./test_data/test.toml",
-				keyValueString: "Std=0x1",
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := FillKeyValueToMoveTomlForce(tt.args.tomlPath, tt.args.keyValueString); (err != nil) != tt.wantErr {
-				t.Errorf("FillKeyValueToMoveTomlForce() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestFillKeyValueToMoveToml(t *testing.T) {
 	type args struct {
 		tomlPath       string
@@ -110,6 +74,14 @@ func TestFillKeyValueToMoveToml(t *testing.T) {
 			args: args{
 				tomlPath:       "./test_data/test.toml",
 				keyValueString: "Std=0x2",
+			},
+			wantErr: false,
+		},
+		{
+			name: "test-2",
+			args: args{
+				tomlPath:       "./test_data/test.toml",
+				keyValueString: "Std=0x1",
 			},
 			wantErr: false,
 		},

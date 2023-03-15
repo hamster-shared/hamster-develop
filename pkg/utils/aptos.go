@@ -22,34 +22,8 @@ type Package struct {
 	Version string `toml:"version"`
 }
 
-// FillKeyValueToMoveToml 填充键值对到 Move.toml 的 Addresses 字段，要求 Move.toml 的 Addresses 字段中的值为 "_"，或不存在，如果不是，则不填充
-// 如果要强制填充，请使用 FillKeyValueToMoveTomlForce
+// FillKeyValueToMoveToml 填充键值对到 Move.toml 的 Addresses 字段
 func FillKeyValueToMoveToml(tomlPath string, keyValueString string) error {
-	moveToml, err := ParseMoveToml(tomlPath)
-	if err != nil {
-		return err
-	}
-
-	keyValues, err := getKeyValueFromString(keyValueString)
-	if err != nil {
-		return err
-	}
-
-	for key, value := range keyValues {
-		if _, ok := moveToml.Addresses[key]; ok {
-			if moveToml.Addresses[key] != "_" {
-				continue
-			}
-			moveToml.Addresses[key] = value
-		} else {
-			moveToml.Addresses[key] = value
-		}
-	}
-	return saveMoveToml(tomlPath, moveToml)
-}
-
-// FillKeyValueToMoveTomlForce 强制填充键值对到 Move.toml 的 Addresses 字段，不管 Move.toml 的 Addresses 字段中的值是否为 "_"
-func FillKeyValueToMoveTomlForce(tomlPath string, keyValueString string) error {
 	moveToml, err := ParseMoveToml(tomlPath)
 	if err != nil {
 		return err
