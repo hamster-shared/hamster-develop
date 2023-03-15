@@ -509,8 +509,8 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 		return vo.DeployResultVo{}, err
 	}
 	params := make(map[string]string)
-	params["namespace"] = user.Username
-	params["projectName"] = project.Name
+	params["namespace"] = strings.ToLower(user.Username)
+	params["projectName"] = strings.ToLower(project.Name)
 	params["servicePorts"] = string(serviceStr)
 	params["containers"] = string(containerStr)
 	params["gateway"] = consts.Gateway
