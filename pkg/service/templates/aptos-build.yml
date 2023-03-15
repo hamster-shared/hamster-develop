@@ -15,7 +15,7 @@ stages:
       - name: code-compile
         runs-on: docker.io/hamstershare/aptoslabs-tools:aptos-node-v1.3.0
         run: |
-          aptos move compile --named-addresses mokshyastaking=0x0ff505af704efc4b90f0f5fd526c1d169e4852dcfe6efaf915d08b7285944e26
+          aptos move compile --named-addresses ${{ param.aptos_param }}
 
       - name: save artifactory
         uses: hamster-artifactory
