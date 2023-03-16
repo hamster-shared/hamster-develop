@@ -291,6 +291,26 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) getJobStepLog(gin *gin.Context) {
+	jobName := gin.Param("name")
+	jobID := gin.Param("id")
+	stageName := gin.Param("stagename")
+	stepName := gin.Param("stepname")
+	id, err := strconv.Atoi(jobID)
+	if err != nil {
+		logger.Errorf("get job step log error, convert id failed: %s", err.Error)
+		Fail("convert job id failed: "+err.Error(), gin)
+		return
+	}
+	step, err := h.Engine.GetJobHistoryStepLog(jobName, id, stageName, stepName)
+	if err != nil {
+		logger.Errorf("get job step log error: %s", err.Error)
+		Fail("get job step log error: "+err.Error(), gin)
+		return
+	}
+	Success(step, gin)
+}
+
 //// getTemplates get template list
 //func (h *HandlerServer) getTemplates(gin *gin.Context) {
 //	lang := gin.Request.Header.Get("lang")
@@ -342,4 +362,13 @@ func (h *HandlerServer) getUserInfo(gin *gin.Context) vo.UserAuth {
 		Username: "admin",
 		Token:    token,
 	}
+}
+
+// 下载文件
+func (h *HandlerServer) download(gin *gin.Context) {
+	// 这是给 worker 节点用的，所以当有人访问这个接口的时候，我们需要检验一下他是不是已注册的 worker 节点，如果不是，无权访问
+	// 检查 header 中的 worker token 是否正确
+	workerToken := gin.GetHeader("worker_token")
+	h.Engine.IsValidWorker(workerToken)
+
 }

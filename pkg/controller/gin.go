@@ -136,6 +136,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/pipeline/:name/:id/stop", h.handlerServer.stopJobDetail)
 	api.GET("/pipeline/:name/logs/:id", h.handlerServer.getJobLog)
 	api.GET("/pipeline/:name/logs/:id/:stagename", h.handlerServer.getJobStageLog)
+	api.GET("/pipeline/:name/logs/:id/:stagename/:stepname", h.handlerServer.getJobStepLog)
 	// get template list
 	//api.GET("/pipeline/templates", h.handlerServer.getTemplates)
 	//api.GET("/pipeline/template/:id", h.handlerServer.getTemplateDetail)
@@ -147,6 +148,10 @@ func (h *HttpServer) StartHttpServer() {
 		//输出 json 结果给调用方
 		Success("", c)
 	})
+
+	// 下载文件
+	api.GET("/download", h.handlerServer.download)
+
 	// fe, _ := fs.Sub(content, "dist")
 	// r.NoRoute(gin.WrapH(http.FileServer(http.FS(fe))))
 	r.Run(fmt.Sprintf(":%d", h.port)) // listen and serve on
