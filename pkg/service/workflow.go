@@ -243,6 +243,11 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			return
 		}
 
+		// zip 文件不处理
+		if strings.HasSuffix(arti.Url, ".zip") {
+			continue
+		}
+
 		// 其他作为 evm 合约处理
 		w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
 	}
@@ -491,7 +496,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 		err = begin.Save(&reportList).Error
 		if err != nil {
 			logger.Errorf("Save report fail, err is %s", err.Error())
-			return
+			// return
 		}
 		begin.Commit()
 	}
@@ -529,7 +534,7 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 
 	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId)
 	if err != nil {
-		logger.Info("workflow ")
+		logger.Errorf("workflow : %s", err)
 		return vo.DeployResultVo{}, err
 	}
 	buildJobDetail, err := w.engine.GetJobHistory(buildWorkflowKey, int(workflowDetail.ExecNumber))
