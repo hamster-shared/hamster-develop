@@ -592,7 +592,7 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 	}
 	ports = append(ports, port)
 	container1 := corev1.Container{
-		Name:      fmt.Sprintf("%s-%s", user.Username, project.Name),
+		Name:      fmt.Sprintf("%s-%s", strings.ToLower(user.Username), strings.ToLower(project.Name)),
 		Image:     buildJobDetail.ActionResult.BuildData[0].ImageName,
 		Ports:     ports,
 		Resources: resources,
