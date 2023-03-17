@@ -352,3 +352,8 @@ Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 GET http://61.172.179.6:30302/api/projects/3775dd75-5f25-42d6-9b44-303e8127fe10/container/deploy
 Content-Type: application/json
 Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
+### 获取日志 step
+GET http://127.0.0.1:8088/api/pipeline/test/logs/10009/第二阶段/步骤 2
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
