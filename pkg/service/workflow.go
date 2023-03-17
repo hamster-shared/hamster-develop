@@ -770,6 +770,7 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
 		if err != nil {
 			logger.Warnf("get job history fail, err is %s", err.Error())
+			return &detail, err
 		}
 		data, err := json.Marshal(jobDetail.Stages)
 		if err == nil {

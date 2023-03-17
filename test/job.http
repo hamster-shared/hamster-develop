@@ -358,15 +358,8 @@ GET http://localhost:5173/api/workflows/910/detail/1101/logs/Initialization/git
 Content-Type: application/json
 Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 
-
-### 获取日志 step 测试环境
-GET http://61.172.179.6:30302/api/pipeline/ff7938e4-19de-489c-b837-edfd8d5e4334_733/logs/1/Check by Mythril/mythril-check
-Content-Type: application/json
-Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
-
-
 ### 获取日志 step 测试环境 2
-GET http://61.172.179.6:30302/api/pipeline/747/logs/852/Check%20by%20AI/openai%20ask
+GET http://61.172.179.6:30301/api/workflows/914/detail/1106/logs/Initialization/git
 Content-Type: application/json
 Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 

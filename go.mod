@@ -10,7 +10,7 @@ require (
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
 	github.com/gorilla/websocket v1.5.0
-	github.com/hamster-shared/aline-engine v1.0.3-0.20230316103930-50da416c2575
+	github.com/hamster-shared/aline-engine v1.0.3-0.20230317075719-7956c2f234e4
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/pkg/errors v0.9.1
@@ -112,3 +112,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/hamster-shared/aline-engine => github.com/hamster-shared/aline-engine v1.0.3-0.20230317075719-7956c2f234e4
