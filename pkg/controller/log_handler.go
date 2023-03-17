@@ -3,16 +3,18 @@ package controller
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	engine "github.com/hamster-shared/aline-engine"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/aline-engine/model"
 	"github.com/hamster-shared/aline-engine/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 var upgrader = websocket.Upgrader{
@@ -106,6 +108,48 @@ func (h *HandlerServer) getWorkflowStageLog(gin *gin.Context) {
 	}
 	gin.Writer.Header().Set("LastLine", strconv.Itoa(data.LastLine))
 	gin.Writer.Header().Set("End", strconv.FormatBool(data.End))
+	Success(data, gin)
+}
+
+func (h *HandlerServer) getWorkflowStepLog(gin *gin.Context) {
+	idStr := gin.Param("id")
+	detailIdStr := gin.Param("detailId")
+	stageName := gin.Param("stageName")
+	stepName := gin.Param("stepName")
+
+	workflowId, err := strconv.Atoi(idStr)
+	if err != nil {
+		logger.Errorf("get job step log error, convert id failed: %s", err.Error)
+		Fail("convert job id failed: "+err.Error(), gin)
+		return
+	}
+	detailId, err := strconv.Atoi(detailIdStr)
+	if err != nil {
+		logger.Errorf("get job step log error, convert detailId failed: %s", err.Error)
+		Fail("convert job detailId failed: "+err.Error(), gin)
+		return
+	}
+	engine := application.GetBean[engine.Engine]("engine")
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	workflow, err := workflowService.QueryWorkflow(workflowId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowDetail, err := workflowService.QueryWorkflowDetail(workflowId, detailId)
+	if err != nil {
+		logger.Errorf("get job step log error, query workflow detail failed: %s", err.Error)
+		Fail(err.Error(), gin)
+		return
+	}
+	logName := workflowService.GetWorkflowKey(workflow.ProjectId.String(), workflow.Id)
+	logger.Tracef("call engine.GetJobHistoryStepLog(%s, %d, %s, %s)", logName, workflowDetail.ExecNumber, stageName, stepName)
+	data, err := engine.GetJobHistoryStepLog(logName, int(workflowDetail.ExecNumber), stageName, stepName)
+	if err != nil {
+		logger.Errorf("get job step log error, get job history step log failed: %s", err.Error)
+		Fail(err.Error(), gin)
+		return
+	}
 	Success(data, gin)
 }
 

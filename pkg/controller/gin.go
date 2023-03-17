@@ -136,7 +136,6 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/pipeline/:name/:id/stop", h.handlerServer.stopJobDetail)
 	api.GET("/pipeline/:name/logs/:id", h.handlerServer.getJobLog)
 	api.GET("/pipeline/:name/logs/:id/:stagename", h.handlerServer.getJobStageLog)
-	api.GET("/pipeline/:name/logs/:id/:stagename/:stepname", h.handlerServer.getJobStepLog)
 	// get template list
 	//api.GET("/pipeline/templates", h.handlerServer.getTemplates)
 	//api.GET("/pipeline/template/:id", h.handlerServer.getTemplateDetail)
@@ -149,8 +148,9 @@ func (h *HttpServer) StartHttpServer() {
 		Success("", c)
 	})
 
+	api.GET("/workflows/:id/detail/:detailId/logs/:stageName/:stepName", h.handlerServer.getWorkflowStepLog)
 	// 下载文件
-	api.GET("/download", h.handlerServer.download)
+	api.GET("/download/:path", h.handlerServer.download)
 
 	// fe, _ := fs.Sub(content, "dist")
 	// r.NoRoute(gin.WrapH(http.FileServer(http.FS(fe))))
@@ -177,5 +177,4 @@ func OpenWeb(port int) error {
 		cmd = exec.Command(run, fmt.Sprintf("http://127.0.0.1:%d", port))
 	}
 	return cmd.Start()
-
 }
