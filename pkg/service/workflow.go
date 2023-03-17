@@ -590,9 +590,10 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 			corev1.ResourceMemory: resource.MustParse("50Mi"),
 		},
 	}
+	projectName := strings.Replace(project.Name, "_", "-", -1)
 	ports = append(ports, port)
 	container1 := corev1.Container{
-		Name:      fmt.Sprintf("%s-%s", strings.ToLower(user.Username), strings.ToLower(project.Name)),
+		Name:      fmt.Sprintf("%s-%s", strings.ToLower(user.Username), strings.ToLower(projectName)),
 		Image:     buildJobDetail.ActionResult.BuildData[0].ImageName,
 		Ports:     ports,
 		Resources: resources,
@@ -617,7 +618,7 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 	}
 	params := make(map[string]string)
 	params["namespace"] = strings.ToLower(user.Username)
-	params["projectName"] = strings.ToLower(project.Name)
+	params["projectName"] = strings.ToLower(projectName)
 	params["servicePorts"] = string(serviceStr)
 	params["containers"] = string(containerStr)
 	params["gateway"] = consts.Gateway
