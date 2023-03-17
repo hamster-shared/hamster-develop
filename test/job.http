@@ -353,13 +353,28 @@ GET http://61.172.179.6:30302/api/projects/3775dd75-5f25-42d6-9b44-303e8127fe10/
 Content-Type: application/json
 Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 
+### 获取日志 step 本地测试
+GET http://127.0.0.1:8088/api/workflows/910/detail/1101/logs/Initialization/git
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
 ### 获取日志 step
 GET http://localhost:5173/api/workflows/910/detail/1101/logs/Initialization/git
 Content-Type: application/json
 Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 
 ### 获取日志 step 测试环境 2
-GET http://61.172.179.6:30301/api/workflows/914/detail/1106/logs/Initialization/git
+GET http://localhost:5173/api/workflows/920/detail/1110/logs/Initialization/git-clone
 Content-Type: application/json
 Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 
+
+### 测试下载文件
+GET http://127.0.0.1:8088/api/download
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+Worker-Token: jl@127.0.0.1
+
+{
+  "path": "jobs/test/job-details-log/10009.log"
+}

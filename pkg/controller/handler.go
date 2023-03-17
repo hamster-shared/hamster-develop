@@ -2,6 +2,10 @@ package controller
 
 import (
 	"fmt"
+	"io"
+	"mime"
+	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 
@@ -292,7 +296,6 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 	Success(data, gin)
 }
 
-
 //// getTemplates get template list
 //func (h *HandlerServer) getTemplates(gin *gin.Context) {
 //	lang := gin.Request.Header.Get("lang")
@@ -355,7 +358,40 @@ func (h *HandlerServer) download(gin *gin.Context) {
 		Fail("worker token is invalid", gin)
 		return
 	}
-	path := gin.Param("path")
-	fmt.Println("download path: ", path)
+	var param DownloadParam
+	gin.BindJSON(&param)
+	logger.Tracef("download path: %s", param.Path)
 
+	path := filepath.Join(h.Engine.GetWorkRootPath(), param.Path)
+	f, err := os.Open(path)
+	if err != nil {
+		gin.JSON(http.StatusNotFound, fmt.Sprintf("file not found: %s", param.Path))
+		return
+	}
+	defer f.Close()
+
+	fileInfo, err := f.Stat()
+	if fileInfo.IsDir() {
+		Fail("file is a directory", gin)
+		return
+	}
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	gin.Writer.Header().Set("Content-Length", strconv.FormatInt(fileInfo.Size(), 10))
+	ext := filepath.Ext(param.Path)
+	mimeType := mime.TypeByExtension(ext)
+	gin.Writer.Header().Set("Content-Type", mimeType)
+	_, err = io.Copy(gin.Writer, f)
+	if err != nil {
+		logger.Errorf("download file error: %s", err.Error())
+		Fail(err.Error(), gin)
+		return
+	}
+
+}
+
+type DownloadParam struct {
+	Path string `json:"path"`
 }

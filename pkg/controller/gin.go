@@ -150,7 +150,7 @@ func (h *HttpServer) StartHttpServer() {
 
 	api.GET("/workflows/:id/detail/:detailId/logs/:stageName/:stepName", h.handlerServer.getWorkflowStepLog)
 	// 下载文件
-	api.GET("/download/:path", h.handlerServer.download)
+	api.GET("/download", h.handlerServer.download)
 
 	// fe, _ := fs.Sub(content, "dist")
 	// r.NoRoute(gin.WrapH(http.FileServer(http.FS(fe))))
