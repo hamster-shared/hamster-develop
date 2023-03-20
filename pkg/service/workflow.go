@@ -590,9 +590,10 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 			corev1.ResourceMemory: resource.MustParse("50Mi"),
 		},
 	}
+	projectName := strings.Replace(project.Name, "_", "-", -1)
 	ports = append(ports, port)
 	container1 := corev1.Container{
-		Name:      fmt.Sprintf("%s-%s", user.Username, project.Name),
+		Name:      fmt.Sprintf("%s-%s", strings.ToLower(user.Username), strings.ToLower(projectName)),
 		Image:     buildJobDetail.ActionResult.BuildData[0].ImageName,
 		Ports:     ports,
 		Resources: resources,
@@ -616,8 +617,8 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 		return vo.DeployResultVo{}, err
 	}
 	params := make(map[string]string)
-	params["namespace"] = user.Username
-	params["projectName"] = project.Name
+	params["namespace"] = strings.ToLower(user.Username)
+	params["projectName"] = strings.ToLower(projectName)
 	params["servicePorts"] = string(serviceStr)
 	params["containers"] = string(containerStr)
 	params["gateway"] = consts.Gateway
@@ -769,6 +770,7 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
 		if err != nil {
 			logger.Warnf("get job history fail, err is %s", err.Error())
+			return &detail, err
 		}
 		data, err := json.Marshal(jobDetail.Stages)
 		if err == nil {

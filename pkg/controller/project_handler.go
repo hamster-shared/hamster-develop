@@ -261,6 +261,7 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 	}
 	Success(data, g)
 }
+
 func (h *HandlerServer) configContainerDeploy(g *gin.Context) {
 	projectIdStr := g.Param("id")
 	if projectIdStr == "" {

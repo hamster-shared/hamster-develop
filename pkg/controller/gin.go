@@ -152,6 +152,11 @@ func (h *HttpServer) StartHttpServer() {
 		//输出 json 结果给调用方
 		Success("", c)
 	})
+
+	api.GET("/workflows/:id/detail/:detailId/logs/:stageName/:stepName", h.handlerServer.getWorkflowStepLog)
+	// 下载文件
+	api.GET("/download", h.handlerServer.download)
+
 	// fe, _ := fs.Sub(content, "dist")
 	// r.NoRoute(gin.WrapH(http.FileServer(http.FS(fe))))
 	r.Run(fmt.Sprintf(":%d", h.port)) // listen and serve on
@@ -177,5 +182,4 @@ func OpenWeb(port int) error {
 		cmd = exec.Command(run, fmt.Sprintf("http://127.0.0.1:%d", port))
 	}
 	return cmd.Start()
-
 }

@@ -1,6 +1,11 @@
 package controller
 
 import (
+	"fmt"
+	"io"
+	"mime"
+	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 
@@ -342,4 +347,51 @@ func (h *HandlerServer) getUserInfo(gin *gin.Context) vo.UserAuth {
 		Username: "admin",
 		Token:    token,
 	}
+}
+
+// 下载文件
+func (h *HandlerServer) download(gin *gin.Context) {
+	// 这是给 worker 节点用的，所以当有人访问这个接口的时候，我们需要检验一下他是不是已注册的 worker 节点，如果不是，无权访问
+	// 检查 header 中的 worker token 是否正确
+	workerToken := gin.GetHeader("Worker-Token")
+	if !h.Engine.IsValidWorker(workerToken) {
+		Fail("worker token is invalid", gin)
+		return
+	}
+	var param DownloadParam
+	gin.BindJSON(&param)
+	logger.Tracef("download path: %s", param.Path)
+
+	path := filepath.Join(h.Engine.GetWorkRootPath(), param.Path)
+	f, err := os.Open(path)
+	if err != nil {
+		gin.JSON(http.StatusNotFound, fmt.Sprintf("file not found: %s", param.Path))
+		return
+	}
+	defer f.Close()
+
+	fileInfo, err := f.Stat()
+	if fileInfo.IsDir() {
+		Fail("file is a directory", gin)
+		return
+	}
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	gin.Writer.Header().Set("Content-Length", strconv.FormatInt(fileInfo.Size(), 10))
+	ext := filepath.Ext(param.Path)
+	mimeType := mime.TypeByExtension(ext)
+	gin.Writer.Header().Set("Content-Type", mimeType)
+	_, err = io.Copy(gin.Writer, f)
+	if err != nil {
+		logger.Errorf("download file error: %s", err.Error())
+		Fail(err.Error(), gin)
+		return
+	}
+
+}
+
+type DownloadParam struct {
+	Path string `json:"path"`
 }
