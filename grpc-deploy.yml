@@ -58,25 +58,25 @@ spec:
                   name: hamster-aline
                   key: openai_api_key
             - name: CLIENT_SECRETS
-                valueFrom:
-                  configMapKeyRef:
-                    name: hamster-aline
-                    key: client_secrets
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: client_secrets
             - name: APPS_CLIENT_ID
-                valueFrom:
-                  configMapKeyRef:
-                    name: hamster-aline
-                    key: apps_client_id
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: apps_client_id
             - name: APPS_CLIENT_SECRETS
-                valueFrom:
-                  configMapKeyRef:
-                    name: hamster-aline
-                    key: apps_client_secerts
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: apps_client_secerts
             - name: GATEWAY
-                valueFrom:
-                  configMapKeyRef:
-                    name: hamster-aline
-                    key: gateway
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: gateway
           ports:
             - containerPort: 8080
           volumeMounts:
@@ -144,25 +144,25 @@ spec:
                   name: hamster-aline
                   key: openai_api_key
             - name: CLIENT_SECRETS
-                valueFrom:
-                  configMapKeyRef:
-                    name: hamster-aline
-                    key: client_secrets
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: client_secrets
             - name: APPS_CLIENT_ID
-                valueFrom:
-                  configMapKeyRef:
-                    name: hamster-aline
-                    key: apps_client_id
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: apps_client_id
             - name: APPS_CLIENT_SECRETS
-                valueFrom:
-                  configMapKeyRef:
-                    name: hamster-aline
-                    key: apps_client_secerts
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: apps_client_secerts
             - name: GATEWAY
-                valueFrom:
-                  configMapKeyRef:
-                    name: hamster-aline
-                    key: gateway
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: gateway
           volumeMounts:
             - mountPath: /certs
               name: docker-tls
