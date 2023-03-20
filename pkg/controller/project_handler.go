@@ -498,6 +498,33 @@ func (h *HandlerServer) saveAptosParams(g *gin.Context) {
 	Success(nil, g)
 }
 
+// 查看是否需要传递 aptos 参数
+func (h *HandlerServer) isAptosNeedsParams(g *gin.Context) {
+	projectID := g.Param("id")
+	if projectID == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	// 先去数据库查询，如果有，直接返回
+	params, err := h.projectService.GetProjectParams(projectID)
+	if err == nil {
+		if params != "" {
+			Success(map[string]bool{
+				"needsParams": false,
+			}, g)
+			return
+		} else {
+			Success(map[string]bool{
+				"needsParams": true,
+			}, g)
+			return
+		}
+	}
+	Success(map[string]bool{
+		"needsParams": true,
+	}, g)
+}
+
 func getGithubRawUrl(reportUrl, branch, path string) string {
 	url := strings.Replace(reportUrl, "github.com", "raw.githubusercontent.com", 1)
 	// 如果以 .git 结尾，去掉

@@ -80,6 +80,7 @@ func (h *HttpServer) StartHttpServer() {
 
 	// aptos params
 	api.GET("/projects/:id/params/aptos", h.handlerServer.queryAptosParams)
+	api.GET("/projects/:id/is-needs-params/aptos", h.handlerServer.isAptosNeedsParams)
 	api.POST("projects/:id/params/aptos", h.handlerServer.saveAptosParams)
 
 	api.GET("/projects/:id/frontend/reports", h.handlerServer.projectFrontendReports)
