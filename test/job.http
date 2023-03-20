@@ -378,3 +378,25 @@ Worker-Token: jl@127.0.0.1
 {
   "path": "jobs/test/job-details-log/10009.log"
 }
+
+#### get aptos move toml params
+GET http://127.0.0.1:8088/api/projects/02e5fe46-f2cd-4016-a824-37917744ca2a/params/aptos
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
+#### get aptos project needs params
+GET http://127.0.0.1:8088/api/projects/02e5fe46-f2cd-4016-a824-37917744ca2a/is-needs-params/aptos
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
+#### update aptos move toml params
+POST http://127.0.0.1:8088/api/projects/02e5fe46-f2cd-4016-a824-37917744ca2a/params/aptos
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
+{
+  "params": [{
+      "key": "raffle",
+      "value": "test"
+    }]
+}

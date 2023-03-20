@@ -3,6 +3,8 @@ package utils
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseMoveToml(t *testing.T) {
@@ -125,5 +127,42 @@ func TestFileToHexString(t *testing.T) {
 				t.Errorf("FileToHexString() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestKeyValuesToString(t *testing.T) {
+	keyValues := []KeyValue{
+		{
+			Key:   "Std",
+			Value: "0x1",
+		},
+		{
+			Key:   "AptosStdlib",
+			Value: "0x2",
+		},
+	}
+	want := "Std=0x1,AptosStdlib=0x2"
+	got := KeyValuesToString(keyValues)
+	if got != want {
+		t.Errorf("KeyValuesToString() = %v, want %v", got, want)
+	}
+}
+
+func TestKeyValuesFromString(t *testing.T) {
+	keyValues := "Std=0x1,AptosStdlib=0x2"
+	want := []KeyValue{
+		{
+			Key:   "Std",
+			Value: "0x1",
+		},
+		{
+			Key:   "AptosStdlib",
+			Value: "0x2",
+		},
+	}
+	got, err := KeyValuesFromString(keyValues)
+	assert.NoError(t, err)
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("KeyValuesFromString() = %v, want %v", got, want)
 	}
 }

@@ -21,6 +21,8 @@ type IProjectService interface {
 	GetProject(id string) (*vo.ProjectDetailVo, error)
 	UpdateProject(id string, updateData vo.UpdateProjectParam) error
 	DeleteProject(id string) error
+	UpdateProjectParams(id string, updateData vo.UpdateProjectParams) error
+	GetProjectParams(id string) (string, error)
 }
 
 type ProjectService struct {
@@ -193,6 +195,24 @@ func (p *ProjectService) UpdateProject(id string, updateData vo.UpdateProjectPar
 		return nil
 	}
 	return errors.New(fmt.Sprintf("application:%s already exists", updateData.Name))
+}
+
+func (p *ProjectService) GetProjectParams(id string) (string, error) {
+	var data db2.Project
+	result := p.db.Where("id = ? ", id).First(&data)
+	if result.Error != nil {
+		return "", result.Error
+	}
+	return data.Params, nil
+}
+
+func (p *ProjectService) UpdateProjectParams(id string, updateData vo.UpdateProjectParams) error {
+	var data db2.Project
+	err := p.db.Model(data).Where("id = ?", id).Updates(db2.Project{Params: updateData.Params, UpdateTime: time.Now()}).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *ProjectService) DeleteProject(id string) error {

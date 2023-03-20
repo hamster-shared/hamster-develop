@@ -2,8 +2,10 @@ package controller
 
 import (
 	"embed"
+	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/aline-engine/logger"
@@ -12,6 +14,7 @@ import (
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
+	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
@@ -398,6 +401,139 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 	Success(result, g)
 
 }
+
+func (h *HandlerServer) queryAptosParams(g *gin.Context) {
+	projectID := g.Param("id")
+	if projectID == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	// 先去数据库查询，如果有，直接返回
+	params, err := h.projectService.GetProjectParams(projectID)
+	if err == nil {
+		if params != "" {
+			params, err := utils.KeyValuesFromString(params)
+			if err != nil {
+				Fail(err.Error(), g)
+				return
+			}
+			Success(params, g)
+			return
+		}
+	}
+
+	// 先查询到此项目的 github 仓库信息
+	data, err := h.projectService.GetProject(projectID)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	rawUrl := getGithubRawUrl(data.RepositoryUrl, data.Branch, "Move.toml")
+	// 获取到这个文件，解析它，得到里面的内容
+	resp, err := http.Get(rawUrl)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	// if 404 not found
+	if resp.StatusCode == 404 {
+		Fail("Move.toml not found", g)
+		return
+	}
+	// 解析这个文件
+	moveToml, err := utils.ParseMoveTomlWithString(string(body))
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	keyValues := moveToml.GetAddressField()
+	if len(keyValues) == 0 {
+		Fail("no address field", g)
+		return
+	}
+	updateData := vo.UpdateProjectParams{
+		Params: utils.KeyValuesToString(keyValues),
+	}
+	// 保存到数据库一份
+	err = h.projectService.UpdateProjectParams(projectID, updateData)
+	if err != nil {
+		logger.Errorf("update project params error: %s", err.Error())
+	}
+	// 返回给前端
+	Success(keyValues, g)
+}
+
+type AptosParams struct {
+	Params []utils.KeyValue `json:"params"`
+}
+
+func (h *HandlerServer) saveAptosParams(g *gin.Context) {
+	projectID := g.Param("id")
+	if projectID == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	var params AptosParams
+	err := g.BindJSON(&params)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	// 保存到数据库一份
+	updateData := vo.UpdateProjectParams{
+		Params: utils.KeyValuesToString(params.Params),
+	}
+	err = h.projectService.UpdateProjectParams(projectID, updateData)
+	if err != nil {
+		logger.Errorf("update project params error: %s", err.Error())
+		Fail(err.Error(), g)
+		return
+	}
+	Success(nil, g)
+}
+
+// 查看是否需要传递 aptos 参数
+func (h *HandlerServer) isAptosNeedsParams(g *gin.Context) {
+	projectID := g.Param("id")
+	if projectID == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	// 先去数据库查询，如果有，直接返回
+	params, err := h.projectService.GetProjectParams(projectID)
+	if err == nil {
+		if params != "" {
+			Success(map[string]bool{
+				"needsParams": false,
+			}, g)
+			return
+		} else {
+			Success(map[string]bool{
+				"needsParams": true,
+			}, g)
+			return
+		}
+	}
+	Success(map[string]bool{
+		"needsParams": true,
+	}, g)
+}
+
+func getGithubRawUrl(reportUrl, branch, path string) string {
+	url := strings.Replace(reportUrl, "github.com", "raw.githubusercontent.com", 1)
+	// 如果以 .git 结尾，去掉
+	url = strings.TrimSuffix(url, ".git")
+	url = strings.Replace(url, "www.", "", 1)
+	url = strings.Join([]string{url, branch, path}, "/")
+	return url
+}
+
 func (h *HandlerServer) projectFrontendReports(g *gin.Context) {
 	projectId := g.Param("id")
 	if projectId == "" {
