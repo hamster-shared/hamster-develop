@@ -81,7 +81,8 @@ func (h *HttpServer) StartHttpServer() {
 	// aptos params
 	api.GET("/projects/:id/params/aptos", h.handlerServer.queryAptosParams)
 	api.GET("/projects/:id/is-needs-params/aptos", h.handlerServer.isAptosNeedsParams)
-	api.POST("projects/:id/params/aptos", h.handlerServer.saveAptosParams)
+	api.POST("/projects/:id/params/aptos", h.handlerServer.saveAptosParams)
+	api.GET("/projects/:id/aptos-build", h.handlerServer.projectWorkflowAptosBuild)
 
 	api.GET("/projects/:id/frontend/reports", h.handlerServer.projectFrontendReports)
 	api.GET("/projects/:id/packages", h.handlerServer.projectPackages)

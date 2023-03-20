@@ -525,6 +525,28 @@ func (h *HandlerServer) isAptosNeedsParams(g *gin.Context) {
 	}, g)
 }
 
+func (h *HandlerServer) projectWorkflowAptosBuild(g *gin.Context) {
+	logger.Tracef("projectWorkflowAptosBuild")
+	projectIdStr := g.Param("id")
+	projectId, err := uuid.FromString(projectIdStr)
+	if err != nil {
+		logger.Errorf("projectWorkflowBuild error: %s", err.Error())
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	var userVo vo.UserAuth
+	userAny, _ := g.Get("user")
+	user, _ := userAny.(db2.User)
+	copier.Copy(&userVo, &user)
+	data, err := workflowService.ExecProjectBuildWorkflowAptos(projectId, userVo)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	Success(data, g)
+}
+
 func getGithubRawUrl(reportUrl, branch, path string) string {
 	url := strings.Replace(reportUrl, "github.com", "raw.githubusercontent.com", 1)
 	// 如果以 .git 结尾，去掉

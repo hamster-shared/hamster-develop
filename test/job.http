@@ -389,6 +389,11 @@ GET http://127.0.0.1:8088/api/projects/02e5fe46-f2cd-4016-a824-37917744ca2a/is-n
 Content-Type: application/json
 Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 
+#### aptos build
+GET http://127.0.0.1:8088/api/projects/02e5fe46-f2cd-4016-a824-37917744ca2a/aptos-build
+Content-Type: application/json
+Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
+
 #### update aptos move toml params
 POST http://127.0.0.1:8088/api/projects/02e5fe46-f2cd-4016-a824-37917744ca2a/params/aptos
 Content-Type: application/json

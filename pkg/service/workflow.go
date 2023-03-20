@@ -627,6 +627,21 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 	return w.ExecProjectWorkflow(projectId, user, 3, params)
 }
 
+func (w *WorkflowService) ExecProjectBuildWorkflowAptos(projectID uuid.UUID, user vo.UserAuth) (vo.DeployResultVo, error) {
+	var project db.Project
+	err := w.db.Model(db.Project{}).Where("id = ?", projectID.String()).First(&project).Error
+	if err != nil {
+		logger.Info("project is not exit ")
+		return vo.DeployResultVo{}, err
+	}
+	params, err := utils.GetKeyValuesFromString(project.Params)
+	if err != nil {
+		logger.Errorf("project params is not valid %s", err)
+		return vo.DeployResultVo{}, err
+	}
+	return w.ExecProjectWorkflow(projectID, user, 2, params)
+}
+
 func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserAuth, workflowType uint, params map[string]string) (vo.DeployResultVo, error) {
 
 	// query project workflow
