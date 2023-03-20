@@ -57,6 +57,26 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: openai_api_key
+            - name: CLIENT_SECRETS
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: client_secrets
+            - name: APPS_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: apps_client_id
+            - name: APPS_CLIENT_SECRETS
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: apps_client_secerts
+            - name: GATEWAY
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: gateway
           ports:
             - containerPort: 8080
           volumeMounts:
@@ -123,6 +143,26 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: openai_api_key
+            - name: CLIENT_SECRETS
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: client_secrets
+            - name: APPS_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: apps_client_id
+            - name: APPS_CLIENT_SECRETS
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: apps_client_secerts
+            - name: GATEWAY
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: gateway
           volumeMounts:
             - mountPath: /certs
               name: docker-tls
