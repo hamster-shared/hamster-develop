@@ -242,19 +242,19 @@ func (h *HandlerServer) getJobLog(gin *gin.Context) {
 	idStr := gin.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		logger.Errorf("get job log error: %s", err.Error)
+		logger.Errorf("get job log error: %s", err)
 		Fail(err.Error(), gin)
 		return
 	}
 	jobDetail, err := h.Engine.GetJobHistory(name, id)
 	if err != nil {
-		logger.Errorf("get job log error: %s", err.Error)
+		logger.Errorf("get job log error: %s", err)
 		Fail(err.Error(), gin)
 		return
 	}
 	data, err := h.Engine.GetJobHistoryLog(name, id)
 	if err != nil {
-		logger.Errorf("get job log error: %s", err.Error)
+		logger.Errorf("get job log error: %s", err)
 		Fail(err.Error(), gin)
 		return
 	}
@@ -273,14 +273,14 @@ func (h *HandlerServer) getJobStageLog(gin *gin.Context) {
 	startStr := gin.DefaultQuery("start", "0")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		logger.Errorf("get job stage log error: %s", err.Error)
+		logger.Errorf("get job stage log error: %s", err)
 		Fail(err.Error(), gin)
 		return
 	}
 	start, _ := strconv.Atoi(startStr)
 	data, err := h.Engine.GetJobHistoryStageLog(name, id, stageName, start)
 	if err != nil {
-		logger.Errorf("get job stage log error: %s", err.Error)
+		logger.Errorf("get job stage log error: %s", err)
 		Fail(err.Error(), gin)
 		return
 	}

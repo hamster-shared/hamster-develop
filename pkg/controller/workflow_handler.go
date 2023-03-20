@@ -277,3 +277,4 @@ func (h *HandlerServer) deleteWorkflowDeploy(gin *gin.Context) {
 	frontendPackageService.DeleteFrontendDeploy(packageId)
 	Success("", gin)
 }
+

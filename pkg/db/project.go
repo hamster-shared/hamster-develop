@@ -21,6 +21,7 @@ type Project struct {
 	CreateTime    time.Time      `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
 	UpdateTime    time.Time      `json:"updateTime"`
 	DeleteTime    gorm.DeletedAt `json:"deleteTime"`
+	Params        string         `json:"params"`
 }
 
 func (p *Project) BeforeCreate(tx *gorm.DB) (err error) {
