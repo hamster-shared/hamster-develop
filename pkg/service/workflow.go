@@ -621,7 +621,8 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 	params["projectName"] = strings.ToLower(projectName)
 	params["servicePorts"] = string(serviceStr)
 	params["containers"] = string(containerStr)
-	params["gateway"] = consts.Gateway
+	//params["gateway"] = consts.Gateway
+	params["gateway"] = os.Getenv("GATEWAY")
 	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
 	return w.ExecProjectWorkflow(projectId, user, 3, params)
 }
