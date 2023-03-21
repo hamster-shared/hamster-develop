@@ -509,16 +509,32 @@ func (h *HandlerServer) isAptosNeedsParams(g *gin.Context) {
 	params, err := h.projectService.GetProjectParams(projectID)
 	if err == nil {
 		if params != "" {
+			keyValues, err := utils.KeyValuesFromString(params)
+			if err != nil {
+				Success(map[string]bool{
+					"needsParams": true,
+				}, g)
+				return
+			}
+
+			for _, keyValue := range keyValues {
+				if keyValue.Value == "_" {
+					Success(map[string]bool{
+						"needsParams": true,
+					}, g)
+					return
+				}
+			}
+
 			Success(map[string]bool{
 				"needsParams": false,
 			}, g)
 			return
-		} else {
-			Success(map[string]bool{
-				"needsParams": true,
-			}, g)
-			return
 		}
+		Success(map[string]bool{
+			"needsParams": true,
+		}, g)
+		return
 	}
 	Success(map[string]bool{
 		"needsParams": true,
