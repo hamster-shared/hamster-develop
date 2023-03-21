@@ -640,8 +640,8 @@ func (w *WorkflowService) ExecProjectBuildWorkflowAptos(projectID uuid.UUID, use
 		return vo.DeployResultVo{}, err
 	}
 	for _, v := range params {
-		// 如果 v 的长度是 62
-		if len(v) == 62 {
+		// 如果 v 的长度是 66
+		if len(v) == 66 {
 			params["aptos_param"] = v
 		}
 	}
