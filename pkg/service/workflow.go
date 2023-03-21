@@ -357,6 +357,7 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 		Status:           consts.STATUS_SUCCESS,
 	}
 
+	logger.Tracef("aptos contract: %+v", contract)
 	return w.saveContractToDatabase(&contract)
 }
 
