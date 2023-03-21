@@ -639,6 +639,13 @@ func (w *WorkflowService) ExecProjectBuildWorkflowAptos(projectID uuid.UUID, use
 		logger.Errorf("project params is not valid %s", err)
 		return vo.DeployResultVo{}, err
 	}
+	for _, v := range params {
+		// 如果 v 的长度是 62
+		if len(v) == 62 {
+			params["aptos_param"] = v
+		}
+	}
+
 	return w.ExecProjectWorkflow(projectID, user, 2, params)
 }
 
