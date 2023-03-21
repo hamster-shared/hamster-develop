@@ -860,6 +860,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 		} else if workflowType == consts.Build {
 			if project.FrameType == uint(consts.StarkWare) {
 				filePath = "templates/stark-ware-build.yml"
+			} else if project.FrameType == consts.Aptos {
+				filePath = "templates/aptos-build.yml"
 			} else {
 				filePath = "templates/truffle-build.yml"
 			}

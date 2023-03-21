@@ -15,6 +15,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"strconv"
 	"time"
 )
 
@@ -70,6 +71,10 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 	if err != nil {
 		return 0, err
 	}
+	version, err := strconv.Atoi(entity.Version)
+	if err != nil {
+		return 0, err
+	}
 	entity.Type = contract.Type
 
 	var savedContractDeploy db2.ContractDeploy
@@ -80,7 +85,21 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 		entity.Id = savedContractDeploy.Id
 		entity.CreateTime = savedContractDeploy.CreateTime
 	}
-
+	if entity.AbiInfo == "" && version > 1 {
+		for {
+			if version > 1 {
+				var contractDeploy db2.ContractDeploy
+				c.db.Model(db2.ContractDeploy{}).Where("contract_id = ? and version = ? ", entity.ContractId, entity.Version).First(&contractDeploy)
+				if contractDeploy.AbiInfo != "" {
+					entity.AbiInfo = contractDeploy.AbiInfo
+					break
+				}
+				version = version - 1
+			} else {
+				break
+			}
+		}
+	}
 	err = c.db.Save(&entity).Error
 	if err != nil {
 		return 0, err
