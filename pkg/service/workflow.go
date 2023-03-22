@@ -312,7 +312,6 @@ func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, 
 
 func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (mv string, byteCode string, err error) {
 	for _, arti := range artis {
-		// 此处逻辑存疑
 		// 以 .bcs 结尾，认为是 byteCode
 		if strings.HasSuffix(arti.Url, ".bcs") {
 			byteCode, err = utils.FileToHexString(arti.Url)
@@ -322,8 +321,7 @@ func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (mv s
 			}
 			continue
 		}
-		// 以 .mv 结尾，认为是 abi
-		if strings.HasSuffix(arti.Url, ".bcs") {
+		if strings.HasSuffix(arti.Url, ".mv") {
 			mv, err = utils.FileToHexString(arti.Url)
 			if err != nil {
 				logger.Errorf("hex string failed: %s", err.Error())
@@ -357,6 +355,7 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 		Status:           consts.STATUS_SUCCESS,
 	}
 
+	logger.Tracef("aptos contract: %+v", contract)
 	return w.saveContractToDatabase(&contract)
 }
 
@@ -639,6 +638,13 @@ func (w *WorkflowService) ExecProjectBuildWorkflowAptos(projectID uuid.UUID, use
 		logger.Errorf("project params is not valid %s", err)
 		return vo.DeployResultVo{}, err
 	}
+	for k, v := range params {
+		// 如果 v 的长度是 66
+		if len(v) == 66 {
+			params["aptos_param"] = fmt.Sprintf("%s=%s", k, v)
+		}
+	}
+
 	return w.ExecProjectWorkflow(projectID, user, 2, params)
 }
 

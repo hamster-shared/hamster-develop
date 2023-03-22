@@ -113,4 +113,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/hamster-shared/aline-engine => github.com/hamster-shared/aline-engine v1.0.3-0.20230317102211-88b16ad26b89
+replace github.com/hamster-shared/aline-engine => github.com/hamster-shared/aline-engine v1.0.3-0.20230320082510-27305f1b647b
