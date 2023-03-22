@@ -457,8 +457,16 @@ func (h *HandlerServer) queryAptosParams(g *gin.Context) {
 		Fail("no address field", g)
 		return
 	}
+	var resultKeyValues []utils.KeyValue
+	// 只保留值是下划线的那些，其他的不要
+	for _, keyValue := range keyValues {
+		if keyValue.Value != "_" {
+			continue
+		}
+		resultKeyValues = append(resultKeyValues, keyValue)
+	}
 	updateData := vo.UpdateProjectParams{
-		Params: utils.KeyValuesToString(keyValues),
+		Params: utils.KeyValuesToString(resultKeyValues),
 	}
 	// 保存到数据库一份
 	err = h.projectService.UpdateProjectParams(projectID, updateData)
@@ -466,7 +474,7 @@ func (h *HandlerServer) queryAptosParams(g *gin.Context) {
 		logger.Errorf("update project params error: %s", err.Error())
 	}
 	// 返回给前端
-	Success(keyValues, g)
+	Success(resultKeyValues, g)
 }
 
 type AptosParams struct {
