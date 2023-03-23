@@ -186,6 +186,8 @@ func (c *ContractService) QueryContractDeployByVersion(projectId string, version
 		for u, deploys := range res2 {
 			var contractData db2.Contract
 			res := c.db.Model(db2.Contract{}).Where("id = ?", u).First(&contractData)
+			var contractInfoVo vo.ContractInfoVo
+			copier.Copy(&contractInfoVo, &contractData)
 			if res.Error == nil {
 				var deployInfo []vo.DeployInfVo
 				if len(deploys) > 0 {
@@ -193,10 +195,11 @@ func (c *ContractService) QueryContractDeployByVersion(projectId string, version
 						var deployData vo.DeployInfVo
 						copier.Copy(&deployData, &deploy)
 						deployInfo = append(deployInfo, deployData)
+						if deploy.AbiInfo != "" && contractInfoVo.AbiInfo == "" {
+							contractInfoVo.AbiInfo = deploy.AbiInfo
+						}
 					}
 				}
-				var contractInfoVo vo.ContractInfoVo
-				copier.Copy(&contractInfoVo, &contractData)
 				contractInfoVo.DeployInfo = deployInfo
 				contractInfo[contractData.Name] = contractInfoVo
 			}
