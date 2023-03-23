@@ -249,7 +249,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		}
 
 		// 其他作为 evm 合约处理
-		w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
+		_ = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
 	}
 }
 
@@ -635,14 +635,12 @@ func (w *WorkflowService) ExecProjectBuildWorkflowAptos(projectID uuid.UUID, use
 		logger.Errorf("project params is not valid %s", err)
 		return vo.DeployResultVo{}, err
 	}
-	paramString := ""
+
+	aptos_param := ""
 	for k, v := range params {
-		// 如果 v 的长度是 66
-		// if len(v) == 66 {
-		paramString += fmt.Sprintf("%s=%s,", k, v)
-		// }
+		aptos_param += fmt.Sprintf("%s=%s,", k, v)
 	}
-	params["aptos_param"] = paramString
+	params["aptos_param"] = aptos_param
 	return w.ExecProjectWorkflow(projectID, user, 2, params)
 }
 
