@@ -1,23 +1,26 @@
 version: 1.0
 name: [[ .Name ]]
 stages:
-  git-clone:
+  Initialization:
     steps:
-      - name: git-clone
+      - name: Clone Code from Github
         uses: git-checkout
         with:
           url: [[ .RepositoryUrl ]]
           branch: main
-  code-compile:
+  Build Contract:
     needs:
-      - git-clone
+      - Initialization
     steps:
-      - name: code-compile
+      - name: Compile Contract
         runs-on: docker.io/hamstershare/aptoslabs-tools:aptos-node-v1.3.0
         run: |
           aptos move compile --save-metadata --named-addresses ${{ param.aptos_param }}
-
-      - name: save artifactory
+  Output Results:
+    needs:
+      - Build Contract
+    steps:
+      - name: Save Files
         uses: hamster-artifactory
         with:
           name: aptos-meta.zip

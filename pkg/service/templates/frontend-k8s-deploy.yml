@@ -1,20 +1,20 @@
 version: "1"
 name: [[.Name]]
 stages:
-  Deploy FrontEnd by K8s:
+  Deploy FrontEnd:
     steps:
-      - name: deploy
+      - name: Deploy by Kubernetes
         uses: k8s-frontend-deploy
         with:
           namespace: ${{ param.namespace }}
           containers: ${{ param.containers }}
           project_name: ${{ param.projectName }}
           service_ports: ${{ param.servicePorts }}
-  Assigning Domains:
+  Configure Service:
     needs:
-      - Deploy FrontEnd by K8s
+      - Deploy FrontEnd
     steps:
-      - name: assign-domain
+      - name: Assign Domains
         uses: k8s-assign-domain
         with:
           gateway: ${{ param.gateway }}

@@ -518,9 +518,6 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.CONTAINER) {
 		image := fmt.Sprintf("%s/%s-%d:%d", consts.DockerHubName, strings.ToLower(user.Username), user.Id, time.Now().Unix())
 		params["imageName"] = image
-		if project.FrameType == 1 || project.FrameType == 2 {
-			params["runBuild"] = "true"
-		}
 	} else {
 		params = nil
 	}
@@ -879,7 +876,11 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 			if project.DeployType == int(consts.IPFS) {
 				filePath = "templates/frontend-build.yml"
 			} else {
-				filePath = "templates/frontend-image-build.yml"
+				if project.FrameType == 1 || project.FrameType == 2 {
+					filePath = "templates/frontend-image-build.yml"
+				} else {
+					filePath = "templates/frontend-node-image-build.yml"
+				}
 			}
 		} else if workflowType == consts.Deploy {
 			if project.DeployType == int(consts.IPFS) {

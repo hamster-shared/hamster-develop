@@ -3,17 +3,17 @@ name: {{.Name}}
 stages:
   Initialization:
     steps:
-      - name: git-clone
+      - name: Clone Code from Github
         uses: git-checkout
         with:
           url: {{ .RepositoryUrl }}
           branch: main
 
-  Check FrontEnd :
+  Check FrontEnd:
     needs:
       - Initialization
     steps:
-      - name: frontend-install
+      - name: Check by ESLint
         run: |
           npm install
       - name: frontend-check
@@ -25,5 +25,5 @@ stages:
     needs:
       - Check FrontEnd
     steps:
-      - name: check-aggregation
+      - name: Integration Report
         uses: check-aggregation

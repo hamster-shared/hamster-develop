@@ -1,9 +1,9 @@
 version: 1.0
 name: [[.Name]]
 stages:
-  ipfs :
+  Deploy FrontEnd :
     steps:
-      - name: artifactory
+      - name: Upload to IPFS
         uses: hamster-ipfs
         with:
           api: http://44.204.204.186:5001

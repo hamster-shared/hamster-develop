@@ -1,22 +1,22 @@
 version: 1.0
 name: {{.Name}}
 stages:
-  git-clone:
+  Initialization:
     steps:
-      - name: git-clone
+      - name: Clone Code from Github
         uses: git-checkout
         with:
           url: {{ .RepositoryUrl }}
           branch: main
-  code-compile:
+  Build Contract:
     needs:
-      - git-clone
+      - Initialization
     steps:
-      - name: code-compile
+      - name: Compile Contract
         run: |
           yarn install
           yarn compile
-      - name: filter
+      - name: Filter Info
         run: |
           mkdir -p build/artifacts
           cd contracts
@@ -25,11 +25,14 @@ stages:
               cp -R ../build/contracts/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
             fi
           done;
-
-      - name: save artifactory
-        uses: hamster-artifactory
-        with:
-          name: contract-meta.zip
-          compress: false
-          path: |
-            build/artifacts/*.json
+  Output Results:
+      needs:
+        - Build Contract
+      steps:
+        - name: Save Files
+          uses: hamster-artifactory
+            with:
+              name: contract-meta.zip
+              compress: false
+              path: |
+                build/artifacts/*.json
