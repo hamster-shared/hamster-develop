@@ -63,6 +63,7 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 
 	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
 	if err != nil {
+		logger.Errorf("get job history failed: %v", err)
 		return
 	}
 
@@ -74,12 +75,14 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	}).First(&workflowDetail)
 
 	if workflowDetail.Id == 0 {
+		logger.Errorf("workflowDetail.Id is 0")
 		return
 	}
 
 	workflowDetail.Status = uint(jobDetail.Status)
 	stageInfo, err := json.Marshal(jobDetail.Stages)
 	if err != nil {
+		logger.Errorf("stage info json marshal failed: %v", err)
 		return
 	}
 	workflowDetail.StageInfo = string(stageInfo)
@@ -90,8 +93,16 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	}
 	workflowDetail.Duration = jobDetail.Duration
 
-	tx := w.db.Save(&workflowDetail)
-	tx.Commit()
+	// retry 3 times
+	for i := 0; i < 3; i++ {
+		err := w.db.Model(&workflowDetail).Select("*").Updates(workflowDetail).Error
+		if err != nil {
+			logger.Errorf("save workflow detail status to database failed: %s", err)
+		} else {
+			logger.Infof("save workflow detail status to database success")
+			break
+		}
+	}
 
 	w.SyncContract(message, workflowDetail)
 	w.SyncReport(message, workflowDetail)
@@ -111,7 +122,7 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 	var projectData db.Project
 	err = w.db.Model(db.Project{}).Where("id = ?", projectId).First(&projectData).Error
 	if err != nil {
-		log.Println("find project by id failed: ", err.Error())
+		logger.Errorf("find project by id failed: ", err.Error())
 		return
 	}
 
@@ -669,6 +680,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		err := yaml.Unmarshal([]byte((workflow.ExecFile)), &jobModel)
 		if err != nil {
 			logger.Errorf("Unmarshal job fail, err is %s", err.Error())
+			logger.Errorf("job file is %s", workflow.ExecFile)
 			return deployResult, err
 		}
 		if jobModel.Name != workflowKey {
