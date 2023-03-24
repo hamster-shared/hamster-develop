@@ -116,7 +116,7 @@ metadata:
   labels:
     app: hamster-aline-worker-1
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: hamster-aline-worker-1
@@ -133,7 +133,7 @@ spec:
             - name: MASTER_ADDRESS
               value: hamster-aline-master:50001
             - name: DOCKER_HOST
-              value: tcp://docker:2376
+              value: tcp://docker2:2376
             - name: DOCKER_CERT_PATH
               value: /certs/client
             - name: DOCKER_TLS_VERIFY
@@ -165,7 +165,7 @@ spec:
                   key: gateway
           volumeMounts:
             - mountPath: /certs
-              name: docker-tls
+              name: docker2-tls
               readOnly: true
             - name: kubeconfig
               mountPath: "/root/.kube"
@@ -173,7 +173,7 @@ spec:
       volumes:
         - name: docker-tls
           persistentVolumeClaim:
-            claimName: docker-tls
+            claimName: docker2-tls
         - name: kubeconfig
           configMap:
             # Provide the name of the ConfigMap you want to mount.
@@ -231,6 +231,8 @@ spec:
               name: aline-pipelines
             - mountPath: /root/workdir
               name: aline-workdir
+            - mountPath: /root/.move
+              name: aptos-move-cache
             - mountPath: /certs
               name: docker-tls
           securityContext:
@@ -245,3 +247,55 @@ spec:
         - name: docker-tls
           persistentVolumeClaim:
             claimName: docker-tls
+        - name: aptos-move-cache
+          persistentVolumeClaim:
+            claimName: aptos-move-cache
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker2
+  labels:
+    app: docker2
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: docker2
+  template:
+    metadata:
+      labels:
+        app: docker2
+    spec:
+      containers:
+        - name: docker
+          image: docker:dind
+          imagePullPolicy: IfNotPresent
+          args:
+            - --storage-driver
+            - overlay2
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: /certs
+          ports:
+            - containerPort: 2376
+          volumeMounts:
+            - mountPath: /root/pipelines
+              name: aline-worker-pipelines
+            - mountPath: /root/workdir
+              name: aline-worker-workdir
+            - mountPath: /certs
+              name: docker2-tls
+          securityContext:
+            privileged: true
+      volumes:
+        - name: aline-worker-pipelines
+          persistentVolumeClaim:
+            claimName: aline-worker-pipelines
+        - name: aline-worker-workdir
+          persistentVolumeClaim:
+            claimName: aline-worker-workdir
+        - name: docker2-tls
+          persistentVolumeClaim:
+            claimName: docker2-tls
