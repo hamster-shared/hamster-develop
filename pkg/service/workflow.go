@@ -940,8 +940,10 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	if workflowType == consts.Deploy {
 		tmpl = tmpl.Delims("[[", "]]")
 	}
-	if workflowType == consts.Build && project.FrameType == consts.Aptos {
-		tmpl = tmpl.Delims("[[", "]]")
+	if project.Type == uint(consts.CONTRACT) {
+		if workflowType == consts.Build && project.FrameType == consts.Aptos {
+			tmpl = tmpl.Delims("[[", "]]")
+		}
 	}
 	if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.CONTAINER) && workflowType == consts.Build {
 		tmpl = tmpl.Delims("[[", "]]")
