@@ -757,10 +757,15 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 
 		if err != nil {
 			logger.Warnf("Save workflow detail fail, err is %s, retry counter: %d", err.Error(), i)
+			continue
 		} else {
 			logger.Infof("create job detail success, job detail id is %d", detail.Id)
 			break
 		}
+	}
+	// 重试 10 次后仍然失败，返回错误
+	if err != nil {
+		return deployResult, err
 	}
 	deployResult.WorkflowId = workflow.Id
 	deployResult.DetailId = dbDetail.Id
