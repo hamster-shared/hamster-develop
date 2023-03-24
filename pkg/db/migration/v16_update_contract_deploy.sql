@@ -1,6 +1,9 @@
 alter table t_contract_deploy
     add column  abi_info mediumtext comment 'abi信息';
 
+alter table t_workflow_detail
+    add constraint t_workflow_detail_unique
+        unique (workflow_id, exec_number);
 
 insert into t_template (
     id,
