@@ -3,11 +3,13 @@ package controller
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	engine "github.com/hamster-shared/aline-engine"
@@ -197,7 +199,9 @@ func (h *HandlerServer) getPipelineDetailList(gin *gin.Context) {
 // execPipeline exec pipeline job
 func (h *HandlerServer) execPipeline(gin *gin.Context) {
 	name := gin.Param("name")
-	_, err := h.Engine.ExecuteJob(name)
+
+	// 这里应该已经废弃了，保险起见，还是随机一个数
+	_, err := h.Engine.ExecuteJob(name, getRandomNumber())
 
 	if err != nil {
 		logger.Errorf("exec pipeline job error: %s", err.Error())
@@ -205,6 +209,12 @@ func (h *HandlerServer) execPipeline(gin *gin.Context) {
 		return
 	}
 	Success("", gin)
+}
+
+// 获取一个随机的数，大于 10000，小于 100000
+func getRandomNumber() int {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(90000) + 10000
 }
 
 // reExecuteJob re exec pipeline job detail

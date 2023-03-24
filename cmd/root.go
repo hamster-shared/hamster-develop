@@ -5,16 +5,18 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"math/rand"
+	"os"
+	"path"
+	"time"
+
 	engine "github.com/hamster-shared/aline-engine"
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/aline-engine/model"
 	"github.com/hamster-shared/aline-engine/pipeline"
 	"github.com/hamster-shared/hamster-develop/pkg/controller"
 	service2 "github.com/hamster-shared/hamster-develop/pkg/service"
-	"io"
-	"os"
-	"path"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -65,7 +67,7 @@ hamster pipeline file in the local environment.`,
 
 			err = Engine.CreateJob(job.Name, yaml)
 
-			jobDetail, err := Engine.ExecuteJob(job.Name)
+			jobDetail, err := Engine.ExecuteJob(job.Name, getRandomNumber())
 			if err != nil {
 				logger.Error("err:", err)
 				return
@@ -81,6 +83,12 @@ hamster pipeline file in the local environment.`,
 		},
 	}
 )
+
+// 获取一个随机的数，大于 1000，小于 65535
+func getRandomNumber() int {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(64535) + 1000
+}
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
