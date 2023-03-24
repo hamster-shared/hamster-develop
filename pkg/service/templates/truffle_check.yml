@@ -33,13 +33,13 @@ stages:
           npm install -g solhint
       - name: Check by Solhint
         uses: solhint-check
-          with:
-            path: contracts
+        with:
+          path: contracts
       - name: Check by Mythril
         uses: mythril-check
-          with:
-            path: contracts
-            solc-version: 0.8.9
+        with:
+          path: contracts
+          solc-version: 0.8.9
       - name: Start Local Chain
         run: |
           npm install -g ganache
@@ -50,8 +50,8 @@ stages:
           sleep 2
       - name: Check by eth-gas-report
         uses: eth-gas-reporter
-          with:
-            solc-version:
+        with:
+          solc-version:
       - name: Check by AI
         uses: openai
   Output Results:
