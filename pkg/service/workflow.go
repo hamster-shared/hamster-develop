@@ -720,46 +720,55 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 	}
 
-	detail, err := w.engine.ExecuteJob(workflowKey)
+	var detail *model.JobDetail
+	var dbDetail db.WorkflowDetail
+	// 重试 10 次
+	for i := 0; i < 10; i++ {
+		detail, err = w.engine.CreateJobDetail(workflowKey)
+		if err != nil {
+			logger.Errorf("Create job detail fail, err is %s", err.Error())
+			return deployResult, err
+		}
+		stageInfo, err := json.Marshal(detail.Stages)
+		if err != nil {
+			logger.Errorf("Marshal stage info fail, err is %s", err.Error())
+			return deployResult, err
+		}
 
-	if err != nil {
-		logger.Errorf("Create job detail fail, err is %s", err.Error())
-		return deployResult, err
-	}
-	stageInfo, err := json.Marshal(detail.Stages)
-	if err != nil {
-		logger.Errorf("Marshal stage info fail, err is %s", err.Error())
-		return deployResult, err
-	}
+		dbDetail = db.WorkflowDetail{
+			Type:        workflowType,
+			ProjectId:   projectId,
+			WorkflowId:  workflow.Id,
+			ExecNumber:  uint(detail.Id),
+			StageInfo:   string(stageInfo),
+			TriggerUser: user.Username,
+			TriggerMode: 1,
+			CodeInfo:    "",
+			//Status:      uint(detail.Status),
+			Status:     1,
+			StartTime:  detail.StartTime,
+			CreateTime: time.Now(),
+			UpdateTime: time.Now(),
+		}
 
-	dbDetail := db.WorkflowDetail{
-		Type:        workflowType,
-		ProjectId:   projectId,
-		WorkflowId:  workflow.Id,
-		ExecNumber:  uint(detail.Id),
-		StageInfo:   string(stageInfo),
-		TriggerUser: user.Username,
-		TriggerMode: 1,
-		CodeInfo:    "",
-		//Status:      uint(detail.Status),
-		Status:     1,
-		StartTime:  detail.StartTime,
-		CreateTime: time.Now(),
-		UpdateTime: time.Now(),
-	}
+		err = w.db.Transaction(func(tx *gorm.DB) error {
+			return tx.Save(&dbDetail).Error
+		})
 
-	err = w.db.Transaction(func(tx *gorm.DB) error {
-		tx.Save(&dbDetail)
-		return nil
-	})
-
-	if err != nil {
-		logger.Errorf("Save workflow detail fail, err is %s", err.Error())
-		return deployResult, err
+		if err != nil {
+			logger.Warnf("Save workflow detail fail, err is %s, retry counter: %d", err.Error(), i)
+		} else {
+			logger.Infof("create job detail success, job detail id is %d", detail.Id)
+			break
+		}
 	}
 	deployResult.WorkflowId = workflow.Id
 	deployResult.DetailId = dbDetail.Id
-	logger.Tracef("create job detail success, job detail id is %d", detail.Id)
+	err = w.engine.ExecuteJobDetail(workflowKey, detail.Id)
+	if err != nil {
+		logger.Errorf("execute job detail fail, err is %s", err.Error())
+		return deployResult, err
+	}
 	return deployResult, nil
 }
 
