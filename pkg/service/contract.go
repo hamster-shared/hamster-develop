@@ -100,6 +100,9 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 			}
 		}
 	}
+	if contract.AbiInfo == "" {
+		contract.AbiInfo = entity.AbiInfo
+	}
 	err = c.db.Save(&entity).Error
 	if err != nil {
 		return 0, err
