@@ -286,7 +286,7 @@ spec:
             - mountPath: /root/workdir
               name: aline-worker-workdir
             - mountPath: /certs
-              name: docker2-tls
+              name: docker-tls
           securityContext:
             privileged: true
       volumes:
@@ -296,6 +296,6 @@ spec:
         - name: aline-worker-workdir
           persistentVolumeClaim:
             claimName: aline-worker-workdir
-        - name: docker2-tls
+        - name: docker-tls
           persistentVolumeClaim:
             claimName: docker2-tls
