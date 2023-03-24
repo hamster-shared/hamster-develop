@@ -93,6 +93,12 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	}
 	workflowDetail.Duration = jobDetail.Duration
 
+	if workflowDetail.Status != uint(message.Status) {
+		// 如果 detail 的状态和 message 的状态不一致，可能是因为 detail 是从文件读取的，读取时还没有保存最新的状态，以 message 的状态为准
+		logger.Warnf("workflowDetail.Status(%d) != message.Status(%d), use message.Status", workflowDetail.Status, message.Status)
+		workflowDetail.Status = uint(message.Status)
+	}
+
 	// retry 3 times
 	for i := 0; i < 3; i++ {
 		err := w.db.Model(&workflowDetail).Select("*").Updates(workflowDetail).Error
@@ -366,7 +372,7 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 		Status:           consts.STATUS_SUCCESS,
 	}
 
-	logger.Tracef("aptos contract: %+v", contract)
+	// logger.Tracef("aptos contract: %+v", contract)
 	return w.saveContractToDatabase(&contract)
 }
 
