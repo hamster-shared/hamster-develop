@@ -87,10 +87,10 @@ to quickly create a Cobra application.`,
 			}
 		}()
 
-		go func() {
-			// check job is true running
-			workflowService.CheckRunningJob()
-		}()
+		//go func() {
+		//	// check job is true running
+		//	workflowService.CheckRunningJob()
+		//}()
 
 		controller.NewHttpService(*handlerServer, port).StartHttpServer()
 
