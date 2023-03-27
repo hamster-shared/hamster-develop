@@ -1,0 +1,16 @@
+[package]
+  name = "mokshya-staking"
+  version = "1.0.0"
+
+[addresses]
+  Std = "0x1"
+  aptos_std = "0x1"
+  mokshyastaking = "_"
+
+[dependencies]
+  [dependencies.AptosFramework]
+    local = "../../aptos-core/aptos-move/framework/aptos-framework"
+  [dependencies.AptosStdlib]
+    local = "../../aptos-core/aptos-move/framework/aptos-stdlib"
+  [dependencies.AptosToken]
+    local = "../../aptos-core/aptos-move/framework/aptos-token"

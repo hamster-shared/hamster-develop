@@ -17,6 +17,7 @@ type Contract struct {
 	BuildTime        time.Time      `json:"buildTime"`
 	AbiInfo          string         `json:"abiInfo"`
 	ByteCode         string         `json:"byteCode"`
+	AptosMv          string         `json:"aptosMv" gorm:"column:aptos_mv"`
 	CreateTime       time.Time      `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
 	Type             uint           `json:"type"`   // see #consts.ProjectFrameType
 	Status           uint           `json:"status"` // 1: deploying, 2: success , 3: fail
@@ -35,4 +36,5 @@ type ContractDeploy struct {
 	DeclareTxHash string    `json:"declareTxHash"`
 	DeployTxHash  string    `json:"deployTxHash"`
 	Status        uint      `json:"status"` // 1: deploying, 2: success , 3: fail
+	AbiInfo       string    `json:"abiInfo"`
 }

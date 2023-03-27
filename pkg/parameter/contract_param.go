@@ -9,4 +9,5 @@ type ContractDeployParam struct {
 	DeclareTxHash string `json:"declareTxHash"`
 	DeployTxHash  string `json:"deployTxHash"`
 	Status        uint   `json:"status"` // 1: deploying, 2: success , 3: fail
+	AbiInfo       string `json:"abiInfo"`
 }

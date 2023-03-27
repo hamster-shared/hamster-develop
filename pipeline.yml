@@ -13,7 +13,7 @@ stages:
         run: |
           make linux-test
           docker buildx build -t hamstershare/hamster-develop:${PIPELINE_ID} --platform=linux/amd64 --push .
-          docker buildx build -f Dockerfile_worker -t hamstershare/hamster-develop-worker:${PIPELINE_ID} --platform=linux/amd64 --push .
+#          docker buildx build -f Dockerfile_worker -t hamstershare/hamster-develop-worker:${PIPELINE_ID} --platform=linux/amd64 --push .
 
   deploy:
     needs:

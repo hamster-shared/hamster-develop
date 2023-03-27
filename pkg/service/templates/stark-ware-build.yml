@@ -1,20 +1,19 @@
 version: 1.0
 name: {{.Name}}
 stages:
-
-  git-clone:
+  Initialization:
     steps:
-      - name: git-clone
+      - name: Clone Code from Github
         uses: git-checkout
         with:
           url: {{ .RepositoryUrl }}
           branch: main
 
-  starknet-compile:
+  Build Contract:
     needs:
-      - git-clone
+      - Initialization
     steps:
-      - name: starknet-compile
+      - name: Compile Contract
         runs-on: jlvihv/cairo-anaconda-env:0.1.4
         run: |
           cd cairo-project
@@ -22,8 +21,11 @@ stages:
             echo "Compiling $f..."
             starknet-compile $f > $f.starknet.output.json
           done
-
-      - name: save artifactory
+  Output Results:
+    needs:
+      - Build Contract
+    steps:
+      - name: Save Files
         uses: hamster-artifactory
         with:
           name: some.zip

@@ -12,10 +12,6 @@ stages:
     needs:
       - Initialization
     steps:
-      - name: Compile Code
-        run: |
-          npm install
-          npm run build
       - name: Build Image
         uses: image-build
         with:

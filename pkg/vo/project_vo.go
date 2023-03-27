@@ -86,6 +86,10 @@ type UpdateProjectParam struct {
 	RepositoryUrl string `json:"repositoryUrl"`
 }
 
+type UpdateProjectParams struct {
+	Params string `json:"params"`
+}
+
 type UserAuth struct {
 	Id       uint   `json:"id"`
 	Username string `json:"username"`

@@ -31,4 +31,5 @@ type ContractVo struct {
 	AbiInfo          string    `json:"abiInfo"`
 	ByteCode         string    `json:"byteCode"`
 	Type             uint      `json:"type"` // see #consts.ProjectFrameType
+	AptosMv          string    `json:"aptosMv"`
 }

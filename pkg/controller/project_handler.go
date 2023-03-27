@@ -2,8 +2,10 @@ package controller
 
 import (
 	"embed"
+	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/aline-engine/logger"
@@ -12,6 +14,7 @@ import (
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
+	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
@@ -111,25 +114,25 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-
-	workflowCheckData := parameter.SaveWorkflowParam{
-		ProjectId:  id,
-		Type:       consts.Check,
-		ExecFile:   "",
-		LastExecId: 0,
+	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Aptos) {
+		workflowCheckData := parameter.SaveWorkflowParam{
+			ProjectId:  id,
+			Type:       consts.Check,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+		if err != nil {
+			Success(id, g)
+			return
+		}
+		checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
+		file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
+		if err == nil {
+			workflowCheckRes.ExecFile = file
+			workflowService.UpdateWorkflow(workflowCheckRes)
+		}
 	}
-	workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
-	if err != nil {
-		Success(id, g)
-		return
-	}
-	checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
-	file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
-	if err == nil {
-		workflowCheckRes.ExecFile = file
-		workflowService.UpdateWorkflow(workflowCheckRes)
-	}
-
 	workflowBuildData := parameter.SaveWorkflowParam{
 		ProjectId:  id,
 		Type:       consts.Build,
@@ -258,6 +261,7 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 	}
 	Success(data, g)
 }
+
 func (h *HandlerServer) configContainerDeploy(g *gin.Context) {
 	projectIdStr := g.Param("id")
 	if projectIdStr == "" {
@@ -397,6 +401,185 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 	Success(result, g)
 
 }
+
+func (h *HandlerServer) queryAptosParams(g *gin.Context) {
+	projectID := g.Param("id")
+	if projectID == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	// 先去数据库查询，如果有，直接返回
+	params, err := h.projectService.GetProjectParams(projectID)
+	if err == nil {
+		if params != "" {
+			params, err := utils.KeyValuesFromString(params)
+			if err != nil {
+				Fail(err.Error(), g)
+				return
+			}
+			Success(params, g)
+			return
+		}
+	}
+
+	// 先查询到此项目的 github 仓库信息
+	data, err := h.projectService.GetProject(projectID)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	rawUrl := getGithubRawUrl(data.RepositoryUrl, data.Branch, "Move.toml")
+	// 获取到这个文件，解析它，得到里面的内容
+	resp, err := http.Get(rawUrl)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	// if 404 not found
+	if resp.StatusCode == 404 {
+		Fail("Move.toml not found", g)
+		return
+	}
+	// 解析这个文件
+	moveToml, err := utils.ParseMoveTomlWithString(string(body))
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	keyValues := moveToml.GetAddressField()
+	if len(keyValues) == 0 {
+		Fail("no address field", g)
+		return
+	}
+	var resultKeyValues []utils.KeyValue
+	// 只保留值是下划线的那些，其他的不要
+	for _, keyValue := range keyValues {
+		if keyValue.Value != "_" {
+			continue
+		}
+		resultKeyValues = append(resultKeyValues, keyValue)
+	}
+	updateData := vo.UpdateProjectParams{
+		Params: utils.KeyValuesToString(resultKeyValues),
+	}
+	// 保存到数据库一份
+	err = h.projectService.UpdateProjectParams(projectID, updateData)
+	if err != nil {
+		logger.Errorf("update project params error: %s", err.Error())
+	}
+	// 返回给前端
+	Success(resultKeyValues, g)
+}
+
+type AptosParams struct {
+	Params []utils.KeyValue `json:"params"`
+}
+
+func (h *HandlerServer) saveAptosParams(g *gin.Context) {
+	projectID := g.Param("id")
+	if projectID == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	var params AptosParams
+	err := g.BindJSON(&params)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	// 保存到数据库一份
+	updateData := vo.UpdateProjectParams{
+		Params: utils.KeyValuesToString(params.Params),
+	}
+	err = h.projectService.UpdateProjectParams(projectID, updateData)
+	if err != nil {
+		logger.Errorf("update project params error: %s", err.Error())
+		Fail(err.Error(), g)
+		return
+	}
+	Success(nil, g)
+}
+
+// 查看是否需要传递 aptos 参数
+func (h *HandlerServer) isAptosNeedsParams(g *gin.Context) {
+	projectID := g.Param("id")
+	if projectID == "" {
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	// 先去数据库查询，如果有，直接返回
+	params, err := h.projectService.GetProjectParams(projectID)
+	if err == nil {
+		if params != "" {
+			keyValues, err := utils.KeyValuesFromString(params)
+			if err != nil {
+				Success(map[string]bool{
+					"needsParams": true,
+				}, g)
+				return
+			}
+
+			for _, keyValue := range keyValues {
+				if keyValue.Value == "_" {
+					Success(map[string]bool{
+						"needsParams": true,
+					}, g)
+					return
+				}
+			}
+
+			Success(map[string]bool{
+				"needsParams": false,
+			}, g)
+			return
+		}
+		Success(map[string]bool{
+			"needsParams": true,
+		}, g)
+		return
+	}
+	Success(map[string]bool{
+		"needsParams": true,
+	}, g)
+}
+
+func (h *HandlerServer) projectWorkflowAptosBuild(g *gin.Context) {
+	logger.Tracef("projectWorkflowAptosBuild")
+	projectIdStr := g.Param("id")
+	projectId, err := uuid.FromString(projectIdStr)
+	if err != nil {
+		logger.Errorf("projectWorkflowBuild error: %s", err.Error())
+		Fail("projectId is empty or invalid", g)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	var userVo vo.UserAuth
+	userAny, _ := g.Get("user")
+	user, _ := userAny.(db2.User)
+	copier.Copy(&userVo, &user)
+	data, err := workflowService.ExecProjectBuildWorkflowAptos(projectId, userVo)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	Success(data, g)
+}
+
+func getGithubRawUrl(reportUrl, branch, path string) string {
+	url := strings.Replace(reportUrl, "github.com", "raw.githubusercontent.com", 1)
+	// 如果以 .git 结尾，去掉
+	url = strings.TrimSuffix(url, ".git")
+	url = strings.Replace(url, "www.", "", 1)
+	url = strings.Join([]string{url, branch, path}, "/")
+	return url
+}
+
 func (h *HandlerServer) projectFrontendReports(g *gin.Context) {
 	projectId := g.Param("id")
 	if projectId == "" {

@@ -21,6 +21,8 @@ type IProjectService interface {
 	GetProject(id string) (*vo.ProjectDetailVo, error)
 	UpdateProject(id string, updateData vo.UpdateProjectParam) error
 	DeleteProject(id string) error
+	UpdateProjectParams(id string, updateData vo.UpdateProjectParams) error
+	GetProjectParams(id string) (string, error)
 }
 
 type ProjectService struct {
@@ -84,11 +86,11 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 				var workflowDeployData db2.WorkflowDetail
 				var packageDeploy vo.PackageDeployVo
 				var deployData db2.FrontendDeploy
-				err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+				err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
 				if err == nil {
-					err = p.db.Model(db2.WorkflowDetail{}).Where("id = ?", deployData.WorkflowDetailId).First(&workflowDeployData).Error
+					copier.Copy(&packageDeploy, workflowDeployData)
+					err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ? and workflow_detail_id = ? ", project.Id, workflowDeployData.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
 					if err == nil {
-						_ = copier.Copy(&packageDeploy, workflowDeployData)
 						packageDeploy.PackageId = deployData.PackageId
 						packageDeploy.Version = deployData.Version
 					}
@@ -166,11 +168,11 @@ func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 		var workflowDeployData db2.WorkflowDetail
 		var packageDeploy vo.PackageDeployVo
 		var deployData db2.FrontendDeploy
-		err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+		err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
 		if err == nil {
-			err = p.db.Model(db2.WorkflowDetail{}).Where("id = ?", deployData.WorkflowDetailId).First(&workflowDeployData).Error
+			copier.Copy(&packageDeploy, workflowDeployData)
+			err = p.db.Model(db2.FrontendDeploy{}).Where("project_id = ? and workflow_detail_id = ? ", data.Id, workflowDeployData.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
 			if err == nil {
-				_ = copier.Copy(&packageDeploy, workflowDeployData)
 				packageDeploy.PackageId = deployData.PackageId
 				packageDeploy.Version = deployData.Version
 			}
@@ -193,6 +195,24 @@ func (p *ProjectService) UpdateProject(id string, updateData vo.UpdateProjectPar
 		return nil
 	}
 	return errors.New(fmt.Sprintf("application:%s already exists", updateData.Name))
+}
+
+func (p *ProjectService) GetProjectParams(id string) (string, error) {
+	var data db2.Project
+	result := p.db.Where("id = ? ", id).First(&data)
+	if result.Error != nil {
+		return "", result.Error
+	}
+	return data.Params, nil
+}
+
+func (p *ProjectService) UpdateProjectParams(id string, updateData vo.UpdateProjectParams) error {
+	var data db2.Project
+	err := p.db.Model(data).Where("id = ?", id).Updates(db2.Project{Params: updateData.Params, UpdateTime: time.Now()}).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *ProjectService) DeleteProject(id string) error {

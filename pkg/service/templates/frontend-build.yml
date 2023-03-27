@@ -3,20 +3,24 @@ name: {{ .Name }}
 stages:
   Initialization:
     steps:
-      - name: git-clone
+      - name: Clone Code from Github
         uses: git-checkout
         with:
           url: {{ .RepositoryUrl }}
           branch: main
-  code-compile:
+  Build FrontEnd:
     needs:
       - Initialization
     steps:
-      - name: code-compile
+      - name: Compile Code
         run: |
           npm install
           npm run build
-      - name: save artifactory
+  Output Results:
+    needs:
+      - Build FrontEnd
+    steps:
+      - name: Save Package
         uses: hamster-artifactory
         with:
           name: frontend.zip

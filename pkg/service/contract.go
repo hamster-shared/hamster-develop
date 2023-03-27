@@ -15,6 +15,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"strconv"
 	"time"
 )
 
@@ -70,6 +71,10 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 	if err != nil {
 		return 0, err
 	}
+	version, err := strconv.Atoi(entity.Version)
+	if err != nil {
+		return 0, err
+	}
 	entity.Type = contract.Type
 
 	var savedContractDeploy db2.ContractDeploy
@@ -80,7 +85,24 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 		entity.Id = savedContractDeploy.Id
 		entity.CreateTime = savedContractDeploy.CreateTime
 	}
-
+	if entity.AbiInfo == "" && version > 1 {
+		for {
+			if version > 1 {
+				var contractDeploy db2.ContractDeploy
+				c.db.Model(db2.ContractDeploy{}).Where("contract_id = ? and version = ? ", entity.ContractId, entity.Version).First(&contractDeploy)
+				if contractDeploy.AbiInfo != "" {
+					entity.AbiInfo = contractDeploy.AbiInfo
+					break
+				}
+				version = version - 1
+			} else {
+				break
+			}
+		}
+	}
+	if contract.AbiInfo == "" {
+		contract.AbiInfo = entity.AbiInfo
+	}
 	err = c.db.Save(&entity).Error
 	if err != nil {
 		return 0, err
@@ -167,6 +189,8 @@ func (c *ContractService) QueryContractDeployByVersion(projectId string, version
 		for u, deploys := range res2 {
 			var contractData db2.Contract
 			res := c.db.Model(db2.Contract{}).Where("id = ?", u).First(&contractData)
+			var contractInfoVo vo.ContractInfoVo
+			copier.Copy(&contractInfoVo, &contractData)
 			if res.Error == nil {
 				var deployInfo []vo.DeployInfVo
 				if len(deploys) > 0 {
@@ -174,10 +198,11 @@ func (c *ContractService) QueryContractDeployByVersion(projectId string, version
 						var deployData vo.DeployInfVo
 						copier.Copy(&deployData, &deploy)
 						deployInfo = append(deployInfo, deployData)
+						if deploy.AbiInfo != "" && contractInfoVo.AbiInfo == "" {
+							contractInfoVo.AbiInfo = deploy.AbiInfo
+						}
 					}
 				}
-				var contractInfoVo vo.ContractInfoVo
-				copier.Copy(&contractInfoVo, &contractData)
 				contractInfoVo.DeployInfo = deployInfo
 				contractInfo[contractData.Name] = contractInfoVo
 			}

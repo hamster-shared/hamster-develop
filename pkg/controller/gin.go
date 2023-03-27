@@ -77,6 +77,13 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/container/deploy", h.handlerServer.getContainerDeploy)
 	api.GET("/projects/:id/contract", h.handlerServer.projectContract)
 	api.GET("/projects/:id/reports", h.handlerServer.projectReport)
+
+	// aptos params
+	api.GET("/projects/:id/params/aptos", h.handlerServer.queryAptosParams)
+	api.GET("/projects/:id/is-needs-params/aptos", h.handlerServer.isAptosNeedsParams)
+	api.POST("/projects/:id/params/aptos", h.handlerServer.saveAptosParams)
+	api.GET("/projects/:id/aptos-build", h.handlerServer.projectWorkflowAptosBuild)
+
 	api.GET("/projects/:id/frontend/reports", h.handlerServer.projectFrontendReports)
 	api.GET("/projects/:id/packages", h.handlerServer.projectPackages)
 	api.POST("/projects/:id/contract/deploy", h.handlerServer.saveContractDeployInfo)
@@ -147,6 +154,11 @@ func (h *HttpServer) StartHttpServer() {
 		//输出 json 结果给调用方
 		Success("", c)
 	})
+
+	api.GET("/workflows/:id/detail/:detailId/logs/:stageName/:stepName", h.handlerServer.getWorkflowStepLog)
+	// 下载文件
+	api.GET("/download", h.handlerServer.download)
+
 	// fe, _ := fs.Sub(content, "dist")
 	// r.NoRoute(gin.WrapH(http.FileServer(http.FS(fe))))
 	r.Run(fmt.Sprintf(":%d", h.port)) // listen and serve on
@@ -172,5 +184,4 @@ func OpenWeb(port int) error {
 		cmd = exec.Command(run, fmt.Sprintf("http://127.0.0.1:%d", port))
 	}
 	return cmd.Start()
-
 }

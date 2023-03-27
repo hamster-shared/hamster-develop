@@ -2,12 +2,14 @@ package utils
 
 import (
 	"errors"
-	"github.com/hamster-shared/hamster-develop/pkg/consts"
+	"fmt"
 	"log"
 	"os"
 	path2 "path"
 	"path/filepath"
 	"strings"
+
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
 )
 
 // GetFiles 获取文件路径集合
@@ -125,4 +127,58 @@ func DefaultWorkDir() string {
 	}
 	dir := filepath.Join(userHomeDir, consts.WORK_DIR_NAME)
 	return dir
+}
+
+// 读取字符串从文件
+func readStringFromFile(filePath string) (string, error) {
+	if !isFileExist(filePath) {
+		return "", fmt.Errorf("file not exist")
+	}
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
+
+func readBytesFromFile(filePath string) ([]byte, error) {
+	if !isFileExist(filePath) {
+		return nil, fmt.Errorf("file not exist")
+	}
+	return os.ReadFile(filePath)
+}
+
+// 判断文件是否存在
+func isFileExist(path string) bool {
+	_, err := os.Stat(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false
+		}
+	}
+	return true
+}
+
+// saveStringToFile 保存字符串到文件
+func saveStringToFile(filePath, content string) error {
+	err := createDirIfNotExist(filepath.Dir(filePath))
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(filePath, []byte(content), 0777)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// 创建文件夹
+func createDirIfNotExist(dir string) error {
+	if !isFileExist(dir) {
+		err := os.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

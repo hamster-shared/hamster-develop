@@ -3,12 +3,12 @@ name: {{.Name}}
 stages:
   Initialization:
     steps:
-      - name: git-clone
+      - name: Clone Code from Github
         uses: git-checkout
         with:
           url: {{ .RepositoryUrl }}
           branch: main
-      - name: npm install
+      - name: Npm install
         run: |
             npm install
 
@@ -24,37 +24,23 @@ stages:
 #        uses: sol-profiler-check
 #        with:
 #          path: contracts
-
-  Check by Solhint:
+  Check Contract:
     needs:
       - Initialization
     steps:
-      - name: solhint-install
+      - name: Install Solhint
         run: |
           npm install -g solhint
-      - name: solhint-check
+      - name: Check by Solhint
         uses: solhint-check
         with:
           path: contracts
-
-  Check by Mythril:
-    needs:
-      - Check by Solhint
-    steps:
-      - name: mythril-check
+      - name: Check by Mythril
         uses: mythril-check
         with:
           path: contracts
           solc-version: 0.8.9
-
-  Check by eth-gas-reporter:
-    needs:
-      - Check by Mythril
-    steps:
-      - name: gas-install
-        run: |
-          npm install
-      - name: start-local-chain
+      - name: Start Local Chain
         run: |
           npm install -g ganache
           if [ -f "command.pid" ]; then
@@ -62,23 +48,16 @@ stages:
           fi
           nohup ganache > ganache.log 2>&1& echo $! > command.pid
           sleep 2
-      - name: eth-gas-reporter
+      - name: Check by eth-gas-report
         uses: eth-gas-reporter
         with:
           solc-version:
-
-  Check by AI:
-    needs:
-      - Check by eth-gas-reporter
-    steps:
-      - name: openai ask
+      - name: Check by AI
         uses: openai
-
-
   Output Results:
     needs:
-      - Check by AI
+      - Check Contract
     steps:
-      - name: check-aggregation
+      - name: Integration Report
         uses: check-aggregation
 
