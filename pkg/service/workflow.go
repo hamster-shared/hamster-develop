@@ -720,16 +720,26 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 	}
 
+	// 从数据库获取最新的执行次数
+	var workflowDetail db.WorkflowDetail
+	var execNumber uint
+	if w.db.Where(&db.WorkflowDetail{}).Order("exec_number desc").First(&workflowDetail).Error == nil {
+		execNumber = workflowDetail.ExecNumber
+	} else {
+		execNumber = 0
+	}
+
 	var detail *model.JobDetail
 	var dbDetail db.WorkflowDetail
 	// 重试 10 次
 	for i := 0; i < 10; i++ {
-		detail, err = w.engine.CreateJobDetail(workflowKey)
+		detail, err = w.engine.CreateJobDetail(workflowKey, int(execNumber)+1+i)
 		if err != nil {
 			logger.Errorf("Create job detail fail, err is %s", err.Error())
 			return deployResult, err
 		}
-		stageInfo, err := json.Marshal(detail.Stages)
+		var stageInfo []byte
+		stageInfo, err = json.Marshal(detail.Stages)
 		if err != nil {
 			logger.Errorf("Marshal stage info fail, err is %s", err.Error())
 			return deployResult, err
@@ -757,7 +767,6 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 
 		if err != nil {
 			logger.Warnf("Save workflow detail fail, err is %s, retry counter: %d", err.Error(), i)
-			continue
 		} else {
 			logger.Infof("create job detail success, job detail id is %d", detail.Id)
 			break
