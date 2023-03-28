@@ -723,7 +723,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 	// 从数据库获取最新的执行次数
 	var workflowDetail db.WorkflowDetail
 	var execNumber uint
-	if w.db.Where(&db.WorkflowDetail{}).Order("exec_number desc").First(&workflowDetail).Error == nil {
+	if w.db.Where(&db.WorkflowDetail{WorkflowId: workflow.Id}).Order("exec_number desc").First(&workflowDetail).Error == nil {
 		execNumber = workflowDetail.ExecNumber
 	} else {
 		execNumber = 0
