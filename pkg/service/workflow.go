@@ -502,8 +502,8 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 					CheckTool:        "OpenAI",
 					Result:           "success",
 					CheckTime:        time.Now(),
-					// ReportFile:       string(report.Content),
-					CreateTime: time.Now(),
+					ReportFile:       string(report.Content),
+					CreateTime:       time.Now(),
 				}
 				reportList = append(reportList, report)
 			}
