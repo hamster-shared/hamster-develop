@@ -128,7 +128,7 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 	var projectData db.Project
 	err = w.db.Model(db.Project{}).Where("id = ?", projectId).First(&projectData).Error
 	if err != nil {
-		logger.Errorf("find project by id failed: ", err.Error())
+		logger.Errorf("find project by id failed: %s", err.Error())
 		return
 	}
 
