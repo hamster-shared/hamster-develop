@@ -1,0 +1,30 @@
+version: 1.0
+name: {{.Name}}
+stages:
+  Initialization:
+    steps:
+      - name: Clone Code from Github
+        uses: git-checkout
+        with:
+          url: {{.RepositoryUrl}}
+          branch: main
+      - name: Run Install
+        run: |
+          yarn install
+
+  Check Contract:
+    needs:
+      - Initialization
+    steps:
+      - name: Check by Move Prove
+        uses: aptos-check
+        with:
+          path:
+          cachePath: /root/.move:/root/.move
+
+  Output Results:
+    needs:
+      - Check Contract
+    steps:
+      - name: check-aggregation
+        uses: check-aggregation
