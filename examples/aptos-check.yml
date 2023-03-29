@@ -1,0 +1,30 @@
+version: 1.0
+name: aptos-check
+stages:
+  Initialization:
+    steps:
+      - name: git-clone
+        uses: git-checkout
+        with:
+          url: https://github.com/hamster-template/aptos-token-staking.git
+          branch: main
+
+  Check Aptos :
+    needs:
+      - Initialization
+    steps:
+      - name: aptos-install
+        run: |
+          yarn install
+      - name: aptos-check
+        uses: aptos-check
+        with:
+          path:
+          cachePath: /Users/abing/.move:/root/.move
+
+  Output Results:
+    needs:
+      - Check Aptos
+    steps:
+      - name: check-aggregation
+        uses: check-aggregation
