@@ -171,7 +171,7 @@ spec:
               mountPath: "/root/.kube"
               readOnly: true
       volumes:
-        - name: docker-tls
+        - name: docker2-tls
           persistentVolumeClaim:
             claimName: docker2-tls
         - name: kubeconfig
