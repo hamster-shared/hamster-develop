@@ -8,6 +8,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"io"
+	"strings"
 	"testing"
 )
 
@@ -76,11 +77,25 @@ func deleteRepo(ctx context.Context, client *github.Client, owner, repo string) 
 
 func TestDeleteRepo(t *testing.T) {
 	ctx := context.Background()
-	token := ""
+	token := "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"
 	client := utils.NewGithubClient(ctx, token)
 
-	owner := "mohaijiang"
-	repoName := "my-uniswapper"
+	option := &github.RepositoryListOptions{
+		Sort:      "created",
+		Direction: "desc",
+	}
+	repositorys, _, err := client.Repositories.List(ctx, "mohaijiang", option)
+	if err != nil {
+		panic(err)
+		return
+	}
 
-	deleteRepo(ctx, client, owner, repoName)
+	for _, r := range repositorys {
+		fmt.Println(r.GetName())
+		if strings.HasPrefix(r.GetName(), "my-") {
+			deleteRepo(ctx, client, "mohaijiang", r.GetName())
+		}
+	}
+
+	//deleteRepo(ctx, client, owner, repoName)
 }

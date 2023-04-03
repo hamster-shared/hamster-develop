@@ -32,7 +32,7 @@ type ProjectDetailVo struct {
 	Name          string        `json:"name"`
 	Type          uint          `json:"type"`
 	RepositoryUrl string        `json:"repositoryUrl"`
-	FrameType     uint          `json:"frameType"`
+	FrameType     uint          `json:"frameType"` // see# consts.Evm
 	Branch        string        `json:"branch"`
 	DeployType    int           `json:"deployType"`
 	LabelDisplay  string        `json:"labelDisplay"`
@@ -73,13 +73,13 @@ type PackageDeployVo struct {
 }
 
 type CreateProjectParam struct {
-	Name         string `json:"name"`
-	Type         int    `json:"type"`
-	Branch       string `json:"branch"`
-	TemplateUrl  string `json:"templateUrl"`
-	FrameType    int    `json:"frameType"`
-	DeployType   int    `json:"deployType"`
-	UserId       int64  `json:"userId"`
+	Name        string `json:"name"`
+	Type        int    `json:"type"`
+	Branch      string `json:"branch"`
+	TemplateUrl string `json:"templateUrl"`
+	FrameType   uint   `json:"frameType"`
+	DeployType  int    `json:"deployType"`
+	UserId      int64  `json:"userId"`
 	LabelDisplay string `json:"labelDisplay"`
 }
 
@@ -97,4 +97,13 @@ type UserAuth struct {
 	Id       uint   `json:"id"`
 	Username string `json:"username"`
 	Token    string `json:"token"`
+}
+
+type Config struct {
+	Package struct {
+		Name    string `toml:"name"`
+		Version string `toml: "version"`
+	} `toml:"package"`
+
+	Addresses map[string]string `toml:"addresses"`
 }

@@ -4,11 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/BurntSushi/toml"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
+	"github.com/hamster-shared/hamster-develop/pkg/vo"
+	"io"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"text/template"
+	"time"
 )
 
 func TestWorkflowService_SyncContract(t *testing.T) {
@@ -45,4 +51,33 @@ func TestTemplate(t *testing.T) {
 	err = tmpl.Execute(&input, templateData)
 
 	fmt.Println(input.String())
+}
+
+func TestGetSuiModelName(t *testing.T) {
+	short := strings.TrimPrefix("https://github.com/mohaijiang/my-sui-nft.git", "https://github.com/")
+	short = strings.TrimSuffix(short, ".git")
+	fmt.Println(short)
+	moveUrl := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/Move.toml", short, "main")
+	fmt.Println(moveUrl)
+
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	response, err := client.Get(moveUrl)
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	data, err := io.ReadAll(response.Body)
+	defer response.Body.Close()
+
+	var config vo.Config
+	_, err = toml.Decode(string(data), &config)
+
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(config.Package.Name)
+
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/dontpanicdao/caigo/types"
+	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -94,7 +95,7 @@ func TestSync(t *testing.T) {
 func TestReadToml(t *testing.T) {
 	path := "/Users/mohaijiang/workdir/aptos/Move.toml"
 
-	var config Config
+	var config vo.Config
 	_, err := toml.DecodeFile(path, &config)
 	if err != nil {
 		panic(err)
@@ -105,13 +106,4 @@ func TestReadToml(t *testing.T) {
 			fmt.Println(k)
 		}
 	}
-}
-
-type Config struct {
-	Package struct {
-		Name    string `toml:"name"`
-		Version string `toml: "version"`
-	} `toml:"package"`
-
-	Addresses map[string]string `toml:"addresses"`
 }
