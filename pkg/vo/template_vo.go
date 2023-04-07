@@ -15,6 +15,7 @@ type TemplateVo struct {
 	LastVersion    string `json:"lastVersion"`
 	Logo           string `json:"logo"`
 	Image          string `json:"image"`
+	LabelDisplay   string `json:"labelDisplay"`
 }
 
 type TemplateDetailVo struct {
@@ -38,5 +39,5 @@ type TemplateDetailVo struct {
 	ShowUrl           string `json:"showUrl"`
 	TitleDescription  string `json:"titleDescription"`
 	HowUseDescription string `json:"howUseDescription"`
-	LabelDisplay      int    `json:"labelDisplay"`
+	LabelDisplay      string `json:"labelDisplay"`
 }
