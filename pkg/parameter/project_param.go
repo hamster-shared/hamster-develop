@@ -4,7 +4,7 @@ type CreateProjectParam struct {
 	Name          string `json:"name"`
 	Type          int    `json:"type"`
 	DeployType    int    `json:"deployType"`
-	LabelDisplay  int    `json:"labelDisplay"`
+	LabelDisplay  string `json:"labelDisplay"`
 	TemplateOwner string `json:"templateOwner"`
 	TemplateUrl   string `json:"templateUrl"`
 	TemplateRepo  string `json:"templateRepo"`

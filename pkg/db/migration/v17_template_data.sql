@@ -1,9 +1,16 @@
 alter table t_project
-    add column  label_display tinyint(1) comment 'label display';
+    add column  label_display varchar(20) comment 'label display';
 
 alter table t_template_detail
-    add column  label_display tinyint(1) comment 'label display',
+    add column  label_display varchar(20) comment 'label display',
     add column  how_use_description   text;
+
+alter table t_template
+    add column  label_display varchar(20) comment 'label display';
+
+update t_template
+set whether_display = 0
+where id =  5;
 
 insert into t_template_type (
     id,
@@ -27,7 +34,8 @@ insert into t_template (
     last_version,
     whether_display,
     language_type,
-    logo
+    logo,
+    label_display
 ) values (
           42,
           6,
@@ -35,9 +43,10 @@ insert into t_template (
           'Create consumer contract for using Chainlink.',
           1,
           '1.0.0',
-          0,
           1,
-          ''
+          1,
+          'https://static.devops.hamsternet.io/ipfs/QmWG1UsNyeQbzh2Edbm6exdaJfqj9EXgCRiApP1Xkyj24p',
+          'chainlink'
          );
 
 INSERT INTO t_template_detail (
@@ -472,7 +481,7 @@ INSERT INTO t_template_detail (
           'FunctionsConsumer Contract',
           'This contract template is a consumer contract example using Chainlink Functions for data aggregation. The contract can send requests and receive responses while also providing functionality for encrypting and decrypting data.',
           'Client contracts which initiate a request and receive a fulfillment can be modified for specific use cases. The only requirements are that the client contract extends the FunctionsClient contract and the fulfillRequest callback function never uses more than 300,000 gas.',
-          1
+          'chainlink'
          );
 
 
