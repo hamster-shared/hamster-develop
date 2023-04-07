@@ -21,6 +21,7 @@ type ProjectListVo struct {
 	FrameType     int           `json:"frameType"`
 	Branch        string        `json:"branch"`
 	DeployType    int           `json:"deployType"`
+	LabelDisplay  int           `json:"labelDisplay"`
 	RecentCheck   RecentCheckVo `json:"recentCheck"`
 	RecentBuild   RecentBuildVo `json:"recentBuild"`
 	RecentDeploy  interface{}   `json:"recentDeploy"`
@@ -34,6 +35,7 @@ type ProjectDetailVo struct {
 	FrameType     uint          `json:"frameType"`
 	Branch        string        `json:"branch"`
 	DeployType    int           `json:"deployType"`
+	LabelDisplay  int           `json:"labelDisplay"`
 	RecentCheck   RecentCheckVo `json:"recentCheck"`
 	RecentBuild   RecentBuildVo `json:"recentBuild"`
 	RecentDeploy  interface{}   `json:"recentDeploy"`
@@ -71,13 +73,14 @@ type PackageDeployVo struct {
 }
 
 type CreateProjectParam struct {
-	Name        string `json:"name"`
-	Type        int    `json:"type"`
-	Branch      string `json:"branch"`
-	TemplateUrl string `json:"templateUrl"`
-	FrameType   int    `json:"frameType"`
-	DeployType  int    `json:"deployType"`
-	UserId      int64  `json:"userId"`
+	Name         string `json:"name"`
+	Type         int    `json:"type"`
+	Branch       string `json:"branch"`
+	TemplateUrl  string `json:"templateUrl"`
+	FrameType    int    `json:"frameType"`
+	DeployType   int    `json:"deployType"`
+	UserId       int64  `json:"userId"`
+	LabelDisplay int    `json:"labelDisplay"`
 }
 
 type UpdateProjectParam struct {

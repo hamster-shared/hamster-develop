@@ -18,23 +18,25 @@ type TemplateVo struct {
 }
 
 type TemplateDetailVo struct {
-	Id               uint   `json:"id"`
-	TemplateId       string `json:"templateId"`
-	Name             string `json:"name"`
-	Audited          bool   `json:"audited"`
-	Extensions       string `json:"extensions"`
-	Description      string `json:"description"`
-	Examples         string `json:"examples"`
-	Resources        string `json:"resources"`
-	AbiInfo          string `json:"abiInfo"`
-	Author           string `json:"author"`
-	RepositoryName   string `json:"repositoryName"`
-	RepositoryUrl    string `json:"repositoryUrl"`
-	Version          string `json:"version"`
-	Branch           string `json:"branch"`
-	CodeSources      string `json:"codeSources"`
-	Title            string `json:"title"`
-	TemplateType     string `json:"templateType"`
-	ShowUrl          string `json:"showUrl"`
-	TitleDescription string `json:"titleDescription"`
+	Id                uint   `json:"id"`
+	TemplateId        string `json:"templateId"`
+	Name              string `json:"name"`
+	Audited           bool   `json:"audited"`
+	Extensions        string `json:"extensions"`
+	Description       string `json:"description"`
+	Examples          string `json:"examples"`
+	Resources         string `json:"resources"`
+	AbiInfo           string `json:"abiInfo"`
+	Author            string `json:"author"`
+	RepositoryName    string `json:"repositoryName"`
+	RepositoryUrl     string `json:"repositoryUrl"`
+	Version           string `json:"version"`
+	Branch            string `json:"branch"`
+	CodeSources       string `json:"codeSources"`
+	Title             string `json:"title"`
+	TemplateType      string `json:"templateType"`
+	ShowUrl           string `json:"showUrl"`
+	TitleDescription  string `json:"titleDescription"`
+	HowUseDescription string `json:"howUseDescription"`
+	LabelDisplay      int    `json:"labelDisplay"`
 }

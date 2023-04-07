@@ -111,12 +111,13 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	data := vo.CreateProjectParam{
-		Name:        createData.Name,
-		Type:        createData.Type,
-		TemplateUrl: *repo.CloneURL,
-		FrameType:   createData.FrameType,
-		DeployType:  createData.DeployType,
-		UserId:      int64(user.Id),
+		Name:         createData.Name,
+		Type:         createData.Type,
+		TemplateUrl:  *repo.CloneURL,
+		FrameType:    createData.FrameType,
+		DeployType:   createData.DeployType,
+		UserId:       int64(user.Id),
+		LabelDisplay: createData.LabelDisplay,
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
