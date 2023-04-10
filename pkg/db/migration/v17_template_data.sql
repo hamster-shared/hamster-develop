@@ -46,7 +46,7 @@ insert into t_template (
           1,
           1,
           'https://static.devops.hamsternet.io/ipfs/QmWG1UsNyeQbzh2Edbm6exdaJfqj9EXgCRiApP1Xkyj24p',
-          'chainlink'
+          'Chainlink'
          );
 
 INSERT INTO t_template_detail (
@@ -478,7 +478,7 @@ INSERT INTO t_template_detail (
           'FunctionsConsumer Contract',
           'This contract template is a consumer contract example using Chainlink Functions for data aggregation. The contract can send requests and receive responses while also providing functionality for encrypting and decrypting data.',
           'Client contracts which initiate a request and receive a fulfillment can be modified for specific use cases. The only requirements are that the client contract extends the FunctionsClient contract and the fulfillRequest callback function never uses more than 300,000 gas.',
-          'chainlink'
+          'Chainlink'
          );
 
 
