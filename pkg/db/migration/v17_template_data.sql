@@ -76,17 +76,14 @@ INSERT INTO t_template_detail (
             'FunctionsConsumer',
             1,
             '',
-            'Create consumer contract for using Chainlink.',
+            'This contract template is a consumer contract example using Chainlink Functions for data aggregation. The contract can send requests and receive responses while also providing functionality for encrypting and decrypting data.',
             'You could use the FunctionsConsumer contract to:
 
 * Data Aggregation: Data can be obtained from multiple data sources and aggregated into a smart contract, which can then store the processed data on the blockchain.
 
-
 * Market Prediction: Create a smart contract for predicting market behavior by using Chainlink''s data sources to obtain market data and other relevant information, and then using the smart contract to calculate and predict market trends.
 
-
 * Blockchain Games: Create a smart contract to enhance the functionality and experience of a game by using off-chain code and data sources to implement various game features and logic.
-
 
 * Decentralized Finance (DeFi): Create a smart contract to  build DeFi applications, such as providing price oracles for DeFi applications, or integrating off-chain data into smart contracts to better support the functionality of DeFi applications.',
           '',
