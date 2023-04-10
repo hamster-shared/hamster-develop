@@ -123,6 +123,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 		project.RepositoryUrl = createData.TemplateUrl
 		project.Branch = "main"
 		project.DeployType = createData.DeployType
+		project.LabelDisplay = createData.LabelDisplay
 		p.db.Create(&project)
 		return project.Id, nil
 	}
