@@ -34,6 +34,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
 	api.POST("/github/webhook", h.handlerServer.githubWebHook)
 	api.GET("/projects/:id/:username/frontend/logs", h.handlerServer.getDeployFrontendLog)
+	api.GET("/user/count", h.handlerServer.getUserCount)
 	api.Use(h.handlerServer.Authorize())
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)

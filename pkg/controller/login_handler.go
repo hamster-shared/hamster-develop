@@ -115,6 +115,16 @@ func (h *HandlerServer) getUseInfo(gin *gin.Context) {
 	Success(user, gin)
 }
 
+func (h *HandlerServer) getUserCount(gin *gin.Context) {
+	userService := application.GetBean[*service.UserService]("userService")
+	data, err := userService.GetUserCount()
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) updateFirstState(gin *gin.Context) {
 	userAny, exit := gin.Get("user")
 	if !exit {
