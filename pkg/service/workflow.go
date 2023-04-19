@@ -2,14 +2,12 @@ package service
 
 import (
 	"bytes"
-	"database/sql"
 	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 	"text/template"
@@ -19,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	engine "github.com/hamster-shared/aline-engine"
-	jober "github.com/hamster-shared/aline-engine/job"
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/aline-engine/model"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
@@ -51,223 +48,6 @@ func NewWorkflowService() *WorkflowService {
 	go workflowService.engine.RegisterStatusChangeHook(workflowService.SyncStatus)
 
 	return workflowService
-}
-
-func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
-	logger.Debugf("SyncStatus: %v", message)
-
-	_, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
-	if err != nil {
-		return
-	}
-
-	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
-	if err != nil {
-		logger.Errorf("get job history failed: %v", err)
-		return
-	}
-
-	var workflowDetail db.WorkflowDetail
-
-	w.db.Where(&db.WorkflowDetail{
-		WorkflowId: uint(workflowId),
-		ExecNumber: uint(jobDetail.Id),
-	}).First(&workflowDetail)
-
-	if workflowDetail.Id == 0 {
-		logger.Errorf("workflowDetail.Id is 0")
-		return
-	}
-
-	workflowDetail.Status = uint(jobDetail.Status)
-	stageInfo, err := json.Marshal(jobDetail.Stages)
-	if err != nil {
-		logger.Errorf("stage info json marshal failed: %v", err)
-		return
-	}
-	workflowDetail.StageInfo = string(stageInfo)
-	workflowDetail.UpdateTime = time.Now()
-	workflowDetail.CodeInfo, err = w.engine.GetCodeInfo(message.JobName, message.JobId)
-	if err != nil {
-		logger.Warnf("get code info failed: %v", err)
-	}
-	workflowDetail.Duration = jobDetail.Duration
-
-	if workflowDetail.Status != uint(message.Status) {
-		// 如果 detail 的状态和 message 的状态不一致，可能是因为 detail 是从文件读取的，读取时还没有保存最新的状态，以 message 的状态为准
-		logger.Warnf("workflowDetail.Status(%d) != message.Status(%d), use message.Status", workflowDetail.Status, message.Status)
-		workflowDetail.Status = uint(message.Status)
-	}
-
-	// retry 3 times
-	for i := 0; i < 3; i++ {
-		err := w.db.Model(&workflowDetail).Select("*").Updates(workflowDetail).Error
-		if err != nil {
-			logger.Errorf("save workflow detail status to database failed: %s", err)
-		} else {
-			logger.Infof("save workflow detail status to database success")
-			break
-		}
-	}
-
-	w.SyncContract(message, workflowDetail)
-	w.SyncReport(message, workflowDetail)
-	w.SyncFrontendPackage(message, workflowDetail)
-}
-
-func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
-	projectIdStr, _, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
-	if err != nil {
-		return
-	}
-	projectId, err := uuid.FromString(projectIdStr)
-	if err != nil {
-		log.Println("UUID from string failed: ", err.Error())
-		return
-	}
-	var projectData db.Project
-	err = w.db.Model(db.Project{}).Where("id = ?", projectId).First(&projectData).Error
-	if err != nil {
-		logger.Errorf("find project by id failed: ", err.Error())
-		return
-	}
-
-	if uint(consts.FRONTEND) != projectData.Type {
-		return
-	}
-	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
-	if err != nil {
-		return
-	}
-	if uint(consts.Build) == workflowDetail.Type {
-		w.syncFrontendBuild(jobDetail, workflowDetail, projectData)
-	} else if uint(consts.Deploy) == workflowDetail.Type {
-		w.syncFrontendDeploy(jobDetail, workflowDetail, projectData)
-	}
-}
-
-func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDetail db.WorkflowDetail, project db.Project) {
-	if len(detail.ActionResult.Artifactorys) > 0 {
-		for range detail.ActionResult.Artifactorys {
-			frontendPackage := db.FrontendPackage{
-				ProjectId:        workflowDetail.ProjectId,
-				WorkflowId:       workflowDetail.WorkflowId,
-				WorkflowDetailId: workflowDetail.Id,
-				Name:             project.Name,
-				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-				Branch:           workflowDetail.CodeInfo,
-				BuildTime:        workflowDetail.CreateTime,
-				CreateTime:       time.Now(),
-			}
-			err := w.db.Save(&frontendPackage).Error
-			if err != nil {
-				log.Println("save frontend package failed: ", err.Error())
-			}
-		}
-	}
-}
-
-func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDetail db.WorkflowDetail, project db.Project) {
-
-	if len(detail.ActionResult.Deploys) > 0 {
-		buildWorkflowDetailIdStr := detail.Parameter["buildWorkflowDetailId"]
-		if buildWorkflowDetailIdStr == "" {
-			return
-		}
-		buildWorkflowDetailId, err := strconv.Atoi(buildWorkflowDetailIdStr)
-		if err != nil {
-			return
-		}
-		var image string
-		if project.FrameType == 1 {
-			image = "https://develop-images.api.hamsternet.io/vue.png"
-		} else if project.FrameType == 2 {
-			image = "https://develop-images.api.hamsternet.io/react.png"
-		} else if project.FrameType == 3 {
-			image = "https://static.devops.hamsternet.io/ipfs/QmW8DNyCUrvDHaG4a4aKjkDNTbYDy9kwFxhFno2nKmgTKt"
-		} else {
-			image = "https://static.devops.hamsternet.io/ipfs/QmPsa61VtwQH3ixzZys7EF9VG1zV7LQHDYjEYBfZpnmPDy"
-		}
-		for _, deploy := range detail.ActionResult.Deploys {
-			var data db.FrontendPackage
-			err := w.db.Model(db.FrontendPackage{}).Where("workflow_detail_id = ?", buildWorkflowDetailId).First(&data).Error
-			if err == nil {
-				data.Domain = deploy.Url
-				err := w.db.Save(&data).Error
-				if err != nil {
-					log.Println("save frontend package failed: ", err.Error())
-				}
-				var packageDeploy db.FrontendDeploy
-				if project.DeployType == int(consts.IPFS) {
-					packageDeploy.DeployInfo = deploy.Cid
-				}
-				packageDeploy.ProjectId = project.Id
-				packageDeploy.WorkflowId = workflowDetail.WorkflowId
-				packageDeploy.WorkflowDetailId = workflowDetail.Id
-				packageDeploy.PackageId = data.Id
-				packageDeploy.Domain = deploy.Url
-				packageDeploy.Version = data.Version
-				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
-				packageDeploy.Name = project.Name
-				packageDeploy.Branch = data.Branch
-				packageDeploy.CreateTime = time.Now()
-				packageDeploy.Image = image
-				err = w.db.Save(&packageDeploy).Error
-				if err != nil {
-					log.Println("save frontend deploy failed: ", err.Error())
-				}
-
-			}
-		}
-	}
-}
-
-func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
-	projectIdStr, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
-	if err != nil {
-		return
-	}
-	projectId, err := uuid.FromString(projectIdStr)
-	if err != nil {
-		log.Println("UUID from string failed: ", err.Error())
-		return
-	}
-	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
-	if err != nil {
-		return
-	}
-
-	if len(jobDetail.Artifactorys) == 0 {
-		return
-	}
-
-	for _, arti := range jobDetail.Artifactorys {
-		// 如果是 starknet 合约
-		if strings.HasSuffix(arti.Url, "starknet.output.json") {
-			err := w.syncContractStarknet(projectId, workflowId, workflowDetail, arti)
-			if err != nil {
-				logger.Errorf("sync contract starknet failed: %s", err.Error())
-			}
-			continue
-		}
-
-		// 如果以 .mv 或者 .bcs 结尾，认为是 aptos 合约，退出循环，在另一个函数中处理
-		if strings.HasSuffix(arti.Url, ".mv") || strings.HasSuffix(arti.Url, ".bcs") {
-			err := w.syncContractAptos(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
-			if err != nil {
-				logger.Errorf("sync contract aptos failed: %s", err.Error())
-			}
-			return
-		}
-
-		// zip 文件不处理
-		if strings.HasSuffix(arti.Url, ".zip") {
-			continue
-		}
-
-		// 其他作为 evm 合约处理
-		_ = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
-	}
 }
 
 func (w *WorkflowService) saveContractToDatabase(contract *db.Contract) error {
@@ -303,220 +83,6 @@ func (w *WorkflowService) getEvmAbiInfoAndByteCode(arti model.Artifactory) (abiI
 		return "", "", err
 	}
 	return abiInfo, byteCode, nil
-}
-
-func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, arti model.Artifactory) error {
-	abiInfo, byteCode, err := w.getEvmAbiInfoAndByteCode(arti)
-	if err != nil {
-		return err
-	}
-
-	contract := db.Contract{
-		ProjectId:        projectId,
-		WorkflowId:       workflowId,
-		WorkflowDetailId: workflowDetail.Id,
-		Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
-		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-		BuildTime:        workflowDetail.CreateTime,
-		AbiInfo:          abiInfo,
-		ByteCode:         byteCode,
-		CreateTime:       time.Now(),
-		Type:             uint(consts.Evm),
-		Status:           consts.STATUS_SUCCESS,
-	}
-	return w.saveContractToDatabase(&contract)
-}
-
-func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (mv string, byteCode string, err error) {
-	for _, arti := range artis {
-		// 以 .bcs 结尾，认为是 byteCode
-		if strings.HasSuffix(arti.Url, ".bcs") {
-			byteCode, err = utils.FileToHexString(arti.Url)
-			if err != nil {
-				logger.Errorf("hex string failed: %s", err.Error())
-				return "", "", err
-			}
-			continue
-		}
-		if strings.HasSuffix(arti.Url, ".mv") {
-			mv, err = utils.FileToHexString(arti.Url)
-			if err != nil {
-				logger.Errorf("hex string failed: %s", err.Error())
-				return "", "", err
-			}
-			continue
-		}
-		logger.Warnf("aptos contract file name is not end with .bcs or .mv: %s", arti.Url)
-	}
-	return mv, byteCode, nil
-}
-
-func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
-	mv, byteCode, err := w.getAptosMvAndByteCode(artis)
-	if err != nil {
-		return err
-	}
-
-	contract := db.Contract{
-		ProjectId:        projectId,
-		WorkflowId:       workflowId,
-		WorkflowDetailId: workflowDetail.Id,
-		Name:             strings.TrimSuffix(artis[0].Name, path.Ext(artis[0].Name)),
-		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-		BuildTime:        workflowDetail.CreateTime,
-		AbiInfo:          "",
-		ByteCode:         byteCode,
-		AptosMv:          mv,
-		CreateTime:       time.Now(),
-		Type:             uint(consts.Aptos),
-		Status:           consts.STATUS_SUCCESS,
-	}
-
-	// logger.Tracef("aptos contract: %+v", contract)
-	return w.saveContractToDatabase(&contract)
-}
-
-func (w *WorkflowService) getStarknetAbiInfoAndByteCode(artiUrl string) (abiInfo string, byteCode string, err error) {
-	data, err := os.ReadFile(artiUrl)
-	if err != nil {
-		return "", "", err
-	}
-	m := make(map[string]any)
-	err = json.Unmarshal(data, &m)
-	if err != nil {
-		return "", "", err
-	}
-	abiBytes, err := json.Marshal(m["abi"])
-	if err != nil {
-		return "", "", err
-	}
-	abiInfo = string(abiBytes)
-	contractService := application.GetBean[*ContractService]("contractService")
-	_, classHash, err := contractService.DoStarknetDeclare(data)
-	if err != nil {
-		logger.Errorf("starknet contract class hash failed: %s", err.Error())
-		return "", "", err
-	}
-	logger.Trace("starknet contract class hash: ", classHash)
-	byteCode = classHash
-	return
-}
-
-func (w *WorkflowService) syncContractStarknet(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, arti model.Artifactory) error {
-	abiInfo, byteCode, err := w.getStarknetAbiInfoAndByteCode(arti.Url)
-	if err != nil {
-		return err
-	}
-
-	contract := db.Contract{
-		ProjectId:        projectId,
-		WorkflowId:       workflowId,
-		WorkflowDetailId: workflowDetail.Id,
-		Name:             strings.TrimSuffix(arti.Name, path.Ext(arti.Name)),
-		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-		BuildTime:        workflowDetail.CreateTime,
-		AbiInfo:          abiInfo,
-		ByteCode:         byteCode,
-		CreateTime:       time.Now(),
-		Type:             uint(consts.StarkWare),
-		Status:           consts.STATUS_SUCCESS,
-	}
-
-	return w.saveContractToDatabase(&contract)
-}
-
-func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
-	if !strings.Contains(message.JobName, "_") {
-		return
-	}
-	projectIdStr, workflowId, err := GetProjectIdAndWorkflowIdByWorkflowKey(message.JobName)
-	if err != nil {
-		return
-	}
-	projectId, err := uuid.FromString(projectIdStr)
-	if err != nil {
-		log.Println("UUID from string failed: ", err.Error())
-		return
-	}
-	workflowExecNumber := message.JobId
-
-	if message.Status == model.STATUS_SUCCESS {
-		//TODO.... 实现同步报告
-		fmt.Println(projectId, workflowId, workflowExecNumber)
-		jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
-		if err != nil {
-			logger.Errorf("Get job history fail, jobName: %s, jobId: %d", message.JobName, message.JobId)
-			return
-		}
-		logger.Tracef("Get job history success, jobName: %s, jobId: %d", message.JobName, message.JobId)
-		logger.Tracef("len jobDetail.Reports: %d", len(jobDetail.Reports))
-		logger.Tracef("jobDetail file path: %s", jober.GetJobDetailFilePath(message.JobName, message.JobId))
-		var reportList []db.Report
-		begin := w.db.Begin()
-		for _, report := range jobDetail.Reports {
-
-			// contract check
-			if report.Type == 2 {
-				if report.Url == "" {
-					continue
-				}
-				file, err := os.ReadFile(report.Url)
-				if err != nil {
-					logger.Errorf("Check result path is err")
-					return
-				}
-				var contractCheckResultList []model.ContractCheckResult[json.RawMessage]
-				err = json.Unmarshal(file, &contractCheckResultList)
-				if err != nil {
-					logger.Errorf("Check result get fail")
-				}
-				for _, contractCheckResult := range contractCheckResultList {
-					marshal, err := json.Marshal(contractCheckResult.Context)
-					if err != nil {
-						logger.Errorf("Check context conversion failed")
-					}
-					report := db.Report{
-						ProjectId:        projectId,
-						WorkflowId:       workflowId,
-						WorkflowDetailId: workflowDetail.Id,
-						Name:             contractCheckResult.Name,
-						Type:             uint(consts.Check),
-						CheckTool:        contractCheckResult.Tool,
-						// CheckVersion:     contractCheckResult.SolcVersion,
-						Result:     contractCheckResult.Result,
-						CheckTime:  time.Now(),
-						ReportFile: string(marshal),
-						CreateTime: time.Now(),
-					}
-					reportList = append(reportList, report)
-				}
-			}
-			// openai report
-			if report.Type == 3 {
-				report := db.Report{
-					ProjectId:        projectId,
-					WorkflowId:       workflowId,
-					WorkflowDetailId: workflowDetail.Id,
-					Name:             "AI Analysis Report",
-					Type:             uint(consts.Check),
-					CheckTool:        "OpenAI",
-					Result:           "success",
-					CheckTime:        time.Now(),
-					// ReportFile:       string(report.Content),
-					CreateTime: time.Now(),
-				}
-				reportList = append(reportList, report)
-			}
-		}
-		logger.Tracef("len(reportList): %d ", len(reportList))
-		err = begin.Save(&reportList).Error
-		if err != nil {
-			logger.Errorf("Save report fail, err is %s", err.Error())
-			// return
-		}
-		begin.Commit()
-	}
-
 }
 
 func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
@@ -723,7 +289,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 	// 从数据库获取最新的执行次数
 	var workflowDetail db.WorkflowDetail
 	var execNumber uint
-	if w.db.Where(&db.WorkflowDetail{}).Order("exec_number desc").First(&workflowDetail).Error == nil {
+	if w.db.Where(&db.WorkflowDetail{WorkflowId: workflow.Id}).Order("exec_number desc").First(&workflowDetail).Error == nil {
 		execNumber = workflowDetail.ExecNumber
 	} else {
 		execNumber = 0
@@ -899,7 +465,10 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 	filePath := "templates/truffle-build.yml"
 	if project.Type == uint(consts.CONTRACT) {
 		if workflowType == consts.Check {
-			if project.FrameType == consts.Aptos {
+
+			if project.FrameType == consts.Sui {
+				filePath = "templates/sui-check.yml"
+      } else if project.FrameType == consts.Aptos {
 				filePath = "templates/aptos-check.yml"
 			} else {
 				filePath = "templates/truffle_check.yml"
@@ -909,6 +478,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 				filePath = "templates/stark-ware-build.yml"
 			} else if project.FrameType == consts.Aptos {
 				filePath = "templates/aptos-build.yml"
+			} else if project.FrameType == consts.Sui {
+				filePath = "templates/sui-build.yml"
 			} else {
 				filePath = "templates/truffle-build.yml"
 			}
@@ -954,7 +525,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 		tmpl = tmpl.Delims("[[", "]]")
 	}
 	if project.Type == uint(consts.CONTRACT) {
-		if workflowType == consts.Build && project.FrameType == consts.Aptos {
+		if workflowType == consts.Build && (project.FrameType == consts.Aptos || project.FrameType == consts.Sui) {
 			tmpl = tmpl.Delims("[[", "]]")
 		}
 	}

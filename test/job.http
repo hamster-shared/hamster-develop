@@ -1,22 +1,36 @@
 ### 创建项目
 POST http://localhost:8080/api/projects
 Content-Type: application/json
-Access-Token: pAckUATfeIsxSq1qzIVIdJcKf3jIhRDmnchfAqIrU2xX4smOe4Hd2p3e3iZNnX0/
+Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg
 
 {
-  "name": "project-three",
-  "type": 1,
-  "templateOwner": "jian-guo-s",
-  "templateRepo": "truffle-webpack",
-  "frameType": 1,
-  "repoOwner": "mohaijiang",
-  "userId": 2
+  "name":"my-sui-nft6",
+  "type":1,
+  "templateOwner":"hamster-template",
+  "frameType":5,
+  "deployType":1,
+  "repoOwner":"mohaijiang",
+  "templateRepo":"sui-nft",
+  "userId":3366709,
+  "templateUrl":"https://github.com/hamster-template/sui-nft.git"
 }
 
-### 执行检查
-POST http://localhost:8080/api/projects/7814b99f-3628-41ab-80fd-50fea5c6f7e8/check
+### template
+GET http://61.172.179.6:30302/api/templates/show?type=1&languageType=5&deployType=1
 Content-Type: application/json
-Access-Token: AklbPE0z2N7p38NiUvdUZIrTBpWNtdwA5a5pMXZMWmTgjVJxQwZ6a9541HKDBIdL
+Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg
+
+
+
+### 执行检查
+POST http://localhost:8080/api/projects/575054f4-1538-41ed-9d31-a17b4151f7b7/check
+Content-Type: application/json
+Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg/
+
+### 执行构建
+POST http://localhost:8080/api/projects/2edddac6-d6b0-4f67-b9ad-94ff576c0e97/build
+Content-Type: application/json
+Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg/
 
 
 ### create job

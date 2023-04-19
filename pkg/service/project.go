@@ -23,6 +23,7 @@ type IProjectService interface {
 	DeleteProject(id string) error
 	UpdateProjectParams(id string, updateData vo.UpdateProjectParams) error
 	GetProjectParams(id string) (string, error)
+	GetProjectById(id string) (*db2.Project, error)
 }
 
 type ProjectService struct {
@@ -123,6 +124,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 		project.RepositoryUrl = createData.TemplateUrl
 		project.Branch = "main"
 		project.DeployType = createData.DeployType
+		project.LabelDisplay = createData.LabelDisplay
 		p.db.Create(&project)
 		return project.Id, nil
 	}
@@ -198,12 +200,11 @@ func (p *ProjectService) UpdateProject(id string, updateData vo.UpdateProjectPar
 }
 
 func (p *ProjectService) GetProjectParams(id string) (string, error) {
-	var data db2.Project
-	result := p.db.Where("id = ? ", id).First(&data)
-	if result.Error != nil {
-		return "", result.Error
+	data, err := p.GetProjectById(id)
+	if err != nil {
+		return "", err
 	}
-	return data.Params, nil
+	return data.Params, err
 }
 
 func (p *ProjectService) UpdateProjectParams(id string, updateData vo.UpdateProjectParams) error {
@@ -233,4 +234,10 @@ func (p *ProjectService) DeleteProject(id string) error {
 	deletePipeCmd.Dir = pipelinePath
 	deletePipeCmd.Run()
 	return nil
+}
+
+func (p *ProjectService) GetProjectById(id string) (*db2.Project, error) {
+	var data db2.Project
+	result := p.db.Where("id = ? ", id).First(&data)
+	return &data, result.Error
 }

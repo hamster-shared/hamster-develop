@@ -12,7 +12,7 @@ type Project struct {
 	UserId        int64          `json:"UserId"`
 	Type          uint           `json:"type"`
 	RepositoryUrl string         `json:"repositoryUrl"`
-	FrameType     int            `json:"frameType"`
+	FrameType     uint           `json:"frameType"`
 	Creator       int64          `json:"creator"`
 	DeleteUser    uint           `json:"deleteUser"`
 	UpdateUser    uint           `json:"updateUser"`
@@ -22,6 +22,7 @@ type Project struct {
 	UpdateTime    time.Time      `json:"updateTime"`
 	DeleteTime    gorm.DeletedAt `json:"deleteTime"`
 	Params        string         `json:"params"`
+	LabelDisplay  string         `json:"labelDisplay"`
 }
 
 func (p *Project) BeforeCreate(tx *gorm.DB) (err error) {

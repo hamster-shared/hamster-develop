@@ -1,0 +1,31 @@
+version: 1.0
+name: [[ .Name ]]
+stages:
+  Initialization:
+    steps:
+      - name: Clone Code from Github
+        uses: git-checkout
+        with:
+          url: [[ .RepositoryUrl ]]
+          branch: main
+  Build Contract:
+    needs:
+      - Initialization
+    steps:
+      - name: Compile Contract
+        runs-on: docker.io/hamstershare/mysten-sui-tools:v0.30.0
+        volumes:
+          - /root/.move:/root/.move
+        run: |
+          sui move build --dump-bytecode-as-base64 > bytecode.json
+  Output Results:
+    needs:
+      - Build Contract
+    steps:
+      - name: Save Files
+        uses: hamster-artifactory
+        with:
+          name: sui-meta.zip
+          compress: false
+          path: |
+            bytecode.json

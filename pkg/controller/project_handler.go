@@ -84,6 +84,21 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 			Fail(err.Error(), g)
 			return
 		}
+	} else {
+		flag := githubService.CheckName(token, user.Username, createData.Name)
+		if flag {
+			repo, res, err = githubService.CreateRepository(token, createData.Name)
+			if err != nil {
+				if res != nil {
+					if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+						Failed(http.StatusUnauthorized, "access not authorized", g)
+						return
+					}
+				}
+				Fail(err.Error(), g)
+				return
+			}
+		}
 	}
 	//email, err := githubService.GetUserEmail(token)
 	//if err != nil {
@@ -96,12 +111,13 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	data := vo.CreateProjectParam{
-		Name:        createData.Name,
-		Type:        createData.Type,
-		TemplateUrl: *repo.CloneURL,
-		FrameType:   createData.FrameType,
-		DeployType:  createData.DeployType,
-		UserId:      int64(user.Id),
+		Name:         createData.Name,
+		Type:         createData.Type,
+		TemplateUrl:  *repo.CloneURL,
+		FrameType:    createData.FrameType,
+		DeployType:   createData.DeployType,
+		UserId:       int64(user.Id),
+		LabelDisplay: createData.LabelDisplay,
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
@@ -131,6 +147,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		workflowCheckRes.ExecFile = file
 		workflowService.UpdateWorkflow(workflowCheckRes)
 	}
+
 	workflowBuildData := parameter.SaveWorkflowParam{
 		ProjectId:  id,
 		Type:       consts.Build,

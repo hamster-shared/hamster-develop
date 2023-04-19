@@ -41,3 +41,11 @@ func (u *UserService) GetUserById(id int64) (db2.User, error) {
 	}
 	return user, nil
 }
+
+func (u *UserService) GetUserCount() (int64, error) {
+	var count int64
+	if err := u.db.Model(&db2.User{}).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}

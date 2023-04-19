@@ -8,7 +8,7 @@ stages:
         with:
           url: {{ .RepositoryUrl }}
           branch: main
-      - name: Run Install
+      - name: Run "npm install"
         run: |
             npm install
 

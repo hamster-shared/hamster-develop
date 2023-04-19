@@ -76,6 +76,7 @@ const (
 	Aptos
 	Ton
 	StarkWare
+	Sui
 )
 
 const IpfsUrl = "http://183.66.65.247:32509"
