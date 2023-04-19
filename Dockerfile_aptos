@@ -1,0 +1,23 @@
+FROM aptoslabs/tools:aptos-node-v1.3.0
+
+RUN rm -rf /etc/apt/sources.list.d/bullseye.list && apt update
+RUN apt install -y -f perl-base=5.32.1-4+deb11u1 --allow-downgrades
+RUN apt install -y git
+RUN rm -rf /var/lib/apt/lists/*
+
+## 初始化 aptos
+RUN aptos init --assume-yes --network devnet --private-key 17f7bfc5b3b1802053b441a73839d9d69d88472efe909e9951d702c044de8f0a
+
+#安装Move Prover
+COPY ./aptos-core ./aptos-core
+RUN echo y | ./aptos-core/scripts/dev_setup.sh -yp
+
+ENV PATH="/root/bin:/root/.cargo/bin:$PATH"
+ENV DOTNET_ROOT="/root/.dotnet"
+ENV PATH="/root/.dotnet/tools:$PATH"
+ENV Z3_EXE="/root/bin/z3"
+ENV CVC5_EXE="/root/bin/cvc5"
+ENV BOOGIE_EXE="/root/.dotnet/tools/boogie"
+ENV SOLC_EXE="/root/bin/solc"
+
+#docker build -t hamstershare/aptoslabs-tools:aptos-node-v1.3.3 .

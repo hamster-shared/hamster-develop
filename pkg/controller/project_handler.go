@@ -130,24 +130,22 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Aptos) {
-		workflowCheckData := parameter.SaveWorkflowParam{
-			ProjectId:  id,
-			Type:       consts.Check,
-			ExecFile:   "",
-			LastExecId: 0,
-		}
-		workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
-		if err != nil {
-			Success(id, g)
-			return
-		}
-		checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
-		file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
-		if err == nil {
-			workflowCheckRes.ExecFile = file
-			workflowService.UpdateWorkflow(workflowCheckRes)
-		}
+	workflowCheckData := parameter.SaveWorkflowParam{
+		ProjectId:  id,
+		Type:       consts.Check,
+		ExecFile:   "",
+		LastExecId: 0,
+	}
+	workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+	if err != nil {
+		Success(id, g)
+		return
+	}
+	checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
+	file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
+	if err == nil {
+		workflowCheckRes.ExecFile = file
+		workflowService.UpdateWorkflow(workflowCheckRes)
 	}
 
 	workflowBuildData := parameter.SaveWorkflowParam{

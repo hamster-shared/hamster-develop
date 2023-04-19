@@ -16,8 +16,8 @@ stages:
         run: |
           yarn install
           yarn run build:staging 
-          docker build -t hamstershare/hamster-frontend:${PIPELINE_ID} --platform=linux/amd64 .
-          docker push hamstershare/hamster-frontend:${PIPELINE_ID}
+          docker buildx build -t hamstershare/hamster-frontend:${PIPELINE_ID} --platform=linux/amd64 --push .
+#          docker push hamstershare/hamster-frontend:${PIPELINE_ID}
 
   deploy:
     needs:
