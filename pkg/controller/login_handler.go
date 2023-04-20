@@ -8,7 +8,10 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
+	"gorm.io/gorm"
+	"log"
 	"net/http"
+	"time"
 )
 
 func (h *HandlerServer) loginWithGithub(gin *gin.Context) {
@@ -75,6 +78,24 @@ func (h *HandlerServer) githubInstall(gin *gin.Context) {
 		return
 	}
 	Success(token, gin)
+}
+
+func (h *HandlerServer) RequestLog() gin.HandlerFunc {
+	return func(gin *gin.Context) {
+		accessToken := gin.Request.Header.Get("Access-Token")
+		url := gin.Request.RequestURI
+		log.Printf("url: %s, method: %s, token: %s ", url, gin.Request.Method, accessToken)
+		requestLog := &db2.RequestLog{
+			Url:        url,
+			Token:      accessToken,
+			Method:     gin.Request.Method,
+			CreateTime: time.Now(),
+			UpdateTime: time.Now(),
+		}
+		db := application.GetBean[*gorm.DB]("db")
+		_ = db.Save(requestLog).Error
+		gin.Next()
+	}
 }
 
 func (h *HandlerServer) Authorize() gin.HandlerFunc {

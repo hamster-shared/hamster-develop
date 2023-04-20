@@ -28,6 +28,7 @@ func NewHttpService(handlerServer HandlerServer, port int) *HttpServer {
 func (h *HttpServer) StartHttpServer() {
 	r := gin.Default()
 	api := r.Group("/api")
+	api.Use(h.handlerServer.RequestLog())
 
 	api.POST("/login", h.handlerServer.loginWithGithub)
 	api.POST("/github/install", h.handlerServer.githubInstall)
