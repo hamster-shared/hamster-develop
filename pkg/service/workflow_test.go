@@ -84,4 +84,5 @@ func TestGetSuiModelName(t *testing.T) {
 
 func TestDd(t *testing.T) {
 	GetTaskResult()
+	//GetFile()
 }

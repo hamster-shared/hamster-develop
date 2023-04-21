@@ -1,9 +1,10 @@
 package service
 
 type SecurityAnalyzerResponse struct {
-	Success bool     `json:"success"`
-	Error   string   `json:"error"`
-	Results []string `json:"results"`
+	Success     bool                     `json:"success"`
+	Error       string                   `json:"error"`
+	Results     []SecurityAnalyzerResult `json:"results"`
+	FileMapping map[string]string        `json:"file_mapping"`
 }
 
 type SecurityAnalyzerResult struct {

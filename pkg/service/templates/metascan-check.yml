@@ -3,7 +3,7 @@ name: [[ .Name ]]
 stages:
   Check Contract:
     steps:
-      [[- if eq .Tool "MetaTrust Security Analyzer" ]]
+      [[- if eq .Tool "MetaTrust (SA)" ]]
       - name: MetaTrust Security Analyzer
         uses: metascan_action
         with:
@@ -11,7 +11,7 @@ stages:
           organization_id: 1078238259684835328
           project_name: ${{ param.projectName }}
           project_url: ${{ param.projectUrl }}
-      [[- else if eq .Tool "MetaTrust Security Prover" ]]
+      [[- else if eq .Tool "MetaTrust (SP)" ]]
       - name: MetaTrust Security Prover
         uses: metascan_action
         with:
@@ -20,7 +20,7 @@ stages:
           meta_scan_token: ${{ param.metaScanToken }}
           project_name: ${{ param.projectName }}
           project_url: ${{ param.projectUrl }}
-      [[- else if eq .Tool "MetaTrust Open Source Analyzer" ]]
+      [[- else if eq .Tool "MetaTrust (OSA)" ]]
       - name: MetaTrust Open Source Analyzer
         uses: metascan_action
         with:
@@ -29,7 +29,7 @@ stages:
           meta_scan_token: ${{ param.metaScanToken }}
           project_name: ${{ param.projectName }}
           project_url: ${{ param.projectUrl }}
-      [[- else if eq .Tool "MetaTrust Code Quality" ]]
+      [[- else if eq .Tool "MetaTrust (CQ)" ]]
       - name: MetaTrust Code Quality
         uses: metascan_action
         with:

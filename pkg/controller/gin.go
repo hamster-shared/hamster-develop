@@ -44,8 +44,10 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/templates/show", h.handlerServer.templateShow)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
-	api.POST("/projects", h.handlerServer.createProject) // 进行中
+	api.POST("/projects", h.handlerServer.createProject)
+	api.POST("/projects/v2", h.handlerServer.createProjectV2)
 	api.POST("/projects/code", h.handlerServer.createProjectByCode)
+	api.POST("/projects/code/v2", h.handlerServer.createProjectByCodeV2)
 	api.GET("/projects/:id", h.handlerServer.projectDetail)
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)

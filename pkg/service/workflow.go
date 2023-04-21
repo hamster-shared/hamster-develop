@@ -513,7 +513,7 @@ func (w *WorkflowService) UpdateWorkflow(data db.Workflow) error {
 func getCheckTemplate(tool string) string {
 	var filePath string
 	switch tool {
-	case "MetaTrust Security Analyzer", "MetaTrust Security Prover", "MetaTrust Open Source Analyzer", "MetaTrust Code Quality":
+	case "MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)":
 		filePath = "templates/metascan-check.yml"
 	case "Mythril", "Solhint", "eth-gas-reporter", "AI":
 		filePath = "templates/truffle_check.yml"
@@ -581,7 +581,7 @@ func (w *WorkflowService) TemplateParseV2(name, tool string, project *vo.Project
 	tmpl := template.New("test")
 	var templateData interface{}
 	switch tool {
-	case "MetaTrust Security Analyzer", "MetaTrust Security Prover", "MetaTrust Open Source Analyzer", "MetaTrust Code Quality":
+	case "MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)":
 		tmpl = tmpl.Delims("[[", "]]")
 		templateData = parameter.MetaScanCheck{
 			Name: name,
@@ -709,7 +709,7 @@ func setMetaScanToken(workflow db.Workflow) (bool, string) {
 	token := ""
 	metaScanFlag := false
 	switch workflow.Tool {
-	case "MetaTrust Security Analyzer", "MetaTrust Security Prover", "MetaTrust Open Source Analyzer", "MetaTrust Code Quality":
+	case "MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)":
 		metaScanFlag = true
 		token = metaScanHttpRequestToken()
 	case "Mythril", "Solhint", "eth-gas-reporter", "AI":
@@ -1010,8 +1010,8 @@ func GetTaskResult() {
 	result := struct {
 		Data TaskResult `json:"data"`
 	}{}
-	res, err := utils.NewHttp().NewRequest().SetPathParam("engineTaskId", "1098616244203945984").SetHeaders(map[string]string{
-		"Authorization":  "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiYXdqN2JZQjdHX2MtVDJXNmFiQkIwMHZld2xoaHZLVVNfSXJUTDFBdUs4In0.eyJleHAiOjE2ODIwNDQ1ODAsImlhdCI6MTY4MjA0Mjc4MCwianRpIjoiY2I5ZmQ0NDctYjg2Zi00ZjY1LThlNmUtZDgxYThkMzM0OTkxIiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50Lm1ldGF0cnVzdC5pby9yZWFsbXMvbXQiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiMjEzNjdlMGQtYWQ0NC00YTMwLWI4OWUtMDRmNDM2NWE4ZmM3IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoid2ViYXBwIiwic2Vzc2lvbl9zdGF0ZSI6IjU3ZjdkM2QwLTYxMjctNGU3Yy05NDVkLWI0OTU0MGZmOTYwOCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcHAubWV0YXRydXN0LmlvIiwiaHR0cHM6Ly9tZXRhdHJ1c3QuaW8iLCJodHRwczovL3d3dy5tZXRhdHJ1c3QuaW8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbXQiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwiZGVsZXRlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJzaWQiOiI1N2Y3ZDNkMC02MTI3LTRlN2MtOTQ1ZC1iNDk1NDBmZjk2MDgiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicHJlZmVycmVkX3VzZXJuYW1lIjoidG9tQGhhbXN0ZXJuZXQuaW8iLCJlbWFpbCI6InRvbUBoYW1zdGVybmV0LmlvIiwidXNlcm5hbWUiOiJ0b21AaGFtc3Rlcm5ldC5pbyJ9.jvm8MAGWheOS7x9Gu1H6jbA4Tp4WtR_l3gu0TYANxY7FBCvqisWBUrROqEWDXHk07bzofAMN-nqCO2Q62vpz32srDJI15RZB8eRX1B_OitZkLU4awseEvGtK2II-7hv9m8zkJgYA056R1GBjwHqNlC452gRBTzCAuJPyW-c8WZC83t_Kt3LyO9w9mtueklOA12GIi9304ykU7DpgEXIHn_g9c2AWrXfV-vmaoIKWdDck7f74h2W99Di7zWwZg6RcHyF1ha6MRDTRztVg8h3kcGKLCTVXLGM0LmHCZPmIx_cL_kSR1u3fuyL_eFBlen91FvEpVzi-MeH8L9gt3bGnqQ",
+	res, err := utils.NewHttp().NewRequest().SetPathParam("engineTaskId", "1098923611277754368").SetHeaders(map[string]string{
+		"Authorization":  "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiYXdqN2JZQjdHX2MtVDJXNmFiQkIwMHZld2xoaHZLVVNfSXJUTDFBdUs4In0.eyJleHAiOjE2ODIwNzIxMjMsImlhdCI6MTY4MjA3MDMyMywianRpIjoiOTA4NjE5NzgtNjgyZC00MDJhLTkxYTQtZWNlNDZiZDJkZDdlIiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50Lm1ldGF0cnVzdC5pby9yZWFsbXMvbXQiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiMjEzNjdlMGQtYWQ0NC00YTMwLWI4OWUtMDRmNDM2NWE4ZmM3IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoid2ViYXBwIiwic2Vzc2lvbl9zdGF0ZSI6IjEyNjg4ZjkxLTFhNDQtNGIwZS1iMjQzLTdjNDg3OTIxZjE2NSIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcHAubWV0YXRydXN0LmlvIiwiaHR0cHM6Ly9tZXRhdHJ1c3QuaW8iLCJodHRwczovL3d3dy5tZXRhdHJ1c3QuaW8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbXQiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwiZGVsZXRlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJzaWQiOiIxMjY4OGY5MS0xYTQ0LTRiMGUtYjI0My03YzQ4NzkyMWYxNjUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicHJlZmVycmVkX3VzZXJuYW1lIjoidG9tQGhhbXN0ZXJuZXQuaW8iLCJlbWFpbCI6InRvbUBoYW1zdGVybmV0LmlvIiwidXNlcm5hbWUiOiJ0b21AaGFtc3Rlcm5ldC5pbyJ9.r_jaYmHjlHHDN2e93pHF9OKhUNpdZuZv5lUOrjlEWGtY0VsR2KIVu0SZVow0ygB6BatmKo10gdZliFGBl5mqbYjPhcvpmc8QRNXXJt2E80k9wc4gL1wtUWkds3wrBVDNpQ4PoxOvAIupPOKPLeA6R1OrnGsFgZBXy34ybc8gcTUGjNeuuWHTs6efdFhkFs7kX0LE1FnN6827LfL-Igi5XMVKcTpeJZhMTr-Mb4yGsZCtXZt_MSIlkvcbBE44jgNRB4eaCEGCbiagHjPe5ZFejZ8Q-Hf8gjkRxRx4x3uBxAHyjJgbrdhwilV4RALJT0w8AMrzPyJoG2JrtrSsGK2tDw",
 		"X-MetaScan-Org": "1098616244203945984",
 	}).SetResult(&result).Get(url)
 	log.Println(res.StatusCode())
@@ -1030,12 +1030,29 @@ func GetTaskResult() {
 		log.Println("查询任务状态失败")
 		return
 	}
-	log.Println(result.Data.Result)
-	log.Println(result)
+	var resultData SecurityAnalyzerResponse
+	if err = json.Unmarshal([]byte(result.Data.Result), &resultData); err != nil {
+		log.Println("json 格式化有问题")
+	}
+	log.Println(resultData.FileMapping)
 
 }
 
 type TaskResult struct {
 	Title  string `json:"title"`
 	Result string `json:"result"`
+}
+
+func GetFile() {
+	url := "https://app.metatrust.io/api/scan/history/vulnerability-files/8f82c7ad-cacd-418a-bcd2-cbb4218c3f86/Functions.sol"
+	res, err := utils.NewHttp().NewRequest().SetHeaders(map[string]string{
+		"Authorization":  "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiYXdqN2JZQjdHX2MtVDJXNmFiQkIwMHZld2xoaHZLVVNfSXJUTDFBdUs4In0.eyJleHAiOjE2ODIwNzIxMjMsImlhdCI6MTY4MjA3MDMyMywianRpIjoiOTA4NjE5NzgtNjgyZC00MDJhLTkxYTQtZWNlNDZiZDJkZDdlIiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50Lm1ldGF0cnVzdC5pby9yZWFsbXMvbXQiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiMjEzNjdlMGQtYWQ0NC00YTMwLWI4OWUtMDRmNDM2NWE4ZmM3IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoid2ViYXBwIiwic2Vzc2lvbl9zdGF0ZSI6IjEyNjg4ZjkxLTFhNDQtNGIwZS1iMjQzLTdjNDg3OTIxZjE2NSIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcHAubWV0YXRydXN0LmlvIiwiaHR0cHM6Ly9tZXRhdHJ1c3QuaW8iLCJodHRwczovL3d3dy5tZXRhdHJ1c3QuaW8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbXQiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwiZGVsZXRlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJzaWQiOiIxMjY4OGY5MS0xYTQ0LTRiMGUtYjI0My03YzQ4NzkyMWYxNjUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicHJlZmVycmVkX3VzZXJuYW1lIjoidG9tQGhhbXN0ZXJuZXQuaW8iLCJlbWFpbCI6InRvbUBoYW1zdGVybmV0LmlvIiwidXNlcm5hbWUiOiJ0b21AaGFtc3Rlcm5ldC5pbyJ9.r_jaYmHjlHHDN2e93pHF9OKhUNpdZuZv5lUOrjlEWGtY0VsR2KIVu0SZVow0ygB6BatmKo10gdZliFGBl5mqbYjPhcvpmc8QRNXXJt2E80k9wc4gL1wtUWkds3wrBVDNpQ4PoxOvAIupPOKPLeA6R1OrnGsFgZBXy34ybc8gcTUGjNeuuWHTs6efdFhkFs7kX0LE1FnN6827LfL-Igi5XMVKcTpeJZhMTr-Mb4yGsZCtXZt_MSIlkvcbBE44jgNRB4eaCEGCbiagHjPe5ZFejZ8Q-Hf8gjkRxRx4x3uBxAHyjJgbrdhwilV4RALJT0w8AMrzPyJoG2JrtrSsGK2tDw",
+		"X-MetaScan-Org": "1098616244203945984",
+	}).Get(url)
+	if err != nil {
+		log.Println("获取失败")
+		return
+	}
+	log.Println(res.StatusCode())
+	log.Println(string(res.Body()))
 }
