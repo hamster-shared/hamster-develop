@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
@@ -16,6 +17,7 @@ type ITemplateService interface {
 	GetTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
 	GetFrontendTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
 	TemplateShow(templateType, languageType, deploymentType int) (*[]vo.TemplateVo, error)
+	TemplateDownload(id int, repoName string) string
 }
 
 type TemplateService struct {
@@ -107,4 +109,10 @@ func (t *TemplateService) TemplateShow(templateType, languageType, deploymentTyp
 	}
 	copier.Copy(&listVo, &list)
 	return &listVo, nil
+}
+
+func (t *TemplateService) TemplateDownload(id int, repoName string) string {
+	fmt.Printf("download template id is:%d", id)
+	downloadUrl := fmt.Sprintf("https://github.com/hamster-template/%s/archive/refs/heads/master.zip", repoName)
+	return downloadUrl
 }
