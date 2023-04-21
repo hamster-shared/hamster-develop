@@ -37,6 +37,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/:username/frontend/logs", h.handlerServer.getDeployFrontendLog)
 	api.GET("/user/count", h.handlerServer.getUserCount)
 	api.Use(h.handlerServer.Authorize())
+	api.POST("/user/wallet", h.handlerServer.saveUserWallet)
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
