@@ -130,26 +130,27 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Aptos) {
-		workflowCheckData := parameter.SaveWorkflowParam{
-			ProjectId:  id,
-			Type:       consts.Check,
-			ExecFile:   "",
-			LastExecId: 0,
-		}
-		workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
-		if err != nil {
-			Success(id, g)
-			return
-		}
-		checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
-		file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
-		if err == nil {
-			workflowCheckRes.ExecFile = file
-			workflowService.UpdateWorkflow(workflowCheckRes)
+	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
+		if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Aptos) {
+			workflowCheckData := parameter.SaveWorkflowParam{
+				ProjectId:  id,
+				Type:       consts.Check,
+				ExecFile:   "",
+				LastExecId: 0,
+			}
+			workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+			if err != nil {
+				Success(id, g)
+				return
+			}
+			checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
+			file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
+			if err == nil {
+				workflowCheckRes.ExecFile = file
+				workflowService.UpdateWorkflow(workflowCheckRes)
+			}
 		}
 	}
-
 	workflowBuildData := parameter.SaveWorkflowParam{
 		ProjectId:  id,
 		Type:       consts.Build,
@@ -766,23 +767,23 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 
-	workflowCheckData := parameter.SaveWorkflowParam{
-		ProjectId:  id,
-		Type:       consts.Check,
-		ExecFile:   "",
-		LastExecId: 0,
-	}
-	workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
-	if err != nil {
-		Success(id, gin)
-		return
-	}
-	checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
-	file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
-	if err == nil {
-		workflowCheckRes.ExecFile = file
-		workflowService.UpdateWorkflow(workflowCheckRes)
-	}
+	//workflowCheckData := parameter.SaveWorkflowParam{
+	//	ProjectId:  id,
+	//	Type:       consts.Check,
+	//	ExecFile:   "",
+	//	LastExecId: 0,
+	//}
+	//workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+	//if err != nil {
+	//	Success(id, gin)
+	//	return
+	//}
+	//checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
+	//file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
+	//if err == nil {
+	//	workflowCheckRes.ExecFile = file
+	//	workflowService.UpdateWorkflow(workflowCheckRes)
+	//}
 	workflowBuildData := parameter.SaveWorkflowParam{
 		ProjectId:  id,
 		Type:       consts.Build,
@@ -822,4 +823,66 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 	}
 
 	Success(id, gin)
+}
+
+func (h *HandlerServer) workflowSetting(gin *gin.Context) {
+	id := gin.Param("id")
+	if id == "" {
+		Fail("project id is empty", gin)
+		return
+	}
+	var settingData parameter.WorkflowSettingParam
+	err := gin.BindJSON(&settingData)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	projectId, err := uuid.FromString(id)
+	if err != nil {
+		logger.Errorf("projectWorkflowCheck error: %s", err.Error())
+		Fail(err.Error(), gin)
+		return
+	}
+	project, err := h.projectService.GetProject(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	workflowCheckData := parameter.SaveWorkflowParam{
+		ProjectId:  projectId,
+		Type:       consts.Check,
+		ExecFile:   "",
+		LastExecId: 0,
+		ToolType:   settingData.ToolType,
+		Tool:       settingData.Tool,
+	}
+	err = workflowService.SettingWorkflow(workflowCheckData, project)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	//workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+	//if err != nil {
+	//	Fail(err.Error(), gin)
+	//	return
+	//}
+	//checkKey := workflowService.GetWorkflowKey(id, workflowCheckRes.Id)
+	//file, err := workflowService.TemplateParseV2(checkKey, settingData.Tool, project)
+	//if err == nil {
+	//	workflowCheckRes.ExecFile = file
+	//	workflowService.UpdateWorkflow(workflowCheckRes)
+	//}
+	Success("", gin)
+}
+
+func (h *HandlerServer) workflowSettingCheck(gin *gin.Context) {
+	id := gin.Param("id")
+	if id == "" {
+		Fail("project id is empty", gin)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	data := workflowService.WorkflowSettingCheck(id, consts.Check)
+	Success(data, gin)
 }

@@ -224,15 +224,17 @@ func (p *ProjectService) DeleteProject(id string) error {
 		return result.Error
 	}
 	filePath := fmt.Sprintf("rm -rf %s*", id)
-	//delete workdir
-	deleteWorkCmd := exec.Command("/bin/bash", "-c", filePath)
-	deleteWorkCmd.Dir = utils.DefaultWorkDir()
-	deleteWorkCmd.Run()
-	//delete pipelines
-	pipelinePath := filepath.Join(utils.DefaultPipelineDir(), consts.JOB_DIR_NAME)
-	deletePipeCmd := exec.Command("/bin/bash", "-c", filePath)
-	deletePipeCmd.Dir = pipelinePath
-	deletePipeCmd.Run()
+	go func() {
+		//delete workdir
+		deleteWorkCmd := exec.Command("/bin/bash", "-c", filePath)
+		deleteWorkCmd.Dir = utils.DefaultWorkDir()
+		deleteWorkCmd.Run()
+		//delete pipelines
+		pipelinePath := filepath.Join(utils.DefaultPipelineDir(), consts.JOB_DIR_NAME)
+		deletePipeCmd := exec.Command("/bin/bash", "-c", filePath)
+		deletePipeCmd.Dir = pipelinePath
+		deletePipeCmd.Run()
+	}()
 	return nil
 }
 

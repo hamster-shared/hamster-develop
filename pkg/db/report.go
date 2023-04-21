@@ -12,6 +12,7 @@ type Report struct {
 	WorkflowDetailId uint      `json:"workflowDetailId"`
 	Name             string    `json:"name"`
 	Type             uint      `json:"type"`
+	ToolType         int       `json:"toolType"`
 	CheckTool        string    `json:"checkTool"`
 	CheckVersion     string    `json:"checkVersion"`
 	Result           string    `json:"result"`

@@ -1,0 +1,41 @@
+version: 1.0
+name: [[ .Name ]]
+stages:
+  Check Contract:
+    steps:
+      [[- if eq .Tool "MetaTrust Security Analyzer" ]]
+      - name: MetaTrust Security Analyzer
+        uses: metascan_action
+        with:
+          engine_type: STATIC
+          organization_id: 1078238259684835328
+          project_name: ${{ param.projectName }}
+          project_url: ${{ param.projectUrl }}
+      [[- else if eq .Tool "MetaTrust Security Prover" ]]
+      - name: MetaTrust Security Prover
+        uses: metascan_action
+        with:
+          engine_type: PROVER
+          organization_id: 1078238259684835328
+          meta_scan_token: ${{ param.metaScanToken }}
+          project_name: ${{ param.projectName }}
+          project_url: ${{ param.projectUrl }}
+      [[- else if eq .Tool "MetaTrust Open Source Analyzer" ]]
+      - name: MetaTrust Open Source Analyzer
+        uses: metascan_action
+        with:
+          engine_type: SCA
+          organization_id: 1078238259684835328
+          meta_scan_token: ${{ param.metaScanToken }}
+          project_name: ${{ param.projectName }}
+          project_url: ${{ param.projectUrl }}
+      [[- else if eq .Tool "MetaTrust Code Quality" ]]
+      - name: MetaTrust Code Quality
+        uses: metascan_action
+        with:
+          engine_type: LINT
+          organization_id: 1078238259684835328
+          meta_scan_token: ${{ param.metaScanToken }}
+          project_name: ${{ param.projectName }}
+          project_url: ${{ param.projectUrl }}
+      [[- end ]]

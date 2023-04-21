@@ -52,6 +52,9 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/check-name", h.handlerServer.checkName)
 	api.GET("/user", h.handlerServer.getUseInfo)
 	api.PUT("/user/first/state", h.handlerServer.updateFirstState)
+	// set check pipeline
+	api.POST("/project/:id/workflow/setting", h.handlerServer.workflowSetting)
+	api.GET("/project/:id/workflow/setting/check", h.handlerServer.workflowSettingCheck)
 
 	/*
 		创建项目返回项目 ID

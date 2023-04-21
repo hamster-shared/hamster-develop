@@ -86,7 +86,18 @@ func (w *WorkflowService) getEvmAbiInfoAndByteCode(arti model.Artifactory) (abiI
 }
 
 func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
-	_, err := w.ExecProjectWorkflow(projectId, user, 1, nil)
+	var project db.Project
+	err := w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	if err != nil {
+		logger.Info("project is not exit ")
+		return err
+	}
+	params := make(map[string]string)
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
+		params["projectName"] = fmt.Sprintf("%s/%s", user.Username, project.Name)
+		params["projectUrl"] = project.RepositoryUrl
+	}
+	_, err = w.ExecProjectWorkflow(projectId, user, 1, params)
 	return err
 }
 
@@ -272,6 +283,10 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 		logger.Tracef("create job success, job name is %s", job.Name)
 	}
+	met, token := setMetaScanToken(workflow)
+	if met {
+		params["metaScanToken"] = token
+	}
 	if params != nil {
 		if job.Parameter == nil {
 			job.Parameter = params
@@ -446,11 +461,45 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db
 	workflow.ProjectId = saveData.ProjectId
 	workflow.ExecFile = saveData.ExecFile
 	workflow.LastExecId = saveData.LastExecId
+	workflow.ToolType = saveData.ToolType
+	workflow.Tool = saveData.Tool
 	res := w.db.Save(&workflow)
 	if res.Error != nil {
 		return workflow, res.Error
 	}
 	return workflow, nil
+}
+
+func (w *WorkflowService) SettingWorkflow(settingData parameter.SaveWorkflowParam, projectData *vo.ProjectDetailVo) error {
+	var workflow db.Workflow
+	err := w.db.Model(db.Workflow{}).Where("project_id=? and type=?", settingData.ProjectId, consts.Check).First(&workflow).Error
+	if err == gorm.ErrRecordNotFound {
+		workflowCheckRes, err := w.SaveWorkflow(settingData)
+		if err != nil {
+			return err
+		}
+		checkKey := w.GetWorkflowKey(settingData.ProjectId.String(), workflowCheckRes.Id)
+		file, err := w.TemplateParseV2(checkKey, settingData.Tool, projectData)
+		if err != nil {
+			return err
+		}
+		workflowCheckRes.ExecFile = file
+		w.UpdateWorkflow(workflowCheckRes)
+		return nil
+	}
+	return errors.New("workflow already set")
+}
+
+func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType consts.WorkflowType) bool {
+	var workflow db.Workflow
+	err := w.db.Model(db.Workflow{}).Where("project_id=? and type=?", projectId, workflowType).First(&workflow).Error
+	if err == gorm.ErrRecordNotFound {
+		return false
+	}
+	if workflow.ExecFile != "" {
+		return true
+	}
+	return true
 }
 
 func (w *WorkflowService) UpdateWorkflow(data db.Workflow) error {
@@ -459,6 +508,19 @@ func (w *WorkflowService) UpdateWorkflow(data db.Workflow) error {
 		return res.Error
 	}
 	return nil
+}
+
+func getCheckTemplate(tool string) string {
+	var filePath string
+	switch tool {
+	case "MetaTrust Security Analyzer", "MetaTrust Security Prover", "MetaTrust Open Source Analyzer", "MetaTrust Code Quality":
+		filePath = "templates/metascan-check.yml"
+	case "Mythril", "Solhint", "eth-gas-reporter", "AI":
+		filePath = "templates/truffle_check.yml"
+	default:
+		filePath = ""
+	}
+	return filePath
 }
 
 func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) string {
@@ -503,6 +565,47 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 		}
 	}
 	return filePath
+}
+
+func (w *WorkflowService) TemplateParseV2(name, tool string, project *vo.ProjectDetailVo) (string, error) {
+	if project == nil {
+		return "", errors.New("project is nil")
+	}
+	filePath := getCheckTemplate(tool)
+	content, err := temp.ReadFile(filePath)
+	if err != nil {
+		log.Println("read template file failed ", err.Error())
+		return "", err
+	}
+	fileContent := string(content)
+	tmpl := template.New("test")
+	var templateData interface{}
+	switch tool {
+	case "MetaTrust Security Analyzer", "MetaTrust Security Prover", "MetaTrust Open Source Analyzer", "MetaTrust Code Quality":
+		tmpl = tmpl.Delims("[[", "]]")
+		templateData = parameter.MetaScanCheck{
+			Name: name,
+			Tool: tool,
+		}
+	default:
+		tmpl = tmpl.Delims("{{", "}}")
+		templateData = parameter.TemplateCheck{
+			Name:          name,
+			RepositoryUrl: project.RepositoryUrl,
+		}
+	}
+	tmpl, err = tmpl.Parse(fileContent)
+	if err != nil {
+		log.Println("template parse failed ", err.Error())
+		return "", err
+	}
+	var input bytes.Buffer
+	err = tmpl.Execute(&input, templateData)
+	if err != nil {
+		log.Println("failed to write parameters to the template ", err)
+		return "", err
+	}
+	return input.String(), nil
 }
 
 func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo, workflowType consts.WorkflowType) (string, error) {
@@ -600,4 +703,339 @@ func (w *WorkflowService) CheckRunningJob() {
 		flow.UpdateTime = time.Now()
 		_ = w.db.Save(flow).Error
 	}
+}
+
+func setMetaScanToken(workflow db.Workflow) (bool, string) {
+	token := ""
+	metaScanFlag := false
+	switch workflow.Tool {
+	case "MetaTrust Security Analyzer", "MetaTrust Security Prover", "MetaTrust Open Source Analyzer", "MetaTrust Code Quality":
+		metaScanFlag = true
+		token = metaScanHttpRequestToken()
+	case "Mythril", "Solhint", "eth-gas-reporter", "AI":
+		token = ""
+		metaScanFlag = false
+	default:
+		metaScanFlag = false
+		token = ""
+	}
+	return metaScanFlag, token
+}
+
+func metaScanHttpRequestToken() string {
+	url := "https://account.metatrust.io/realms/mt/protocol/openid-connect/token"
+	token := struct {
+		AccessToken      string `json:"access_token"`
+		ExpiresIn        int64  `json:"expires_in"`
+		RefreshExpiresIn int64  `json:"refresh_expires_in"`
+		RefreshToken     string `json:"refresh_token"`
+		TokenType        string `json:"token_type"`
+		NotBeforePolicy  int    `json:"not-before-policy"`
+		SessionState     string `json:"session_state"`
+		Scope            string `json:"scope"`
+	}{}
+	res, err := utils.NewHttp().NewRequest().SetFormData(map[string]string{
+		"grant_type": "password",
+		"username":   "tom@hamsternet.io",
+		"password":   "pysded-hismoh-3Dagcy",
+		"client_id":  "webapp",
+	}).SetResult(&token).SetHeader("Content-Type", "application/x-www-form-urlencoded").Post(url)
+	if res.StatusCode() != 200 {
+		return ""
+	}
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("%s %s", token.TokenType, token.AccessToken)
+}
+
+func GetProjectList() {
+	url := "https://app.metatrust.io/api/project"
+	result := struct {
+		Data MetaProjectsData `json:"data"`
+	}{}
+	res, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
+		"title": "ddsss",
+	}).SetResult(&result).
+		SetHeaders(map[string]string{
+			"Authorization":  "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiYXdqN2JZQjdHX2MtVDJXNmFiQkIwMHZld2xoaHZLVVNfSXJUTDFBdUs4In0.eyJleHAiOjE2ODE4OTc3NjAsImlhdCI6MTY4MTg5NTk2MCwianRpIjoiZmFmNDAwMzQtNWI5Yi00ZThmLTk0MDgtOWI3YzNiOGM5OWU5IiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50Lm1ldGF0cnVzdC5pby9yZWFsbXMvbXQiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiMjEzNjdlMGQtYWQ0NC00YTMwLWI4OWUtMDRmNDM2NWE4ZmM3IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoid2ViYXBwIiwic2Vzc2lvbl9zdGF0ZSI6IjQ5ZWYyYmRmLWYzMWItNDE3YS1hMTIzLTJlNTcxM2ZmYWQzNiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcHAubWV0YXRydXN0LmlvIiwiaHR0cHM6Ly9tZXRhdHJ1c3QuaW8iLCJodHRwczovL3d3dy5tZXRhdHJ1c3QuaW8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbXQiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwiZGVsZXRlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJzaWQiOiI0OWVmMmJkZi1mMzFiLTQxN2EtYTEyMy0yZTU3MTNmZmFkMzYiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicHJlZmVycmVkX3VzZXJuYW1lIjoidG9tQGhhbXN0ZXJuZXQuaW8iLCJlbWFpbCI6InRvbUBoYW1zdGVybmV0LmlvIiwidXNlcm5hbWUiOiJ0b21AaGFtc3Rlcm5ldC5pbyJ9.wkgmwRviR32HnW0LAIMU2NfyoOZ3xHY2SGTFxE6uYYnsKsqwQBx3TUnZRX3g55yB8s296ydEVUFc6cFdnYtCtqihMRZEdTGLSfR3Nz39VGkMmuiA5rGfJDLmUZ2pXePIWfGFAYwjMsm2ArzUXnjphcu25d3eTMCN2iE3t8hOqIBZxmgF88uJpAPQ_tgdhh7PfGBtjFhdNapp94DnwurCwZKVTgr5K8s2Q68hUK5P2onacGXfsE0FwfTR0ePNBFWyfi72qzyVieWmu6bCHL57c4LiG8Aj6UmIJ3rGut-7DN5wt_INht6Np_MoaMMSGYIzxjiCvHbS6jYNudBU565ktA",
+			"X-MetaScan-Org": "1078238259684835328",
+		}).Get(url)
+	if err != nil {
+		log.Println("---------------")
+		log.Println(err)
+		log.Println("---------------")
+		log.Println("创建失败")
+		return
+	}
+	if res.StatusCode() == 401 {
+		log.Println("权限认证失败")
+		return
+	}
+	if res.StatusCode() != 200 {
+		log.Println(res)
+		log.Println("创建失败")
+		return
+	}
+	log.Println(result)
+}
+
+type MetaScanProject struct {
+	Id    string `json:"id"`
+	Title string `json:"title"`
+}
+
+type MetaProjectsData struct {
+	Total      int               `json:"total"`
+	TotalPages int               `json:"totalPages"`
+	Items      []MetaScanProject `json:"items"`
+}
+
+func CreateMetaScanProject() {
+	url := "https://app.metatrust.io/api/project"
+	createData := struct {
+		Title           string `json:"title"`
+		RepoUrl         string `json:"repoUrl"`
+		IntegrationType string `json:"integrationType"`
+	}{
+		Title:           "jiangzhihui/0420",
+		RepoUrl:         "hamster-template/Token",
+		IntegrationType: "github",
+	}
+	result := struct {
+		Message string          `json:"message"`
+		Data    MetaScanProject `json:"data"`
+		Code    int64           `json:"code"`
+	}{}
+	res, err := utils.NewHttp().NewRequest().SetBody(&createData).
+		SetHeaders(map[string]string{
+			"Authorization":  "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiYXdqN2JZQjdHX2MtVDJXNmFiQkIwMHZld2xoaHZLVVNfSXJUTDFBdUs4In0.eyJleHAiOjE2ODE5NzM1MzYsImlhdCI6MTY4MTk3MTczNiwianRpIjoiZDQwYTFjYjQtNGVjNC00NjllLWJhYTYtZjU4YmU0ZTY2NTMyIiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50Lm1ldGF0cnVzdC5pby9yZWFsbXMvbXQiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiMjEzNjdlMGQtYWQ0NC00YTMwLWI4OWUtMDRmNDM2NWE4ZmM3IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoid2ViYXBwIiwic2Vzc2lvbl9zdGF0ZSI6ImY0ZjY2MzYzLWI1MTMtNDNmMC05OGVhLTMxMjEwNmY5NDIxNSIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcHAubWV0YXRydXN0LmlvIiwiaHR0cHM6Ly9tZXRhdHJ1c3QuaW8iLCJodHRwczovL3d3dy5tZXRhdHJ1c3QuaW8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbXQiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwiZGVsZXRlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJzaWQiOiJmNGY2NjM2My1iNTEzLTQzZjAtOThlYS0zMTIxMDZmOTQyMTUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicHJlZmVycmVkX3VzZXJuYW1lIjoidG9tQGhhbXN0ZXJuZXQuaW8iLCJlbWFpbCI6InRvbUBoYW1zdGVybmV0LmlvIiwidXNlcm5hbWUiOiJ0b21AaGFtc3Rlcm5ldC5pbyJ9.jDrHK3uFqdrfIvx5gjhf4_Gg4S_bhnXV2QdeWR0AMbtevBRL3U2V4AxvooL4IBWBYeac3Q4-Hk4mfRH6keG26nU3B1PItnkJteoJ_VJRuc2Qg96MnfVr6S_wLnTD5OrzkZhm2rhvxXsofuU5aWxi8PlVvXKnUGF9upICCJaSjo6vBbBwMmE55s71JRI-WxwD8c2taRS-LvGiceofE2e6_jzMzAXxOrbqvQ44jZeypbsjknN8M6D__82N_9sa8hdi6DRbXpGot79wZI9i1zhXG_dI3h2VM-vcGL0O_I7yJqJY_aVmtDhb-gTZBlJTmw0TK_Fh6m2fnSbE-FWERHzwyQ",
+			"X-MetaScan-Org": "1078238259684835328",
+			"Content-Type":   "application/json",
+		}).SetResult(&result).Post(url)
+	log.Println("++++++++++++++++")
+	log.Println(res.StatusCode())
+	log.Println("++++++++++++++++")
+	if err != nil {
+		log.Println("---------------")
+		log.Println(err)
+		log.Println("---------------")
+		log.Println("创建失败")
+		return
+	}
+	if res.StatusCode() == 401 {
+		log.Println("权限认证失败")
+		return
+	}
+	if res.StatusCode() != 200 {
+		log.Println(res)
+		log.Println("创建失败")
+		return
+	}
+	log.Println(res.Error())
+	log.Println(result)
+	log.Println("创建成功")
+}
+
+func StartScanTask() {
+	url := "https://app.metatrust.io/api/scan/task"
+	var types []string
+	types = append(types, "STATIC")
+	repoData := Repo{
+		Branch:     "",
+		CommitHash: "",
+	}
+	scanData := TaskScan{
+		SubPath:      "",
+		Mode:         "",
+		IgnoredPaths: "node_modules,test,tests,mock",
+	}
+	envData := TaskEnv{
+		Node:           "",
+		Solc:           "",
+		PackageManage:  "",
+		CompileCommand: "",
+		Variables:      "",
+	}
+	bodyData := struct {
+		EngineTypes []string `json:"engine_types"`
+		Repo        Repo     `json:"repo"`
+		Scan        TaskScan `json:"scan"`
+		Env         TaskEnv  `json:"env"`
+	}{
+		EngineTypes: types,
+		Repo:        repoData,
+		Scan:        scanData,
+		Env:         envData,
+	}
+	var result StartTaskRes
+	log.Println(bodyData.EngineTypes)
+	res, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
+		"action":    "start-scan",
+		"projectId": "1098614733587611648",
+	}).SetBody(&bodyData).SetHeaders(map[string]string{
+		"Authorization":  "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiYXdqN2JZQjdHX2MtVDJXNmFiQkIwMHZld2xoaHZLVVNfSXJUTDFBdUs4In0.eyJleHAiOjE2ODE5NzU2MDYsImlhdCI6MTY4MTk3MzgwNiwianRpIjoiYzQ4NDEyY2UtYjk1NS00MjU4LThkOWItNjZhNmRkOTc3MTllIiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50Lm1ldGF0cnVzdC5pby9yZWFsbXMvbXQiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiMjEzNjdlMGQtYWQ0NC00YTMwLWI4OWUtMDRmNDM2NWE4ZmM3IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoid2ViYXBwIiwic2Vzc2lvbl9zdGF0ZSI6IjQ0YmExOTM5LTljYWYtNDEwMC1hMjlmLTM1YmY3YWM0NWJmYyIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcHAubWV0YXRydXN0LmlvIiwiaHR0cHM6Ly9tZXRhdHJ1c3QuaW8iLCJodHRwczovL3d3dy5tZXRhdHJ1c3QuaW8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbXQiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwiZGVsZXRlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJzaWQiOiI0NGJhMTkzOS05Y2FmLTQxMDAtYTI5Zi0zNWJmN2FjNDViZmMiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicHJlZmVycmVkX3VzZXJuYW1lIjoidG9tQGhhbXN0ZXJuZXQuaW8iLCJlbWFpbCI6InRvbUBoYW1zdGVybmV0LmlvIiwidXNlcm5hbWUiOiJ0b21AaGFtc3Rlcm5ldC5pbyJ9.BPunpK_dUysbfrs3ISwyiP3soVz9tNU5G9GInCuLzlko2g3DGkNOsgm0lW69H_ykN-gqAmTvZEdB-4EE4hYM6KcJvaQ90ZmwpAMoI77NYI2YsWeJeMWBGw41No9jHKeTrUnWhMhuNflSdplqpM5ybCV0wWu2gk-OFdpdlbhd-utJrl7lawAs-CPMTO2Pv-JyvgrAyBFdD0B23g3O7wwaT5IPxdHomt4SVFYfmH0h1yeRaKyt-7szBfccFNkHRGBurGn_iFfbL1tvNq58-V2GSVK_LwSLCt1nQkhwCak6HWUbfu83Yemecvz4UEdlodf2buiEI7Die4OHLmxClsUpug",
+		"X-MetaScan-Org": "1078238259684835328",
+		"Content-Type":   "application/json",
+	}).SetResult(&result).Post(url)
+	log.Println(res.StatusCode())
+	if err != nil {
+		log.Println(err.Error())
+		log.Println("启动检查失败")
+		return
+	}
+	if res.StatusCode() != 200 {
+		log.Println(res.Error())
+		log.Println(res)
+		log.Println("调用失败")
+		return
+	}
+	log.Println(result)
+	log.Println("启动任务成功")
+}
+
+type Repo struct {
+	Branch     string `json:"branch"`
+	CommitHash string `json:"commit_hash"`
+}
+type StartTaskRes struct {
+	Data TaskData `json:"data"`
+}
+
+type TaskData struct {
+	Id          string       `json:"id"`
+	TaskState   string       `json:"taskState"`
+	EngineTasks []BaseEntity `json:"engineTasks"`
+}
+
+type BaseEntity struct {
+	Id string `json:"id"`
+}
+
+type TaskScan struct {
+	SubPath      string `json:"sub_path"`
+	Mode         string `json:"mode"`
+	IgnoredPaths string `json:"ignored_paths"`
+}
+
+type TaskEnv struct {
+	Node           string `json:"node"`
+	Solc           string `json:"solc"`
+	PackageManage  string `json:"package_manage"`
+	CompileCommand string `json:"compile_command"`
+	Variables      string `json:"variables"`
+}
+
+func QueryTaskStatus() {
+	url := "https://app.metatrust.io/api/scan/state"
+	result := struct {
+		Data TaskStatusRes `json:"data"`
+	}{}
+	res, err := utils.NewHttp().NewRequest().SetQueryParam("taskId", "1098610494056431618").SetHeaders(map[string]string{
+		"Authorization":  "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiYXdqN2JZQjdHX2MtVDJXNmFiQkIwMHZld2xoaHZLVVNfSXJUTDFBdUs4In0.eyJleHAiOjE2ODE5NzE2NjEsImlhdCI6MTY4MTk2OTg2MSwianRpIjoiZmNkYmU0ZTAtYjg1Ni00NzEyLWFmZjAtZDgxYjgxNjkwNjNmIiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50Lm1ldGF0cnVzdC5pby9yZWFsbXMvbXQiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiMjEzNjdlMGQtYWQ0NC00YTMwLWI4OWUtMDRmNDM2NWE4ZmM3IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoid2ViYXBwIiwic2Vzc2lvbl9zdGF0ZSI6ImYwYjNhZmE3LTkxZDYtNDg2ZC05YzY0LTAzMGEzMTY5YzkzYyIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcHAubWV0YXRydXN0LmlvIiwiaHR0cHM6Ly9tZXRhdHJ1c3QuaW8iLCJodHRwczovL3d3dy5tZXRhdHJ1c3QuaW8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbXQiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwiZGVsZXRlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJzaWQiOiJmMGIzYWZhNy05MWQ2LTQ4NmQtOWM2NC0wMzBhMzE2OWM5M2MiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicHJlZmVycmVkX3VzZXJuYW1lIjoidG9tQGhhbXN0ZXJuZXQuaW8iLCJlbWFpbCI6InRvbUBoYW1zdGVybmV0LmlvIiwidXNlcm5hbWUiOiJ0b21AaGFtc3Rlcm5ldC5pbyJ9.cArWpbG1csPLdIQoSRhtD8nH4nhsLPXaT4Jp58Nl1HwjK2griXRA-jwN2X6Y5gXaVE2OV1sdCeN0ldm2IxuqGs6CFxB6ehi3w_1bRzpVDYy3AmdrRiECXve3v0ltQTeSu8gtzM6eDaPGo0up-b3NuyppOxsSwsOHbmP2x-Y_yDfZ9Ia381wQf1KjzsiXHnhkaWyC6KetRgfz2Q2geoCMh5O9YqwQ-clM8LWeVHo5bMNkewvU8z-72ZAMckp7pAI0FanVX2BPE2jzRJ3n8ccIIfT5uoxBMiblCbeXF0UZFukVAk6Zse-xAt5AHtoM2iPFzVSZYBMvLgOhD59lLtR9Yg",
+		"X-MetaScan-Org": "1078238259684835328",
+	}).SetResult(&result).Get(url)
+	log.Println(res.StatusCode())
+	if err != nil {
+		log.Println(err.Error())
+		log.Println("查询任务状态失败")
+		return
+	}
+	if res.StatusCode() == 401 {
+		log.Println("没有权限")
+		return
+	}
+	if res.StatusCode() != 200 {
+		log.Println(res.Error())
+		log.Println(res)
+		log.Println("查询任务状态失败")
+		return
+	}
+	log.Println(result.Data.State)
+}
+
+type TaskStatusRes struct {
+	State string `json:"state"`
+}
+
+func GetEngineTaskSummary() {
+	url := "https://app.metatrust.io/api/scan/engineTask/{engineTaskId}"
+	result := struct {
+		Data SummaryData `json:"data"`
+	}{}
+	res, err := utils.NewHttp().NewRequest().SetPathParam("engineTaskId", "1098616244203945984").SetHeaders(map[string]string{
+		"Authorization":  "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiYXdqN2JZQjdHX2MtVDJXNmFiQkIwMHZld2xoaHZLVVNfSXJUTDFBdUs4In0.eyJleHAiOjE2ODE5NzcxMTEsImlhdCI6MTY4MTk3NTMxMSwianRpIjoiODI4MmE4YzctYWQ4Ny00ZTEyLTk2YTktOGUyMWE4NjdhOTAzIiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50Lm1ldGF0cnVzdC5pby9yZWFsbXMvbXQiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiMjEzNjdlMGQtYWQ0NC00YTMwLWI4OWUtMDRmNDM2NWE4ZmM3IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoid2ViYXBwIiwic2Vzc2lvbl9zdGF0ZSI6IjE5NTZjYjY1LWE3M2UtNDk1My1iOTNiLTgwNmQ0YTUyNDc5NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcHAubWV0YXRydXN0LmlvIiwiaHR0cHM6Ly9tZXRhdHJ1c3QuaW8iLCJodHRwczovL3d3dy5tZXRhdHJ1c3QuaW8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbXQiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwiZGVsZXRlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJzaWQiOiIxOTU2Y2I2NS1hNzNlLTQ5NTMtYjkzYi04MDZkNGE1MjQ3OTYiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicHJlZmVycmVkX3VzZXJuYW1lIjoidG9tQGhhbXN0ZXJuZXQuaW8iLCJlbWFpbCI6InRvbUBoYW1zdGVybmV0LmlvIiwidXNlcm5hbWUiOiJ0b21AaGFtc3Rlcm5ldC5pbyJ9.kGm_sYXbNtGz8TmQqA2GcTNuglRFRrP5hyJ_OsV2OaHJr_MfxMtsArWHMCB95zfBkLaiTl2ZQ-HwDWyYNwz9Vxxg1vDHIYEgIOLUEfXTrVMzqKiKF-R0U2sggkoBoLFlSAfaS5M7k7mDMprQvgVVkTGduc_crdYLk7YNW0NW5KhvujCg-8ksIf_2HZ-UBI7TnrsE5noYb7lOiXZunsDGAB_CXNqDCguYa4U5h8BPtbczgfsZmwc2l5SxR5u7rYyjJMmV1Rk_RB5XfPZMyRGWtfDD_j9jw2GbEBdXxfZ3fLgSw4xFkZ2jAV-V4u9KfKkKIMc5PSq9deyGu5Cy-AOx9Q",
+		"X-MetaScan-Org": "1078238259684835328",
+	}).SetResult(&result).Get(url)
+	log.Println(res.StatusCode())
+	if err != nil {
+		log.Println(err.Error())
+		log.Println("查询任务状态失败")
+		return
+	}
+	if res.StatusCode() == 401 {
+		log.Println("没有权限")
+		return
+	}
+	if res.StatusCode() != 200 {
+		log.Println(res.Error())
+		log.Println(res)
+		log.Println("查询任务状态失败")
+		return
+	}
+	log.Println(result)
+
+}
+
+type SummaryData struct {
+	ResultOverview ResultOverview `json:"resultOverview"`
+}
+
+type ResultOverview struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error"`
+	Impact  Impact `json:"impact"`
+}
+
+type Impact struct {
+	Critical      int `json:"CRITICAL"`
+	Low           int `json:"LOW"`
+	High          int `json:"HIGH"`
+	Medium        int `json:"MEDIUM"`
+	Informational int `json:"INFORMATIONAL"`
+}
+
+func GetTaskResult() {
+	url := "https://app.metatrust.io/api/scan/history/engine/{engineTaskId}/result"
+	result := struct {
+		Data TaskResult `json:"data"`
+	}{}
+	res, err := utils.NewHttp().NewRequest().SetPathParam("engineTaskId", "1098616244203945984").SetHeaders(map[string]string{
+		"Authorization":  "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiYXdqN2JZQjdHX2MtVDJXNmFiQkIwMHZld2xoaHZLVVNfSXJUTDFBdUs4In0.eyJleHAiOjE2ODIwNDQ1ODAsImlhdCI6MTY4MjA0Mjc4MCwianRpIjoiY2I5ZmQ0NDctYjg2Zi00ZjY1LThlNmUtZDgxYThkMzM0OTkxIiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50Lm1ldGF0cnVzdC5pby9yZWFsbXMvbXQiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiMjEzNjdlMGQtYWQ0NC00YTMwLWI4OWUtMDRmNDM2NWE4ZmM3IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoid2ViYXBwIiwic2Vzc2lvbl9zdGF0ZSI6IjU3ZjdkM2QwLTYxMjctNGU3Yy05NDVkLWI0OTU0MGZmOTYwOCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9hcHAubWV0YXRydXN0LmlvIiwiaHR0cHM6Ly9tZXRhdHJ1c3QuaW8iLCJodHRwczovL3d3dy5tZXRhdHJ1c3QuaW8iXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbXQiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwiZGVsZXRlLWFjY291bnQiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJzaWQiOiI1N2Y3ZDNkMC02MTI3LTRlN2MtOTQ1ZC1iNDk1NDBmZjk2MDgiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicHJlZmVycmVkX3VzZXJuYW1lIjoidG9tQGhhbXN0ZXJuZXQuaW8iLCJlbWFpbCI6InRvbUBoYW1zdGVybmV0LmlvIiwidXNlcm5hbWUiOiJ0b21AaGFtc3Rlcm5ldC5pbyJ9.jvm8MAGWheOS7x9Gu1H6jbA4Tp4WtR_l3gu0TYANxY7FBCvqisWBUrROqEWDXHk07bzofAMN-nqCO2Q62vpz32srDJI15RZB8eRX1B_OitZkLU4awseEvGtK2II-7hv9m8zkJgYA056R1GBjwHqNlC452gRBTzCAuJPyW-c8WZC83t_Kt3LyO9w9mtueklOA12GIi9304ykU7DpgEXIHn_g9c2AWrXfV-vmaoIKWdDck7f74h2W99Di7zWwZg6RcHyF1ha6MRDTRztVg8h3kcGKLCTVXLGM0LmHCZPmIx_cL_kSR1u3fuyL_eFBlen91FvEpVzi-MeH8L9gt3bGnqQ",
+		"X-MetaScan-Org": "1098616244203945984",
+	}).SetResult(&result).Get(url)
+	log.Println(res.StatusCode())
+	if err != nil {
+		log.Println(err.Error())
+		log.Println("查询任务状态失败")
+		return
+	}
+	if res.StatusCode() == 401 {
+		log.Println("没有权限")
+		return
+	}
+	if res.StatusCode() != 200 {
+		log.Println(res.Error())
+		log.Println(res)
+		log.Println("查询任务状态失败")
+		return
+	}
+	log.Println(result.Data.Result)
+	log.Println(result)
+
+}
+
+type TaskResult struct {
+	Title  string `json:"title"`
+	Result string `json:"result"`
 }

@@ -79,6 +79,15 @@ const (
 	Sui
 )
 
+// check type
+const (
+	SecurityAnalysis int = iota + 1
+	OpenSourceAnalysis
+	CodeQualityAnalysis
+	GasUsageAnalysis
+	OtherAnalysis
+)
+
 const IpfsUrl = "http://183.66.65.247:32509"
 
 const (
