@@ -68,6 +68,14 @@ const (
 	TemplateUrl      = "https://github.com/hamster-template/truffle-frame.git"
 )
 
+var MetaScanReportTypeMap = map[int]string{
+	1: "Security Analysis Report",
+	2: "Open Source Analysis Report",
+	3: "Code Quality Analysis Report",
+	4: "Gas Usage Analysis Report",
+	5: "Other Analysis Report",
+}
+
 type ProjectFrameType uint
 
 // project frame type
