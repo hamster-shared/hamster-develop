@@ -43,10 +43,11 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/frontend-templates/:id", h.handlerServer.frontendTemplateDetail)
 	api.GET("/templates/show", h.handlerServer.templateShow)
 	api.POST("/templates/:id/download", h.handlerServer.templateDownload)
+	api.GET("/projects", h.handlerServer.projectList)
 	api.Use(h.handlerServer.Authorize())
 	api.POST("/user/wallet", h.handlerServer.saveUserWallet)
 	// project
-	api.GET("/projects", h.handlerServer.projectList)
+	//api.GET("/projects", h.handlerServer.projectList)
 	api.POST("/projects", h.handlerServer.createProject) // 进行中
 	api.POST("/projects/code", h.handlerServer.createProjectByCode)
 	api.GET("/projects/:id", h.handlerServer.projectDetail)
