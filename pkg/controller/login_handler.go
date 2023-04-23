@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -106,22 +107,24 @@ func (h *HandlerServer) Authorize() gin.HandlerFunc {
 			gin.Abort()
 			return
 		}
-		token := utils.AesDecrypt(accessToken, consts.SecretKey)
-		userService := application.GetBean[*service.UserService]("userService")
-		user, err := userService.GetUserByToken(token)
-		if err != nil {
-			Failed(http.StatusUnauthorized, err.Error(), gin)
-			gin.Abort()
-			return
+		if !strings.HasPrefix(accessToken, "0x") {
+			token := utils.AesDecrypt(accessToken, consts.SecretKey)
+			userService := application.GetBean[*service.UserService]("userService")
+			user, err := userService.GetUserByToken(token)
+			if err != nil {
+				Failed(http.StatusUnauthorized, err.Error(), gin)
+				gin.Abort()
+				return
+			}
+			if user.Token == "" {
+				Failed(http.StatusUnauthorized, "access not authorized", gin)
+				gin.Abort()
+				return
+			}
+			user.Token = accessToken
+			gin.Set("token", token)
+			gin.Set("user", user)
 		}
-		if user.Token == "" {
-			Failed(http.StatusUnauthorized, "access not authorized", gin)
-			gin.Abort()
-			return
-		}
-		user.Token = accessToken
-		gin.Set("token", token)
-		gin.Set("user", user)
 		gin.Next()
 	}
 }
