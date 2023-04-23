@@ -340,6 +340,8 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 			StartTime:  detail.StartTime,
 			CreateTime: time.Now(),
 			UpdateTime: time.Now(),
+			ToolType:   workflow.ToolType,
+			Tool:       workflow.Tool,
 		}
 
 		err = w.db.Transaction(func(tx *gorm.DB) error {
