@@ -107,3 +107,19 @@ func (h *HandlerServer) templateShow(gin *gin.Context) {
 	}
 	Success(data, gin)
 }
+
+func (h *HandlerServer) templateDownload(gin *gin.Context) {
+	idStr := gin.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	repoName := gin.Query("repoName")
+	if "repoName" == "" {
+		Fail("download repo name is empty", gin)
+		return
+	}
+	data := h.templateService.TemplateDownload(id, repoName)
+	Success(data, gin)
+}

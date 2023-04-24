@@ -44,14 +44,23 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	userAny, _ := gin.Get("user")
-	user, _ := userAny.(db2.User)
-	data, err := h.projectService.GetProjects(int(user.Id), query, page, size, projectType)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
+	userAny, exit := gin.Get("user")
+	if exit {
+		user, _ := userAny.(db2.User)
+		data, err := h.projectService.GetProjects(int(user.Id), query, page, size, projectType)
+		if err != nil {
+			Fail(err.Error(), gin)
+			return
+		}
+		Success(data, gin)
+	} else {
+		data := vo.ProjectPage{
+			Total:    0,
+			Page:     1,
+			PageSize: 10,
+		}
+		Success(data, gin)
 	}
-	Success(data, gin)
 }
 
 func (h *HandlerServer) createProject(g *gin.Context) {
@@ -261,24 +270,22 @@ func (h *HandlerServer) createProjectV2(g *gin.Context) {
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
-		if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Aptos) {
-			workflowCheckData := parameter.SaveWorkflowParam{
-				ProjectId:  id,
-				Type:       consts.Check,
-				ExecFile:   "",
-				LastExecId: 0,
-			}
-			workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
-			if err != nil {
-				Success(id, g)
-				return
-			}
-			checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
-			file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
-			if err == nil {
-				workflowCheckRes.ExecFile = file
-				workflowService.UpdateWorkflow(workflowCheckRes)
-			}
+		workflowCheckData := parameter.SaveWorkflowParam{
+			ProjectId:  id,
+			Type:       consts.Check,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+		if err != nil {
+			Success(id, g)
+			return
+		}
+		checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
+		file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
+		if err == nil {
+			workflowCheckRes.ExecFile = file
+			workflowService.UpdateWorkflow(workflowCheckRes)
 		}
 	}
 	workflowBuildData := parameter.SaveWorkflowParam{
@@ -532,6 +539,7 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
+	reportType := g.Query("reportType")
 
 	Type := g.DefaultQuery("type", "")
 	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
@@ -539,7 +547,7 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 
 	reportService := application.GetBean[*service.ReportService]("reportService")
 
-	result, err := reportService.QueryReports(projectId, Type, page, size)
+	result, err := reportService.QueryReports(projectId, reportType, Type, page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)

@@ -49,3 +49,20 @@ func (u *UserService) GetUserCount() (int64, error) {
 	}
 	return count, nil
 }
+
+func (u *UserService) SaveUserWallet(userId uint, address string) int64 {
+
+	var count int64
+	err := u.db.Model(&db2.UserWallet{}).Where("address=?", address).Count(&count).Error
+	if err == nil && count == 0 {
+		wallet := &db2.UserWallet{
+			UserId:  userId,
+			Address: address,
+		}
+		err := u.db.Save(wallet).Error
+		if err != nil {
+			return 0
+		}
+	}
+	return count
+}

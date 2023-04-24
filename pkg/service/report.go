@@ -18,12 +18,18 @@ func NewReportService() *ReportService {
 	}
 }
 
-func (c *ReportService) QueryReports(projectId string, Type string, page int, size int) (vo.Page[db2.Report], error) {
+func (c *ReportService) QueryReports(projectId, reportType string, Type string, page int, size int) (vo.Page[db2.Report], error) {
 	var total int64
 	var reports []db2.Report
 	tx := c.db.Model(db2.Report{}).Where("project_id = ?", projectId)
-	if Type != "" {
+	if Type != "" || reportType != "" {
+		tx = tx.Where("check_tool = ? and name=?", Type, reportType)
+	} else if Type == "" && reportType == "" {
+		tx = tx.Where("1 = 1")
+	} else if Type != "" {
 		tx = tx.Where("check_tool = ?", Type)
+	} else {
+		tx = tx.Where("name = ?", reportType)
 	}
 	tx = tx.Order("create_time desc")
 	result := tx.Offset((page - 1) * size).Limit(size).Find(&reports).Offset(-1).Limit(-1).Count(&total)
