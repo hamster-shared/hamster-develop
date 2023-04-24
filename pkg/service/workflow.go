@@ -86,7 +86,18 @@ func (w *WorkflowService) getEvmAbiInfoAndByteCode(arti model.Artifactory) (abiI
 }
 
 func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
-	_, err := w.ExecProjectWorkflow(projectId, user, 1, nil)
+	var project db.Project
+	err := w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	if err != nil {
+		logger.Info("project is not exit ")
+		return err
+	}
+	params := make(map[string]string)
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
+		params["projectName"] = fmt.Sprintf("%s/%s", user.Username, project.Name)
+		params["projectUrl"] = project.RepositoryUrl
+	}
+	_, err = w.ExecProjectWorkflow(projectId, user, 1, params)
 	return err
 }
 
@@ -272,6 +283,11 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 		logger.Tracef("create job success, job name is %s", job.Name)
 	}
+	met, token := setMetaScanToken(workflow)
+	if met {
+		params["scanToken"] = token
+	}
+
 	if params != nil {
 		if job.Parameter == nil {
 			job.Parameter = params
@@ -453,12 +469,57 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db
 	return workflow, nil
 }
 
+func (w *WorkflowService) SettingWorkflow(settingData parameter.SaveWorkflowParam, projectData *vo.ProjectDetailVo) error {
+	var workflow db.Workflow
+	err := w.db.Model(db.Workflow{}).Where("project_id=? and type=?", settingData.ProjectId, consts.Check).First(&workflow).Error
+	if err == gorm.ErrRecordNotFound {
+		workflow, err = w.SaveWorkflow(settingData)
+		if err != nil {
+			return err
+		}
+	}
+	if err != nil {
+		return err
+	}
+	checkKey := w.GetWorkflowKey(settingData.ProjectId.String(), workflow.Id)
+	file, err := w.TemplateParseV2(checkKey, settingData.Tool, projectData)
+	if err != nil {
+		return err
+	}
+	workflow.ExecFile = file
+	toolType := hasCommonElements(settingData.Tool, consts.MetaScanTool)
+	if toolType {
+		workflow.ToolType = 1
+	} else {
+		workflow.ToolType = 0
+	}
+	w.UpdateWorkflow(workflow)
+	return nil
+}
+
+func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType consts.WorkflowType) bool {
+	var workflow db.Workflow
+	err := w.db.Model(db.Workflow{}).Where("project_id=? and type=?", projectId, workflowType).First(&workflow).Error
+	if err == gorm.ErrRecordNotFound {
+		return false
+	}
+	if workflow.ExecFile != "" {
+		return true
+	}
+	return true
+}
+
 func (w *WorkflowService) UpdateWorkflow(data db.Workflow) error {
 	res := w.db.Save(&data)
 	if res.Error != nil {
 		return res.Error
 	}
 	return nil
+}
+
+func getCheckTemplate() string {
+	filePath := "templates/metascan-check.yml"
+	return filePath
 }
 
 func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) string {
@@ -468,7 +529,7 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 
 			if project.FrameType == consts.Sui {
 				filePath = "templates/sui-check.yml"
-      } else if project.FrameType == consts.Aptos {
+			} else if project.FrameType == consts.Aptos {
 				filePath = "templates/aptos-check.yml"
 			} else {
 				filePath = "templates/truffle_check.yml"
@@ -506,6 +567,48 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 		}
 	}
 	return filePath
+}
+
+func (w *WorkflowService) TemplateParseV2(name string, tool []string, project *vo.ProjectDetailVo) (string, error) {
+	if project == nil {
+		return "", errors.New("project is nil")
+	}
+	filePath := getCheckTemplate()
+	content, err := temp.ReadFile(filePath)
+	if err != nil {
+		log.Println("read template file failed ", err.Error())
+		return "", err
+	}
+	fileContent := string(content)
+	tmpl := template.New("test")
+	tmpl = tmpl.Delims("[[", "]]")
+	var checkType []string
+	metaCheck := hasCommonElements(tool, consts.MetaScanTool)
+	if metaCheck {
+		checkType = append(checkType, "CheckMetaScan")
+	}
+	truffleCheck := hasCommonElements(tool, consts.TruffleCheckTool)
+	if truffleCheck {
+		checkType = append(checkType, "Truffle Check")
+	}
+	templateData := parameter.MetaScanCheck{
+		Name:          name,
+		CheckType:     checkType,
+		Tool:          tool,
+		RepositoryUrl: project.RepositoryUrl,
+	}
+	tmpl, err = tmpl.Parse(fileContent)
+	if err != nil {
+		log.Println("template parse failed ", err.Error())
+		return "", err
+	}
+	var input bytes.Buffer
+	err = tmpl.Execute(&input, templateData)
+	if err != nil {
+		log.Println("failed to write parameters to the template ", err)
+		return "", err
+	}
+	return input.String(), nil
 }
 
 func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo, workflowType consts.WorkflowType) (string, error) {
@@ -603,4 +706,62 @@ func (w *WorkflowService) CheckRunningJob() {
 		flow.UpdateTime = time.Now()
 		_ = w.db.Save(flow).Error
 	}
+}
+
+func setMetaScanToken(workflow db.Workflow) (bool, string) {
+	token := ""
+	metaScanFlag := false
+	if workflow.ToolType == 1 {
+
+	}
+	switch workflow.ToolType {
+	case 1:
+		metaScanFlag = true
+		token = metaScanHttpRequestToken()
+		log.Println(fmt.Sprintf("flag is %t,token is :%s", metaScanFlag, token))
+	default:
+		metaScanFlag = false
+		token = ""
+	}
+	log.Println(fmt.Sprintf("flag is %t,token is :%s", metaScanFlag, token))
+	return metaScanFlag, token
+}
+
+func metaScanHttpRequestToken() string {
+	url := "https://account.metatrust.io/realms/mt/protocol/openid-connect/token"
+	token := struct {
+		AccessToken      string `json:"access_token"`
+		ExpiresIn        int64  `json:"expires_in"`
+		RefreshExpiresIn int64  `json:"refresh_expires_in"`
+		RefreshToken     string `json:"refresh_token"`
+		TokenType        string `json:"token_type"`
+		NotBeforePolicy  int    `json:"not-before-policy"`
+		SessionState     string `json:"session_state"`
+		Scope            string `json:"scope"`
+	}{}
+	res, err := utils.NewHttp().NewRequest().SetFormData(map[string]string{
+		"grant_type": "password",
+		"username":   "tom@hamsternet.io",
+		"password":   "pysded-hismoh-3Dagcy",
+		"client_id":  "webapp",
+	}).SetResult(&token).SetHeader("Content-Type", "application/x-www-form-urlencoded").Post(url)
+	if res.StatusCode() != 200 {
+		return ""
+	}
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("%s %s", token.TokenType, token.AccessToken)
+	//return token.AccessToken
+}
+
+func hasCommonElements(arr1, arr2 []string) bool {
+	for _, elem1 := range arr1 {
+		for _, elem2 := range arr2 {
+			if elem1 == elem2 {
+				return true
+			}
+		}
+	}
+	return false
 }

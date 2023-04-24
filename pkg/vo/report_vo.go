@@ -15,5 +15,8 @@ type ReportVo struct {
 	CheckTool        string    `json:"checkTool"`
 	Result           string    `json:"result"`
 	CheckTime        time.Time `json:"checkTime"`
+	Issues           int       `json:"issues"`
+	MetaScanOverview string    `json:"metaScanOverview"`
+	ToolType         int       `json:"toolType"`
 	ReportFile       string    `json:"reportFile"`
 }

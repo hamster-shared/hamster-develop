@@ -3,6 +3,7 @@ package controller
 import (
 	"embed"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -109,11 +110,6 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 			}
 		}
 	}
-	//email, err := githubService.GetUserEmail(token)
-	//if err != nil {
-	//	Fail(err.Error(), g)
-	//	return
-	//}
 	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
 	if err != nil {
 		Fail(err.Error(), g)
@@ -139,24 +135,159 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	workflowCheckData := parameter.SaveWorkflowParam{
+	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
+		if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Aptos) {
+			workflowCheckData := parameter.SaveWorkflowParam{
+				ProjectId:  id,
+				Type:       consts.Check,
+				ExecFile:   "",
+				LastExecId: 0,
+			}
+			workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+			if err != nil {
+				Success(id, g)
+				return
+			}
+			checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
+			file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
+			if err == nil {
+				workflowCheckRes.ExecFile = file
+				workflowService.UpdateWorkflow(workflowCheckRes)
+			}
+		}
+	}
+	workflowBuildData := parameter.SaveWorkflowParam{
 		ProjectId:  id,
-		Type:       consts.Check,
+		Type:       consts.Build,
 		ExecFile:   "",
 		LastExecId: 0,
 	}
-	workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+	workflowBuildRes, err := workflowService.SaveWorkflow(workflowBuildData)
 	if err != nil {
 		Success(id, g)
 		return
 	}
-	checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
-	file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
+	buildKey := workflowService.GetWorkflowKey(id.String(), workflowBuildRes.Id)
+	file1, err := workflowService.TemplateParse(buildKey, project, consts.Build)
 	if err == nil {
-		workflowCheckRes.ExecFile = file
-		workflowService.UpdateWorkflow(workflowCheckRes)
+		workflowBuildRes.ExecFile = file1
+		workflowService.UpdateWorkflow(workflowBuildRes)
 	}
 
+	if project.Type == uint(consts.FRONTEND) {
+		workflowDeployData := parameter.SaveWorkflowParam{
+			ProjectId:  id,
+			Type:       consts.Deploy,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowDeployRes, err := workflowService.SaveWorkflow(workflowDeployData)
+		if err != nil {
+			Success(id, g)
+			return
+		}
+		deployKey := workflowService.GetWorkflowKey(id.String(), workflowDeployRes.Id)
+		file1, err := workflowService.TemplateParse(deployKey, project, consts.Deploy)
+		if err == nil {
+			workflowDeployRes.ExecFile = file1
+			workflowService.UpdateWorkflow(workflowDeployRes)
+		}
+	}
+
+	Success(id, g)
+}
+
+func (h *HandlerServer) createProjectV2(g *gin.Context) {
+	createData := parameter.CreateProjectParam{}
+	err := g.BindJSON(&createData)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	tokenAny, _ := g.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := g.Get("user")
+	user, _ := userAny.(db2.User)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	repo, res, err := githubService.GetRepo(token, user.Username, createData.Name)
+	if err != nil {
+		if res != nil {
+			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+				Failed(http.StatusUnauthorized, "access not authorized", g)
+				return
+			}
+		}
+		repo, res, err = githubService.CreateRepository(token, createData.Name)
+		if err != nil {
+			if res != nil {
+				if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+					Failed(http.StatusUnauthorized, "access not authorized", g)
+					return
+				}
+			}
+			Fail(err.Error(), g)
+			return
+		}
+	} else {
+		flag := githubService.CheckName(token, user.Username, createData.Name)
+		if flag {
+			repo, res, err = githubService.CreateRepository(token, createData.Name)
+			if err != nil {
+				if res != nil {
+					if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+						Failed(http.StatusUnauthorized, "access not authorized", g)
+						return
+					}
+				}
+				Fail(err.Error(), g)
+				return
+			}
+		}
+	}
+	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	data := vo.CreateProjectParam{
+		Name:         createData.Name,
+		Type:         createData.Type,
+		TemplateUrl:  *repo.CloneURL,
+		FrameType:    createData.FrameType,
+		DeployType:   createData.DeployType,
+		UserId:       int64(user.Id),
+		LabelDisplay: createData.LabelDisplay,
+	}
+	id, err := h.projectService.CreateProject(data)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	project, err := h.projectService.GetProject(id.String())
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
+		workflowCheckData := parameter.SaveWorkflowParam{
+			ProjectId:  id,
+			Type:       consts.Check,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+		if err != nil {
+			Success(id, g)
+			return
+		}
+		checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
+		file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
+		if err == nil {
+			workflowCheckRes.ExecFile = file
+			workflowService.UpdateWorkflow(workflowCheckRes)
+		}
+	}
 	workflowBuildData := parameter.SaveWorkflowParam{
 		ProjectId:  id,
 		Type:       consts.Build,
@@ -830,4 +961,177 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 	}
 
 	Success(id, gin)
+}
+
+func (h *HandlerServer) createProjectByCodeV2(gin *gin.Context) {
+	createData := parameter.CreateByCodeParam{}
+	err := gin.BindJSON(&createData)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+
+	repo, res, err := githubService.GetRepo(token, user.Username, createData.Name)
+	if err != nil {
+		if res != nil {
+			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+				Failed(http.StatusUnauthorized, "access not authorized", gin)
+				return
+			}
+		}
+		repo, res, err = githubService.CreateRepository(token, createData.Name)
+		if err != nil {
+			if res != nil {
+				if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+					Failed(http.StatusUnauthorized, "access not authorized", gin)
+					return
+				}
+			}
+			Fail(err.Error(), gin)
+			return
+		}
+	}
+	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateUrl, consts.TemplateRepoName)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	// add file
+	_, res, err = githubService.AddFile(token, user.Username, createData.Name, createData.Content, createData.FileName)
+	if err != nil {
+		if res != nil {
+			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+				Failed(http.StatusUnauthorized, "access not authorized", gin)
+				return
+			}
+		}
+		Fail(err.Error(), gin)
+		return
+	}
+	//create project
+	data := vo.CreateProjectParam{
+		Name:        createData.Name,
+		Type:        createData.Type,
+		TemplateUrl: *repo.CloneURL,
+		FrameType:   createData.FrameType,
+		UserId:      int64(user.Id),
+	}
+	id, err := h.projectService.CreateProject(data)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	project, err := h.projectService.GetProject(id.String())
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+
+	workflowBuildData := parameter.SaveWorkflowParam{
+		ProjectId:  id,
+		Type:       consts.Build,
+		ExecFile:   "",
+		LastExecId: 0,
+	}
+	workflowBuildRes, err := workflowService.SaveWorkflow(workflowBuildData)
+	if err != nil {
+		Success(id, gin)
+		return
+	}
+	buildKey := workflowService.GetWorkflowKey(id.String(), workflowBuildRes.Id)
+	file1, err := workflowService.TemplateParse(buildKey, project, consts.Build)
+	if err == nil {
+		workflowBuildRes.ExecFile = file1
+		workflowService.UpdateWorkflow(workflowBuildRes)
+	}
+
+	if project.Type == uint(consts.FRONTEND) {
+		workflowDeployData := parameter.SaveWorkflowParam{
+			ProjectId:  id,
+			Type:       consts.Deploy,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowDeployRes, err := workflowService.SaveWorkflow(workflowDeployData)
+		if err != nil {
+			Success(id, gin)
+			return
+		}
+		deployKey := workflowService.GetWorkflowKey(id.String(), workflowDeployRes.Id)
+		file1, err := workflowService.TemplateParse(deployKey, project, consts.Deploy)
+		if err == nil {
+			workflowDeployRes.ExecFile = file1
+			workflowService.UpdateWorkflow(workflowDeployRes)
+		}
+	}
+
+	Success(id, gin)
+}
+
+func (h *HandlerServer) workflowSetting(gin *gin.Context) {
+	id := gin.Param("id")
+	if id == "" {
+		Fail("project id is empty", gin)
+		return
+	}
+	var settingData parameter.WorkflowSettingParam
+	err := gin.BindJSON(&settingData)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	log.Println(settingData.Tool)
+	projectId, err := uuid.FromString(id)
+	if err != nil {
+		logger.Errorf("projectWorkflowCheck error: %s", err.Error())
+		Fail(err.Error(), gin)
+		return
+	}
+	project, err := h.projectService.GetProject(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	workflowCheckData := parameter.SaveWorkflowParam{
+		ProjectId:  projectId,
+		Type:       consts.Check,
+		ExecFile:   "",
+		LastExecId: 0,
+		Tool:       settingData.Tool,
+	}
+	err = workflowService.SettingWorkflow(workflowCheckData, project)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	//workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+	//if err != nil {
+	//	Fail(err.Error(), gin)
+	//	return
+	//}
+	//checkKey := workflowService.GetWorkflowKey(id, workflowCheckRes.Id)
+	//file, err := workflowService.TemplateParseV2(checkKey, settingData.Tool, project)
+	//if err == nil {
+	//	workflowCheckRes.ExecFile = file
+	//	workflowService.UpdateWorkflow(workflowCheckRes)
+	//}
+	Success("", gin)
+}
+
+func (h *HandlerServer) workflowSettingCheck(gin *gin.Context) {
+	id := gin.Param("id")
+	if id == "" {
+		Fail("project id is empty", gin)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	data := workflowService.WorkflowSettingCheck(id, consts.Check)
+	Success(data, gin)
 }

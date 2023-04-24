@@ -1,0 +1,106 @@
+version: 1.0
+name: [[ .Name ]]
+stages:
+  [[- range $CheckTypeIndex, $CheckTypeValue := .CheckType ]]
+    [[- if eq $CheckTypeValue "Truffle Check" ]]
+    Initialization:
+      steps:
+        - name: Clone Code from Github
+          uses: git-checkout
+          with:
+            url: [[ $.RepositoryUrl ]]
+            branch: main
+        - name: Run "npm install"
+          run: |
+            npm install
+    Check Contract:
+      needs:
+        - Initialization
+      steps:
+        [[- range $ToolIndex, $ToolValue := $.Tool]]
+          [[- if eq $ToolValue "Solhint" ]]
+          - name: Install Solhint
+            run: |
+              npm install -g solhint
+          - name: Check by Solhint
+            uses: solhint-check
+            with:
+              path: contracts
+          [[- else if eq $ToolValue "Mythril" ]]
+          - name: Check by Mythril
+            uses: mythril-check
+            with:
+              path: contracts
+              solc-version: 0.8.9
+          [[- else if eq $ToolValue "eth-gas-reporter" ]]
+          - name: Start Local Chain
+            run: |
+              npm install -g ganache
+              if [ -f "command.pid" ]; then
+              kill -9 `cat command.pid`  || (echo 'No such process ')
+              fi
+              nohup ganache > ganache.log 2>&1& echo $! > command.pid
+              sleep 2
+          - name: Check by eth-gas-report
+            uses: eth-gas-reporter
+            with:
+              solc-version:
+          [[- else if eq $ToolValue "AI" ]]
+          - name: Check by AI
+            uses: openai
+          [[- end ]]
+          [[- end ]]
+    Output Results:
+      needs:
+        - Check Contract
+      steps:
+        - name: Integration Report
+          uses: check-aggregation
+    [[- else if eq $CheckTypeValue "CheckMetaScan" ]]
+    MetaScan Check:
+      steps:
+        [[- range $ToolIndex, $ToolValue := $.Tool]]
+          [[- if eq $ToolValue "MetaTrust (SA)" ]]
+          - name: MetaTrust Security Analyzer
+            uses: metascan_action
+            with:
+              engine_type: STATIC
+              organization_id: 1078238259684835328
+              scan_token: ${{ param.scanToken }}
+              project_name: ${{ param.projectName }}
+              project_url: ${{ param.projectUrl }}
+              tool: MetaTrust (SA)
+          [[- else if eq $ToolValue "MetaTrust (SP)" ]]
+          - name: MetaTrust Security Prover
+            uses: metascan_action
+            with:
+              engine_type: PROVER
+              organization_id: 1078238259684835328
+              scan_token: ${{ param.scanToken }}
+              project_name: ${{ param.projectName }}
+              project_url: ${{ param.projectUrl }}
+              tool: MetaTrust (SP)
+          [[- else if eq $ToolValue "MetaTrust (OSA)" ]]
+          - name: MetaTrust Open Source Analyzer
+            uses: metascan_action
+            with:
+              engine_type: SCA
+              organization_id: 1078238259684835328
+              scan_token: ${{ param.scanToken }}
+              project_name: ${{ param.projectName }}
+              project_url: ${{ param.projectUrl }}
+              tool: MetaTrust (OSA)
+          [[- else if eq $ToolValue "MetaTrust (CQ)" ]]
+          - name: MetaTrust Code Quality
+            uses: metascan_action
+            with:
+              engine_type: LINT
+              organization_id: 1078238259684835328
+              scan_token: ${{ param.scanToken }}
+              project_name: ${{ param.projectName }}
+              project_url: ${{ param.projectUrl }}
+              tool: MetaTrust (CQ)
+          [[- end ]]
+          [[- end ]]
+    [[- end]]
+    [[- end]]

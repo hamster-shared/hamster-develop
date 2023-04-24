@@ -267,6 +267,30 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 			logger.Errorf("Get job history fail, jobName: %s, jobId: %d", message.JobName, message.JobId)
 			return
 		}
+		if len(jobDetail.MetaScanData) > 0 {
+			logger.Info("start sysnc meta scan report--------")
+			if len(jobDetail.MetaScanData) > 0 {
+				for _, datum := range jobDetail.MetaScanData {
+					report := db.Report{
+						ProjectId:        projectId,
+						WorkflowId:       workflowId,
+						WorkflowDetailId: workflowDetail.Id,
+						Name:             consts.MetaScanReportTypeMap[consts.CheckToolTypeMap[datum.Tool]],
+						Type:             uint(consts.Check),
+						CheckTool:        datum.Tool,
+						Result:           "success",
+						CheckTime:        time.Now(),
+						ReportFile:       datum.CheckResult,
+						CreateTime:       time.Now(),
+						Issues:           int(datum.Total),
+						ToolType:         consts.CheckToolTypeMap[datum.Tool],
+						MetaScanOverview: datum.ResultOverview,
+					}
+					w.db.Create(&report)
+				}
+				logger.Info("end sysnc meta scan report--------")
+			}
+		}
 		logger.Tracef("Get job history success, jobName: %s, jobId: %d", message.JobName, message.JobId)
 		logger.Tracef("len jobDetail.Reports: %d", len(jobDetail.Reports))
 		logger.Tracef("jobDetail file path: %s", jober.GetJobDetailFilePath(message.JobName, message.JobId))
@@ -306,6 +330,8 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 						CheckTime:  time.Now(),
 						ReportFile: string(marshal),
 						CreateTime: time.Now(),
+						Issues:     contractCheckResult.Total,
+						ToolType:   consts.CheckToolTypeMap[contractCheckResult.Tool],
 					}
 					reportList = append(reportList, report)
 				}
@@ -318,11 +344,12 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 					WorkflowDetailId: workflowDetail.Id,
 					Name:             "AI Analysis Report",
 					Type:             uint(consts.Check),
-					CheckTool:        "OpenAI",
+					CheckTool:        "AI",
 					Result:           "success",
 					CheckTime:        time.Now(),
 					ReportFile:       string(report.Content),
 					CreateTime:       time.Now(),
+					ToolType:         5,
 				}
 				reportList = append(reportList, report)
 			}
@@ -335,7 +362,6 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 		}
 		begin.Commit()
 	}
-
 }
 
 func (w *WorkflowService) syncContractStarknet(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
