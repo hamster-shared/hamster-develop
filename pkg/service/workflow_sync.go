@@ -330,6 +330,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 						CheckTime:  time.Now(),
 						ReportFile: string(marshal),
 						CreateTime: time.Now(),
+						Issues:     contractCheckResult.Total,
 						ToolType:   consts.CheckToolTypeMap[contractCheckResult.Tool],
 					}
 					reportList = append(reportList, report)
