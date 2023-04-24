@@ -285,8 +285,9 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 	}
 	met, token := setMetaScanToken(workflow)
 	if met {
-		params["metaScanToken"] = token
+		params["scanToken"] = token
 	}
+
 	if params != nil {
 		if job.Parameter == nil {
 			job.Parameter = params
@@ -487,6 +488,17 @@ func (w *WorkflowService) SettingWorkflow(settingData parameter.SaveWorkflowPara
 		}
 		workflowCheckRes.ExecFile = file
 		w.UpdateWorkflow(workflowCheckRes)
+		return nil
+	} else {
+		checkKey := w.GetWorkflowKey(settingData.ProjectId.String(), workflow.Id)
+		file, err := w.TemplateParseV2(checkKey, settingData.Tool, projectData)
+		if err != nil {
+			return err
+		}
+		workflow.Tool = settingData.Tool
+		workflow.ToolType = settingData.ToolType
+		workflow.ExecFile = file
+		w.UpdateWorkflow(workflow)
 		return nil
 	}
 	return errors.New("workflow already set")
@@ -714,6 +726,7 @@ func setMetaScanToken(workflow db.Workflow) (bool, string) {
 	case "MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)":
 		metaScanFlag = true
 		token = metaScanHttpRequestToken()
+		log.Println(fmt.Sprintf("flag is %s,token is :%s", metaScanFlag, token))
 	case "Mythril", "Solhint", "eth-gas-reporter", "AI":
 		token = ""
 		metaScanFlag = false
@@ -721,6 +734,7 @@ func setMetaScanToken(workflow db.Workflow) (bool, string) {
 		metaScanFlag = false
 		token = ""
 	}
+	log.Println(fmt.Sprintf("flag is %s,token is :%s", metaScanFlag, token))
 	return metaScanFlag, token
 }
 
@@ -749,4 +763,5 @@ func metaScanHttpRequestToken() string {
 		return ""
 	}
 	return fmt.Sprintf("%s %s", token.TokenType, token.AccessToken)
+	//return token.AccessToken
 }

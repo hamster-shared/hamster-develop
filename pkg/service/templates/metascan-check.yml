@@ -9,6 +9,7 @@ stages:
         with:
           engine_type: STATIC
           organization_id: 1078238259684835328
+          scan_token: ${{ param.scanToken }}
           project_name: ${{ param.projectName }}
           project_url: ${{ param.projectUrl }}
       [[- else if eq .Tool "MetaTrust (SP)" ]]
@@ -17,7 +18,7 @@ stages:
         with:
           engine_type: PROVER
           organization_id: 1078238259684835328
-          meta_scan_token: ${{ param.metaScanToken }}
+          scan_token: ${{ param.scanToken }}
           project_name: ${{ param.projectName }}
           project_url: ${{ param.projectUrl }}
       [[- else if eq .Tool "MetaTrust (OSA)" ]]
@@ -26,7 +27,7 @@ stages:
         with:
           engine_type: SCA
           organization_id: 1078238259684835328
-          meta_scan_token: ${{ param.metaScanToken }}
+          scan_token: ${{ param.scanToken }}
           project_name: ${{ param.projectName }}
           project_url: ${{ param.projectUrl }}
       [[- else if eq .Tool "MetaTrust (CQ)" ]]
@@ -35,7 +36,7 @@ stages:
         with:
           engine_type: LINT
           organization_id: 1078238259684835328
-          meta_scan_token: ${{ param.metaScanToken }}
+          scan_token: ${{ param.scanToken }}
           project_name: ${{ param.projectName }}
           project_url: ${{ param.projectUrl }}
       [[- end ]]

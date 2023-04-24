@@ -4,14 +4,13 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.2.1
-	github.com/bradfitz/slice v0.0.0-20180809154707-2b758aa73013
 	github.com/dontpanicdao/caigo v0.4.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
 	github.com/gorilla/websocket v1.5.0
-	github.com/hamster-shared/aline-engine v1.0.3-0.20230423063524-c6a62365d785
+	github.com/hamster-shared/aline-engine v1.0.3-0.20230423091257-bd2843ea3f06
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/pkg/errors v0.9.1
@@ -93,7 +92,6 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/whyrusleeping/tar-utils v0.0.0-20201201191210-20a61371de5b // indirect
-	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect

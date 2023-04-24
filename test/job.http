@@ -4,14 +4,14 @@ Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 {
-  "name":"my-contract-Erc910",
+  "name":"my-contract-Erc913",
   "type":1,
   "templateOwner":"hamster-template",
   "frameType":1,
   "deployType":1,
   "repoOwner":"jian-guo-s",
   "templateRepo":"ERC4907",
-  "userId":3366709,
+  "userId":53070354,
   "templateUrl":"https://github.com/hamster-contract/ERC4907.git"
 }
 
@@ -439,19 +439,41 @@ Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
     }]
 }
 
+### 创建项目
+POST http://localhost:8080/api/projects
+Content-Type: application/json
+Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
+
+{
+  "name":"my-contract-Erc915",
+  "type":1,
+  "templateOwner":"hamster-template",
+  "frameType":1,
+  "deployType":1,
+  "repoOwner":"jian-guo-s",
+  "templateRepo":"FunctionsConsumer",
+  "userId":53070354,
+  "templateUrl":"https://github.com/hamster-template/FunctionsConsumer.git"
+}
+
 
 #### get workflow check
-GET http://localhost:8080/api/project/04272508-d662-46ed-ad21-3d35829772c1/workflow/setting/check
+GET http://localhost:8080/api/project/3b29589d-299a-41af-a8c7-68c76330ec4f/workflow/setting/check
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 ### setting workflow
-POST http://localhost:8080/api//project/04272508-d662-46ed-ad21-3d35829772c1/workflow/setting
+POST http://localhost:8080/api/project/3b29589d-299a-41af-a8c7-68c76330ec4f/workflow/setting
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 
 {
   "toolType": 1,
-  "tool": "MetaTrust Security Analyzer"
+  "tool": "MetaTrust (SA)"
 }
+
+### check project
+POST http://localhost:8080/api/projects/3b29589d-299a-41af-a8c7-68c76330ec4f/check
+Content-Type: application/json
+Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
