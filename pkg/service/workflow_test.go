@@ -81,8 +81,3 @@ func TestGetSuiModelName(t *testing.T) {
 	fmt.Println(config.Package.Name)
 
 }
-
-func TestDd(t *testing.T) {
-	GetTaskResult()
-	//GetFile()
-}

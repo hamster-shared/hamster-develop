@@ -75,6 +75,19 @@ var MetaScanReportTypeMap = map[int]string{
 	4: "Gas Usage Analysis Report",
 	5: "Other Analysis Report",
 }
+var CheckToolTypeMap = map[string]int{
+	"MetaTrust (SA)":   1,
+	"MetaTrust (SP)":   1,
+	"MetaTrust (OSA)":  2,
+	"MetaTrust (CQ)":   3,
+	"Mythril":          1,
+	"Solhint":          3,
+	"eth-gas-reporter": 4,
+	"AI":               5,
+}
+
+var MetaScanTool = []string{"MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)"}
+var TruffleCheckTool = []string{"Mythril", "Solhint", "eth-gas-reporter", "AI"}
 
 type ProjectFrameType uint
 

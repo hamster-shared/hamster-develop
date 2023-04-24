@@ -104,6 +104,44 @@ func (h *HandlerServer) workflowReport(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) workflowReportOverview(gin *gin.Context) {
+	idStr := gin.Param("id")
+	workflowDetailIdStr := gin.Param("detailId")
+	workflowId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowDetailId, err := strconv.Atoi(workflowDetailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	reportService := application.GetBean[*service.ReportService]("reportService")
+	data, err := reportService.ReportOverview(workflowId, workflowDetailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) reportDetail(gin *gin.Context) {
+	idStr := gin.Param("id")
+	reportId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	reportService := application.GetBean[*service.ReportService]("reportService")
+	data, err := reportService.ReportDetail(reportId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) workflowFrontendReports(gin *gin.Context) {
 	idStr := gin.Param("id")
 	workflowDetailIdStr := gin.Param("detailId")
@@ -277,4 +315,3 @@ func (h *HandlerServer) deleteWorkflowDeploy(gin *gin.Context) {
 	frontendPackageService.DeleteFrontendDeploy(packageId)
 	Success("", gin)
 }
-

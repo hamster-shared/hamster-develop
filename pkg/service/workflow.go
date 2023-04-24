@@ -341,8 +341,6 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 			StartTime:  detail.StartTime,
 			CreateTime: time.Now(),
 			UpdateTime: time.Now(),
-			ToolType:   workflow.ToolType,
-			Tool:       workflow.Tool,
 		}
 
 		err = w.db.Transaction(func(tx *gorm.DB) error {
@@ -464,8 +462,6 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db
 	workflow.ProjectId = saveData.ProjectId
 	workflow.ExecFile = saveData.ExecFile
 	workflow.LastExecId = saveData.LastExecId
-	workflow.ToolType = saveData.ToolType
-	workflow.Tool = saveData.Tool
 	res := w.db.Save(&workflow)
 	if res.Error != nil {
 		return workflow, res.Error
@@ -477,31 +473,28 @@ func (w *WorkflowService) SettingWorkflow(settingData parameter.SaveWorkflowPara
 	var workflow db.Workflow
 	err := w.db.Model(db.Workflow{}).Where("project_id=? and type=?", settingData.ProjectId, consts.Check).First(&workflow).Error
 	if err == gorm.ErrRecordNotFound {
-		workflowCheckRes, err := w.SaveWorkflow(settingData)
+		workflow, err = w.SaveWorkflow(settingData)
 		if err != nil {
 			return err
 		}
-		checkKey := w.GetWorkflowKey(settingData.ProjectId.String(), workflowCheckRes.Id)
-		file, err := w.TemplateParseV2(checkKey, settingData.Tool, projectData)
-		if err != nil {
-			return err
-		}
-		workflowCheckRes.ExecFile = file
-		w.UpdateWorkflow(workflowCheckRes)
-		return nil
-	} else {
-		checkKey := w.GetWorkflowKey(settingData.ProjectId.String(), workflow.Id)
-		file, err := w.TemplateParseV2(checkKey, settingData.Tool, projectData)
-		if err != nil {
-			return err
-		}
-		workflow.Tool = settingData.Tool
-		workflow.ToolType = settingData.ToolType
-		workflow.ExecFile = file
-		w.UpdateWorkflow(workflow)
-		return nil
 	}
-	return errors.New("workflow already set")
+	if err != nil {
+		return err
+	}
+	checkKey := w.GetWorkflowKey(settingData.ProjectId.String(), workflow.Id)
+	file, err := w.TemplateParseV2(checkKey, settingData.Tool, projectData)
+	if err != nil {
+		return err
+	}
+	workflow.ExecFile = file
+	toolType := hasCommonElements(settingData.Tool, consts.MetaScanTool)
+	if toolType {
+		workflow.ToolType = 1
+	} else {
+		workflow.ToolType = 0
+	}
+	w.UpdateWorkflow(workflow)
+	return nil
 }
 
 func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType consts.WorkflowType) bool {
@@ -524,16 +517,8 @@ func (w *WorkflowService) UpdateWorkflow(data db.Workflow) error {
 	return nil
 }
 
-func getCheckTemplate(tool string) string {
-	var filePath string
-	switch tool {
-	case "MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)":
-		filePath = "templates/metascan-check.yml"
-	case "Mythril", "Solhint", "eth-gas-reporter", "AI":
-		filePath = "templates/truffle_check.yml"
-	default:
-		filePath = ""
-	}
+func getCheckTemplate() string {
+	filePath := "templates/metascan-check.yml"
 	return filePath
 }
 
@@ -581,11 +566,11 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 	return filePath
 }
 
-func (w *WorkflowService) TemplateParseV2(name, tool string, project *vo.ProjectDetailVo) (string, error) {
+func (w *WorkflowService) TemplateParseV2(name string, tool []string, project *vo.ProjectDetailVo) (string, error) {
 	if project == nil {
 		return "", errors.New("project is nil")
 	}
-	filePath := getCheckTemplate(tool)
+	filePath := getCheckTemplate()
 	content, err := temp.ReadFile(filePath)
 	if err != nil {
 		log.Println("read template file failed ", err.Error())
@@ -593,20 +578,21 @@ func (w *WorkflowService) TemplateParseV2(name, tool string, project *vo.Project
 	}
 	fileContent := string(content)
 	tmpl := template.New("test")
-	var templateData interface{}
-	switch tool {
-	case "MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)":
-		tmpl = tmpl.Delims("[[", "]]")
-		templateData = parameter.MetaScanCheck{
-			Name: name,
-			Tool: tool,
-		}
-	default:
-		tmpl = tmpl.Delims("{{", "}}")
-		templateData = parameter.TemplateCheck{
-			Name:          name,
-			RepositoryUrl: project.RepositoryUrl,
-		}
+	tmpl = tmpl.Delims("[[", "]]")
+	var checkType []string
+	metaCheck := hasCommonElements(tool, consts.MetaScanTool)
+	if metaCheck {
+		checkType = append(checkType, "CheckMetaScan")
+	}
+	truffleCheck := hasCommonElements(tool, consts.TruffleCheckTool)
+	if truffleCheck {
+		checkType = append(checkType, "Truffle Check")
+	}
+	templateData := parameter.MetaScanCheck{
+		Name:          name,
+		CheckType:     checkType,
+		Tool:          tool,
+		RepositoryUrl: project.RepositoryUrl,
 	}
 	tmpl, err = tmpl.Parse(fileContent)
 	if err != nil {
@@ -722,19 +708,19 @@ func (w *WorkflowService) CheckRunningJob() {
 func setMetaScanToken(workflow db.Workflow) (bool, string) {
 	token := ""
 	metaScanFlag := false
-	switch workflow.Tool {
-	case "MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)":
+	if workflow.ToolType == 1 {
+
+	}
+	switch workflow.ToolType {
+	case 1:
 		metaScanFlag = true
 		token = metaScanHttpRequestToken()
-		log.Println(fmt.Sprintf("flag is %s,token is :%s", metaScanFlag, token))
-	case "Mythril", "Solhint", "eth-gas-reporter", "AI":
-		token = ""
-		metaScanFlag = false
+		log.Println(fmt.Sprintf("flag is %t,token is :%s", metaScanFlag, token))
 	default:
 		metaScanFlag = false
 		token = ""
 	}
-	log.Println(fmt.Sprintf("flag is %s,token is :%s", metaScanFlag, token))
+	log.Println(fmt.Sprintf("flag is %t,token is :%s", metaScanFlag, token))
 	return metaScanFlag, token
 }
 
@@ -764,4 +750,15 @@ func metaScanHttpRequestToken() string {
 	}
 	return fmt.Sprintf("%s %s", token.TokenType, token.AccessToken)
 	//return token.AccessToken
+}
+
+func hasCommonElements(arr1, arr2 []string) bool {
+	for _, elem1 := range arr1 {
+		for _, elem2 := range arr2 {
+			if elem1 == elem2 {
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -58,6 +58,34 @@ func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int)
 	return result, nil
 }
 
+func (c *ReportService) ReportOverview(workflowId, workflowDetailId int) (map[int][]vo.ReportVo, error) {
+	var reports []db2.Report
+	var result []vo.ReportVo
+	res := c.db.Model(db2.Report{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Find(&reports)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	if len(reports) > 0 {
+		copier.Copy(&result, &reports)
+	}
+	groupedReports := make(map[int][]vo.ReportVo)
+	for _, p := range result {
+		groupedReports[p.ToolType] = append(groupedReports[p.ToolType], p)
+	}
+	return groupedReports, nil
+}
+
+func (c *ReportService) ReportDetail(reportId int) (vo.ReportVo, error) {
+	var reports db2.Report
+	var result vo.ReportVo
+	res := c.db.Model(db2.Report{}).Where("id = ?", reportId).Find(&reports)
+	if res.Error != nil {
+		return result, res.Error
+	}
+	copier.Copy(&result, &reports)
+	return result, nil
+}
+
 func (c *ReportService) QueryFrontendReportsByWorkflow(workflowId, workflowDetailId int) ([]vo.ReportVo, error) {
 	var reports []db2.Report
 	var data []vo.ReportVo

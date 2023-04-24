@@ -3,6 +3,7 @@ package controller
 import (
 	"embed"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -1077,6 +1078,7 @@ func (h *HandlerServer) workflowSetting(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	log.Println(settingData.Tool)
 	projectId, err := uuid.FromString(id)
 	if err != nil {
 		logger.Errorf("projectWorkflowCheck error: %s", err.Error())
@@ -1094,7 +1096,6 @@ func (h *HandlerServer) workflowSetting(gin *gin.Context) {
 		Type:       consts.Check,
 		ExecFile:   "",
 		LastExecId: 0,
-		ToolType:   settingData.ToolType,
 		Tool:       settingData.Tool,
 	}
 	err = workflowService.SettingWorkflow(workflowCheckData, project)

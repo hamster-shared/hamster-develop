@@ -267,8 +267,7 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 			logger.Errorf("Get job history fail, jobName: %s, jobId: %d", message.JobName, message.JobId)
 			return
 		}
-		switch workflowDetail.Tool {
-		case "MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)":
+		if len(jobDetail.MetaScanData) > 0 {
 			logger.Info("start sysnc meta scan report--------")
 			if len(jobDetail.MetaScanData) > 0 {
 				for _, datum := range jobDetail.MetaScanData {
@@ -276,90 +275,92 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 						ProjectId:        projectId,
 						WorkflowId:       workflowId,
 						WorkflowDetailId: workflowDetail.Id,
-						Name:             consts.MetaScanReportTypeMap[workflowDetail.ToolType],
+						Name:             consts.MetaScanReportTypeMap[consts.CheckToolTypeMap[datum.Tool]],
 						Type:             uint(consts.Check),
-						CheckTool:        workflowDetail.Tool,
+						CheckTool:        datum.Tool,
 						Result:           "success",
 						CheckTime:        time.Now(),
 						ReportFile:       datum.CheckResult,
 						CreateTime:       time.Now(),
 						Issues:           int(datum.Total),
+						ToolType:         consts.CheckToolTypeMap[datum.Tool],
 						MetaScanOverview: datum.ResultOverview,
 					}
 					w.db.Create(&report)
 				}
+				logger.Info("end sysnc meta scan report--------")
 			}
-		case "Mythril", "Solhint", "eth-gas-reporter", "AI":
-			logger.Tracef("Get job history success, jobName: %s, jobId: %d", message.JobName, message.JobId)
-			logger.Tracef("len jobDetail.Reports: %d", len(jobDetail.Reports))
-			logger.Tracef("jobDetail file path: %s", jober.GetJobDetailFilePath(message.JobName, message.JobId))
-			var reportList []db.Report
-			begin := w.db.Begin()
-			for _, report := range jobDetail.Reports {
+		}
+		logger.Tracef("Get job history success, jobName: %s, jobId: %d", message.JobName, message.JobId)
+		logger.Tracef("len jobDetail.Reports: %d", len(jobDetail.Reports))
+		logger.Tracef("jobDetail file path: %s", jober.GetJobDetailFilePath(message.JobName, message.JobId))
+		var reportList []db.Report
+		begin := w.db.Begin()
+		for _, report := range jobDetail.Reports {
 
-				// contract check
-				if report.Type == 2 {
-					if report.Url == "" {
-						continue
-					}
-					file, err := os.ReadFile(report.Url)
-					if err != nil {
-						logger.Errorf("Check result path is err")
-						return
-					}
-					var contractCheckResultList []model.ContractCheckResult[json.RawMessage]
-					err = json.Unmarshal(file, &contractCheckResultList)
-					if err != nil {
-						logger.Errorf("Check result get fail")
-					}
-					for _, contractCheckResult := range contractCheckResultList {
-						marshal, err := json.Marshal(contractCheckResult.Context)
-						if err != nil {
-							logger.Errorf("Check context conversion failed")
-						}
-						report := db.Report{
-							ProjectId:        projectId,
-							WorkflowId:       workflowId,
-							WorkflowDetailId: workflowDetail.Id,
-							Name:             contractCheckResult.Name,
-							Type:             uint(consts.Check),
-							CheckTool:        contractCheckResult.Tool,
-							// CheckVersion:     contractCheckResult.SolcVersion,
-							Result:     contractCheckResult.Result,
-							CheckTime:  time.Now(),
-							ReportFile: string(marshal),
-							CreateTime: time.Now(),
-						}
-						reportList = append(reportList, report)
-					}
+			// contract check
+			if report.Type == 2 {
+				if report.Url == "" {
+					continue
 				}
-				// openai report
-				if report.Type == 3 {
+				file, err := os.ReadFile(report.Url)
+				if err != nil {
+					logger.Errorf("Check result path is err")
+					return
+				}
+				var contractCheckResultList []model.ContractCheckResult[json.RawMessage]
+				err = json.Unmarshal(file, &contractCheckResultList)
+				if err != nil {
+					logger.Errorf("Check result get fail")
+				}
+				for _, contractCheckResult := range contractCheckResultList {
+					marshal, err := json.Marshal(contractCheckResult.Context)
+					if err != nil {
+						logger.Errorf("Check context conversion failed")
+					}
 					report := db.Report{
 						ProjectId:        projectId,
 						WorkflowId:       workflowId,
 						WorkflowDetailId: workflowDetail.Id,
-						Name:             "AI Analysis Report",
+						Name:             contractCheckResult.Name,
 						Type:             uint(consts.Check),
-						CheckTool:        "AI",
-						Result:           "success",
-						CheckTime:        time.Now(),
-						ReportFile:       string(report.Content),
-						CreateTime:       time.Now(),
+						CheckTool:        contractCheckResult.Tool,
+						// CheckVersion:     contractCheckResult.SolcVersion,
+						Result:     contractCheckResult.Result,
+						CheckTime:  time.Now(),
+						ReportFile: string(marshal),
+						CreateTime: time.Now(),
+						ToolType:   consts.CheckToolTypeMap[contractCheckResult.Tool],
 					}
 					reportList = append(reportList, report)
 				}
 			}
-			logger.Tracef("len(reportList): %d ", len(reportList))
-			err = begin.Save(&reportList).Error
-			if err != nil {
-				logger.Errorf("Save report fail, err is %s", err.Error())
-				// return
+			// openai report
+			if report.Type == 3 {
+				report := db.Report{
+					ProjectId:        projectId,
+					WorkflowId:       workflowId,
+					WorkflowDetailId: workflowDetail.Id,
+					Name:             "AI Analysis Report",
+					Type:             uint(consts.Check),
+					CheckTool:        "AI",
+					Result:           "success",
+					CheckTime:        time.Now(),
+					ReportFile:       string(report.Content),
+					CreateTime:       time.Now(),
+					ToolType:         5,
+				}
+				reportList = append(reportList, report)
 			}
-			begin.Commit()
 		}
+		logger.Tracef("len(reportList): %d ", len(reportList))
+		err = begin.Save(&reportList).Error
+		if err != nil {
+			logger.Errorf("Save report fail, err is %s", err.Error())
+			// return
+		}
+		begin.Commit()
 	}
-
 }
 
 func (w *WorkflowService) syncContractStarknet(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {

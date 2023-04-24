@@ -6,6 +6,8 @@ type TemplateCheck struct {
 }
 
 type MetaScanCheck struct {
-	Name string `json:"name"`
-	Tool string `json:"tool"`
+	Name          string   `json:"name"`
+	CheckType     []string `yaml:"checkType"`
+	Tool          []string `yaml:"tool"`
+	RepositoryUrl string   `json:"repositoryUrl"`
 }
