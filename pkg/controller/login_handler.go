@@ -8,7 +8,11 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
+	"gorm.io/gorm"
+	"log"
 	"net/http"
+	"strings"
+	"time"
 )
 
 func (h *HandlerServer) loginWithGithub(gin *gin.Context) {
@@ -77,6 +81,24 @@ func (h *HandlerServer) githubInstall(gin *gin.Context) {
 	Success(token, gin)
 }
 
+func (h *HandlerServer) RequestLog() gin.HandlerFunc {
+	return func(gin *gin.Context) {
+		accessToken := gin.Request.Header.Get("Access-Token")
+		url := gin.Request.RequestURI
+		log.Printf("url: %s, method: %s, token: %s ", url, gin.Request.Method, accessToken)
+		requestLog := &db2.RequestLog{
+			Url:        url,
+			Token:      accessToken,
+			Method:     gin.Request.Method,
+			CreateTime: time.Now(),
+			UpdateTime: time.Now(),
+		}
+		db := application.GetBean[*gorm.DB]("db")
+		_ = db.Save(requestLog).Error
+		gin.Next()
+	}
+}
+
 func (h *HandlerServer) Authorize() gin.HandlerFunc {
 	return func(gin *gin.Context) {
 		accessToken := gin.Request.Header.Get("Access-Token")
@@ -85,22 +107,24 @@ func (h *HandlerServer) Authorize() gin.HandlerFunc {
 			gin.Abort()
 			return
 		}
-		token := utils.AesDecrypt(accessToken, consts.SecretKey)
-		userService := application.GetBean[*service.UserService]("userService")
-		user, err := userService.GetUserByToken(token)
-		if err != nil {
-			Failed(http.StatusUnauthorized, err.Error(), gin)
-			gin.Abort()
-			return
+		if !strings.HasPrefix(accessToken, "0x") {
+			token := utils.AesDecrypt(accessToken, consts.SecretKey)
+			userService := application.GetBean[*service.UserService]("userService")
+			user, err := userService.GetUserByToken(token)
+			if err != nil {
+				Failed(http.StatusUnauthorized, err.Error(), gin)
+				gin.Abort()
+				return
+			}
+			if user.Token == "" {
+				Failed(http.StatusUnauthorized, "access not authorized", gin)
+				gin.Abort()
+				return
+			}
+			user.Token = accessToken
+			gin.Set("token", token)
+			gin.Set("user", user)
 		}
-		if user.Token == "" {
-			Failed(http.StatusUnauthorized, "access not authorized", gin)
-			gin.Abort()
-			return
-		}
-		user.Token = accessToken
-		gin.Set("token", token)
-		gin.Set("user", user)
 		gin.Next()
 	}
 }
@@ -123,6 +147,25 @@ func (h *HandlerServer) getUserCount(gin *gin.Context) {
 		return
 	}
 	Success(data, gin)
+}
+
+func (h *HandlerServer) saveUserWallet(gin *gin.Context) {
+	userAny, exit := gin.Get("user")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", gin)
+		return
+	}
+	user, _ := userAny.(db2.User)
+	userService := application.GetBean[*service.UserService]("userService")
+	wallet := &db2.UserWallet{}
+	err := gin.BindJSON(wallet)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	userService.SaveUserWallet(user.Id, wallet.Address)
+	Success("", gin)
+
 }
 
 func (h *HandlerServer) updateFirstState(gin *gin.Context) {

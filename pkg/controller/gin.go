@@ -28,6 +28,7 @@ func NewHttpService(handlerServer HandlerServer, port int) *HttpServer {
 func (h *HttpServer) StartHttpServer() {
 	r := gin.Default()
 	api := r.Group("/api")
+	api.Use(h.handlerServer.RequestLog())
 
 	api.POST("/login", h.handlerServer.loginWithGithub)
 	api.POST("/github/install", h.handlerServer.githubInstall)
@@ -35,13 +36,15 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/github/webhook", h.handlerServer.githubWebHook)
 	api.GET("/projects/:id/:username/frontend/logs", h.handlerServer.getDeployFrontendLog)
 	api.GET("/user/count", h.handlerServer.getUserCount)
-	api.Use(h.handlerServer.Authorize())
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
 	api.GET("/templates/:id", h.handlerServer.templateDetail)
 	api.GET("/frontend-templates/:id", h.handlerServer.frontendTemplateDetail)
 	api.GET("/templates/show", h.handlerServer.templateShow)
+	api.POST("/templates/:id/download", h.handlerServer.templateDownload)
+	api.Use(h.handlerServer.Authorize())
+	api.POST("/user/wallet", h.handlerServer.saveUserWallet)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
 	api.POST("/projects", h.handlerServer.createProject) // 进行中

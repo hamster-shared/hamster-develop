@@ -43,14 +43,23 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	userAny, _ := gin.Get("user")
-	user, _ := userAny.(db2.User)
-	data, err := h.projectService.GetProjects(int(user.Id), query, page, size, projectType)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
+	userAny, exit := gin.Get("user")
+	if exit {
+		user, _ := userAny.(db2.User)
+		data, err := h.projectService.GetProjects(int(user.Id), query, page, size, projectType)
+		if err != nil {
+			Fail(err.Error(), gin)
+			return
+		}
+		Success(data, gin)
+	} else {
+		data := vo.ProjectPage{
+			Total:    0,
+			Page:     1,
+			PageSize: 10,
+		}
+		Success(data, gin)
 	}
-	Success(data, gin)
 }
 
 func (h *HandlerServer) createProject(g *gin.Context) {
