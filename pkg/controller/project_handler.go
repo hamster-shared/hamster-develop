@@ -408,14 +408,14 @@ func (h *HandlerServer) projectReport(g *gin.Context) {
 		Fail("projectId is empty or invalid", g)
 		return
 	}
-
+	reportType := g.Query("reportType")
 	Type := g.DefaultQuery("type", "")
 	page, _ := strconv.Atoi(g.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(g.DefaultQuery("size", "10"))
 
 	reportService := application.GetBean[*service.ReportService]("reportService")
 
-	result, err := reportService.QueryReports(projectId, Type, page, size)
+	result, err := reportService.QueryReports(projectId, reportType, Type, page, size)
 
 	if err != nil {
 		Fail(err.Error(), g)
