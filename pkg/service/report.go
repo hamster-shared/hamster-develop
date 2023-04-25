@@ -68,10 +68,10 @@ func (c *ReportService) QueryReportsByWorkflow(workflowId, workflowDetailId int)
 	return result, nil
 }
 
-func (c *ReportService) ReportOverview(workflowId, workflowDetailId int) (vo.ReportOverView, error) {
+func (c *ReportService) ReportOverview(workflowId, workflowDetailId int) ([]vo.ReportOverView, error) {
 	var reports []db2.Report
 	var result []vo.ReportVo
-	var data vo.ReportOverView
+	var data []vo.ReportOverView
 	res := c.db.Model(db2.Report{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Find(&reports)
 	if res.Error != nil {
 		return data, res.Error
@@ -83,30 +83,45 @@ func (c *ReportService) ReportOverview(workflowId, workflowDetailId int) (vo.Rep
 	for _, p := range result {
 		groupedReports[p.ToolType] = append(groupedReports[p.ToolType], p)
 	}
-	data.SecutityAnalysis.Title = "Secutity Analysis"
-	data.OpenSourceAnalysis.Title = "Open Source Analysis"
-	data.CodeQualityAnalysis.Title = "Code Quality Analysisi"
-	data.GasUsageAnalysis.Title = "Gas Usage Analysis"
-	data.OtherAnalysis.Title = "AI Analysis"
 	secutityAnalysisData, ok := groupedReports[1]
 	if ok {
-		data.SecutityAnalysis.Content = secutityAnalysisData
+		reportRes := vo.ReportOverView{
+			Title:   "Secutity Analysis",
+			Content: secutityAnalysisData,
+		}
+		data = append(data, reportRes)
 	}
 	OpenSourceAnalysisData, ok := groupedReports[2]
 	if ok {
-		data.OpenSourceAnalysis.Content = OpenSourceAnalysisData[0]
+		reportRes := vo.ReportOverView{
+			Title:   "Open Source Analysis",
+			Content: OpenSourceAnalysisData,
+		}
+		data = append(data, reportRes)
 	}
 	CodeQualityAnalysisData, ok := groupedReports[3]
 	if ok {
-		data.CodeQualityAnalysis.Content = CodeQualityAnalysisData
+		reportRes := vo.ReportOverView{
+			Title:   "Code Quality Analysisi",
+			Content: CodeQualityAnalysisData,
+		}
+		data = append(data, reportRes)
 	}
 	GasUsageAnalysisData, ok := groupedReports[4]
 	if ok {
-		data.GasUsageAnalysis.Content = GasUsageAnalysisData[0]
+		reportRes := vo.ReportOverView{
+			Title:   "Gas Usage Analysis",
+			Content: GasUsageAnalysisData,
+		}
+		data = append(data, reportRes)
 	}
 	OtherAnalysisData, ok := groupedReports[5]
 	if ok {
-		data.OtherAnalysis.Content = OtherAnalysisData[0]
+		reportRes := vo.ReportOverView{
+			Title:   "AI Analysis",
+			Content: OtherAnalysisData,
+		}
+		data = append(data, reportRes)
 	}
 
 	return data, nil

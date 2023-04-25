@@ -22,34 +22,6 @@ type ReportVo struct {
 }
 
 type ReportOverView struct {
-	SecutityAnalysis    SecutityAnalysis    `json:"secutityAnalysis"`
-	OpenSourceAnalysis  OpenSourceAnalysis  `json:"openSourceAnalysis"`
-	CodeQualityAnalysis CodeQualityAnalysis `json:"codeQualityAnalysis"`
-	GasUsageAnalysis    GasUsageAnalysis    `json:"gasUsageAnalysis"`
-	OtherAnalysis       OtherAnalysis       `json:"otherAnalysis"`
-}
-
-type SecutityAnalysis struct {
 	Title   string     `json:"title"`
 	Content []ReportVo `json:"content"`
-}
-
-type OpenSourceAnalysis struct {
-	Title   string   `json:"title"`
-	Content ReportVo `json:"content"`
-}
-
-type CodeQualityAnalysis struct {
-	Title   string     `json:"title"`
-	Content []ReportVo `json:"content"`
-}
-
-type GasUsageAnalysis struct {
-	Title   string   `json:"title"`
-	Content ReportVo `json:"content"`
-}
-
-type OtherAnalysis struct {
-	Title   string   `json:"title"`
-	Content ReportVo `json:"content"`
 }
