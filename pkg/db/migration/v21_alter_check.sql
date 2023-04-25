@@ -1,5 +1,6 @@
 alter table t_workflow
-    add column  tool_type tinyint(1) comment 'tool type';
+    add column  tool_type tinyint(1) comment 'tool type',
+    add column  tool varchar(200) comment 'tool';
 
 alter table t_report
     add column  tool_type tinyint(1) comment 'tool type',

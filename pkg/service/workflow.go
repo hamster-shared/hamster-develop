@@ -493,20 +493,20 @@ func (w *WorkflowService) SettingWorkflow(settingData parameter.SaveWorkflowPara
 	} else {
 		workflow.ToolType = 0
 	}
+	workflow.Tool = strings.Join(settingData.Tool, ",")
 	w.UpdateWorkflow(workflow)
 	return nil
 }
 
-func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType consts.WorkflowType) bool {
+func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType consts.WorkflowType) []string {
 	var workflow db.Workflow
+	var data []string
 	err := w.db.Model(db.Workflow{}).Where("project_id=? and type=?", projectId, workflowType).First(&workflow).Error
 	if err == gorm.ErrRecordNotFound {
-		return false
+		return data
 	}
-	if workflow.ExecFile != "" {
-		return true
-	}
-	return true
+	data = strings.Split(workflow.Tool, ",")
+	return data
 }
 
 func (w *WorkflowService) UpdateWorkflow(data db.Workflow) error {
