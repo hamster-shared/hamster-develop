@@ -469,7 +469,7 @@ Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 
 {
-  "tool": ["MetaTrust (SA)","Solhint","MetaTrust (OSA)","Mythril","MetaTrust (CQ)","AI","eth-gas-reporter"]
+  "tool": ["MetaTrust (OSA)","eth-gas-reporter"]
 }
 
 ### check project
@@ -479,7 +479,7 @@ Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 
 ###
-GET http://61.172.179.6:30302/api/workflows/1959/detail/3066/report/overview
+GET http://61.172.179.6:30302/api/workflows/1979/detail/3161/report/overview
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 

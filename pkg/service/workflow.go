@@ -283,6 +283,12 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 		logger.Tracef("create job success, job name is %s", job.Name)
 	}
+	if workflow.Tool != "" {
+		err = w.engine.CreateJob(workflowKey, workflow.ExecFile)
+		if err != nil {
+			return deployResult, err
+		}
+	}
 	met, token := setMetaScanToken(workflow)
 	if met {
 		params["scanToken"] = token
