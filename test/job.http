@@ -445,7 +445,7 @@ Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 {
-  "name":"my-contract-Erc916",
+  "name":"my-contract-Erc917",
   "type":1,
   "templateOwner":"hamster-template",
   "frameType":1,
@@ -458,22 +458,22 @@ Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 
 #### get workflow check
-GET http://61.172.179.6:30302/api/project/0c37f411-bfca-48a2-8bbd-43722081ec14/workflow/setting/check
+GET http://61.172.179.6:30302/api/project/81be5991-f19c-4236-a11e-cfbb4c028cee/workflow/setting/check
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 ### setting workflow
-POST http://61.172.179.6:30302/api/project/0c37f411-bfca-48a2-8bbd-43722081ec14/workflow/setting
+POST http://61.172.179.6:30302/api/project/81be5991-f19c-4236-a11e-cfbb4c028cee/workflow/setting
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 
 {
-  "tool": ["MetaTrust (SA)","Solhint","MetaTrust (OSA)"]
+  "tool": ["MetaTrust (SA)","Solhint","MetaTrust (OSA)","Mythril","MetaTrust (CQ)","AI","eth-gas-reporter"]
 }
 
 ### check project
-POST http://localhost:8080/api/projects/0c37f411-bfca-48a2-8bbd-43722081ec14/check
+POST http://61.172.179.6:30302/api/projects/81be5991-f19c-4236-a11e-cfbb4c028cee/check
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 

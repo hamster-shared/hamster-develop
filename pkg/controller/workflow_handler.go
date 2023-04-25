@@ -142,6 +142,21 @@ func (h *HandlerServer) reportDetail(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) metaScanFile(gin *gin.Context) {
+	key := gin.Param("key")
+	if key == "" {
+		Fail("file key is empty", gin)
+		return
+	}
+	reportService := application.GetBean[*service.ReportService]("reportService")
+	data, err := reportService.GetFile(key)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) workflowFrontendReports(gin *gin.Context) {
 	idStr := gin.Param("id")
 	workflowDetailIdStr := gin.Param("detailId")

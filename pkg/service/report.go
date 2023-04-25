@@ -1,11 +1,15 @@
 package service
 
 import (
+	"errors"
+	"fmt"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
+	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"log"
 )
 
 type ReportService struct {
@@ -110,4 +114,26 @@ func (c *ReportService) QueryReportCheckTools(projectId string) ([]string, error
 		return data, res.Error
 	}
 	return data, nil
+}
+
+func (c *ReportService) GetFile(key string) (string, error) {
+	token := utils.MetaScanHttpRequestToken()
+	url := fmt.Sprintf("https://app.metatrust.io/api/scan/history/vulnerability-files/%s", key)
+	res, err := utils.NewHttp().NewRequest().SetHeaders(map[string]string{
+		"Authorization":  token,
+		"X-MetaScan-Org": "1098616244203945984",
+	}).Get(url)
+	if err != nil {
+		log.Println("获取失败")
+		return "", err
+	}
+	if res.StatusCode() == 401 {
+		log.Println("get file no auth")
+		return "", errors.New("get file filed")
+	}
+	if res.StatusCode() != 200 {
+		log.Println("meta scan file failed")
+		return "", errors.New(fmt.Sprintf("%v", res.Error()))
+	}
+	return string(res.Body()), nil
 }
