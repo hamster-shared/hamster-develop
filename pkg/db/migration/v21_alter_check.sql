@@ -7,6 +7,9 @@ alter table t_report
     add column  issues    int        comment 'total issues',
     add column  meta_scan_overview mediumtext comment 'meta scan overview';
 
+alter table t_report
+    modify report_file mediumtext;
+
 # create table t_report_detail (
 #                         id BIGINT primary key auto_increment,
 #                         report_id  int comment 'report id',
