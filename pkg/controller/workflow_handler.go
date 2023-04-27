@@ -6,7 +6,6 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	uuid "github.com/iris-contrib/go.uuid"
-	"net/url"
 	"strconv"
 )
 
@@ -144,9 +143,9 @@ func (h *HandlerServer) reportDetail(gin *gin.Context) {
 }
 
 func (h *HandlerServer) metaScanFile(gin *gin.Context) {
-	key, err := url.PathUnescape(gin.Param("key"))
-	if err != nil {
-		Fail(err.Error(), gin)
+	key := gin.Param("key")
+	if key == "" {
+		Fail("key is empty", gin)
 		return
 	}
 	reportService := application.GetBean[*service.ReportService]("reportService")

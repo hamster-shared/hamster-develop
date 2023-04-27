@@ -464,17 +464,18 @@ Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 ### setting workflow
-POST http://61.172.179.6:30302/api/project/b2f48893-a565-4e63-8dad-37b0e7bade51/workflow/setting
+#POST http://61.172.179.6:30302/api/project/b2f48893-a565-4e63-8dad-37b0e7bade51/workflow/setting
+POST http://61.172.179.6:30302/api/project/81be5991-f19c-4236-a11e-cfbb4c028cee/workflow/setting
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 
 {
-  "tool": ["MetaTrust (SP)"]
+  "tool": ["MetaTrust (SA)"]
 }
 
 ### check project
-POST http://61.172.179.6:30302/api/projects/b2f48893-a565-4e63-8dad-37b0e7bade51/check
+POST http://61.172.179.6:30302/api/projects/81be5991-f19c-4236-a11e-cfbb4c028cee/check
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
@@ -495,6 +496,7 @@ Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 ###
-GET http://61.172.179.6:30302/api/metascan/file/6566bf37-05b0-4826-a768-2827a444e793/Functions.sol
+#GET http://61.172.179.6:30302/api/metascan/file/6566bf37-05b0-4826-a768-2827a444e793/Functions.sol
+GET localhost:8080/api/metascan/file/6566bf37-05b0-4826-a768-2827a444e793/Functions.sol
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
