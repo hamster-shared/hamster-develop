@@ -76,15 +76,6 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 		return 0, err
 	}
 	entity.Type = contract.Type
-
-	var savedContractDeploy db2.ContractDeploy
-
-	err = c.db.Model(db2.ContractDeploy{}).Where("contract_id = ? and version = ? ", entity.ContractId, entity.Version).First(&savedContractDeploy).Error
-
-	if err == nil {
-		entity.Id = savedContractDeploy.Id
-		entity.CreateTime = savedContractDeploy.CreateTime
-	}
 	if entity.AbiInfo == "" && version > 1 {
 		for {
 			if version > 1 {
