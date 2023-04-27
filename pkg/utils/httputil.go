@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"os"
 )
 
 type HttpUtil struct {
@@ -35,8 +36,8 @@ func MetaScanHttpRequestToken() string {
 	}{}
 	res, err := NewHttp().NewRequest().SetFormData(map[string]string{
 		"grant_type": "password",
-		"username":   "tom@hamsternet.io",
-		"password":   "pysded-hismoh-3Dagcy",
+		"username":   os.Getenv("METASCAN_USERNAME"),
+		"password":   os.Getenv("METASCAN_PASSWORD"),
 		"client_id":  "webapp",
 	}).SetResult(&token).SetHeader("Content-Type", "application/x-www-form-urlencoded").Post(url)
 	if res.StatusCode() != 200 {
