@@ -445,35 +445,36 @@ Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 {
-  "name":"my-contract-Erc917",
+  "name":"my-contract-Erc918",
   "type":1,
   "templateOwner":"hamster-template",
   "frameType":1,
   "deployType":1,
   "repoOwner":"jian-guo-s",
-  "templateRepo":"FunctionsConsumer",
+  "templateRepo":"metascan-sp",
   "userId":53070354,
-  "templateUrl":"https://github.com/hamster-template/FunctionsConsumer.git"
+  "templateUrl":"https://github.com/hamster-template/metascan-sp.git"
 }
 
 
 #### get workflow check
-GET http://61.172.179.6:30302/api/project/81be5991-f19c-4236-a11e-cfbb4c028cee/workflow/setting/check
+#GET http://61.172.179.6:30302/api/project/81be5991-f19c-4236-a11e-cfbb4c028cee/workflow/setting/check
+GET http://61.172.179.6:30302/api/project/b2f48893-a565-4e63-8dad-37b0e7bade51/workflow/setting/check
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 ### setting workflow
-POST http://61.172.179.6:30302/api/project/81be5991-f19c-4236-a11e-cfbb4c028cee/workflow/setting
+POST http://61.172.179.6:30302/api/project/b2f48893-a565-4e63-8dad-37b0e7bade51/workflow/setting
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 
 {
-  "tool": ["MetaTrust (OSA)","eth-gas-reporter"]
+  "tool": ["MetaTrust (SP)"]
 }
 
 ### check project
-POST http://61.172.179.6:30302/api/projects/81be5991-f19c-4236-a11e-cfbb4c028cee/check
+POST http://61.172.179.6:30302/api/projects/b2f48893-a565-4e63-8dad-37b0e7bade51/check
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
@@ -485,5 +486,15 @@ Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 ###
 GET http://61.172.179.6:30302/api/report/2091
+Content-Type: application/json
+Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
+
+###
+GET http://61.172.179.6:30302/api/report/2228
+Content-Type: application/json
+Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
+
+###
+GET http://61.172.179.6:30302/api/metascan/file/6566bf37-05b0-4826-a768-2827a444e793/Functions.sol
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
