@@ -244,12 +244,11 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 
 	var workflow db.Workflow
 	var deployResult vo.DeployResultVo
-	w.db.Where(&db.Workflow{
+	err := w.db.Where(&db.Workflow{
 		ProjectId: projectId,
 		Type:      workflowType,
-	}).First(&workflow)
-
-	if &workflow == nil {
+	}).First(&workflow).Error
+	if err != nil {
 		return deployResult, errors.New("no check workflow in the project ")
 	}
 
