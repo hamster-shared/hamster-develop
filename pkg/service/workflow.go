@@ -523,7 +523,7 @@ func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType co
 				result["Code Quality Analysis"] = append(result["Code Quality Analysis"], i2)
 			case "eth-gas-reporter":
 				result["Gas Usage Analysis"] = append(result["Gas Usage Analysis"], i2)
-			default:
+			case "Other Analysis":
 				result["Other Analysis"] = append(result["Other Analysis"], i2)
 			}
 		}
