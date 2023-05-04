@@ -26,7 +26,7 @@ func (c *ReportService) QueryReports(projectId, reportType string, Type string, 
 	var total int64
 	var reports []db2.Report
 	tx := c.db.Model(db2.Report{}).Where("project_id = ?", projectId)
-	if Type != "" || reportType != "" {
+	if Type != "" && reportType != "" {
 		tx = tx.Where("check_tool = ? and name=?", Type, reportType)
 	} else if Type == "" && reportType == "" {
 		tx = tx.Where("1 = 1")
