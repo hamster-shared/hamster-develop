@@ -107,6 +107,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/workflows/:id/detail/:detailId/report/overview", h.handlerServer.workflowReportOverview)
 	api.GET("/report/:id", h.handlerServer.reportDetail)
 	api.GET("/metascan/file/*key", h.handlerServer.metaScanFile)
+	api.GET("/project/:id/contract/:name/content", h.handlerServer.contractFileContent)
 	// frontend reports
 	api.GET("/workflows/:id/detail/:detailId/frontend/report", h.handlerServer.workflowFrontendReports)
 	//workflow frontend packages
