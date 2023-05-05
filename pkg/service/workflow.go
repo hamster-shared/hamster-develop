@@ -503,15 +503,32 @@ func (w *WorkflowService) SettingWorkflow(settingData parameter.SaveWorkflowPara
 	return nil
 }
 
-func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType consts.WorkflowType) []string {
+func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType consts.WorkflowType) map[string][]string {
 	var workflow db.Workflow
 	var data []string
+	result := make(map[string][]string)
 	err := w.db.Model(db.Workflow{}).Where("project_id=? and type=?", projectId, workflowType).First(&workflow).Error
 	if err == gorm.ErrRecordNotFound {
-		return data
+		return result
 	}
 	data = strings.Split(workflow.Tool, ",")
-	return data
+	if len(data) > 0 {
+		for _, i2 := range data {
+			switch i2 {
+			case "MetaTrust (SA)", "MetaTrust (SP)", "Mythril":
+				result["Security Analysis"] = append(result["Security Analysis"], i2)
+			case "MetaTrust (OSA)":
+				result["Open Source Analysis"] = append(result["Open Source Analysis"], i2)
+			case "Solhint", "MetaTrust (CQ)":
+				result["Code Quality Analysis"] = append(result["Code Quality Analysis"], i2)
+			case "eth-gas-reporter":
+				result["Gas Usage Analysis"] = append(result["Gas Usage Analysis"], i2)
+			case "Other Analysis":
+				result["Other Analysis"] = append(result["Other Analysis"], i2)
+			}
+		}
+	}
+	return result
 }
 
 func (w *WorkflowService) UpdateWorkflow(data db.Workflow) error {

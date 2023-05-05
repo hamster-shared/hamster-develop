@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	engine "github.com/hamster-shared/aline-engine"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
+	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	uuid "github.com/iris-contrib/go.uuid"
 	"strconv"
@@ -155,6 +157,36 @@ func (h *HandlerServer) metaScanFile(gin *gin.Context) {
 		return
 	}
 	Success(data, gin)
+}
+
+func (h *HandlerServer) contractFileContent(gin *gin.Context) {
+	idStr := gin.Param("id")
+	if idStr == "" {
+		Fail("project id is empty", gin)
+		return
+	}
+	name := gin.Param("name")
+	if name == "" {
+		Fail("file name is empty", gin)
+		return
+	}
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	data, err := h.projectService.GetProject(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	path := fmt.Sprintf("contracts/%s", name)
+	content, err := githubService.GetFileContent(token, user.Username, data.Name, path)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(content, gin)
 }
 
 func (h *HandlerServer) workflowFrontendReports(gin *gin.Context) {
