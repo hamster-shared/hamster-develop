@@ -516,15 +516,15 @@ func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType co
 		for _, i2 := range data {
 			switch i2 {
 			case "MetaTrust (SA)", "MetaTrust (SP)", "Mythril":
-				result["Security Analysis"] = append(result["Security Analysis"], i2)
+				result["securityAnalysis"] = append(result["Security Analysis"], i2)
 			case "MetaTrust (OSA)":
-				result["Open Source Analysis"] = append(result["Open Source Analysis"], i2)
+				result["openSourceAnalysis"] = append(result["Open Source Analysis"], i2)
 			case "Solhint", "MetaTrust (CQ)":
-				result["Code Quality Analysis"] = append(result["Code Quality Analysis"], i2)
+				result["codeQualityAnalysis"] = append(result["Code Quality Analysis"], i2)
 			case "eth-gas-reporter":
-				result["Gas Usage Analysis"] = append(result["Gas Usage Analysis"], i2)
+				result["gasUsageAnalysis"] = append(result["Gas Usage Analysis"], i2)
 			case "Other Analysis":
-				result["Other Analysis"] = append(result["Other Analysis"], i2)
+				result["otherAnalysis"] = append(result["Other Analysis"], i2)
 			}
 		}
 	}
