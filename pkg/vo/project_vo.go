@@ -22,6 +22,8 @@ type ProjectListVo struct {
 	Branch        string        `json:"branch"`
 	DeployType    int           `json:"deployType"`
 	LabelDisplay  string        `json:"labelDisplay"`
+	GistId        string        `json:"gistId"`
+	DefaultFile   string        `json:"defaultFile"`
 	RecentCheck   RecentCheckVo `json:"recentCheck"`
 	RecentBuild   RecentBuildVo `json:"recentBuild"`
 	RecentDeploy  interface{}   `json:"recentDeploy"`
@@ -35,6 +37,8 @@ type ProjectDetailVo struct {
 	FrameType     uint          `json:"frameType"` // see# consts.Evm
 	Branch        string        `json:"branch"`
 	DeployType    int           `json:"deployType"`
+	GistId        string        `json:"gistId"`
+	DefaultFile   string        `json:"defaultFile"`
 	LabelDisplay  string        `json:"labelDisplay"`
 	RecentCheck   RecentCheckVo `json:"recentCheck"`
 	RecentBuild   RecentBuildVo `json:"recentBuild"`
@@ -73,13 +77,15 @@ type PackageDeployVo struct {
 }
 
 type CreateProjectParam struct {
-	Name        string `json:"name"`
-	Type        int    `json:"type"`
-	Branch      string `json:"branch"`
-	TemplateUrl string `json:"templateUrl"`
-	FrameType   uint   `json:"frameType"`
-	DeployType  int    `json:"deployType"`
-	UserId      int64  `json:"userId"`
+	Name         string `json:"name"`
+	Type         int    `json:"type"`
+	Branch       string `json:"branch"`
+	TemplateUrl  string `json:"templateUrl"`
+	FrameType    uint   `json:"frameType"`
+	DeployType   int    `json:"deployType"`
+	UserId       int64  `json:"userId"`
+	GistId       string `json:"gistId"`
+	DefaultFile  string `json:"defaultFile"`
 	LabelDisplay string `json:"labelDisplay"`
 }
 

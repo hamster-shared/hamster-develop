@@ -123,6 +123,8 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		DeployType:   createData.DeployType,
 		UserId:       int64(user.Id),
 		LabelDisplay: createData.LabelDisplay,
+		GistId:       createData.GistId,
+		DefaultFile:  createData.DefaultFile,
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {

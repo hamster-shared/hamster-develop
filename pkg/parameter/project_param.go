@@ -10,6 +10,8 @@ type CreateProjectParam struct {
 	TemplateRepo  string `json:"templateRepo"`
 	FrameType     uint   `json:"frameType"`
 	RepoOwner     string `json:"repoOwner"`
+	GistId        string `json:"gistId"`
+	DefaultFile   string `json:"defaultFile"`
 	Branch        string `json:"branch"`
 }
 
