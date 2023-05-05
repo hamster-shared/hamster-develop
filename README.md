@@ -11,9 +11,70 @@ _One-stop Toolkit and Middleware Platform for Web3.0 Developers_
 
 </div>
 
-## Documentation
+## Getting Started
 
-[click here](./doc.md)
+Follow these steps to set up and run the Go project locally:
+
+### Prerequisites
+
+Ensure you have the following installed on your system:
+
+- [Go](https://golang.org/dl/) (latest version)
+- [Docker](https://www.docker.com/get-started) (latest version)
+- [Docker Compose](https://docs.docker.com/compose/install/) (latest version)
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/hamster-shared/hamster-develop.git
+cd hamster-develop
+```
+
+### Setting Up the Database
+
+1. Start the database container using Docker Compose:
+
+```bash
+docker-compose up -d
+```
+
+2. Import the SQL files from the `pkg/db/migration` directory into the database:
+
+- You can use your preferred database management tool (e.g., [DBeaver](https://dbeaver.io/), [MySQL Workbench](https://www.mysql.com/products/workbench/), or [pgAdmin](https://www.pgadmin.org/)) to connect to the database and import the SQL files.
+
+### Building the Project
+
+1. Depending on your system platform, run one of the following commands to compile the project:
+
+- For Linux:
+
+```bash
+make linux
+```
+
+- For Windows:
+
+```bash
+make windows
+```
+
+- For macOS:
+
+```bash
+make macos
+```
+
+### Running the Project
+
+1. Execute the project using the following command:
+
+```bash
+./aline daemon
+```
+
+Now the Go project should be running locally, and you can start exploring its features and functionalities.
 
 ## About Hamster
 
