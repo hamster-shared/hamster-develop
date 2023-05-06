@@ -10,23 +10,3 @@ services:
       MYSQL_PASSWORD: 123456
     ports:
       - 3307:3306
-
-  aline-test:
-    container_name: hamster-develop-aline-test
-    depends_on:
-      - mysql
-    restart: always
-    image: aline-test
-    environment:
-      DB_HOST: mysql
-    ports:
-      - 8080:8080
-
-  aline-frontend:
-    container_name: hamster-develop-aline-frontend
-    depends_on:
-      - aline-test
-    restart: always
-    image: aline-frontend
-    ports:
-      - 80:80

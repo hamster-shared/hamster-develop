@@ -516,15 +516,15 @@ func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType co
 		for _, i2 := range data {
 			switch i2 {
 			case "MetaTrust (SA)", "MetaTrust (SP)", "Mythril":
-				result["Security Analysis"] = append(result["Security Analysis"], i2)
+				result["securityAnalysis"] = append(result["Security Analysis"], i2)
 			case "MetaTrust (OSA)":
-				result["Open Source Analysis"] = append(result["Open Source Analysis"], i2)
+				result["openSourceAnalysis"] = append(result["Open Source Analysis"], i2)
 			case "Solhint", "MetaTrust (CQ)":
-				result["Code Quality Analysis"] = append(result["Code Quality Analysis"], i2)
+				result["codeQualityAnalysis"] = append(result["Code Quality Analysis"], i2)
 			case "eth-gas-reporter":
-				result["Gas Usage Analysis"] = append(result["Gas Usage Analysis"], i2)
+				result["gasUsageAnalysis"] = append(result["Gas Usage Analysis"], i2)
 			case "Other Analysis":
-				result["Other Analysis"] = append(result["Other Analysis"], i2)
+				result["otherAnalysis"] = append(result["Other Analysis"], i2)
 			}
 		}
 	}
@@ -758,4 +758,60 @@ func hasCommonElements(arr1, arr2 []string) bool {
 		}
 	}
 	return false
+}
+
+func (w *WorkflowService) initWorkflow(project *vo.ProjectDetailVo) {
+	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
+		workflowCheckData := parameter.SaveWorkflowParam{
+			ProjectId:  project.Id,
+			Type:       consts.Check,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowCheckRes, err := w.SaveWorkflow(workflowCheckData)
+		if err != nil {
+			return
+		}
+		checkKey := w.GetWorkflowKey(project.Id.String(), workflowCheckRes.Id)
+		file, err := w.TemplateParse(checkKey, project, consts.Check)
+		if err == nil {
+			workflowCheckRes.ExecFile = file
+			w.UpdateWorkflow(workflowCheckRes)
+		}
+	}
+	workflowBuildData := parameter.SaveWorkflowParam{
+		ProjectId:  project.Id,
+		Type:       consts.Build,
+		ExecFile:   "",
+		LastExecId: 0,
+	}
+	workflowBuildRes, err := w.SaveWorkflow(workflowBuildData)
+	if err != nil {
+		return
+	}
+	buildKey := w.GetWorkflowKey(project.Id.String(), workflowBuildRes.Id)
+	file1, err := w.TemplateParse(buildKey, project, consts.Build)
+	if err == nil {
+		workflowBuildRes.ExecFile = file1
+		w.UpdateWorkflow(workflowBuildRes)
+	}
+
+	if project.Type == uint(consts.FRONTEND) {
+		workflowDeployData := parameter.SaveWorkflowParam{
+			ProjectId:  project.Id,
+			Type:       consts.Deploy,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowDeployRes, err := w.SaveWorkflow(workflowDeployData)
+		if err != nil {
+			return
+		}
+		deployKey := w.GetWorkflowKey(project.Id.String(), workflowDeployRes.Id)
+		file1, err := w.TemplateParse(deployKey, project, consts.Deploy)
+		if err == nil {
+			workflowDeployRes.ExecFile = file1
+			w.UpdateWorkflow(workflowDeployRes)
+		}
+	}
 }

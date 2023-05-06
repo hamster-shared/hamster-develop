@@ -58,5 +58,7 @@ type TemplateDetail struct {
 	ShowUrl           string       `json:"showUrl"`
 	TitleDescription  string       `json:"titleDescription"`
 	HowUseDescription string       `json:"howUseDescription"`
+	GistId            string       `json:"gistId"`
+	DefaultFile       string       `json:"defaultFile"`
 	LabelDisplay      string       `json:"labelDisplay"`
 }
