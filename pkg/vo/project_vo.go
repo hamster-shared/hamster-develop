@@ -1,6 +1,7 @@
 package vo
 
 import (
+	"github.com/google/go-github/v48/github"
 	uuid "github.com/iris-contrib/go.uuid"
 	"time"
 )
@@ -73,13 +74,13 @@ type PackageDeployVo struct {
 }
 
 type CreateProjectParam struct {
-	Name        string `json:"name"`
-	Type        int    `json:"type"`
-	Branch      string `json:"branch"`
-	TemplateUrl string `json:"templateUrl"`
-	FrameType   uint   `json:"frameType"`
-	DeployType  int    `json:"deployType"`
-	UserId      int64  `json:"userId"`
+	Name         string `json:"name"`
+	Type         int    `json:"type"`
+	Branch       string `json:"branch"`
+	TemplateUrl  string `json:"templateUrl"`
+	FrameType    uint   `json:"frameType"`
+	DeployType   int    `json:"deployType"`
+	UserId       int64  `json:"userId"`
 	LabelDisplay string `json:"labelDisplay"`
 }
 
@@ -106,4 +107,21 @@ type Config struct {
 	} `toml:"package"`
 
 	Addresses map[string]string `toml:"addresses"`
+}
+
+type RepoListPage struct {
+	Data     []RepoVo `json:"data"`
+	Total    int      `json:"total"`
+	Page     int      `json:"page"`
+	PageSize int      `json:"pageSize"`
+}
+
+type RepoVo struct {
+	Name       string           `json:"name"`
+	UpdatedAt  github.Timestamp `json:"updatedAt"`
+	Language   string           `json:"language"`
+	GithubUrl  string           `json:"githubUrl"`
+	Visibility string           `json:"Visibility"`
+	RepoOwner  string           `json:"repoOwner"`
+	Branch     string           `json:"branch"`
 }

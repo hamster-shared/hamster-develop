@@ -274,3 +274,34 @@ func (g *GithubService) GetFileContent(token, owner, repo, path string) (string,
 	}
 	return content, err
 }
+
+func (g *GithubService) GetRepoList(token, owner string, page, size int) (vo.RepoListPage, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	opt := &github.RepositoryListOptions{
+		ListOptions: github.ListOptions{
+			Page:    page,
+			PerPage: size,
+		},
+	}
+	repo, res, err := client.Repositories.List(g.ctx, owner, opt)
+	if err != nil {
+		return vo.RepoListPage{}, err
+	}
+	var repoListVo vo.RepoListPage
+	repoListVo.Page = page
+	repoListVo.PageSize = size
+	repoListVo.Total = res.LastPage + 1
+	for _, v := range repo {
+		repoVo := vo.RepoVo{
+			Name:       v.GetName(),
+			UpdatedAt:  v.GetUpdatedAt(),
+			Language:   v.GetLanguage(),
+			GithubUrl:  v.GetCloneURL(),
+			Visibility: v.GetVisibility(),
+			RepoOwner:  v.Owner.GetLogin(),
+			Branch:     v.GetDefaultBranch(),
+		}
+		repoListVo.Data = append(repoListVo.Data, repoVo)
+	}
+	return repoListVo, nil
+}
