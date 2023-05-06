@@ -275,23 +275,29 @@ func (g *GithubService) GetFileContent(token, owner, repo, path string) (string,
 	return content, err
 }
 
-func (g *GithubService) GetRepoList(token, owner string, page, size int) (vo.RepoListPage, error) {
+func (g *GithubService) GetRepoList(token, owner, filter string, page, size int) (vo.RepoListPage, error) {
 	client := utils.NewGithubClient(g.ctx, token)
-	opt := &github.RepositoryListOptions{
+	query := "user:" + owner
+	if filter != "" {
+		query = query + " " + filter + " in:name"
+	}
+	searchOpt := &github.SearchOptions{
+		Sort:  "updated",
+		Order: "desc",
 		ListOptions: github.ListOptions{
 			Page:    page,
 			PerPage: size,
 		},
 	}
-	repo, res, err := client.Repositories.List(g.ctx, owner, opt)
+	repo, _, err := client.Search.Repositories(g.ctx, query, searchOpt)
 	if err != nil {
 		return vo.RepoListPage{}, err
 	}
 	var repoListVo vo.RepoListPage
-	repoListVo.Page = page
+	repoListVo.Page = page + 1
 	repoListVo.PageSize = size
-	repoListVo.Total = res.LastPage + 1
-	for _, v := range repo {
+	repoListVo.Total = *repo.Total
+	for _, v := range repo.Repositories {
 		repoVo := vo.RepoVo{
 			Name:       v.GetName(),
 			UpdatedAt:  v.GetUpdatedAt(),

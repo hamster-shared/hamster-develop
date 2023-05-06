@@ -15,6 +15,12 @@ type CreateProjectParam struct {
 	Branch        string `json:"branch"`
 }
 
+type ImportProjectParam struct {
+	Name      string `json:"name"`
+	Ecosystem int    `json:"ecosystem"`
+	RepoUrl   string `json:"repoUrl"`
+}
+
 type CreateByCodeParam struct {
 	Name      string `json:"name"`
 	Type      int    `json:"type"`

@@ -64,6 +64,33 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 }
 
 func (h *HandlerServer) importProject(g *gin.Context) {
+	//importData := parameter.ImportProjectParam{}
+	//err := g.BindJSON(&importData)
+	//if err != nil {
+	//	Fail(err.Error(), g)
+	//	return
+	//}
+	//data := vo.CreateProjectParam{
+	//	Name:         importData.Name,
+	//	Type:         createData.Type,
+	//	TemplateUrl:  *repo.CloneURL,
+	//	FrameType:    createData.FrameType,
+	//	DeployType:   createData.DeployType,
+	//	UserId:       int64(user.Id),
+	//	LabelDisplay: createData.LabelDisplay,
+	//	GistId:       createData.GistId,
+	//	DefaultFile:  createData.DefaultFile,
+	//}
+	//id, err := h.projectService.CreateProject(data)
+	//if err != nil {
+	//	Fail(err.Error(), g)
+	//	return
+	//}
+	//project, err := h.projectService.GetProject(id.String())
+	//if err != nil {
+	//	Fail(err.Error(), g)
+	//	return
+	//}
 
 }
 
@@ -901,6 +928,7 @@ func (h *HandlerServer) workflowSettingCheck(gin *gin.Context) {
 func (h *HandlerServer) repositories(gin *gin.Context) {
 	pageStr := gin.DefaultQuery("page", "1")
 	sizeStr := gin.DefaultQuery("size", "10")
+	filter := gin.DefaultQuery("filter", "")
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -916,7 +944,7 @@ func (h *HandlerServer) repositories(gin *gin.Context) {
 	userAny, _ := gin.Get("user")
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	repoListVo, err := githubService.GetRepoList(token, user.Username, page-1, size)
+	repoListVo, err := githubService.GetRepoList(token, user.Username, filter, page-1, size)
 	if err != nil {
 		Fail(err.Error(), gin)
 	}
