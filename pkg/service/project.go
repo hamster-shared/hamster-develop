@@ -126,7 +126,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 		project.DeployType = createData.DeployType
 		project.LabelDisplay = createData.LabelDisplay
 		project.GistId = createData.GistId
-		project.DefaultFile = project.DefaultFile
+		project.DefaultFile = createData.DefaultFile
 		p.db.Create(&project)
 		return project.Id, nil
 	}
