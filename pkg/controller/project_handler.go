@@ -71,6 +71,7 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	importData := parameter.ImportProjectParam{}
 	err := g.BindJSON(&importData)
 	if err != nil {
+		log.Printf("get improtProjectParam error: %s\n", err.Error())
 		Fail(err.Error(), g)
 		return
 	}
@@ -84,8 +85,10 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		UserId:      int64(user.Id),
 	}
 	// check the project frame
+	// if type = frontend, use ecosystem for frame type direct
 	if data.Type == int(consts.FRONTEND) {
 		data.FrameType = uint(importData.Ecosystem)
+		data.DeployType = importData.DeployType
 	} else {
 		githubService := application.GetBean[*service.GithubService]("githubService")
 		// get all files
@@ -97,6 +100,11 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		frame, err := h.projectService.ParsingFrame(repoContents, importData.Name, user.Username, token)
 		if err != nil {
 			Fail(err.Error(), g)
+			return
+		}
+		if int(frame) != importData.Ecosystem {
+			msg := "The wrong ecology: " + strconv.Itoa(importData.Ecosystem) + " was chosen and should have been chosen: " + strconv.Itoa(int(frame))
+			Fail(msg, g)
 			return
 		}
 		data.FrameType = frame

@@ -19,8 +19,9 @@ type ImportProjectParam struct {
 	Name      string `json:"name"`
 	Ecosystem int    `json:"ecosystem"`
 	CloneURL  string `json:"cloneUrl"`
-	// contract: 1, frontEnd: 2
-	Type int `json:"type"`
+	Type      int    `json:"type"`
+	// only used for frontend
+	DeployType int `json:"deployType"`
 }
 
 type CreateByCodeParam struct {
