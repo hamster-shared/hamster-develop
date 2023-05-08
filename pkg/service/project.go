@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/BurntSushi/toml"
@@ -288,7 +289,7 @@ func parsingToml(fileContent *github.RepositoryContent, name, userName, token st
 	githubService := application.GetBean[*GithubService]("githubService")
 	content, err := githubService.GetFileContent(token, userName, name, fileContent.GetPath())
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 	var tomlData map[string]interface{}
 	if err := toml.Unmarshal([]byte(content), &tomlData); err != nil {
@@ -309,4 +310,26 @@ func parsingToml(fileContent *github.RepositoryContent, name, userName, token st
 		}
 	}
 	return 0, fmt.Errorf("dependencies did not have sui or aptos, it may be not sui or aptos")
+}
+
+func parsingPackageJson(fileContent *github.RepositoryContent, name, userName, token string) (uint, error) {
+	githubService := application.GetBean[*GithubService]("githubService")
+	content, err := githubService.GetFileContent(token, userName, name, fileContent.GetPath())
+	if err != nil {
+		return 0, err
+	}
+	var packageData map[string]any
+	if err := json.Unmarshal([]byte(content), &packageData); err != nil {
+		return 0, err
+	}
+	if _, ok := packageData["dependencies"].(map[string]interface{})["vue"]; ok {
+		return 1, nil
+	} else if _, ok := packageData["dependencies"].(map[string]interface{})["react"]; ok {
+		return 2, nil
+	} else if _, ok := packageData["dependencies"].(map[string]interface{})["nuxt"]; ok {
+		return 3, nil
+	} else if _, ok := packageData["dependencies"].(map[string]interface{})["next"]; ok {
+		return 4, nil
+	}
+	return 0, fmt.Errorf("canot ensure the frontend frame type")
 }
