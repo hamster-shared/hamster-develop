@@ -64,34 +64,56 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 }
 
 func (h *HandlerServer) importProject(g *gin.Context) {
-	//importData := parameter.ImportProjectParam{}
-	//err := g.BindJSON(&importData)
-	//if err != nil {
-	//	Fail(err.Error(), g)
-	//	return
-	//}
-	//data := vo.CreateProjectParam{
-	//	Name:         importData.Name,
-	//	Type:         createData.Type,
-	//	TemplateUrl:  *repo.CloneURL,
-	//	FrameType:    createData.FrameType,
-	//	DeployType:   createData.DeployType,
-	//	UserId:       int64(user.Id),
-	//	LabelDisplay: createData.LabelDisplay,
-	//	GistId:       createData.GistId,
-	//	DefaultFile:  createData.DefaultFile,
-	//}
-	//id, err := h.projectService.CreateProject(data)
-	//if err != nil {
-	//	Fail(err.Error(), g)
-	//	return
-	//}
-	//project, err := h.projectService.GetProject(id.String())
-	//if err != nil {
-	//	Fail(err.Error(), g)
-	//	return
-	//}
-
+	tokenAny, _ := g.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := g.Get("user")
+	user, _ := userAny.(db2.User)
+	importData := parameter.ImportProjectParam{}
+	err := g.BindJSON(&importData)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	data := vo.CreateProjectParam{
+		Name:        importData.Name,
+		Type:        importData.Type,
+		Branch:      "main",
+		TemplateUrl: importData.CloneURL,
+		FrameType:   0,
+		DeployType:  1,
+		UserId:      int64(user.Id),
+	}
+	// check the project frame
+	if data.Type == int(consts.FRONTEND) {
+		data.FrameType = uint(importData.Ecosystem)
+	} else {
+		githubService := application.GetBean[*service.GithubService]("githubService")
+		// get all files
+		repoContents, err := githubService.GetRepoFileList(token, user.Username, importData.Name)
+		if err != nil {
+			Fail(err.Error(), g)
+			return
+		}
+		frame, err := h.projectService.ParsingFrame(repoContents, importData.Name, user.Username, token)
+		if err != nil {
+			Fail(err.Error(), g)
+			return
+		}
+		data.FrameType = frame
+	}
+	id, err := h.projectService.CreateProject(data)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	project, err := h.projectService.GetProject(id.String())
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	workflowService.InitWorkflow(project)
+	Success(id, g)
 }
 
 func (h *HandlerServer) createProject(g *gin.Context) {

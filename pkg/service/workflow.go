@@ -760,7 +760,7 @@ func hasCommonElements(arr1, arr2 []string) bool {
 	return false
 }
 
-func (w *WorkflowService) initWorkflow(project *vo.ProjectDetailVo) {
+func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
 		workflowCheckData := parameter.SaveWorkflowParam{
 			ProjectId:  project.Id,

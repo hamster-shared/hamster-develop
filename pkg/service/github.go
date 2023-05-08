@@ -311,3 +311,22 @@ func (g *GithubService) GetRepoList(token, owner, filter string, page, size int)
 	}
 	return repoListVo, nil
 }
+
+func (g *GithubService) GetRepoFileList(token, owner, fileName string) ([]*github.RepositoryContent, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	// 设置查询选项，包含ref和message参数
+	opts := &github.RepositoryContentGetOptions{
+		Ref: "main",
+	}
+	_, contents, _, err := client.Repositories.GetContents(g.ctx, owner, fileName, "", opts)
+	if err != nil {
+		return nil, err
+	}
+	var repoContent []*github.RepositoryContent
+	for _, content := range contents {
+		if *content.Type == "file" {
+			repoContent = append(repoContent, content)
+		}
+	}
+	return repoContent, nil
+}
