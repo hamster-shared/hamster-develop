@@ -13,16 +13,16 @@ stages:
       - Initialization
     steps:
       - name: Compile Contract
+        runs-on: docker.io/hamstershare/mysten-sui-tools:v0.30.0
         run: |
-          yarn install
-          yarn compile
+          forge build
       - name: Filter Info
         run: |
           mkdir -p build/artifacts
-          cd contracts
+          cd src
           for i in `ls *.sol`;do
-            if [ -e "../build/contracts/`echo $i|sed 's/\.sol//g'`.json" ]; then
-              cp -R ../build/contracts/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
+            if [ -e "../out/$i/`echo $i|sed 's/\.sol//g'`.json" ]; then
+              cp -R ../out/$i/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
             fi
           done;
   Output Results:
