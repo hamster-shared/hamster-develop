@@ -18,7 +18,8 @@ stages:
     [[- if eq $ToolTitleValue "Security Analysis" ]]
     Security Analysis:
       [[- if in $.Tool "Mythril" ]]
-      needs: Initialization
+      needs:
+        - Initialization
       [[- end ]]
       steps:
         [[- range $ToolIndex, $ToolValue := $.Tool]]
@@ -67,9 +68,11 @@ stages:
     [[- else if eq $ToolTitleValue "Code Quality Analysis" ]]
     Code Quality Analysis:
       [[- if in $.Tool "Mythril" ]]
-      needs: Security Analysis
+      needs:
+        - Security Analysis
       [[- else if in $.Tool "Solhint" ]]
-      needs: Initialization
+      needs:
+        - Initialization
       [[- end ]]
       steps:
         [[- range $ToolIndex, $ToolValue := $.Tool]]
@@ -96,11 +99,14 @@ stages:
     [[- else if eq $ToolTitleValue "Gas Usage Analysis" ]]
     Gas Usage Analysis:
       [[- if in $.Tool "Solhint" ]]
-      needs: Code Quality Analysis
+      needs:
+        - Code Quality Analysis
       [[- else if in $.Tool "Mythril" ]]
-      needs: Security Analysis
+      needs:
+        - Security Analysis
       [[- else ]]
-      needs: Initialization
+      needs:
+        - Initialization
       [[- end ]]
       steps:
         [[- if in $.Tool "eth-gas-reporter" ]]
@@ -120,13 +126,17 @@ stages:
     [[- else if eq $ToolTitleValue "Expanded Analysis" ]]
     Expanded Analysis:
       [[- if in $.Tool "eth-gas-reporter" ]]
-      needs: Gas Usage Analysis
+      needs:
+        - Gas Usage Analysis
       [[- else if in $.Tool "Solhint" ]]
-      needs: Code Quality Analysis
+      needs:
+        - Code Quality Analysis
       [[- else if in $.Tool "Mythril" ]]
-      needs: Security Analysis
+      needs:
+        - Security Analysis
       [[- else ]]
-      needs: Initialization
+      needs:
+        - Initialization
       [[- end ]]
       steps:
         [[- if in $.Tool "AI"]]
