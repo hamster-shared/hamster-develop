@@ -87,6 +87,7 @@ var CheckToolTypeMap = map[string]int{
 }
 
 var MetaScanTool = []string{"MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)"}
+var CheckToolData = []string{"MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)", "Mythril", "Solhint", "eth-gas-reporter", "AI"}
 var TruffleCheckTool = []string{"Mythril", "Solhint", "eth-gas-reporter", "AI"}
 
 type ProjectFrameType uint

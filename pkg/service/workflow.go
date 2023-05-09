@@ -610,7 +610,7 @@ func (w *WorkflowService) TemplateParseV2(name string, tool []string, project *v
 	if truffleCheck {
 		checkType = append(checkType, "Truffle Check")
 	}
-	metaCheck := hasCommonElements(tool, consts.MetaScanTool)
+	metaCheck := hasCommonElements(tool, consts.CheckToolData)
 	if metaCheck {
 		checkType = append(checkType, "CheckMetaScan")
 	}
