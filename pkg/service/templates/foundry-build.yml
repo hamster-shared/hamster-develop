@@ -13,7 +13,7 @@ stages:
       - Initialization
     steps:
       - name: Compile Contract
-        runs-on: docker.io/hamstershare/mysten-sui-tools:v0.30.0
+        runs-on: ghcr.io/foundry-rs/foundry:latest
         run: |
           forge build
       - name: Filter Info
