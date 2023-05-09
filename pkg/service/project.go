@@ -30,7 +30,8 @@ type IProjectService interface {
 	UpdateProjectParams(id string, updateData vo.UpdateProjectParams) error
 	GetProjectParams(id string) (string, error)
 	GetProjectById(id string) (*db2.Project, error)
-	ParsingFrame(repoContents []*github.RepositoryContent, name, userName, token string) (uint, error)
+	//ParsingFrame(repoContents []*github.RepositoryContent, name, userName, token string) (uint, error)
+	ParsingEVMFrame(repoContents []*github.RepositoryContent) (consts.EVMFrameType, error)
 }
 
 type ProjectService struct {
@@ -253,34 +254,49 @@ func (p *ProjectService) GetProjectById(id string) (*db2.Project, error) {
 	return &data, result.Error
 }
 
-func (p *ProjectService) ParsingFrame(repoContents []*github.RepositoryContent, name, userName, token string) (uint, error) {
+// ParsingFrame only parsing EVM frame now
+//func (p *ProjectService) ParsingFrame(repoContents []*github.RepositoryContent, name, userName, token string) (uint, error) {
+//	for _, v := range repoContents {
+//		fileName := v.GetName()
+//		if strings.Contains(fileName, "cairo") {
+//			return consts.StarkWare, nil
+//		} else if strings.Contains(fileName, "Move.toml") {
+//			return parsingToml(v, name, userName, token)
+//		} else if strings.Contains(fileName, "truffle-config.js") || strings.Contains(fileName, "foundry.toml") || strings.Contains(fileName, "hardhat.config.js") {
+//			evmFrameType := getEvmFrameType(fileName)
+//			if evmFrameType == 0 {
+//				return 0, fmt.Errorf("parsing evm frame type failed")
+//			} else {
+//				return evmFrameType, nil
+//			}
+//		}
+//	}
+//	return 0, fmt.Errorf("parsing frame error")
+//}
+
+func (p *ProjectService) ParsingEVMFrame(repoContents []*github.RepositoryContent) (consts.EVMFrameType, error) {
 	for _, v := range repoContents {
 		fileName := v.GetName()
-		if strings.Contains(fileName, "cairo") {
-			return consts.StarkWare, nil
-		} else if strings.Contains(fileName, "Move.toml") {
-			return parsingToml(v, name, userName, token)
-		} else if strings.Contains(fileName, "truffle-config.js") || strings.Contains(fileName, "foundry.toml") || strings.Contains(fileName, "hardhat.config.js") {
-			evmFrameType := getEvmFrameType(fileName)
-			if evmFrameType == 0 {
-				return 0, fmt.Errorf("parsing evm frame type failed")
-			} else {
-				return evmFrameType, nil
-			}
+		if strings.Contains(fileName, "truffle-config.js") {
+			return consts.Truffle, nil
+		} else if strings.Contains(fileName, "foundry.toml") {
+			return consts.Foundry, nil
+		} else if strings.Contains(fileName, "hardhat.config.js") {
+			return consts.Hardhat, nil
 		}
 	}
 	return 0, fmt.Errorf("parsing frame error")
 }
 
-func getEvmFrameType(fileName string) uint {
+func getEvmFrameType(fileName string) consts.EVMFrameType {
 	if strings.Contains(fileName, "truffle-config.js") {
-		return consts.Evm
+		return consts.Truffle
 	}
 	if strings.Contains(fileName, "foundry.toml") {
-		return consts.Evm
+		return consts.Foundry
 	}
 	if strings.Contains(fileName, "hardhat.config.js") {
-		return consts.Evm
+		return consts.Hardhat
 	}
 	return 0
 }

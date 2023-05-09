@@ -80,16 +80,18 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		Type:        importData.Type,
 		Branch:      "main",
 		TemplateUrl: importData.CloneURL,
-		FrameType:   0,
+		FrameType:   uint(importData.Ecosystem),
 		DeployType:  1,
 		UserId:      int64(user.Id),
 	}
 	// check the project frame
 	// if type = frontend, use ecosystem for frame type direct
 	if data.Type == int(consts.FRONTEND) {
-		data.FrameType = uint(importData.Ecosystem)
 		data.DeployType = importData.DeployType
-	} else {
+	}
+	var evmTemplateType consts.EVMFrameType
+	// if frame type == evm, need to choose evm template type
+	if data.Type == int(consts.CONTRACT) && data.FrameType == consts.Evm {
 		githubService := application.GetBean[*service.GithubService]("githubService")
 		// get all files
 		repoContents, err := githubService.GetRepoFileList(token, user.Username, importData.Name)
@@ -97,27 +99,28 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 			Fail(err.Error(), g)
 			return
 		}
-		frame, err := h.projectService.ParsingFrame(repoContents, importData.Name, user.Username, token)
+		// get EVM contract frame: truffle\foundry\hardhat
+		frame, err := h.projectService.ParsingEVMFrame(repoContents)
 		if err != nil {
 			Fail(err.Error(), g)
 			return
 		}
-		if int(frame) != importData.Ecosystem {
-			msg := "The wrong ecology: " + strconv.Itoa(importData.Ecosystem) + " was chosen and should have been chosen: " + strconv.Itoa(int(frame))
-			Fail(msg, g)
-			return
-		}
-		data.FrameType = frame
+		evmTemplateType = consts.EVMFrameType(frame)
 	}
+	// if import project not exited, create project and return project id
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
+	// get project(check detail, build detail)
 	project, err := h.projectService.GetProject(id.String())
 	if err != nil {
 		Fail(err.Error(), g)
 		return
+	}
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+		project.EvmTemplateType = uint(evmTemplateType)
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	workflowService.InitWorkflow(project)
@@ -196,6 +199,9 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	if err != nil {
 		Fail(err.Error(), g)
 		return
+	}
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+		project.EvmTemplateType = createData.EvmTemplateType
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {

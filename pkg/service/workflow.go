@@ -564,7 +564,13 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 			} else if project.FrameType == consts.Sui {
 				filePath = "templates/sui-build.yml"
 			} else {
-				filePath = "templates/truffle-build.yml"
+				if project.EvmTemplateType == uint(consts.Truffle) {
+					filePath = "templates/truffle-build.yml"
+				} else if project.EvmTemplateType == uint(consts.Foundry) {
+					filePath = "templates/foundry-build.yml"
+				} else {
+					filePath = "templates/hardhat-build.yml"
+				}
 			}
 		}
 	} else if project.Type == uint(consts.FRONTEND) {

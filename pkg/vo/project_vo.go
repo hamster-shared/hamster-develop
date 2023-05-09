@@ -31,19 +31,20 @@ type ProjectListVo struct {
 }
 
 type ProjectDetailVo struct {
-	Id            uuid.UUID     `json:"id"`
-	Name          string        `json:"name"`
-	Type          uint          `json:"type"`
-	RepositoryUrl string        `json:"repositoryUrl"`
-	FrameType     uint          `json:"frameType"` // see# consts.Evm
-	Branch        string        `json:"branch"`
-	DeployType    int           `json:"deployType"`
-	GistId        string        `json:"gistId"`
-	DefaultFile   string        `json:"defaultFile"`
-	LabelDisplay  string        `json:"labelDisplay"`
-	RecentCheck   RecentCheckVo `json:"recentCheck"`
-	RecentBuild   RecentBuildVo `json:"recentBuild"`
-	RecentDeploy  interface{}   `json:"recentDeploy"`
+	Id              uuid.UUID     `json:"id"`
+	Name            string        `json:"name"`
+	Type            uint          `json:"type"`
+	RepositoryUrl   string        `json:"repositoryUrl"`
+	FrameType       uint          `json:"frameType"` // see# consts.Evm
+	Branch          string        `json:"branch"`
+	DeployType      int           `json:"deployType"`
+	GistId          string        `json:"gistId"`
+	DefaultFile     string        `json:"defaultFile"`
+	LabelDisplay    string        `json:"labelDisplay"`
+	RecentCheck     RecentCheckVo `json:"recentCheck"`
+	RecentBuild     RecentBuildVo `json:"recentBuild"`
+	RecentDeploy    interface{}   `json:"recentDeploy"`
+	EvmTemplateType uint          `json:"evmTemplateType"`
 }
 
 type RecentCheckVo struct {
