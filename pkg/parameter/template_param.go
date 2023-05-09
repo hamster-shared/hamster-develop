@@ -9,5 +9,7 @@ type MetaScanCheck struct {
 	Name          string   `json:"name"`
 	CheckType     []string `yaml:"checkType"`
 	Tool          []string `yaml:"tool"`
+	ToolTitle     []string `yaml:"toolTitle""`
+	OutNeed       string   `yaml:"outNeed"`
 	RepositoryUrl string   `json:"repositoryUrl"`
 }

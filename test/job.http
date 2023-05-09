@@ -440,12 +440,12 @@ Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 }
 
 ### 创建项目
-POST http://61.172.179.6:30302/api/projects
+POST http://localhost:8080/api/projects
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 {
-  "name":"my-contract-Erc918",
+  "name":"my-contract-Erc220",
   "type":1,
   "templateOwner":"hamster-template",
   "frameType":1,
@@ -465,7 +465,8 @@ Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
 ### setting workflow
 #POST http://61.172.179.6:30302/api/project/b2f48893-a565-4e63-8dad-37b0e7bade51/workflow/setting
-POST http://61.172.179.6:30302/api/project/81be5991-f19c-4236-a11e-cfbb4c028cee/workflow/setting
+#POST http://61.172.179.6:30302/api/project/81be5991-f19c-4236-a11e-cfbb4c028cee/workflow/setting
+POST http://localhost:8080/api/project/9088b096-b755-4709-8c12-8bd1fca64b83/workflow/setting
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
@@ -475,7 +476,7 @@ Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 }
 
 ### check project
-POST http://61.172.179.6:30302/api/projects/81be5991-f19c-4236-a11e-cfbb4c028cee/check
+POST http://localhost:8080/api/projects/9088b096-b755-4709-8c12-8bd1fca64b83/check
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 
