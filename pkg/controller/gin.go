@@ -61,6 +61,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/project/:id/workflow/setting/check", h.handlerServer.workflowSettingCheck)
 	// repository
 	api.GET("/repositories", h.handlerServer.repositories)
+	api.GET("/repository/type", h.handlerServer.repositoryType)
 	/*
 		创建项目返回项目 ID
 		缺登录的接口

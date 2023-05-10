@@ -986,3 +986,35 @@ func (h *HandlerServer) repositories(gin *gin.Context) {
 	}
 	Success(repoListVo, gin)
 }
+
+func (h *HandlerServer) repositoryType(gin *gin.Context) {
+	repoUrl := gin.Query("repoUrl")
+	repoName := gin.Query("repoName")
+	repoTypeStr := gin.Query("repoType")
+	if repoUrl == "" || repoName == "" || repoTypeStr == "" {
+		log.Println("repoUrl or repoName is empty")
+		Fail("repoUrl or repoName is empty", gin)
+	}
+	repoType, err := strconv.Atoi(repoTypeStr)
+	if err != nil {
+		log.Println(err.Error())
+		Fail(err.Error(), gin)
+	}
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	// get all files
+	repoContents, err := githubService.GetRepoFileList(token, user.Username, repoName)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	repoFrameType, err := service.ParsingRepoType(repoType, repoContents, user.Username, token)
+	if err != nil {
+		log.Println(err.Error())
+		Fail(err.Error(), gin)
+	}
+	Success(repoFrameType, gin)
+}

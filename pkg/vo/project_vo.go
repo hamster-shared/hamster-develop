@@ -132,3 +132,8 @@ type RepoVo struct {
 	RepoOwner  string           `json:"repoOwner"`
 	Branch     string           `json:"branch"`
 }
+
+type RepoFrameType struct {
+	Type     uint `json:"type"`
+	EvmFrame uint `json:"evmFrame"`
+}

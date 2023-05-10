@@ -3,13 +3,16 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/google/go-github/v48/github"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"log"
+	"strings"
 )
 
 type ReportService struct {
@@ -178,4 +181,56 @@ func (c *ReportService) GetFile(key string) (string, error) {
 		return "", errors.New(fmt.Sprintf("%v", res.Error()))
 	}
 	return string(res.Body()), nil
+}
+
+func ParsingRepoType(repoType int, repoFiles []*github.RepositoryContent, userName, token string) (vo.RepoFrameType, error) {
+	if repoType == int(consts.CONTRACT) {
+		return parsingContractType(repoFiles, userName, token)
+	} else if repoType == int(consts.FRONTEND) {
+		return parsingFrontEndType(repoFiles, userName, token)
+	}
+	return vo.RepoFrameType{}, fmt.Errorf("repo type invalid")
+}
+
+func parsingContractType(repoFiles []*github.RepositoryContent, userName, token string) (vo.RepoFrameType, error) {
+	var repoFrameType vo.RepoFrameType
+	for _, v := range repoFiles {
+		if strings.Contains(v.GetName(), "cairo") {
+			repoFrameType.Type = consts.StarkWare
+			return repoFrameType, nil
+		} else if strings.Contains(v.GetName(), "Move.toml") {
+			tomlType, err := parsingToml(v, v.GetName(), userName, token)
+			if err != nil {
+				return repoFrameType, err
+			}
+			repoFrameType.Type = tomlType
+			return repoFrameType, nil
+		} else if strings.Contains(v.GetName(), "truffle-config.js") {
+			repoFrameType.Type = consts.Evm
+			repoFrameType.EvmFrame = uint(consts.Truffle)
+			return repoFrameType, nil
+		} else if strings.Contains(v.GetName(), "foundry.toml") {
+			repoFrameType.Type = consts.Evm
+			repoFrameType.EvmFrame = uint(consts.Foundry)
+			return repoFrameType, nil
+		} else if strings.Contains(v.GetName(), "hardhat.config.js") {
+			repoFrameType.Type = consts.Evm
+			repoFrameType.EvmFrame = uint(consts.Hardhat)
+			return repoFrameType, nil
+		}
+	}
+	return repoFrameType, fmt.Errorf("parsing contract frame error")
+}
+
+func parsingFrontEndType(repoFiles []*github.RepositoryContent, userName, token string) (vo.RepoFrameType, error) {
+	for _, v := range repoFiles {
+		if strings.Contains(v.GetName(), "package.json") {
+			frontEndType, err := parsingPackageJson(v, v.GetName(), userName, token)
+			if err != nil {
+				return vo.RepoFrameType{}, err
+			}
+			return vo.RepoFrameType{Type: frontEndType}, nil
+		}
+	}
+	return vo.RepoFrameType{}, fmt.Errorf("parsing front end type err: package.json not exit")
 }
