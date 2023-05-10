@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -86,7 +87,18 @@ func (w *WorkflowService) getEvmAbiInfoAndByteCode(arti model.Artifactory) (abiI
 }
 
 func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
-	_, err := w.ExecProjectWorkflow(projectId, user, 1, nil)
+	var project db.Project
+	err := w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	if err != nil {
+		logger.Info("project is not exit ")
+		return err
+	}
+	params := make(map[string]string)
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
+		params["projectName"] = fmt.Sprintf("%s/%s", user.Username, project.Name)
+		params["projectUrl"] = project.RepositoryUrl
+	}
+	_, err = w.ExecProjectWorkflow(projectId, user, 1, params)
 	return err
 }
 
@@ -233,12 +245,11 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 
 	var workflow db.Workflow
 	var deployResult vo.DeployResultVo
-	w.db.Where(&db.Workflow{
+	err := w.db.Where(&db.Workflow{
 		ProjectId: projectId,
 		Type:      workflowType,
-	}).First(&workflow)
-
-	if &workflow == nil {
+	}).First(&workflow).Error
+	if err != nil {
 		return deployResult, errors.New("no check workflow in the project ")
 	}
 
@@ -272,6 +283,17 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 		logger.Tracef("create job success, job name is %s", job.Name)
 	}
+	if workflow.Tool != "" {
+		err = w.engine.CreateJob(workflowKey, workflow.ExecFile)
+		if err != nil {
+			return deployResult, err
+		}
+	}
+	met, token := setMetaScanToken(workflow)
+	if met {
+		params["scanToken"] = token
+	}
+
 	if params != nil {
 		if job.Parameter == nil {
 			job.Parameter = params
@@ -453,12 +475,74 @@ func (w *WorkflowService) SaveWorkflow(saveData parameter.SaveWorkflowParam) (db
 	return workflow, nil
 }
 
+func (w *WorkflowService) SettingWorkflow(settingData parameter.SaveWorkflowParam, projectData *vo.ProjectDetailVo) error {
+	var workflow db.Workflow
+	err := w.db.Model(db.Workflow{}).Where("project_id=? and type=?", settingData.ProjectId, consts.Check).First(&workflow).Error
+	if err == gorm.ErrRecordNotFound {
+		workflow, err = w.SaveWorkflow(settingData)
+		if err != nil {
+			return err
+		}
+	}
+	if err != nil {
+		return err
+	}
+	checkKey := w.GetWorkflowKey(settingData.ProjectId.String(), workflow.Id)
+	file, err := w.TemplateParseV2(checkKey, settingData.Tool, projectData)
+	if err != nil {
+		return err
+	}
+	workflow.ExecFile = file
+	toolType := hasCommonElements(settingData.Tool, consts.MetaScanTool)
+	if toolType {
+		workflow.ToolType = 1
+	} else {
+		workflow.ToolType = 0
+	}
+	workflow.Tool = strings.Join(settingData.Tool, ",")
+	w.UpdateWorkflow(workflow)
+	return nil
+}
+
+func (w *WorkflowService) WorkflowSettingCheck(projectId string, workflowType consts.WorkflowType) map[string][]string {
+	var workflow db.Workflow
+	var data []string
+	result := make(map[string][]string)
+	err := w.db.Model(db.Workflow{}).Where("project_id=? and type=?", projectId, workflowType).First(&workflow).Error
+	if err == gorm.ErrRecordNotFound {
+		return result
+	}
+	data = strings.Split(workflow.Tool, ",")
+	if len(data) > 0 {
+		for _, i2 := range data {
+			switch i2 {
+			case "MetaTrust (SA)", "MetaTrust (SP)", "Mythril":
+				result["securityAnalysis"] = append(result["securityAnalysis"], i2)
+			case "MetaTrust (OSA)":
+				result["openSourceAnalysis"] = append(result["openSourceAnalysis"], i2)
+			case "Solhint", "MetaTrust (CQ)":
+				result["codeQualityAnalysis"] = append(result["codeQualityAnalysis"], i2)
+			case "eth-gas-reporter":
+				result["gasUsageAnalysis"] = append(result["gasUsageAnalysis"], i2)
+			case "AI":
+				result["otherAnalysis"] = append(result["otherAnalysis"], i2)
+			}
+		}
+	}
+	return result
+}
+
 func (w *WorkflowService) UpdateWorkflow(data db.Workflow) error {
 	res := w.db.Save(&data)
 	if res.Error != nil {
 		return res.Error
 	}
 	return nil
+}
+
+func getCheckTemplate() string {
+	filePath := "templates/metascan-check.yml"
+	return filePath
 }
 
 func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) string {
@@ -468,7 +552,7 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 
 			if project.FrameType == consts.Sui {
 				filePath = "templates/sui-check.yml"
-      } else if project.FrameType == consts.Aptos {
+			} else if project.FrameType == consts.Aptos {
 				filePath = "templates/aptos-check.yml"
 			} else {
 				filePath = "templates/truffle_check.yml"
@@ -506,6 +590,66 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 		}
 	}
 	return filePath
+}
+
+func (w *WorkflowService) TemplateParseV2(name string, tool []string, project *vo.ProjectDetailVo) (string, error) {
+	if project == nil {
+		return "", errors.New("project is nil")
+	}
+	filePath := getCheckTemplate()
+	content, err := temp.ReadFile(filePath)
+	if err != nil {
+		log.Println("read template file failed ", err.Error())
+		return "", err
+	}
+	fileContent := string(content)
+	tmpl := template.New("test")
+	tmpl = tmpl.Delims("[[", "]]")
+	var checkType []string
+	truffleCheck := hasCommonElements(tool, consts.TruffleCheckTool)
+	if truffleCheck {
+		checkType = append(checkType, "Truffle Check")
+	}
+	metaCheck := hasCommonElements(tool, consts.CheckToolData)
+	if metaCheck {
+		checkType = append(checkType, "CheckMetaScan")
+	}
+	// 注册 in 函数
+	funcMap := template.FuncMap{
+		"in": func(slice []string, element string) bool {
+			for _, item := range slice {
+				if item == element {
+					return true
+				}
+			}
+			return false
+		},
+	}
+	order := []string{"Mythril", "MetaTrust (SA)", "MetaTrust (SP),", "MetaTrust (OSA),", "Solhint", "MetaTrust (CQ)", "eth-gas-reporter", "AI"}
+	sort.Slice(tool, func(i, j int) bool {
+		return orderIndex(order, tool[i]) < orderIndex(order, tool[j])
+	})
+	toolTitle, outResult := judgeTool(tool)
+	templateData := parameter.MetaScanCheck{
+		Name:          name,
+		CheckType:     checkType,
+		Tool:          tool,
+		ToolTitle:     toolTitle,
+		OutNeed:       outResult,
+		RepositoryUrl: project.RepositoryUrl,
+	}
+	tmpl, err = tmpl.Funcs(funcMap).Parse(fileContent)
+	if err != nil {
+		log.Println("template parse failed ", err.Error())
+		return "", err
+	}
+	var input bytes.Buffer
+	err = tmpl.Execute(&input, templateData)
+	if err != nil {
+		log.Println("failed to write parameters to the template ", err)
+		return "", err
+	}
+	return input.String(), nil
 }
 
 func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo, workflowType consts.WorkflowType) (string, error) {
@@ -603,4 +747,98 @@ func (w *WorkflowService) CheckRunningJob() {
 		flow.UpdateTime = time.Now()
 		_ = w.db.Save(flow).Error
 	}
+}
+
+func setMetaScanToken(workflow db.Workflow) (bool, string) {
+	token := ""
+	metaScanFlag := false
+	if workflow.ToolType == 1 {
+
+	}
+	switch workflow.ToolType {
+	case 1:
+		metaScanFlag = true
+		token = utils.MetaScanHttpRequestToken()
+		log.Println(fmt.Sprintf("flag is %t,token is :%s", metaScanFlag, token))
+	default:
+		metaScanFlag = false
+		token = ""
+	}
+	log.Println(fmt.Sprintf("flag is %t,token is :%s", metaScanFlag, token))
+	return metaScanFlag, token
+}
+
+func hasCommonElements(arr1, arr2 []string) bool {
+	for _, elem1 := range arr1 {
+		for _, elem2 := range arr2 {
+			if elem1 == elem2 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func judgeTool(arr1 []string) ([]string, string) {
+	var result []string
+	var data string
+	for _, i2 := range arr1 {
+		switch i2 {
+		case "MetaTrust (SA)", "MetaTrust (SP)", "Mythril":
+			if !strings.Contains(strings.Join(result, ","), "Security Analysis") {
+				result = append(result, "Security Analysis")
+			}
+		case "MetaTrust (OSA)":
+			if !strings.Contains(strings.Join(result, ","), "Open Source Analysis") {
+				result = append(result, "Open Source Analysis")
+			}
+		case "Solhint", "MetaTrust (CQ)":
+			if !strings.Contains(strings.Join(result, ","), "Code Quality Analysis") {
+				result = append(result, "Code Quality Analysis")
+			}
+		case "eth-gas-reporter":
+			if !strings.Contains(strings.Join(result, ","), "Gas Usage Analysis") {
+				result = append(result, "Gas Usage Analysis")
+			}
+		case "AI":
+			if !strings.Contains(strings.Join(result, ","), "Expanded Analysis") {
+				result = append(result, "Expanded Analysis")
+			}
+		}
+	}
+	order := []string{"Security Analysis", "Open Source Analysis", "Code Quality Analysis", "Gas Usage Analysis", "Expanded Analysis"}
+	sort.Slice(result, func(i, j int) bool {
+		return orderIndex(order, result[i]) < orderIndex(order, result[j])
+	})
+	if checkTool(result, "Expanded Analysis") {
+		data = "Expanded Analysis"
+		return result, data
+	} else if checkTool(result, "Gas Usage Analysis") {
+		data = "Gas Usage Analysis"
+		return result, data
+	} else if checkTool(result, "Code Quality Analysis") {
+		data = "Code Quality Analysis"
+		return result, data
+	} else {
+		data = "Security Analysis"
+		return result, data
+	}
+}
+
+func orderIndex(order []string, s string) int {
+	for i, v := range order {
+		if v == s {
+			return i
+		}
+	}
+	return len(order)
+}
+
+func checkTool(data []string, str string) bool {
+	for _, datum := range data {
+		if datum == str {
+			return true
+		}
+	}
+	return false
 }

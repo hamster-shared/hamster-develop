@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	engine "github.com/hamster-shared/aline-engine"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
+	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	uuid "github.com/iris-contrib/go.uuid"
 	"strconv"
@@ -102,6 +104,89 @@ func (h *HandlerServer) workflowReport(gin *gin.Context) {
 		return
 	}
 	Success(data, gin)
+}
+
+func (h *HandlerServer) workflowReportOverview(gin *gin.Context) {
+	idStr := gin.Param("id")
+	workflowDetailIdStr := gin.Param("detailId")
+	workflowId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	workflowDetailId, err := strconv.Atoi(workflowDetailIdStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	reportService := application.GetBean[*service.ReportService]("reportService")
+	data, err := reportService.ReportOverview(workflowId, workflowDetailId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) reportDetail(gin *gin.Context) {
+	idStr := gin.Param("id")
+	reportId, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	reportService := application.GetBean[*service.ReportService]("reportService")
+	data, err := reportService.ReportDetail(reportId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) metaScanFile(gin *gin.Context) {
+	key := gin.Param("key")
+	if key == "" {
+		Fail("key is empty", gin)
+		return
+	}
+	reportService := application.GetBean[*service.ReportService]("reportService")
+	data, err := reportService.GetFile(key)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) contractFileContent(gin *gin.Context) {
+	idStr := gin.Param("id")
+	if idStr == "" {
+		Fail("project id is empty", gin)
+		return
+	}
+	name := gin.Param("name")
+	if name == "" {
+		Fail("file name is empty", gin)
+		return
+	}
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	data, err := h.projectService.GetProject(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	path := fmt.Sprintf("contracts/%s", name)
+	content, err := githubService.GetFileContent(token, user.Username, data.Name, path)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(content, gin)
 }
 
 func (h *HandlerServer) workflowFrontendReports(gin *gin.Context) {
@@ -277,4 +362,3 @@ func (h *HandlerServer) deleteWorkflowDeploy(gin *gin.Context) {
 	frontendPackageService.DeleteFrontendDeploy(packageId)
 	Success("", gin)
 }
-

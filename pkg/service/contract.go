@@ -16,6 +16,7 @@ import (
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -76,15 +77,6 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 		return 0, err
 	}
 	entity.Type = contract.Type
-
-	var savedContractDeploy db2.ContractDeploy
-
-	err = c.db.Model(db2.ContractDeploy{}).Where("contract_id = ? and version = ? ", entity.ContractId, entity.Version).First(&savedContractDeploy).Error
-
-	if err == nil {
-		entity.Id = savedContractDeploy.Id
-		entity.CreateTime = savedContractDeploy.CreateTime
-	}
 	if entity.AbiInfo == "" && version > 1 {
 		for {
 			if version > 1 {
@@ -103,13 +95,16 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 	if contract.AbiInfo == "" {
 		contract.AbiInfo = entity.AbiInfo
 	}
-	err = c.db.Save(&entity).Error
+	err = c.db.Create(&entity).Error
 	if err != nil {
 		return 0, err
 	}
-
+	network := entity.Network
+	if contract.Network.String != "" {
+		network = networkDistinct(contract.Network.String, entity.Network)
+	}
 	contract.Network = sql.NullString{
-		String: entity.Network,
+		String: network,
 		Valid:  true,
 	}
 	contract.Status = entity.Status
@@ -122,22 +117,22 @@ func (c *ContractService) QueryContracts(projectId string, query, version, netwo
 	var afterData []db2.Contract
 	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,byte_code,create_time from t_contract where project_id = ? ")
 	if query != "" && version != "" && network != "" {
-		sql = sql + "and name like CONCAT('%',?,'%') and version = ? and network = ? group by id order by create_time desc"
+		sql = sql + "and name like CONCAT('%',?,'%') and version = ? and network like CONCAT('%',?,'%') group by id order by create_time desc"
 		c.db.Raw(sql, projectId, query, version, network).Scan(&contracts)
 	} else if query != "" && version != "" {
 		sql = sql + "and name like CONCAT('%',?,'%') and version = ? group by id order by create_time desc"
 		c.db.Raw(sql, projectId, query, version).Scan(&contracts)
 	} else if query != "" && network != "" {
-		sql = sql + "and name like CONCAT('%',?,'%') and network = ? group by id order by create_time desc"
+		sql = sql + "and name like CONCAT('%',?,'%') and network like CONCAT('%',?,'%') group by id order by create_time desc"
 		c.db.Raw(sql, projectId, query, network).Scan(&contracts)
 	} else if version != "" && network != "" {
-		sql = sql + "and version = ? and network = ? group by id order by create_time desc"
+		sql = sql + "and version = ? and network like CONCAT('%',?,'%') group by id order by create_time desc"
 		c.db.Raw(sql, projectId, version, network).Scan(&contracts)
 	} else if query != "" {
 		sql = sql + "and name like CONCAT('%',?,'%') group by id order by create_time desc"
 		c.db.Raw(sql, projectId, query).Scan(&contracts)
 	} else if network != "" {
-		sql = sql + "and network = ? group by id order by create_time desc"
+		sql = sql + "and network like CONCAT('%',?,'%') group by id order by create_time desc"
 		c.db.Raw(sql, projectId, network).Scan(&contracts)
 	} else if version != "" {
 		sql = sql + "and version = ? group by id order by create_time desc"
@@ -233,11 +228,19 @@ func (c *ContractService) QueryContractNameList(projectId string) ([]string, err
 
 func (c *ContractService) QueryNetworkList(projectId string) ([]string, error) {
 	var data []string
+	var result []string
 	res := c.db.Model(db2.Contract{}).Distinct("network").Select("network").Where("project_id = ? and network != '' ", projectId).Find(&data)
 	if res.Error != nil {
-		return data, res.Error
+		return result, res.Error
 	}
-	return data, nil
+	longest := ""
+	for _, str := range data {
+		if len(str) > len(longest) {
+			longest = str
+		}
+	}
+	result = strings.Split(longest, ",")
+	return result, nil
 }
 
 func (c *ContractService) SyncStarkWareContract() {
@@ -297,4 +300,19 @@ func (c *ContractService) GetContractDeployInfo(id int) (db2.ContractDeploy, err
 	var result db2.ContractDeploy
 	err := c.db.Model(db2.ContractDeploy{}).First(&result, id).Error
 	return result, err
+}
+
+func networkDistinct(oldNetwork, newNetwork string) string {
+	arr := strings.Split(oldNetwork, ",")
+	exist := false
+	for _, network := range arr {
+		if newNetwork == network {
+			exist = true
+			break
+		}
+	}
+	if exist {
+		return oldNetwork
+	}
+	return fmt.Sprintf("%s,%s", oldNetwork, newNetwork)
 }

@@ -68,6 +68,28 @@ const (
 	TemplateUrl      = "https://github.com/hamster-template/truffle-frame.git"
 )
 
+var MetaScanReportTypeMap = map[int]string{
+	1: "Security Analysis Report",
+	2: "Open Source Analysis Report",
+	3: "Code Quality Analysis Report",
+	4: "Gas Usage Analysis Report",
+	5: "Other Analysis Report",
+}
+var CheckToolTypeMap = map[string]int{
+	"MetaTrust (SA)":   1,
+	"MetaTrust (SP)":   1,
+	"MetaTrust (OSA)":  2,
+	"MetaTrust (CQ)":   3,
+	"Mythril":          1,
+	"Solhint":          3,
+	"eth-gas-reporter": 4,
+	"AI":               5,
+}
+
+var MetaScanTool = []string{"MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)"}
+var CheckToolData = []string{"MetaTrust (SA)", "MetaTrust (SP)", "MetaTrust (OSA)", "MetaTrust (CQ)", "Mythril", "Solhint", "eth-gas-reporter", "AI"}
+var TruffleCheckTool = []string{"Mythril", "Solhint", "eth-gas-reporter", "AI"}
+
 type ProjectFrameType uint
 
 // project frame type
@@ -77,6 +99,15 @@ const (
 	Ton
 	StarkWare
 	Sui
+)
+
+// check type
+const (
+	SecurityAnalysis int = iota + 1
+	OpenSourceAnalysis
+	CodeQualityAnalysis
+	GasUsageAnalysis
+	OtherAnalysis
 )
 
 const IpfsUrl = "http://183.66.65.247:32509"

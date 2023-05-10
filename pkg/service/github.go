@@ -262,3 +262,15 @@ func deleteOwnerDir(owner string) {
 	deleteCmd.Dir = utils.DefaultRepoDir()
 	deleteCmd.Start()
 }
+func (g *GithubService) GetFileContent(token, owner, repo, path string) (string, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	fileContent, _, _, err := client.Repositories.GetContents(g.ctx, owner, repo, path, nil)
+	if err != nil {
+		return "", err
+	}
+	content, err := fileContent.GetContent()
+	if err != nil {
+		return "", err
+	}
+	return content, err
+}

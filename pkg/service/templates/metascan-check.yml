@@ -1,0 +1,157 @@
+version: 1.0
+name: [[ .Name ]]
+stages:
+  [[- range $CheckTypeIndex, $CheckTypeValue := .CheckType ]]
+    [[- if eq $CheckTypeValue "Truffle Check" ]]
+    Initialization:
+      steps:
+        - name: Clone Code from Github
+          uses: git-checkout
+          with:
+            url: [[ $.RepositoryUrl ]]
+            branch: main
+        - name: Run "npm install"
+          run: |
+            npm install
+    [[- else if eq $CheckTypeValue "CheckMetaScan" ]]
+    [[- range $ToolTitleIndex, $ToolTitleValue := $.ToolTitle]]
+    [[- if eq $ToolTitleValue "Security Analysis" ]]
+    Security Analysis:
+      [[- if in $.Tool "Mythril" ]]
+      needs:
+        - Initialization
+      [[- end ]]
+      steps:
+        [[- range $ToolIndex, $ToolValue := $.Tool]]
+          [[- if eq $ToolValue "Mythril" ]]
+          - name: Check by Mythril
+            uses: mythril-check
+            with:
+              path: contracts
+              solc-version: 0.8.9
+          [[- else if eq $ToolValue "MetaTrust (SA)" ]]
+          - name: Check by MetaTrust(SA)
+            uses: metascan_action
+            with:
+              engine_type: STATIC
+              organization_id: 1078238259684835328
+              scan_token: ${{ param.scanToken }}
+              project_name: ${{ param.projectName }}
+              project_url: ${{ param.projectUrl }}
+              tool: MetaTrust (SA)
+          [[- else if eq $ToolValue "MetaTrust (SP)" ]]
+          - name: Check by MetaTrust(SP)
+            uses: metascan_action
+            with:
+              engine_type: PROVER
+              organization_id: 1078238259684835328
+              scan_token: ${{ param.scanToken }}
+              project_name: ${{ param.projectName }}
+              project_url: ${{ param.projectUrl }}
+              tool: MetaTrust (SP)
+        [[- end]]
+        [[- end]]
+    [[- else if eq $ToolTitleValue "Open Source Analysis" ]]
+    Open Source Analysis:
+      steps:
+        [[- if in $.Tool "MetaTrust (OSA)" ]]
+        - name: Check by MetaTrust(OSA)
+          uses: metascan_action
+          with:
+            engine_type: SCA
+            organization_id: 1078238259684835328
+            scan_token: ${{ param.scanToken }}
+            project_name: ${{ param.projectName }}
+            project_url: ${{ param.projectUrl }}
+            tool: MetaTrust (OSA)
+        [[- end ]]
+    [[- else if eq $ToolTitleValue "Code Quality Analysis" ]]
+    Code Quality Analysis:
+      [[- if in $.Tool "Mythril" ]]
+      needs:
+        - Security Analysis
+      [[- else if in $.Tool "Solhint" ]]
+      needs:
+        - Initialization
+      [[- end ]]
+      steps:
+        [[- range $ToolIndex, $ToolValue := $.Tool]]
+        [[- if eq $ToolValue "Solhint" ]]
+        - name: Install Solhint
+          run: |
+            npm install -g solhint
+        - name: Check by Solhint
+          uses: solhint-check
+          with:
+            path: contracts
+        [[- else if eq $ToolValue "MetaTrust (CQ)" ]]
+        - name: Check by MetaTrust(CQ)
+          uses: metascan_action
+          with:
+            engine_type: LINT
+            organization_id: 1078238259684835328
+            scan_token: ${{ param.scanToken }}
+            project_name: ${{ param.projectName }}
+            project_url: ${{ param.projectUrl }}
+            tool: MetaTrust (CQ)
+        [[- end ]]
+        [[- end ]]
+    [[- else if eq $ToolTitleValue "Gas Usage Analysis" ]]
+    Gas Usage Analysis:
+      [[- if in $.Tool "Solhint" ]]
+      needs:
+        - Code Quality Analysis
+      [[- else if in $.Tool "Mythril" ]]
+      needs:
+        - Security Analysis
+      [[- else ]]
+      needs:
+        - Initialization
+      [[- end ]]
+      steps:
+        [[- if in $.Tool "eth-gas-reporter" ]]
+        - name: Start Local Chain
+          run: |
+            npm install -g ganache
+            if [ -f "command.pid" ]; then
+            kill -9 `cat command.pid`  || (echo 'No such process ')
+            fi
+            nohup ganache > ganache.log 2>&1& echo $! > command.pid
+            sleep 2
+        - name: Check by eth-gas-report
+          uses: eth-gas-reporter
+          with:
+            solc-version:
+        [[- end ]]
+    [[- else if eq $ToolTitleValue "Expanded Analysis" ]]
+    Expanded Analysis:
+      [[- if in $.Tool "eth-gas-reporter" ]]
+      needs:
+        - Gas Usage Analysis
+      [[- else if in $.Tool "Solhint" ]]
+      needs:
+        - Code Quality Analysis
+      [[- else if in $.Tool "Mythril" ]]
+      needs:
+        - Security Analysis
+      [[- else ]]
+      needs:
+        - Initialization
+      [[- end ]]
+      steps:
+        [[- if in $.Tool "AI"]]
+        - name: Check by AI
+          uses: openai
+        [[- end ]]
+    [[- end ]]
+    [[- end ]]
+  [[- end ]]
+  [[- end ]]
+  [[- if in $.CheckType "Truffle Check" ]]
+    Output Results:
+      needs:
+        - [[ $.OutNeed ]]
+      steps:
+        - name: Integration Report
+          uses: check-aggregation
+  [[- end ]]

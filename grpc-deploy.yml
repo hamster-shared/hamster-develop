@@ -77,6 +77,16 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: gateway
+            - name: METASCAN_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: meta_scan_username
+            - name: METASCAN_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: meta_scan_password
           ports:
             - containerPort: 8080
           volumeMounts:

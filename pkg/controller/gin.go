@@ -47,7 +47,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/user/wallet", h.handlerServer.saveUserWallet)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
-	api.POST("/projects", h.handlerServer.createProject) // 进行中
+	api.POST("/projects", h.handlerServer.createProject)
 	api.POST("/projects/code", h.handlerServer.createProjectByCode)
 	api.GET("/projects/:id", h.handlerServer.projectDetail)
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
@@ -55,6 +55,9 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/check-name", h.handlerServer.checkName)
 	api.GET("/user", h.handlerServer.getUseInfo)
 	api.PUT("/user/first/state", h.handlerServer.updateFirstState)
+	// set check pipeline
+	api.POST("/project/:id/workflow/setting", h.handlerServer.workflowSetting)
+	api.GET("/project/:id/workflow/setting/check", h.handlerServer.workflowSettingCheck)
 
 	/*
 		创建项目返回项目 ID
@@ -101,6 +104,10 @@ func (h *HttpServer) StartHttpServer() {
 	//delete frontend deploy
 	api.DELETE("/package/:id/deploy-info", h.handlerServer.deleteWorkflowDeploy)
 	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)
+	api.GET("/workflows/:id/detail/:detailId/report/overview", h.handlerServer.workflowReportOverview)
+	api.GET("/report/:id", h.handlerServer.reportDetail)
+	api.GET("/metascan/file/*key", h.handlerServer.metaScanFile)
+	api.GET("/project/:id/contract/:name/content", h.handlerServer.contractFileContent)
 	// frontend reports
 	api.GET("/workflows/:id/detail/:detailId/frontend/report", h.handlerServer.workflowFrontendReports)
 	//workflow frontend packages

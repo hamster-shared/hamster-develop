@@ -13,6 +13,8 @@ type Workflow struct {
 	Type       uint
 	ExecFile   string
 	LastExecId uint
+	ToolType   int          `json:"toolType"`
+	Tool       string       `json:"tool"`
 	CreateTime time.Time    `json:"create_time"`
 	UpdateTime time.Time    `json:"update_time"`
 	DeleteTime sql.NullTime `json:"delete_time"`

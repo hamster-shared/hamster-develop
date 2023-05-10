@@ -10,4 +10,9 @@ type SaveWorkflowParam struct {
 	Type       consts.WorkflowType `json:"type"`
 	ExecFile   string              `json:"execFile"`
 	LastExecId uint                `json:"lastExecId"`
+	Tool       []string            `json:"tool"`
+}
+
+type WorkflowSettingParam struct {
+	Tool []string `json:"tool"`
 }
