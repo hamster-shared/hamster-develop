@@ -89,13 +89,21 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	if data.Type == int(consts.FRONTEND) {
 		data.DeployType = importData.DeployType
 	}
+	// parsing url
+	owner, name, err := service.ParsingGitHubURL(importData.CloneURL)
+	if err != nil {
+		log.Println(err.Error())
+		Fail(err.Error(), g)
+		return
+	}
 	var evmTemplateType consts.EVMFrameType
 	// if frame type == evm, need to choose evm template type
 	if data.Type == int(consts.CONTRACT) && data.FrameType == consts.Evm {
 		githubService := application.GetBean[*service.GithubService]("githubService")
 		// get all files
-		repoContents, err := githubService.GetRepoFileList(token, user.Username, importData.Name)
+		repoContents, err := githubService.GetRepoFileList(token, owner, name)
 		if err != nil {
+			log.Println(err.Error())
 			Fail(err.Error(), g)
 			return
 		}
@@ -105,9 +113,9 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 			Fail(err.Error(), g)
 			return
 		}
-		evmTemplateType = consts.EVMFrameType(frame)
+		evmTemplateType = frame
 	}
-	// if import project not exited, create project and return project id
+	//if import project not exited, create project and return project id
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
 		Fail(err.Error(), g)

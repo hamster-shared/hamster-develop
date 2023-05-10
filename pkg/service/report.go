@@ -12,6 +12,7 @@ import (
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"log"
+	"net/url"
 	"strings"
 )
 
@@ -233,4 +234,29 @@ func parsingFrontEndType(repoFiles []*github.RepositoryContent, userName, token 
 		}
 	}
 	return vo.RepoFrameType{}, fmt.Errorf("parsing front end type err: package.json not exit")
+}
+
+func ParsingGitHubURL(urlStr string) (owner, repo string, err error) {
+	// 移除 .git 后缀
+	urlStr = strings.TrimSuffix(urlStr, ".git")
+
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return "", "", err
+	}
+
+	if u.Host != "github.com" {
+		return "", "", fmt.Errorf("invalid GitHub URL")
+	}
+
+	path := strings.TrimPrefix(u.Path, "/")
+	segments := strings.Split(path, "/")
+	if len(segments) < 2 {
+		return "", "", fmt.Errorf("invalid GitHub URL")
+	}
+
+	owner = segments[0]
+	repo = segments[1]
+
+	return owner, repo, nil
 }

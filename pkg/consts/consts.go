@@ -103,7 +103,7 @@ const (
 type EVMFrameType int
 
 const (
-	Truffle EVMFrameType = iota
+	Truffle EVMFrameType = iota + 1
 	Foundry
 	Hardhat
 )
