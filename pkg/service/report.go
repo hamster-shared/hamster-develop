@@ -237,26 +237,23 @@ func parsingFrontEndType(repoFiles []*github.RepositoryContent, userName, token 
 }
 
 func ParsingGitHubURL(urlStr string) (owner, repo string, err error) {
-	// 移除 .git 后缀
-	urlStr = strings.TrimSuffix(urlStr, ".git")
-
+	if strings.HasSuffix(urlStr, ".git") {
+		// 移除 .git 后缀
+		urlStr = strings.TrimSuffix(urlStr, ".git")
+	}
 	u, err := url.Parse(urlStr)
 	if err != nil {
 		return "", "", err
 	}
-
 	if u.Host != "github.com" {
 		return "", "", fmt.Errorf("invalid GitHub URL")
 	}
-
 	path := strings.TrimPrefix(u.Path, "/")
 	segments := strings.Split(path, "/")
 	if len(segments) < 2 {
 		return "", "", fmt.Errorf("invalid GitHub URL")
 	}
-
 	owner = segments[0]
 	repo = segments[1]
-
 	return owner, repo, nil
 }
