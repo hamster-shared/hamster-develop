@@ -209,7 +209,8 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		return
 	}
 	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
-		project.EvmTemplateType = createData.EvmTemplateType
+		//project.EvmTemplateType = createData.EvmTemplateType
+		project.EvmTemplateType = uint(consts.Truffle)
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
