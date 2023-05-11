@@ -1,18 +1,28 @@
 package parameter
 
 type CreateProjectParam struct {
-	Name          string `json:"name"`
-	Type          int    `json:"type"`
-	DeployType    int    `json:"deployType"`
-	LabelDisplay  string `json:"labelDisplay"`
-	TemplateOwner string `json:"templateOwner"`
-	TemplateUrl   string `json:"templateUrl"`
-	TemplateRepo  string `json:"templateRepo"`
-	FrameType     uint   `json:"frameType"`
-	RepoOwner     string `json:"repoOwner"`
-	GistId        string `json:"gistId"`
-	DefaultFile   string `json:"defaultFile"`
-	Branch        string `json:"branch"`
+	Name            string `json:"name"`
+	Type            int    `json:"type"`
+	DeployType      int    `json:"deployType"`
+	LabelDisplay    string `json:"labelDisplay"`
+	TemplateOwner   string `json:"templateOwner"`
+	TemplateUrl     string `json:"templateUrl"`
+	TemplateRepo    string `json:"templateRepo"`
+	FrameType       uint   `json:"frameType"`
+	RepoOwner       string `json:"repoOwner"`
+	GistId          string `json:"gistId"`
+	DefaultFile     string `json:"defaultFile"`
+	Branch          string `json:"branch"`
+	EvmTemplateType uint   `json:"evmTemplateType"`
+}
+
+type ImportProjectParam struct {
+	Name      string `json:"name"`
+	Ecosystem int    `json:"ecosystem"`
+	CloneURL  string `json:"cloneUrl"`
+	Type      int    `json:"type"`
+	// only used for frontend
+	DeployType int `json:"deployType"`
 }
 
 type CreateByCodeParam struct {

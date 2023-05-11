@@ -101,6 +101,14 @@ const (
 	Sui
 )
 
+type EVMFrameType int
+
+const (
+	Truffle EVMFrameType = iota + 1
+	Foundry
+	Hardhat
+)
+
 // check type
 const (
 	SecurityAnalysis int = iota + 1

@@ -48,6 +48,7 @@ func (h *HttpServer) StartHttpServer() {
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
 	api.POST("/projects", h.handlerServer.createProject)
+	api.POST("/projects/import", h.handlerServer.importProject)
 	api.POST("/projects/code", h.handlerServer.createProjectByCode)
 	api.GET("/projects/:id", h.handlerServer.projectDetail)
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
@@ -58,7 +59,9 @@ func (h *HttpServer) StartHttpServer() {
 	// set check pipeline
 	api.POST("/project/:id/workflow/setting", h.handlerServer.workflowSetting)
 	api.GET("/project/:id/workflow/setting/check", h.handlerServer.workflowSettingCheck)
-
+	// repository
+	api.GET("/repositories", h.handlerServer.repositories)
+	api.GET("/repository/type", h.handlerServer.repositoryType)
 	/*
 		创建项目返回项目 ID
 		缺登录的接口
