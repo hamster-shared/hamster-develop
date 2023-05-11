@@ -6,7 +6,7 @@ stages:
       - name: set workdir
         uses: workdir
         with:
-          workdir: /Users/sunjianguo/GolandProjects/hamster-develop
+          workdir: /home/gzh/work/hamster-develop
   build:
     steps:
       - name: build
