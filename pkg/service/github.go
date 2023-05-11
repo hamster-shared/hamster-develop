@@ -294,7 +294,7 @@ func (g *GithubService) GetRepoList(token, owner, filter string, page, size int)
 		return vo.RepoListPage{}, err
 	}
 	var repoListVo vo.RepoListPage
-	repoListVo.Page = page + 1
+	repoListVo.Page = page
 	repoListVo.PageSize = size
 	repoListVo.Total = *repo.Total
 	for _, v := range repo.Repositories {

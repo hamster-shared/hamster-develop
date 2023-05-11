@@ -989,7 +989,7 @@ func (h *HandlerServer) repositories(gin *gin.Context) {
 	userAny, _ := gin.Get("user")
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	repoListVo, err := githubService.GetRepoList(token, user.Username, filter, page-1, size)
+	repoListVo, err := githubService.GetRepoList(token, user.Username, filter, page, size)
 	if err != nil {
 		Fail(err.Error(), gin)
 	}
