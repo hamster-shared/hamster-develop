@@ -22,8 +22,8 @@ stages:
           mkdir -p build/artifacts
           cd artifacts/contracts
           for i in `ls *.sol`;do
-            if [ -e "../artifacts/contracts/`echo $i`/`echo $i|sed 's/\.sol//g'`.json" ]; then
-              cp -R ../artifacts/contracts/`echo $i`/`echo $i|sed 's/\.sol//g'`.json  ../build/artifacts
+            if [ -e "../artifacts/contracts/` echo $i|sed 's/\.sol//g'`.json" ]; then
+              cp -R ../artifacts/contracts/` echo $i|sed 's/\.sol//g'`.json  ../build/artifacts
             fi
           done;
   Output Results:
