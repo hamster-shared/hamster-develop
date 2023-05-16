@@ -28,9 +28,9 @@ Content-Type: application/json
 Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg/
 
 ### 执行构建
-POST http://localhost:8080/api/projects/2edddac6-d6b0-4f67-b9ad-94ff576c0e97/build
+POST http://localhost:8080/api/projects/6ddd03e7-e68f-4200-8e0e-55290d6698d5/build
 Content-Type: application/json
-Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg/
+Access-Token: 7kGpnNHXzu3OCQvUP4iahgqkexKIFPMOdE0kj7QxwSm4OJmuD8azSmmMArNELxup
 
 
 ### create job
@@ -442,19 +442,24 @@ Access-Token: ufMizxtT9EqaTJf45pXUgUWget8C8jtbR+l/ltaerv/WYwyWAIUPOqRH/+f6R0ip
 ### 创建项目
 POST http://localhost:8080/api/projects
 Content-Type: application/json
-Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
+Access-Token: 1UZSNopwvo+BcNJ5PzGKeqtU752zQLLZ1u95SyLWGX2uVY6uvs+mwd/eQDc5fnvW
 
 {
-  "name":"my-contract-Erc220",
+  "name":"my-contract-Erc78225",
   "type":1,
   "templateOwner":"hamster-template",
-  "frameType":1,
+  "frameType":4,
   "deployType":1,
   "repoOwner":"jian-guo-s",
-  "templateRepo":"metascan-sp",
+  "templateRepo":"starkware-erc721",
   "userId":53070354,
-  "templateUrl":"https://github.com/hamster-template/metascan-sp.git"
+  "templateUrl":"https://github.com/hamster-template/starkware-erc721.git"
 }
+
+### 执行构建
+POST http://localhost:8080/api/projects/ed170a64-bff0-4e22-a957-c1b690ca4f10/build
+Content-Type: application/json
+Access-Token: 1UZSNopwvo+BcNJ5PzGKeqtU752zQLLZ1u95SyLWGX2uVY6uvs+mwd/eQDc5fnvW
 
 
 #### get workflow check
