@@ -23,7 +23,7 @@ stages:
           cd contracts
           for i in `ls *.sol`;do
             if [ -e "../artifacts/contracts/`echo $i`/`echo $i|sed 's/\.sol//g'`.json" ]; then
-              echo cp -R ../artifacts/contracts/`echo $i`/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
+              cp -R ../artifacts/contracts/`echo $i`/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
             fi
           done;
   Output Results:
