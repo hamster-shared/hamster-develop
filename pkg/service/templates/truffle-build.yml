@@ -15,8 +15,7 @@ stages:
       - name: Compile Contract
         run: |
           yarn install
-          npm install truffle --save-dev
-          npx truffle compile
+          yarn compile
       - name: Filter Info
         run: |
           mkdir -p build/artifacts
