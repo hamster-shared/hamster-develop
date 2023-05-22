@@ -847,6 +847,10 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+		//project.EvmTemplateType = createData.EvmTemplateType
+		project.EvmTemplateType = uint(consts.Truffle)
+	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 
 	workflowCheckData := parameter.SaveWorkflowParam{
