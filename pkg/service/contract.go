@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -15,6 +16,8 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"io"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -33,23 +36,114 @@ func NewContractService() *ContractService {
 	}
 }
 
+type DeclareRequest struct {
+	Type          string              `json:"type"`
+	SenderAddress string              `json:"sender_address"`
+	MaxFee        string              `json:"max_fee"`
+	Nonce         string              `json:"nonce"`
+	Signature     []string            `json:"signature"`
+	ContractClass types.ContractClass `json:"contract_class"`
+	Version       string              `json:"version"`
+}
+
+func (c *ContractService) Declare(gw *gateway.Gateway, ctx context.Context, contract types.ContractClass) (resp types.AddDeclareResponse, err error) {
+	declareRequest := DeclareRequest{}
+	declareRequest.Type = "DECLARE"
+	declareRequest.SenderAddress = "0x1"
+	declareRequest.MaxFee = "0x0"
+	declareRequest.Nonce = "0x0"
+	declareRequest.Signature = []string{}
+	declareRequest.ContractClass = contract
+	declareRequest.Version = "0x0"
+	req, err := c.newRequest(gw, ctx, http.MethodPost, "/add_transaction", declareRequest)
+	if err != nil {
+		return resp, err
+	}
+
+	return resp, c.do(req, &resp)
+
+}
+
+func (c *ContractService) newRequest(
+	gw *gateway.Gateway, ctx context.Context, method, endpoint string, body interface{},
+) (*http.Request, error) {
+	url := gw.Feeder + endpoint
+	if strings.HasSuffix(endpoint, "add_transaction") {
+		url = gw.Gateway + endpoint
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if body != nil {
+		data, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("marshal body: %w", err)
+		}
+		req.Body = io.NopCloser(bytes.NewBuffer(data))
+		req.Header.Add("Content-Type", "application/json; charset=utf")
+	}
+	return req, nil
+}
+
+func (c *ContractService) do(req *http.Request, v interface{}) error {
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close() // nolint: errcheck
+
+	if resp.StatusCode >= 299 {
+		e := NewError(resp)
+		return e
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(body, v)
+}
+
+type Error struct {
+	StatusCode int    `json:"-"`
+	Body       []byte `json:"-"`
+
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+// Error implements the error interface.
+func (e Error) Error() string {
+	return fmt.Sprintf("%d: %s %s", e.StatusCode, e.Code, e.Message)
+}
+
+func NewError(resp *http.Response) error {
+	apiErr := Error{StatusCode: resp.StatusCode}
+	data, err := io.ReadAll(resp.Body)
+	if err == nil && data != nil {
+		apiErr.Body = data
+		if err := json.Unmarshal(data, &apiErr); err != nil {
+			apiErr.Code = "unknown_error_format"
+			apiErr.Message = string(data)
+		}
+	}
+	return &apiErr
+}
+
 func (c *ContractService) DoStarknetDeclare(compiledContract []byte) (txHash string, classHash string, err error) {
 	gw := gateway.NewClient(gateway.WithChain(gateway.GOERLI_ID))
-
 	ctx := context.Background()
 	var contractClass types.ContractClass
-
 	err = json.Unmarshal(compiledContract, &contractClass)
-
 	if err != nil {
 		return "", "", err
 	}
-
-	declare, err := gw.Declare(ctx, contractClass, gateway.DeclareRequest{})
+	declare, err := c.Declare(gw, ctx, contractClass)
 	if err != nil {
 		return "", "", err
 	}
-
 	fmt.Println("declare.TransactionHash: ", declare.TransactionHash)
 	fmt.Println("declare.ClassHash: ", declare.ClassHash)
 
@@ -65,6 +159,39 @@ func (c *ContractService) DoStarknetDeclare(compiledContract []byte) (txHash str
 
 	return declare.TransactionHash, declare.ClassHash, nil
 }
+
+//func (c *ContractService) DoStarknetDeclare(compiledContract []byte) (txHash string, classHash string, err error) {
+//	gw := gateway.NewClient(gateway.WithChain(gateway.GOERLI_ID))
+//
+//	ctx := context.Background()
+//	var contractClass types.ContractClass
+//
+//	err = json.Unmarshal(compiledContract, &contractClass)
+//
+//	if err != nil {
+//		return "", "", err
+//	}
+//
+//	declare, err := gw.Declare(ctx, contractClass, gateway.DeclareRequest{})
+//	if err != nil {
+//		return "", "", err
+//	}
+//
+//	fmt.Println("declare.TransactionHash: ", declare.TransactionHash)
+//	fmt.Println("declare.ClassHash: ", declare.ClassHash)
+//
+//	_, receipt, err := gw.WaitForTransaction(ctx, declare.TransactionHash, 3, 10)
+//	if err != nil {
+//		fmt.Printf("could not declare contract: %v\n", err)
+//		return "", "", err
+//	}
+//	if receipt.Status != types.TransactionAcceptedOnL1 && receipt.Status != types.TransactionAcceptedOnL2 {
+//		fmt.Printf("unexpected status: %s\n", receipt.Status)
+//		return "", "", err
+//	}
+//
+//	return declare.TransactionHash, declare.ClassHash, nil
+//}
 
 func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 	var contract db2.Contract

@@ -445,19 +445,19 @@ Content-Type: application/json
 Access-Token: 1UZSNopwvo+BcNJ5PzGKeqtU752zQLLZ1u95SyLWGX2uVY6uvs+mwd/eQDc5fnvW
 
 {
-  "name":"my-contract-Erc78225",
+  "name":"my-contract-Erc901",
   "type":1,
   "templateOwner":"hamster-template",
   "frameType":4,
   "deployType":1,
   "repoOwner":"jian-guo-s",
-  "templateRepo":"starkware-erc721",
+  "templateRepo":"starkware-erc1155",
   "userId":53070354,
-  "templateUrl":"https://github.com/hamster-template/starkware-erc721.git"
+  "templateUrl":"https://github.com/hamster-template/starkware-erc1155.git"
 }
 
 ### 执行构建
-POST http://localhost:8080/api/projects/ed170a64-bff0-4e22-a957-c1b690ca4f10/build
+POST http://localhost:8080/api/projects/ba14566e-6f0d-449f-bf5c-00d0d1960b1b/build
 Content-Type: application/json
 Access-Token: 1UZSNopwvo+BcNJ5PzGKeqtU752zQLLZ1u95SyLWGX2uVY6uvs+mwd/eQDc5fnvW
 
