@@ -1000,6 +1000,31 @@ func (h *HandlerServer) repositories(gin *gin.Context) {
 	Success(repoListVo, gin)
 }
 
+func (h *HandlerServer) getRepositories(gin *gin.Context) {
+	pageStr := gin.DefaultQuery("page", "1")
+	sizeStr := gin.DefaultQuery("size", "10")
+	filter := gin.DefaultQuery("filter", "")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	data, err := h.projectService.HandleProjectsByUserId(user, page, size, token, filter)
+	if err != nil {
+		Fail(err.Error(), gin)
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) repositoryType(gin *gin.Context) {
 	repoUrl := gin.Query("repoUrl")
 	repoName := gin.Query("repoName")

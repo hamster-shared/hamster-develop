@@ -23,6 +23,7 @@ import (
 
 type IProjectService interface {
 	GetProjects(userId int, keyword string, page, size, projectType int) (*vo.ProjectPage, error)
+	HandleProjectsByUserId(user db2.User, page, size int, token, filter string) (vo.RepoListPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error)
 	GetProject(id string) (*vo.ProjectDetailVo, error)
 	UpdateProject(id string, updateData vo.UpdateProjectParam) error
@@ -252,6 +253,52 @@ func (p *ProjectService) GetProjectById(id string) (*db2.Project, error) {
 	var data db2.Project
 	result := p.db.Where("id = ? ", id).First(&data)
 	return &data, result.Error
+}
+
+func (p *ProjectService) HandleProjectsByUserId(user db2.User, page, size int, token, filter string) (vo.RepoListPage, error) {
+	var projects []db2.Project
+	err := p.db.Model(db2.Project{}).Where("user_id = ?", user.Id).Find(&projects).Error
+	if err != nil {
+		return vo.RepoListPage{}, err
+	}
+	githubService := application.GetBean[*GithubService]("githubService")
+	if len(projects) > 0 {
+		data, err := githubService.GetRepoList(token, user.Username, filter, 1, 1000)
+		if err != nil {
+			return vo.RepoListPage{}, err
+		}
+		res := removeElements(data.Data, projects)
+		start, end := utils.SlicePage(int64(page), int64(size), int64(len(res)))
+		result := res[start:end]
+		data.Total = len(res)
+		data.Data = result
+		data.PageSize = size
+		data.Page = page
+		return data, nil
+	}
+	repoListVo, err := githubService.GetRepoList(token, user.Username, filter, page, size)
+	if err != nil {
+		return vo.RepoListPage{}, err
+	}
+	return repoListVo, nil
+
+}
+
+func removeElements(arr1 []vo.RepoVo, arr2 []db2.Project) []vo.RepoVo {
+	var result []vo.RepoVo
+	for _, repoVo := range arr1 {
+		found := false
+		for _, project := range arr2 {
+			if repoVo.Name == project.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			result = append(result, repoVo)
+		}
+	}
+	return result
 }
 
 // ParsingFrame only parsing EVM frame now

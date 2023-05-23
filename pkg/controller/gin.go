@@ -60,7 +60,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/project/:id/workflow/setting", h.handlerServer.workflowSetting)
 	api.GET("/project/:id/workflow/setting/check", h.handlerServer.workflowSettingCheck)
 	// repository
-	api.GET("/repositories", h.handlerServer.repositories)
+	api.GET("/repositories", h.handlerServer.getRepositories)
 	api.GET("/repository/type", h.handlerServer.repositoryType)
 	/*
 		创建项目返回项目 ID
