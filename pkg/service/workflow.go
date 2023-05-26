@@ -554,6 +554,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 				filePath = "templates/sui-check.yml"
 			} else if project.FrameType == consts.Aptos {
 				filePath = "templates/aptos-check.yml"
+			} else if project.FrameType == consts.StarkWare {
+				filePath = "templates/stark-ware-check.yml"
 			} else {
 				filePath = "templates/truffle_check.yml"
 			}
