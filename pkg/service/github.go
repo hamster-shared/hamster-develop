@@ -33,17 +33,24 @@ func NewGithubService() *GithubService {
 
 func (g *GithubService) CheckName(token, owner, projectName string) bool {
 	client := utils.NewGithubClient(g.ctx, token)
-	query := fmt.Sprintf("%s/%s", owner, projectName)
-	opt := &github.SearchOptions{
-		ListOptions: github.ListOptions{PerPage: 1},
-	}
-	result, _, err := client.Search.Repositories(g.ctx, query, opt)
-	if err != nil {
+	repo, _, err := client.Repositories.Get(g.ctx, owner, projectName)
+	if repo == nil {
 		return true
 	}
-	if result.GetTotal() > 0 {
+	if err == nil {
 		return false
 	}
+	//query := fmt.Sprintf("%s/%s", owner, projectName)
+	//opt := &github.SearchOptions{
+	//	ListOptions: github.ListOptions{PerPage: 1},
+	//}
+	//result, _, err := client.Search.Repositories(g.ctx, query, opt)
+	//if err != nil {
+	//	return true
+	//}
+	//if result.GetTotal() > 0 {
+	//	return false
+	//}
 	return true
 }
 
