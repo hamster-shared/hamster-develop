@@ -126,7 +126,7 @@ metadata:
   labels:
     app: hamster-aline-worker-1
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: hamster-aline-worker-1
@@ -262,6 +262,20 @@ spec:
             claimName: aptos-move-cache
 
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker2
+spec:
+  selector:
+    app: docker2
+  type: ClusterIP
+  ports:
+    - name: docker-rpc
+      protocol: TCP
+      port: 2376
+      targetPort: 2376
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -269,7 +283,7 @@ metadata:
   labels:
     app: docker2
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: docker2
@@ -296,7 +310,7 @@ spec:
             - mountPath: /root/workdir
               name: aline-worker-workdir
             - mountPath: /certs
-              name: docker-tls
+              name: docker2-tls
           securityContext:
             privileged: true
       volumes:
@@ -306,6 +320,6 @@ spec:
         - name: aline-worker-workdir
           persistentVolumeClaim:
             claimName: aline-worker-workdir
-        - name: docker-tls
+        - name: docker2-tls
           persistentVolumeClaim:
             claimName: docker2-tls
