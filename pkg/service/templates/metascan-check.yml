@@ -10,9 +10,11 @@ stages:
           with:
             url: [[ $.RepositoryUrl ]]
             branch: main
+        [[- if contains $.Tool $.InstallTool ]]
         - name: Run "npm install"
           run: |
             npm install
+        [[- end ]]
     [[- else if eq $CheckTypeValue "CheckMetaScan" ]]
     [[- range $ToolTitleIndex, $ToolTitleValue := $.ToolTitle]]
     [[- if eq $ToolTitleValue "Security Analysis" ]]
@@ -147,7 +149,7 @@ stages:
     [[- end ]]
   [[- end ]]
   [[- end ]]
-  [[- if in $.CheckType "Truffle Check" ]]
+  [[- if contains $.Tool $.InstallTool ]]
     Output Results:
       needs:
         - [[ $.OutNeed ]]

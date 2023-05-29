@@ -632,11 +632,22 @@ func (w *WorkflowService) TemplateParseV2(name string, tool []string, project *v
 			}
 			return false
 		},
+		"contains": func(item []string, match []string) bool {
+			for _, m := range match {
+				for _, i := range item {
+					if i == m {
+						return true
+					}
+				}
+			}
+			return false
+		},
 	}
 	order := []string{"Mythril", "MetaTrust (SA)", "MetaTrust (SP),", "MetaTrust (OSA),", "Solhint", "MetaTrust (CQ)", "eth-gas-reporter", "AI"}
 	sort.Slice(tool, func(i, j int) bool {
 		return orderIndex(order, tool[i]) < orderIndex(order, tool[j])
 	})
+	installTool := []string{"Mythril", "Solhint", "eth-gas-reporter"}
 	toolTitle, outResult := judgeTool(tool)
 	templateData := parameter.MetaScanCheck{
 		Name:          name,
@@ -645,6 +656,7 @@ func (w *WorkflowService) TemplateParseV2(name string, tool []string, project *v
 		ToolTitle:     toolTitle,
 		OutNeed:       outResult,
 		RepositoryUrl: project.RepositoryUrl,
+		InstallTool:   installTool,
 	}
 	tmpl, err = tmpl.Funcs(funcMap).Parse(fileContent)
 	if err != nil {
