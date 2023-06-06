@@ -36,6 +36,7 @@ type WorkflowDetailVo struct {
 	ExecNumber  uint      `json:"execNumber"`
 	StartTime   time.Time `json:"startTime"`
 	Duration    int64     `json:"duration"`
+	Type        uint      `json:"type"`
 	TriggerUser string    `json:"triggerUser"`
 }
 
