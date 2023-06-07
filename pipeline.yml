@@ -6,20 +6,29 @@ stages:
       - name: set workdir
         uses: workdir
         with:
-          workdir: /Users/sunjianguo/GolandProjects/hamster-develop
+          workdir: /Users/abing/Develop/GO/GOPATH/src/github.com/hamster-develop
   build:
     steps:
       - name: build
         run: |
           make linux-test
           docker buildx build -t hamstershare/hamster-develop:${PIPELINE_ID} --platform=linux/amd64 --push .
-#          docker buildx build -f Dockerfile_worker -t hamstershare/hamster-develop-worker:${PIPELINE_ID} --platform=linux/amd64 --push .
+          docker buildx build -f Dockerfile_worker -t hamstershare/hamster-develop-worker:${PIPELINE_ID} --platform=linux/amd64 --push .
 
-  deploy:
+  deploy-master:
     needs:
       - init
     steps:
-      - name: deploy
+      - name: deploy-master
         run: |
-          envsubst < grpc-deploy.yml | kubectl -n hamster apply -f -
+          envsubst < deploy-master.yml | kubectl -n hamster apply -f -
+
+  deploy-worker:
+    needs:
+      - init
+    steps:
+      - name: deploy-worker
+        run: |
+          export DOCKER2_IP=$(kubectl get endpoints -n hamster docker2 -o jsonpath='{.subsets[0].addresses[0].ip}:{.subsets[0].ports[0].port}')
+          envsubst < deploy-worker.yml | kubectl -n hamster apply -f -
 

@@ -1,0 +1,38 @@
+version: 1.0
+name:  {{ .Name }}
+stages:
+  Initialization:
+    steps:
+      - name: Clone Code from Github
+        uses: git-checkout
+        with:
+          url: {{ .RepositoryUrl }}
+          branch: main
+  Build Contract:
+    needs:
+      - Initialization
+    steps:
+      - name: Compile Contract
+        runs-on: ghcr.io/foundry-rs/foundry:latest
+        run: |
+          forge build
+      - name: Filter Info
+        run: |
+          mkdir -p build/artifacts
+          cd src
+          for i in `ls *.sol`;do
+            if [ -e "../out/$i/`echo $i|sed 's/\.sol//g'`.json" ]; then
+              cp -R ../out/$i/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
+            fi
+          done;
+  Output Results:
+    needs:
+      - Build Contract
+    steps:
+      - name: Save Files
+        uses: hamster-artifactory
+        with:
+          name: contract-meta.zip
+          compress: false
+          path: |
+            build/artifacts/*.json

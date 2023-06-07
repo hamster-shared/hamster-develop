@@ -554,6 +554,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 				filePath = "templates/sui-check.yml"
 			} else if project.FrameType == consts.Aptos {
 				filePath = "templates/aptos-check.yml"
+			} else if project.FrameType == consts.StarkWare {
+				filePath = "templates/stark-ware-check.yml"
 			} else {
 				filePath = "templates/truffle_check.yml"
 			}
@@ -565,7 +567,13 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 			} else if project.FrameType == consts.Sui {
 				filePath = "templates/sui-build.yml"
 			} else {
-				filePath = "templates/truffle-build.yml"
+				if project.EvmTemplateType == uint(consts.Truffle) {
+					filePath = "templates/truffle-build.yml"
+				} else if project.EvmTemplateType == uint(consts.Foundry) {
+					filePath = "templates/foundry-build.yml"
+				} else {
+					filePath = "templates/hardhat-build.yml"
+				}
 			}
 		}
 	} else if project.Type == uint(consts.FRONTEND) {
@@ -624,11 +632,22 @@ func (w *WorkflowService) TemplateParseV2(name string, tool []string, project *v
 			}
 			return false
 		},
+		"contains": func(item []string, match []string) bool {
+			for _, m := range match {
+				for _, i := range item {
+					if i == m {
+						return true
+					}
+				}
+			}
+			return false
+		},
 	}
 	order := []string{"Mythril", "MetaTrust (SA)", "MetaTrust (SP),", "MetaTrust (OSA),", "Solhint", "MetaTrust (CQ)", "eth-gas-reporter", "AI"}
 	sort.Slice(tool, func(i, j int) bool {
 		return orderIndex(order, tool[i]) < orderIndex(order, tool[j])
 	})
+	installTool := []string{"Mythril", "Solhint", "eth-gas-reporter"}
 	toolTitle, outResult := judgeTool(tool)
 	templateData := parameter.MetaScanCheck{
 		Name:          name,
@@ -637,6 +656,7 @@ func (w *WorkflowService) TemplateParseV2(name string, tool []string, project *v
 		ToolTitle:     toolTitle,
 		OutNeed:       outResult,
 		RepositoryUrl: project.RepositoryUrl,
+		InstallTool:   installTool,
 	}
 	tmpl, err = tmpl.Funcs(funcMap).Parse(fileContent)
 	if err != nil {
@@ -777,6 +797,62 @@ func hasCommonElements(arr1, arr2 []string) bool {
 		}
 	}
 	return false
+}
+
+func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
+	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
+		workflowCheckData := parameter.SaveWorkflowParam{
+			ProjectId:  project.Id,
+			Type:       consts.Check,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowCheckRes, err := w.SaveWorkflow(workflowCheckData)
+		if err != nil {
+			return
+		}
+		checkKey := w.GetWorkflowKey(project.Id.String(), workflowCheckRes.Id)
+		file, err := w.TemplateParse(checkKey, project, consts.Check)
+		if err == nil {
+			workflowCheckRes.ExecFile = file
+			w.UpdateWorkflow(workflowCheckRes)
+		}
+	}
+	workflowBuildData := parameter.SaveWorkflowParam{
+		ProjectId:  project.Id,
+		Type:       consts.Build,
+		ExecFile:   "",
+		LastExecId: 0,
+	}
+	workflowBuildRes, err := w.SaveWorkflow(workflowBuildData)
+	if err != nil {
+		return
+	}
+	buildKey := w.GetWorkflowKey(project.Id.String(), workflowBuildRes.Id)
+	file1, err := w.TemplateParse(buildKey, project, consts.Build)
+	if err == nil {
+		workflowBuildRes.ExecFile = file1
+		w.UpdateWorkflow(workflowBuildRes)
+	}
+
+	if project.Type == uint(consts.FRONTEND) {
+		workflowDeployData := parameter.SaveWorkflowParam{
+			ProjectId:  project.Id,
+			Type:       consts.Deploy,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowDeployRes, err := w.SaveWorkflow(workflowDeployData)
+		if err != nil {
+			return
+		}
+		deployKey := w.GetWorkflowKey(project.Id.String(), workflowDeployRes.Id)
+		file1, err := w.TemplateParse(deployKey, project, consts.Deploy)
+		if err == nil {
+			workflowDeployRes.ExecFile = file1
+			w.UpdateWorkflow(workflowDeployRes)
+		}
+	}
 }
 
 func judgeTool(arr1 []string) ([]string, string) {

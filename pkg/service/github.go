@@ -33,17 +33,24 @@ func NewGithubService() *GithubService {
 
 func (g *GithubService) CheckName(token, owner, projectName string) bool {
 	client := utils.NewGithubClient(g.ctx, token)
-	query := fmt.Sprintf("%s/%s", owner, projectName)
-	opt := &github.SearchOptions{
-		ListOptions: github.ListOptions{PerPage: 1},
-	}
-	result, _, err := client.Search.Repositories(g.ctx, query, opt)
-	if err != nil {
+	repo, _, err := client.Repositories.Get(g.ctx, owner, projectName)
+	if repo == nil {
 		return true
 	}
-	if result.GetTotal() > 0 {
+	if err == nil {
 		return false
 	}
+	//query := fmt.Sprintf("%s/%s", owner, projectName)
+	//opt := &github.SearchOptions{
+	//	ListOptions: github.ListOptions{PerPage: 1},
+	//}
+	//result, _, err := client.Search.Repositories(g.ctx, query, opt)
+	//if err != nil {
+	//	return true
+	//}
+	//if result.GetTotal() > 0 {
+	//	return false
+	//}
 	return true
 }
 
@@ -273,4 +280,60 @@ func (g *GithubService) GetFileContent(token, owner, repo, path string) (string,
 		return "", err
 	}
 	return content, err
+}
+
+func (g *GithubService) GetRepoList(token, owner, filter string, page, size int) (vo.RepoListPage, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	query := "user:" + owner
+	if filter != "" {
+		query = query + " " + filter + " in:name"
+	}
+	searchOpt := &github.SearchOptions{
+		Sort:  "updated",
+		Order: "desc",
+		ListOptions: github.ListOptions{
+			Page:    page,
+			PerPage: size,
+		},
+	}
+	repo, _, err := client.Search.Repositories(g.ctx, query, searchOpt)
+	if err != nil {
+		return vo.RepoListPage{}, err
+	}
+	var repoListVo vo.RepoListPage
+	repoListVo.Page = page
+	repoListVo.PageSize = size
+	repoListVo.Total = *repo.Total
+	for _, v := range repo.Repositories {
+		repoVo := vo.RepoVo{
+			Name:       v.GetName(),
+			UpdatedAt:  v.GetUpdatedAt(),
+			Language:   v.GetLanguage(),
+			GithubUrl:  v.GetCloneURL(),
+			Visibility: v.GetVisibility(),
+			RepoOwner:  v.Owner.GetLogin(),
+			Branch:     v.GetDefaultBranch(),
+		}
+		repoListVo.Data = append(repoListVo.Data, repoVo)
+	}
+	return repoListVo, nil
+}
+
+func (g *GithubService) GetRepoFileList(token, owner, fileName string) ([]*github.RepositoryContent, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	// 设置查询选项，包含ref和message参数
+	opts := &github.RepositoryContentGetOptions{
+		Ref: "main",
+	}
+	_, contents, _, err := client.Repositories.GetContents(g.ctx, owner, fileName, "", opts)
+	if err != nil {
+		return nil, err
+	}
+	var repoContent []*github.RepositoryContent
+	for _, content := range contents {
+		if *content.Type == "file" {
+			repoContent = append(repoContent, content)
+		}
+	}
+	return repoContent, nil
 }

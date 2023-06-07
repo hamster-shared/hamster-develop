@@ -63,6 +63,78 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 	}
 }
 
+func (h *HandlerServer) importProject(g *gin.Context) {
+	tokenAny, _ := g.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := g.Get("user")
+	user, _ := userAny.(db2.User)
+	importData := parameter.ImportProjectParam{}
+	err := g.BindJSON(&importData)
+	if err != nil {
+		log.Printf("get improtProjectParam error: %s\n", err.Error())
+		Fail(err.Error(), g)
+		return
+	}
+	data := vo.CreateProjectParam{
+		Name:        importData.Name,
+		Type:        importData.Type,
+		Branch:      "main",
+		TemplateUrl: importData.CloneURL,
+		FrameType:   uint(importData.Ecosystem),
+		DeployType:  1,
+		UserId:      int64(user.Id),
+	}
+	// check the project frame
+	// if type = frontend, use ecosystem for frame type direct
+	if data.Type == int(consts.FRONTEND) {
+		data.DeployType = importData.DeployType
+	}
+	// parsing url
+	owner, name, err := service.ParsingGitHubURL(importData.CloneURL)
+	if err != nil {
+		log.Println(err.Error())
+		Fail(err.Error(), g)
+		return
+	}
+	var evmTemplateType consts.EVMFrameType
+	// if frame type == evm, need to choose evm template type
+	if data.Type == int(consts.CONTRACT) && data.FrameType == consts.Evm {
+		githubService := application.GetBean[*service.GithubService]("githubService")
+		// get all files
+		repoContents, err := githubService.GetRepoFileList(token, owner, name)
+		if err != nil {
+			log.Println(err.Error())
+			Fail(err.Error(), g)
+			return
+		}
+		// get EVM contract frame: truffle\foundry\hardhat
+		frame, err := h.projectService.ParsingEVMFrame(repoContents)
+		if err != nil {
+			Fail(err.Error(), g)
+			return
+		}
+		evmTemplateType = frame
+	}
+	//if import project not exited, create project and return project id
+	id, err := h.projectService.CreateProject(data)
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	// get project(check detail, build detail)
+	project, err := h.projectService.GetProject(id.String())
+	if err != nil {
+		Fail(err.Error(), g)
+		return
+	}
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+		project.EvmTemplateType = uint(evmTemplateType)
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	workflowService.InitWorkflow(project)
+	Success(id, g)
+}
+
 func (h *HandlerServer) createProject(g *gin.Context) {
 	createData := parameter.CreateProjectParam{}
 	err := g.BindJSON(&createData)
@@ -135,6 +207,10 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	if err != nil {
 		Fail(err.Error(), g)
 		return
+	}
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+		//project.EvmTemplateType = createData.EvmTemplateType
+		project.EvmTemplateType = uint(consts.Truffle)
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
@@ -771,6 +847,10 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+		//project.EvmTemplateType = createData.EvmTemplateType
+		project.EvmTemplateType = uint(consts.Truffle)
+	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 
 	workflowCheckData := parameter.SaveWorkflowParam{
@@ -891,4 +971,88 @@ func (h *HandlerServer) workflowSettingCheck(gin *gin.Context) {
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	data := workflowService.WorkflowSettingCheck(id, consts.Check)
 	Success(data, gin)
+}
+
+// get user repo lists
+func (h *HandlerServer) repositories(gin *gin.Context) {
+	pageStr := gin.DefaultQuery("page", "1")
+	sizeStr := gin.DefaultQuery("size", "10")
+	filter := gin.DefaultQuery("filter", "")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	repoListVo, err := githubService.GetRepoList(token, user.Username, filter, page, size)
+	if err != nil {
+		Fail(err.Error(), gin)
+	}
+	Success(repoListVo, gin)
+}
+
+func (h *HandlerServer) getRepositories(gin *gin.Context) {
+	pageStr := gin.DefaultQuery("page", "1")
+	sizeStr := gin.DefaultQuery("size", "10")
+	filter := gin.DefaultQuery("filter", "")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	data, err := h.projectService.HandleProjectsByUserId(user, page, size, token, filter)
+	if err != nil {
+		Fail(err.Error(), gin)
+	}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) repositoryType(gin *gin.Context) {
+	repoUrl := gin.Query("repoUrl")
+	repoName := gin.Query("repoName")
+	repoTypeStr := gin.Query("repoType")
+	if repoUrl == "" || repoName == "" || repoTypeStr == "" {
+		log.Println("repoUrl or repoName is empty")
+		Fail("repoUrl or repoName is empty", gin)
+	}
+	repoType, err := strconv.Atoi(repoTypeStr)
+	if err != nil {
+		log.Println(err.Error())
+		Fail(err.Error(), gin)
+	}
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	// get all files
+	repoContents, err := githubService.GetRepoFileList(token, user.Username, repoName)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	repoFrameType, err := service.ParsingRepoType(repoType, repoContents, user.Username, token)
+	if err != nil {
+		log.Println(err.Error())
+		Fail(err.Error(), gin)
+	}
+	Success(repoFrameType, gin)
 }

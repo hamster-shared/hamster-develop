@@ -1,6 +1,7 @@
 package vo
 
 import (
+	"github.com/google/go-github/v48/github"
 	uuid "github.com/iris-contrib/go.uuid"
 	"time"
 )
@@ -30,19 +31,20 @@ type ProjectListVo struct {
 }
 
 type ProjectDetailVo struct {
-	Id            uuid.UUID     `json:"id"`
-	Name          string        `json:"name"`
-	Type          uint          `json:"type"`
-	RepositoryUrl string        `json:"repositoryUrl"`
-	FrameType     uint          `json:"frameType"` // see# consts.Evm
-	Branch        string        `json:"branch"`
-	DeployType    int           `json:"deployType"`
-	GistId        string        `json:"gistId"`
-	DefaultFile   string        `json:"defaultFile"`
-	LabelDisplay  string        `json:"labelDisplay"`
-	RecentCheck   RecentCheckVo `json:"recentCheck"`
-	RecentBuild   RecentBuildVo `json:"recentBuild"`
-	RecentDeploy  interface{}   `json:"recentDeploy"`
+	Id              uuid.UUID     `json:"id"`
+	Name            string        `json:"name"`
+	Type            uint          `json:"type"`
+	RepositoryUrl   string        `json:"repositoryUrl"`
+	FrameType       uint          `json:"frameType"` // see# consts.Evm
+	Branch          string        `json:"branch"`
+	DeployType      int           `json:"deployType"`
+	GistId          string        `json:"gistId"`
+	DefaultFile     string        `json:"defaultFile"`
+	LabelDisplay    string        `json:"labelDisplay"`
+	RecentCheck     RecentCheckVo `json:"recentCheck"`
+	RecentBuild     RecentBuildVo `json:"recentBuild"`
+	RecentDeploy    interface{}   `json:"recentDeploy"`
+	EvmTemplateType uint          `json:"evmTemplateType"`
 }
 
 type RecentCheckVo struct {
@@ -112,4 +114,26 @@ type Config struct {
 	} `toml:"package"`
 
 	Addresses map[string]string `toml:"addresses"`
+}
+
+type RepoListPage struct {
+	Data     []RepoVo `json:"data"`
+	Total    int      `json:"total"`
+	Page     int      `json:"page"`
+	PageSize int      `json:"pageSize"`
+}
+
+type RepoVo struct {
+	Name       string           `json:"name"`
+	UpdatedAt  github.Timestamp `json:"updatedAt"`
+	Language   string           `json:"language"`
+	GithubUrl  string           `json:"githubUrl"`
+	Visibility string           `json:"Visibility"`
+	RepoOwner  string           `json:"repoOwner"`
+	Branch     string           `json:"branch"`
+}
+
+type RepoFrameType struct {
+	Type     uint `json:"type"`
+	EvmFrame uint `json:"evmFrame"`
 }

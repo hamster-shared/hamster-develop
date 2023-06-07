@@ -1,8 +1,12 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/BurntSushi/toml"
+	"github.com/google/go-github/v48/github"
+	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
@@ -10,13 +14,16 @@ import (
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"log"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 type IProjectService interface {
 	GetProjects(userId int, keyword string, page, size, projectType int) (*vo.ProjectPage, error)
+	HandleProjectsByUserId(user db2.User, page, size int, token, filter string) (vo.RepoListPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error)
 	GetProject(id string) (*vo.ProjectDetailVo, error)
 	UpdateProject(id string, updateData vo.UpdateProjectParam) error
@@ -24,6 +31,8 @@ type IProjectService interface {
 	UpdateProjectParams(id string, updateData vo.UpdateProjectParams) error
 	GetProjectParams(id string) (string, error)
 	GetProjectById(id string) (*db2.Project, error)
+	//ParsingFrame(repoContents []*github.RepositoryContent, name, userName, token string) (uint, error)
+	ParsingEVMFrame(repoContents []*github.RepositoryContent) (consts.EVMFrameType, error)
 }
 
 type ProjectService struct {
@@ -244,4 +253,146 @@ func (p *ProjectService) GetProjectById(id string) (*db2.Project, error) {
 	var data db2.Project
 	result := p.db.Where("id = ? ", id).First(&data)
 	return &data, result.Error
+}
+
+func (p *ProjectService) HandleProjectsByUserId(user db2.User, page, size int, token, filter string) (vo.RepoListPage, error) {
+	var projects []db2.Project
+	err := p.db.Model(db2.Project{}).Where("user_id = ?", user.Id).Find(&projects).Error
+	if err != nil {
+		return vo.RepoListPage{}, err
+	}
+	githubService := application.GetBean[*GithubService]("githubService")
+	if len(projects) > 0 {
+		data, err := githubService.GetRepoList(token, user.Username, filter, 1, 1000)
+		if err != nil {
+			return vo.RepoListPage{}, err
+		}
+		res := removeElements(data.Data, projects)
+		start, end := utils.SlicePage(int64(page), int64(size), int64(len(res)))
+		result := res[start:end]
+		data.Total = len(res)
+		data.Data = result
+		data.PageSize = size
+		data.Page = page
+		return data, nil
+	}
+	repoListVo, err := githubService.GetRepoList(token, user.Username, filter, page, size)
+	if err != nil {
+		return vo.RepoListPage{}, err
+	}
+	return repoListVo, nil
+
+}
+
+func removeElements(arr1 []vo.RepoVo, arr2 []db2.Project) []vo.RepoVo {
+	var result []vo.RepoVo
+	for _, repoVo := range arr1 {
+		found := false
+		for _, project := range arr2 {
+			if repoVo.Name == project.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			result = append(result, repoVo)
+		}
+	}
+	return result
+}
+
+// ParsingFrame only parsing EVM frame now
+//func (p *ProjectService) ParsingFrame(repoContents []*github.RepositoryContent, name, userName, token string) (uint, error) {
+//	for _, v := range repoContents {
+//		fileName := v.GetName()
+//		if strings.Contains(fileName, "cairo") {
+//			return consts.StarkWare, nil
+//		} else if strings.Contains(fileName, "Move.toml") {
+//			return parsingToml(v, name, userName, token)
+//		} else if strings.Contains(fileName, "truffle-config.js") || strings.Contains(fileName, "foundry.toml") || strings.Contains(fileName, "hardhat.config.js") {
+//			evmFrameType := getEvmFrameType(fileName)
+//			if evmFrameType == 0 {
+//				return 0, fmt.Errorf("parsing evm frame type failed")
+//			} else {
+//				return evmFrameType, nil
+//			}
+//		}
+//	}
+//	return 0, fmt.Errorf("parsing frame error")
+//}
+
+func (p *ProjectService) ParsingEVMFrame(repoContents []*github.RepositoryContent) (consts.EVMFrameType, error) {
+	for _, v := range repoContents {
+		fileName := v.GetName()
+		if strings.Contains(fileName, "truffle-config.js") {
+			return consts.Truffle, nil
+		} else if strings.Contains(fileName, "foundry.toml") {
+			return consts.Foundry, nil
+		} else if strings.Contains(fileName, "hardhat.config.js") {
+			return consts.Hardhat, nil
+		}
+	}
+	return 0, fmt.Errorf("parsing frame error")
+}
+
+func getEvmFrameType(fileName string) consts.EVMFrameType {
+	if strings.Contains(fileName, "truffle-config.js") {
+		return consts.Truffle
+	}
+	if strings.Contains(fileName, "foundry.toml") {
+		return consts.Foundry
+	}
+	if strings.Contains(fileName, "hardhat.config.js") {
+		return consts.Hardhat
+	}
+	return 0
+}
+
+func parsingToml(fileContent *github.RepositoryContent, name, userName, token string) (uint, error) {
+	githubService := application.GetBean[*GithubService]("githubService")
+	content, err := githubService.GetFileContent(token, userName, name, fileContent.GetPath())
+	if err != nil {
+		return 0, err
+	}
+	var tomlData map[string]interface{}
+	if err := toml.Unmarshal([]byte(content), &tomlData); err != nil {
+		log.Printf("parsing toml failed: %s\n", err.Error())
+		return 0, err
+	}
+	dependenciesData, ok := tomlData["dependencies"].(map[string]interface{})
+	if !ok {
+		log.Println("get move.toml dependencies failed")
+		return 0, fmt.Errorf("get dependencies failed")
+	}
+	for key, _ := range dependenciesData {
+		if strings.Contains(key, "aptos") || strings.Contains(key, "Aptos") {
+			return consts.Aptos, nil
+		}
+		if strings.Contains(key, "Sui") || strings.Contains(key, "sui") {
+			return consts.Sui, nil
+		}
+	}
+	return 0, fmt.Errorf("dependencies did not have sui or aptos, it may be not sui or aptos")
+}
+
+func parsingPackageJson(fileContent *github.RepositoryContent, name, userName, token string) (uint, error) {
+	githubService := application.GetBean[*GithubService]("githubService")
+	content, err := githubService.GetFileContent(token, userName, name, fileContent.GetPath())
+	if err != nil {
+		return 0, err
+	}
+	var packageData map[string]any
+	if err := json.Unmarshal([]byte(content), &packageData); err != nil {
+		return 0, err
+	}
+	if _, ok := packageData["dependencies"].(map[string]interface{})["vue"]; ok {
+		return 1, nil
+	} else if _, ok := packageData["dependencies"].(map[string]interface{})["react"]; ok {
+		return 2, nil
+	} else if _, ok := packageData["dependencies"].(map[string]interface{})["nuxt"]; ok {
+		return 3, nil
+	} else if _, ok := packageData["dependencies"].(map[string]interface{})["next"]; ok {
+		return 4, nil
+	}
+	return 0, fmt.Errorf("canot ensure the frontend frame type")
 }

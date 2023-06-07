@@ -118,80 +118,6 @@ spec:
             items:
               - key: "kubeconfig"
                 path: "config"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: hamster-aline-worker-1
-  labels:
-    app: hamster-aline-worker-1
-spec:
-  replicas: 0
-  selector:
-    matchLabels:
-      app: hamster-aline-worker-1
-  template:
-    metadata:
-      labels:
-        app: hamster-aline-worker-1
-    spec:
-      containers:
-        - name: hamster-aline-worker-1
-          image: hamstershare/hamster-develop-worker:${PIPELINE_ID}
-          imagePullPolicy: Always
-          env:
-            - name: MASTER_ADDRESS
-              value: hamster-aline-master:50001
-            - name: DOCKER_HOST
-              value: tcp://docker2:2376
-            - name: DOCKER_CERT_PATH
-              value: /certs/client
-            - name: DOCKER_TLS_VERIFY
-              value: "1"
-            - name: OPENAI_API_KEY
-              valueFrom:
-                configMapKeyRef:
-                  name: hamster-aline
-                  key: openai_api_key
-            - name: CLIENT_SECRETS
-              valueFrom:
-                configMapKeyRef:
-                  name: hamster-aline
-                  key: client_secrets
-            - name: APPS_CLIENT_ID
-              valueFrom:
-                configMapKeyRef:
-                  name: hamster-aline
-                  key: apps_client_id
-            - name: APPS_CLIENT_SECRETS
-              valueFrom:
-                configMapKeyRef:
-                  name: hamster-aline
-                  key: apps_client_secerts
-            - name: GATEWAY
-              valueFrom:
-                configMapKeyRef:
-                  name: hamster-aline
-                  key: gateway
-          volumeMounts:
-            - mountPath: /certs
-              name: docker2-tls
-              readOnly: true
-            - name: kubeconfig
-              mountPath: "/root/.kube"
-              readOnly: true
-      volumes:
-        - name: docker2-tls
-          persistentVolumeClaim:
-            claimName: docker2-tls
-        - name: kubeconfig
-          configMap:
-            # Provide the name of the ConfigMap you want to mount.
-            name: kubeconfig
-            # An array of keys from the ConfigMap to create as files
-            items:
-              - key: "kubeconfig"
-                path: "config"
 
 ---
 apiVersion: v1
@@ -262,6 +188,20 @@ spec:
             claimName: aptos-move-cache
 
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker2
+spec:
+  selector:
+    app: docker2
+  type: ClusterIP
+  ports:
+    - name: docker-rpc
+      protocol: TCP
+      port: 2376
+      targetPort: 2376
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -269,7 +209,7 @@ metadata:
   labels:
     app: docker2
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: docker2
@@ -279,7 +219,7 @@ spec:
         app: docker2
     spec:
       containers:
-        - name: docker
+        - name: docker2
           image: docker:dind
           imagePullPolicy: IfNotPresent
           args:
@@ -296,7 +236,7 @@ spec:
             - mountPath: /root/workdir
               name: aline-worker-workdir
             - mountPath: /certs
-              name: docker-tls
+              name: docker2-tls
           securityContext:
             privileged: true
       volumes:
@@ -306,6 +246,6 @@ spec:
         - name: aline-worker-workdir
           persistentVolumeClaim:
             claimName: aline-worker-workdir
-        - name: docker-tls
+        - name: docker2-tls
           persistentVolumeClaim:
             claimName: docker2-tls
