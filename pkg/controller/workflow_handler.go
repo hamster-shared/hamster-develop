@@ -180,7 +180,8 @@ func (h *HandlerServer) contractFileContent(gin *gin.Context) {
 	tokenAny, _ := gin.Get("token")
 	token, _ := tokenAny.(string)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	path := fmt.Sprintf("contracts%s", name)
+	//path := fmt.Sprintf("contracts%s", name)
+	path := fmt.Sprintf("%s", name)
 	content, err := githubService.GetFileContent(token, user.Username, data.Name, path)
 	if err != nil {
 		Fail(err.Error(), gin)
