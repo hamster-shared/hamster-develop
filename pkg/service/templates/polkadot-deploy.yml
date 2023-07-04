@@ -1,0 +1,23 @@
+version: "1"
+name: [[.Name]]
+stages:
+  Deploy Node Template:
+    steps:
+      - name: Deploy by Kubernetes
+        uses: k8s-frontend-deploy
+        with:
+          namespace: ${{ param.namespace }}
+          containers: ${{ param.containers }}
+          project_name: ${{ param.projectName }}
+          service_ports: ${{ param.servicePorts }}
+  Configure Service:
+    needs:
+      - Deploy Node Template
+    steps:
+      - name: Assign Domains
+        uses: k8s-assign-domain
+        with:
+          gateway: ${{ param.gateway }}
+          namespace: ${{ param.namespace }}
+          project_name: ${{ param.projectName }}
+          service_ports: ${{ param.servicePorts }}

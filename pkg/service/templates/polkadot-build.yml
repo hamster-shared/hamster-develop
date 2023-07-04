@@ -1,0 +1,59 @@
+version: 1.0
+name: [[.Name]]
+stages:
+  Initialization:
+    steps:
+      - name: Clone Code from Github
+        uses: git-checkout
+        with:
+          url: [[ .RepositoryUrl ]]
+          branch: main
+
+  Build Node Template:
+    needs:
+      - Initialization
+    steps:
+      - name: Compile Contract
+        runs-on: docker.io/paritytech/ci-linux:production
+        run: |
+          cargo build --locked --release
+      - name: write Dockerfile
+        run: |
+          cat >Dockerfile <<EOF
+          FROM docker.io/library/ubuntu:20.04
+          
+          LABEL description="Multistage Docker image for Substrate: a platform for web3" \
+            io.parity.image.type="builder" \
+            io.parity.image.authors="chevdor@gmail.com, devops-team@parity.io" \
+            io.parity.image.vendor="Parity Technologies" \
+            io.parity.image.description="Substrate is a next-generation framework for blockchain innovation 🚀" \
+            io.parity.image.source="https://github.com/paritytech/polkadot/blob/${VCS_REF}/docker/substrate_builder.Dockerfile" \
+            io.parity.image.documentation="https://github.com/paritytech/polkadot/"
+          
+          COPY ./target/release/node-template /usr/local/bin
+          
+          RUN useradd -m -u 1000 -U -s /bin/sh -d /substrate substrate && \
+            mkdir -p /data /substrate/.local/share/substrate && \
+            chown -R substrate:substrate /data && \
+            ln -s /data /substrate/.local/share/substrate 
+          
+          USER substrate
+          EXPOSE 30333 9933 9944 9615
+          VOLUME ["/data"]
+          
+          ENTRYPOINT ["/usr/local/bin/node-template"]
+          CMD ["--dev", "--port", "30333", "--rpc-port", "9944", "--rpc-external", "--rpc-cors", "all", "--unsafe-rpc-external", "--rpc-methods", "unsafe", "--enable-offchain-indexing", "true" , "--no-mdns", "--ws-max-connections", "10000" , "--base-path", "/data/substrate"]
+          
+          EOF
+      - name: Build Image
+        uses: image-build
+        with:
+          image_name: ${{ param.imageName }}
+  Output Results:
+    needs:
+      - Build Node Template
+    steps:
+      - name: Save Image
+        uses: image-push
+        with:
+          image_name: ${{ param.imageName }}
