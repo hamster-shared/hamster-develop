@@ -35,7 +35,7 @@ to quickly create a Cobra application.`,
 		portFlag := cmd.Flags().Lookup("db_port")
 		nameFlag := cmd.Flags().Lookup("db_name")
 
-		DSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
+		DSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 			userFlag.Value, passwordFlag.Value, hostFlag.Value, portFlag.Value, nameFlag.Value)
 
 		// go Engine.Start()

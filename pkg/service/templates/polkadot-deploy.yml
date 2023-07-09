@@ -21,3 +21,4 @@ stages:
           namespace: ${{ param.namespace }}
           project_name: ${{ param.projectName }}
           service_ports: ${{ param.servicePorts }}
+          config_https: "true"

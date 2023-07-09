@@ -42,7 +42,7 @@ stages:
           VOLUME ["/data"]
           
           ENTRYPOINT ["/usr/local/bin/node-template"]
-          CMD ["--dev", "--port", "30333", "--rpc-port", "9944", "--rpc-external", "--rpc-cors", "all", "--unsafe-rpc-external", "--rpc-methods", "unsafe", "--enable-offchain-indexing", "true" , "--no-mdns", "--ws-max-connections", "10000" , "--base-path", "/data/substrate"]
+          CMD ["--dev","--ws-external", "--port", "30333", "--ws-port", "9944", "--rpc-port", "9933", "--rpc-external", "--rpc-cors", "all", "--unsafe-rpc-external", "--rpc-methods", "unsafe", "--enable-offchain-indexing", "true" , "--no-mdns", "--ws-max-connections", "10000" , "--base-path", "/data/substrate"]
           
           EOF
       - name: Build Image

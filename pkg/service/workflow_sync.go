@@ -102,18 +102,17 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 		logger.Errorf("find project by id failed: %s", err.Error())
 		return
 	}
-
-	if uint(consts.FRONTEND) != projectData.Type {
-		return
-	}
-	jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
-	if err != nil {
-		return
-	}
-	if uint(consts.Build) == workflowDetail.Type {
-		w.syncFrontendBuild(jobDetail, workflowDetail, projectData)
-	} else if uint(consts.Deploy) == workflowDetail.Type {
-		w.syncFrontendDeploy(jobDetail, workflowDetail, projectData)
+	if uint(consts.FRONTEND) == projectData.Type || uint(consts.BLOCKCHAIN) == projectData.Type {
+		jobDetail, err := w.engine.GetJobHistory(message.JobName, message.JobId)
+		if err != nil {
+			logger.Errorf("get job history failed: %s", err)
+			return
+		}
+		if uint(consts.Build) == workflowDetail.Type {
+			w.syncFrontendBuild(jobDetail, workflowDetail, projectData)
+		} else if uint(consts.Deploy) == workflowDetail.Type {
+			w.syncFrontendDeploy(jobDetail, workflowDetail, projectData)
+		}
 	}
 }
 

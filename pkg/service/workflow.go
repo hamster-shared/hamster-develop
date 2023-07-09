@@ -110,7 +110,7 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 		return vo.DeployResultVo{}, err
 	}
 	params := make(map[string]string)
-	if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.CONTAINER) {
+	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) {
 		image := fmt.Sprintf("%s/%s-%d:%d", consts.DockerHubName, strings.ToLower(user.Username), user.Id, time.Now().Unix())
 		params["imageName"] = image
 	} else {
@@ -699,7 +699,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 			tmpl = tmpl.Delims("[[", "]]")
 		}
 	}
-	if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.CONTAINER) && workflowType == consts.Build {
+	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) && workflowType == consts.Build {
 		tmpl = tmpl.Delims("[[", "]]")
 	}
 
