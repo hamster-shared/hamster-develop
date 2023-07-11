@@ -9,15 +9,15 @@ stages:
           url: [[ .RepositoryUrl ]]
           branch: main
 
-  Build Node Template:
+  Build Node Code:
     needs:
       - Initialization
     steps:
-      - name: Compile Contract
+      - name: Compile Code
         runs-on: docker.io/paritytech/ci-linux:production
         run: |
           cargo build --locked --release
-      - name: write Dockerfile
+      - name: Create Dockerfile
         run: |
           cat >Dockerfile <<EOF
           FROM docker.io/library/ubuntu:20.04
@@ -49,11 +49,11 @@ stages:
         uses: image-build
         with:
           image_name: ${{ param.imageName }}
-  Output Results:
+  Upload Image:
     needs:
-      - Build Node Template
+      - Build Node Code
     steps:
-      - name: Save Image
+      - name: Push Image
         uses: image-push
         with:
           image_name: ${{ param.imageName }}

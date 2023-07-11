@@ -118,12 +118,16 @@ func (w *WorkflowService) SyncFrontendPackage(message model.StatusChangeMessage,
 
 func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDetail db.WorkflowDetail, project db.Project) {
 	if len(detail.ActionResult.Artifactorys) > 0 {
+		projectName := project.Name
+		if project.Type == uint(consts.BLOCKCHAIN) {
+			projectName = fmt.Sprintf("%s_node_polkadot", project.Name)
+		}
 		for range detail.ActionResult.Artifactorys {
 			frontendPackage := db.FrontendPackage{
 				ProjectId:        workflowDetail.ProjectId,
 				WorkflowId:       workflowDetail.WorkflowId,
 				WorkflowDetailId: workflowDetail.Id,
-				Name:             project.Name,
+				Name:             projectName,
 				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
 				Branch:           workflowDetail.CodeInfo,
 				BuildTime:        workflowDetail.CreateTime,
