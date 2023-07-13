@@ -97,7 +97,7 @@ func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.
 	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
 		params["projectName"] = fmt.Sprintf("%s/%s", user.Username, project.Name)
 		params["projectUrl"] = project.RepositoryUrl
-		params["userId"] = string(user.Id)
+		params["userId"] = strconv.Itoa(int(user.Id))
 	}
 	checkData, err := w.ExecProjectWorkflow(projectId, user, 1, params)
 	return checkData, err
