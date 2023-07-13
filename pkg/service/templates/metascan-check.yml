@@ -36,7 +36,7 @@ stages:
             uses: metascan_action
             with:
               engine_type: STATIC
-              organization_id: 1078238259684835328
+              organization_id: 1120366957082705920
               scan_token: ${{ param.scanToken }}
               project_name: ${{ param.projectName }}
               project_url: ${{ param.projectUrl }}
@@ -47,7 +47,7 @@ stages:
             uses: metascan_action
             with:
               engine_type: PROVER
-              organization_id: 1078238259684835328
+              organization_id: 1120366957082705920
               scan_token: ${{ param.scanToken }}
               project_name: ${{ param.projectName }}
               project_url: ${{ param.projectUrl }}
@@ -63,7 +63,7 @@ stages:
           uses: metascan_action
           with:
             engine_type: SCA
-            organization_id: 1078238259684835328
+            organization_id: 1120366957082705920
             scan_token: ${{ param.scanToken }}
             project_name: ${{ param.projectName }}
             project_url: ${{ param.projectUrl }}
@@ -94,7 +94,7 @@ stages:
           uses: metascan_action
           with:
             engine_type: LINT
-            organization_id: 1078238259684835328
+            organization_id: 1120366957082705920
             scan_token: ${{ param.scanToken }}
             project_name: ${{ param.projectName }}
             project_url: ${{ param.projectUrl }}
