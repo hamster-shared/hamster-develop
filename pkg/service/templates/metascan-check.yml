@@ -41,6 +41,7 @@ stages:
               project_name: ${{ param.projectName }}
               project_url: ${{ param.projectUrl }}
               tool: MetaTrust (SA)
+              user_id: ${{ param.userId }}
           [[- else if eq $ToolValue "MetaTrust (SP)" ]]
           - name: Check by MetaTrust(SP)
             uses: metascan_action
@@ -51,6 +52,7 @@ stages:
               project_name: ${{ param.projectName }}
               project_url: ${{ param.projectUrl }}
               tool: MetaTrust (SP)
+              user_id: ${{ param.userId }}
         [[- end]]
         [[- end]]
     [[- else if eq $ToolTitleValue "Open Source Analysis" ]]
@@ -66,6 +68,7 @@ stages:
             project_name: ${{ param.projectName }}
             project_url: ${{ param.projectUrl }}
             tool: MetaTrust (OSA)
+            user_id: ${{ param.userId }}
         [[- end ]]
     [[- else if eq $ToolTitleValue "Code Quality Analysis" ]]
     Code Quality Analysis:
@@ -96,6 +99,7 @@ stages:
             project_name: ${{ param.projectName }}
             project_url: ${{ param.projectUrl }}
             tool: MetaTrust (CQ)
+            user_id: ${{ param.userId }}
         [[- end ]]
         [[- end ]]
     [[- else if eq $ToolTitleValue "Gas Usage Analysis" ]]
