@@ -506,3 +506,28 @@ Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
 GET http://61.172.179.6:30302/api/metascan/file/6566bf37-05b0-4826-a768-2827a444e793/Functions.sol
 Content-Type: application/json
 Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
+
+###
+# import project
+POST http://localhost:8080/api/projects/import
+Content-Type: application/json
+Access-Token: HZhJloi4k18J/kH40XRIVb61RXAQ0A1EfVAChpkPQlvl/iSJhYCFgGnhJgd93IIN
+
+{
+  "name": "0711",
+  "ecosystem": 1,
+  "cloneUrl": "https://github.com/substrate-developer-hub/substrate-node-template.git",
+  "type": 3,
+  "deployType": 2
+}
+
+### 执行构建
+POST http://localhost:8080/api/projects/94907f38-3fa5-48f7-be92-d22df47f4c8f/build
+Content-Type: application/json
+Access-Token: HZhJloi4k18J/kH40XRIVb61RXAQ0A1EfVAChpkPQlvl/iSJhYCFgGnhJgd93IIN
+
+
+### container deploy
+POST http://localhost:8080/api/projects/94907f38-3fa5-48f7-be92-d22df47f4c8f/workflows/3356/detail/4918/container/deploy
+Content-Type: application/json
+Access-Token: HZhJloi4k18J/kH40XRIVb61RXAQ0A1EfVAChpkPQlvl/iSJhYCFgGnhJgd93IIN

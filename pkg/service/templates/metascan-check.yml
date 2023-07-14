@@ -36,21 +36,23 @@ stages:
             uses: metascan_action
             with:
               engine_type: STATIC
-              organization_id: 1078238259684835328
+              organization_id: 1120366957082705920
               scan_token: ${{ param.scanToken }}
               project_name: ${{ param.projectName }}
               project_url: ${{ param.projectUrl }}
               tool: MetaTrust (SA)
+              user_id: ${{ param.userId }}
           [[- else if eq $ToolValue "MetaTrust (SP)" ]]
           - name: Check by MetaTrust(SP)
             uses: metascan_action
             with:
               engine_type: PROVER
-              organization_id: 1078238259684835328
+              organization_id: 1120366957082705920
               scan_token: ${{ param.scanToken }}
               project_name: ${{ param.projectName }}
               project_url: ${{ param.projectUrl }}
               tool: MetaTrust (SP)
+              user_id: ${{ param.userId }}
         [[- end]]
         [[- end]]
     [[- else if eq $ToolTitleValue "Open Source Analysis" ]]
@@ -61,11 +63,12 @@ stages:
           uses: metascan_action
           with:
             engine_type: SCA
-            organization_id: 1078238259684835328
+            organization_id: 1120366957082705920
             scan_token: ${{ param.scanToken }}
             project_name: ${{ param.projectName }}
             project_url: ${{ param.projectUrl }}
             tool: MetaTrust (OSA)
+            user_id: ${{ param.userId }}
         [[- end ]]
     [[- else if eq $ToolTitleValue "Code Quality Analysis" ]]
     Code Quality Analysis:
@@ -91,11 +94,12 @@ stages:
           uses: metascan_action
           with:
             engine_type: LINT
-            organization_id: 1078238259684835328
+            organization_id: 1120366957082705920
             scan_token: ${{ param.scanToken }}
             project_name: ${{ param.projectName }}
             project_url: ${{ param.projectUrl }}
             tool: MetaTrust (CQ)
+            user_id: ${{ param.userId }}
         [[- end ]]
         [[- end ]]
     [[- else if eq $ToolTitleValue "Gas Usage Analysis" ]]

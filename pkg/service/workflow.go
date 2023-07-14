@@ -86,20 +86,21 @@ func (w *WorkflowService) getEvmAbiInfoAndByteCode(arti model.Artifactory) (abiI
 	return abiInfo, byteCode, nil
 }
 
-func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.UserAuth) error {
+func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.UserAuth) (vo.DeployResultVo, error) {
 	var project db.Project
 	err := w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
 	if err != nil {
 		logger.Info("project is not exit ")
-		return err
+		return vo.DeployResultVo{}, err
 	}
 	params := make(map[string]string)
 	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
 		params["projectName"] = fmt.Sprintf("%s/%s", user.Username, project.Name)
 		params["projectUrl"] = project.RepositoryUrl
+		params["userId"] = strconv.Itoa(int(user.Id))
 	}
-	_, err = w.ExecProjectWorkflow(projectId, user, 1, params)
-	return err
+	checkData, err := w.ExecProjectWorkflow(projectId, user, 1, params)
+	return checkData, err
 }
 
 func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.UserAuth) (vo.DeployResultVo, error) {
@@ -110,7 +111,7 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 		return vo.DeployResultVo{}, err
 	}
 	params := make(map[string]string)
-	if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.CONTAINER) {
+	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) {
 		image := fmt.Sprintf("%s/%s-%d:%d", consts.DockerHubName, strings.ToLower(user.Username), user.Id, time.Now().Unix())
 		params["imageName"] = image
 	} else {
@@ -596,6 +597,12 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 				filePath = "templates/frontend-k8s-deploy.yml"
 			}
 		}
+	} else if project.Type == uint(consts.BLOCKCHAIN) {
+		if workflowType == consts.Deploy {
+			filePath = "templates/polkadot-deploy.yml"
+		} else if workflowType == consts.Build {
+			filePath = "templates/polkadot-build.yml"
+		}
 	}
 	return filePath
 }
@@ -693,7 +700,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 			tmpl = tmpl.Delims("[[", "]]")
 		}
 	}
-	if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.CONTAINER) && workflowType == consts.Build {
+	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) && workflowType == consts.Build {
 		tmpl = tmpl.Delims("[[", "]]")
 	}
 
@@ -800,7 +807,7 @@ func hasCommonElements(arr1, arr2 []string) bool {
 }
 
 func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
-	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
+	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) && project.Type != uint(consts.BLOCKCHAIN) {
 		workflowCheckData := parameter.SaveWorkflowParam{
 			ProjectId:  project.Id,
 			Type:       consts.Check,
@@ -835,7 +842,7 @@ func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 		w.UpdateWorkflow(workflowBuildRes)
 	}
 
-	if project.Type == uint(consts.FRONTEND) {
+	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) {
 		workflowDeployData := parameter.SaveWorkflowParam{
 			ProjectId:  project.Id,
 			Type:       consts.Deploy,

@@ -87,6 +87,21 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: meta_scan_password
+            - name: AZURE_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: AZURE_API_KEY
+            - name: AZURE_API_BASE
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: AZURE_API_BASE
+            - name: AZURE_DEPLOYMENT_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: AZURE_DEPLOYMENT_NAME
           ports:
             - containerPort: 8080
           volumeMounts:

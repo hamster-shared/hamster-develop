@@ -1,7 +1,7 @@
 version: "1"
 name: [[.Name]]
 stages:
-  Deploy FrontEnd:
+  Deploy Node Code:
     steps:
       - name: Deploy by Kubernetes
         uses: k8s-frontend-deploy
@@ -12,7 +12,7 @@ stages:
           service_ports: ${{ param.servicePorts }}
   Configure Service:
     needs:
-      - Deploy FrontEnd
+      - Deploy Node Code
     steps:
       - name: Assign Domains
         uses: k8s-assign-domain
@@ -21,4 +21,4 @@ stages:
           namespace: ${{ param.namespace }}
           project_name: ${{ param.projectName }}
           service_ports: ${{ param.servicePorts }}
-          config_https: "false"
+          config_https: "true"

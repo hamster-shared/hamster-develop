@@ -89,6 +89,9 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	if data.Type == int(consts.FRONTEND) {
 		data.DeployType = importData.DeployType
 	}
+	if data.Type == int(consts.BLOCKCHAIN) {
+		data.DeployType = int(consts.CONTAINER)
+	}
 	// parsing url
 	owner, name, err := service.ParsingGitHubURL(importData.CloneURL)
 	if err != nil {
@@ -132,6 +135,19 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	workflowService.InitWorkflow(project)
+	if project.Type == uint(consts.BLOCKCHAIN) {
+		containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+		deployParam := parameter.K8sDeployParam{
+			ContainerPort:     9944,
+			ServiceProtocol:   "TCP",
+			ServicePort:       9944,
+			ServiceTargetPort: 9944,
+		}
+		err = containerDeployService.UpdateContainerDeploy(project.Id, deployParam)
+		if err != nil {
+			logger.Errorf("init blockchain k8s param failed: %s", err)
+		}
+	}
 	Success(id, g)
 }
 
@@ -298,13 +314,13 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 	var userVo vo.UserAuth
 	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	err = workflowService.ExecProjectCheckWorkflow(projectId, userVo)
+	checkData, err := workflowService.ExecProjectCheckWorkflow(projectId, userVo)
 	if err != nil {
 		logger.Errorf("projectWorkflowCheck error: %s", err.Error())
 		Fail(err.Error(), g)
 		return
 	}
-	Success("", g)
+	Success(checkData, g)
 }
 
 func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {

@@ -52,6 +52,21 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: gateway
+            - name: AZURE_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: AZURE_API_KEY
+            - name: AZURE_API_BASE
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: AZURE_API_BASE
+            - name: AZURE_DEPLOYMENT_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: AZURE_DEPLOYMENT_NAME
           volumeMounts:
             - mountPath: /certs
               name: docker2-tls
