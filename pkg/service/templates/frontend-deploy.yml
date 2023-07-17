@@ -8,5 +8,5 @@ stages:
         with:
           api: http://44.204.204.186:5001
           arti_url: ${{ param.ArtifactUrl }}
-          gateway: http://g.alpha.hamsternet.io
+          gateway: ${{param.ipfsGateway}}
           base_dir: ${{ param.baseDir }}

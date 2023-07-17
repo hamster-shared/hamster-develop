@@ -102,6 +102,11 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: AZURE_DEPLOYMENT_NAME
+            - name: ipfs_gateway
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: ipfs_gateway
           ports:
             - containerPort: 8080
           volumeMounts:

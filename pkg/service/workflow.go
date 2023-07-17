@@ -142,6 +142,7 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 	params["baseDir"] = "dist"
 	params["ArtifactUrl"] = "file://" + buildJobDetail.Artifactorys[0].Url
 	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
+	params["ipfsGateway"] = os.Getenv("ipfs_gateway")
 	return w.ExecProjectWorkflow(projectId, user, 3, params)
 }
 

@@ -284,7 +284,7 @@ func (g *GithubService) GetFileContent(token, owner, repo, path string) (string,
 
 func (g *GithubService) GetRepoList(token, owner, filter string, page, size int) (vo.RepoListPage, error) {
 	client := utils.NewGithubClient(g.ctx, token)
-	query := "user:" + owner
+	query := "user:" + owner + " fork:true"
 	if filter != "" {
 		query = query + " " + filter + " in:name"
 	}
