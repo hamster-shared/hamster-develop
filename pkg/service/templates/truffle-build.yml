@@ -14,8 +14,8 @@ stages:
     steps:
       - name: Compile Contract
         run: |
-          yarn install
-          yarn add truffle --save-dev
+          npm install
+          npm install truffle --save-dev
           npx truffle compile
       - name: Filter Info
         run: |
