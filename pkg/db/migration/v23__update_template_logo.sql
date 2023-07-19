@@ -13,4 +13,3 @@ update t_template set logo='https://g.alpha.hamsternet.io/ipfs/QmUEn2zsMBW8xojsm
 update t_template set logo='https://g.alpha.hamsternet.io/ipfs/QmUitnWFT9M7Kjmh9z4su4LGFfQsyqdCbGQ2vVYceoCDrj' where id = 35;
 update t_template set logo='https://g.alpha.hamsternet.io/ipfs/QmYCLdgTEmLwVuecuzzXxC9aUhsPAW2cLd6TDi9QBEsQCn' where id = 36;
 update t_template set logo='https://g.alpha.hamsternet.io/ipfs/QmNpaEzye5ipuD3vAqfCw7y95XgkBRMVaXc7SeyBvaCQhz' where id = 37;
-update t_template set logo='https://g.alpha.hamsternet.io/ipfs/' where id = 37;
