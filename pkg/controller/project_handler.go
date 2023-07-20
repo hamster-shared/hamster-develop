@@ -203,6 +203,9 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
+	if createData.Type == int(consts.BLOCKCHAIN) {
+		createData.DeployType = 2
+	}
 	data := vo.CreateProjectParam{
 		Name:         createData.Name,
 		Type:         createData.Type,
@@ -229,7 +232,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		project.EvmTemplateType = uint(consts.Truffle)
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) {
+	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) && project.Type != uint(consts.BLOCKCHAIN) {
 		workflowCheckData := parameter.SaveWorkflowParam{
 			ProjectId:  id,
 			Type:       consts.Check,
@@ -266,7 +269,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		workflowService.UpdateWorkflow(workflowBuildRes)
 	}
 
-	if project.Type == uint(consts.FRONTEND) {
+	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) {
 		workflowDeployData := parameter.SaveWorkflowParam{
 			ProjectId:  id,
 			Type:       consts.Deploy,
@@ -285,7 +288,19 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 			workflowService.UpdateWorkflow(workflowDeployRes)
 		}
 	}
-
+	if project.Type == uint(consts.BLOCKCHAIN) {
+		containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+		deployParam := parameter.K8sDeployParam{
+			ContainerPort:     9944,
+			ServiceProtocol:   "TCP",
+			ServicePort:       9944,
+			ServiceTargetPort: 9944,
+		}
+		err = containerDeployService.UpdateContainerDeploy(project.Id, deployParam)
+		if err != nil {
+			logger.Errorf("init blockchain k8s param failed: %s", err)
+		}
+	}
 	Success(id, g)
 }
 

@@ -13,6 +13,83 @@ update t_template set logo='https://g.alpha.hamsternet.io/ipfs/QmUEn2zsMBW8xojsm
 update t_template set logo='https://g.alpha.hamsternet.io/ipfs/QmUitnWFT9M7Kjmh9z4su4LGFfQsyqdCbGQ2vVYceoCDrj' where id = 35;
 update t_template set logo='https://g.alpha.hamsternet.io/ipfs/QmYCLdgTEmLwVuecuzzXxC9aUhsPAW2cLd6TDi9QBEsQCn' where id = 36;
 update t_template set logo='https://g.alpha.hamsternet.io/ipfs/QmNpaEzye5ipuD3vAqfCw7y95XgkBRMVaXc7SeyBvaCQhz' where id = 37;
+update t_template set logo='https://g.alpha.hamsternet.io/ipfs/QmWG1UsNyeQbzh2Edbm6exdaJfqj9EXgCRiApP1Xkyj24p' where id = 42;
 
 update t_frontend_template_detail set show_url='https://g.alpha.hamsternet.io/ipfs/QmZMP5jmafwZDeE98Hu9kdT9wDuPXDs7ygpwFVzQRD7iqP' where id = 1;
 update t_frontend_template_detail set show_url='https://g.alpha.hamsternet.io/ipfs/QmRZMRqvCE1qLBzvC4HHvGSAyKcTEqYgj3Mq3fFwjBd1XB' where id = 2;
+
+
+insert into t_template_type (
+                id,
+                name,
+                description,
+                type
+)values (
+         7,
+         'polkadot',
+         '',
+         3
+        );
+alter table t_template
+    modify description text;
+insert into t_template (
+    id,
+    template_type_id,
+    name,
+    description,
+    audited,
+    last_version,
+    whether_display,
+    language_type,
+    logo
+) values (
+    48,
+    7,
+    'substrate-node-template',
+    'A standalone version of this template is available for each release of Polkadot in the Substrate Developer Hub Parachain Template repository. The parachain template is generated directly at each Polkadot release branch from the Node Template in Substrate upstream.',
+     1,
+    '0.0.1',
+    1,
+    1,
+    'https://g.alpha.hamsternet.io/ipfs/QmNpaEzye5ipuD3vAqfCw7y95XgkBRMVaXc7SeyBvaCQhz'
+         );
+
+INSERT INTO t_template_detail (
+    id,
+    template_id,
+    name,
+    audited,
+    extensions,
+    description,
+    examples,
+    resources,
+    abi_info,
+    byte_code,
+    author,
+    repository_url,
+    repository_name,
+    branch,
+    version,
+    code_sources,
+    title,
+    title_description
+) values (
+            48,
+            48,
+            'substrate-node-template',
+            1,
+            'A standalone version of this template is available for each release of Polkadot in the Substrate Developer Hub Parachain Template repository. The parachain template is generated directly at each Polkadot release branch from the Node Template in Substrate upstream.',
+            '',
+            '',
+            '',
+            '',
+            '',
+            'hamster-template',
+            'https://github.com/hamster-template/substrate-node-template.git',
+            'substrate-node-template',
+            'main',
+            '0.0.1',
+            '',
+            '',
+            ''
+         );
