@@ -141,3 +141,5 @@ const Gateway = "hamster.newtouch.com"
 
 // al
 //const Gateway = "c.alpha.hamsternet.io"
+
+const Namespace = "hamster-container"
