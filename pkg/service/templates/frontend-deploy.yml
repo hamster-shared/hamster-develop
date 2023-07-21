@@ -6,7 +6,7 @@ stages:
       - name: Upload to IPFS
         uses: hamster-ipfs
         with:
-          api: https://ipfs-console.gke.hamsternet.io/
+          api: https://ipfs-console.gke.hamsternet.io
           arti_url: ${{ param.ArtifactUrl }}
           gateway: ${{param.ipfsGateway}}
           base_dir: ${{ param.baseDir }}
