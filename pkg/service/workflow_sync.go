@@ -155,9 +155,9 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		var image string
 		if project.Type == uint(consts.FRONTEND) {
 			if project.FrameType == 1 {
-				image = "https://develop-images.api.hamsternet.io/vue.png"
+				image = "https://g.alpha.hamsternet.io/ipfs/QmdhtgKNuQn2aqkdTn4DxRQidSLmmtggtpaBgh8vuyVjxd"
 			} else if project.FrameType == 2 {
-				image = "https://develop-images.api.hamsternet.io/react.png"
+				image = "https://g.alpha.hamsternet.io/ipfs/QmUcXKszQxwT21dnqf67vFxzBgFwT8iWEsxExeGA1oFf6N"
 			} else if project.FrameType == 3 {
 				image = "https://g.alpha.hamsternet.io/ipfs/QmW8DNyCUrvDHaG4a4aKjkDNTbYDy9kwFxhFno2nKmgTKt"
 			} else {
