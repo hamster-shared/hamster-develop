@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -180,7 +181,7 @@ func (h *HandlerServer) getDeployFrontendLog(gin *gin.Context) {
 		return
 	}
 	name := fmt.Sprintf("%s-%s", username, project.Name)
-	req, err := utils.GetPodLogs(name, name, username)
+	req, err := utils.GetPodLogs(name, name, consts.Namespace)
 	if err != nil {
 		log.Println("get pod logs failed", err.Error())
 		Fail(err.Error(), gin)
