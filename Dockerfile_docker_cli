@@ -14,3 +14,4 @@ RUN apt-get update && \
     apt-get install -y -qq --no-install-recommends docker-ce-cli nodejs npm cmake make yarn ;\
     rm -rf /var/lib/apt/lists/*
 RUN npm install -g truffle
+RUN  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"

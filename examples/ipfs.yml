@@ -1,18 +1,18 @@
-version: 1.0
-name: my-test2
+version: "1.0"
+name: 781e52d9-eea8-4a44-956d-44fddcd6a4e9_12537
 stages:
-  git-clone:
+  Deploy FrontEnd:
     steps:
-      - name: git-clone
-        uses: git-checkout
-        with:
-          url: https://gitee.com/mohaijiang/spring-boot-example.git
-          branch: master
-  ipfs:
-    needs:
-      - git-clone
-    steps:
-      - name: update ipfs
+      - name: Upload to IPFS
         uses: hamster-ipfs
         with:
-          path: src
+          api: https://ipfs-console.gke.hamsternet.io
+          arti_url: ${{ param.ArtifactUrl }}
+          base_dir: ${{ param.baseDir }}
+          gateway: ${{param.ipfsGateway}}
+        volumes: []
+parameter:
+  ArtifactUrl: file:///tmp/frontend.zip
+  baseDir: dist
+  buildWorkflowDetailId: "12571"
+  ipfsGateway: "https://g.alpha.hamsternet.io"
