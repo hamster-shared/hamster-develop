@@ -1,0 +1,12 @@
+version: 1.0
+name: [[.Name]]
+stages:
+  Deploy FrontEnd :
+    steps:
+      - name: Upload to IPFS
+        uses: hamster-ipfs
+        with:
+          api: /dns/ipfs-console.hamsternet.io/tcp/5001
+          arti_url: ${{ param.ArtifactUrl }}
+          gateway: ${{param.ipfsGateway}}
+          base_dir: ${{ param.baseDir }}
