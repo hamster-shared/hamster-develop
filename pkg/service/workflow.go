@@ -680,6 +680,15 @@ func (w *WorkflowService) TemplateParseV2(name string, tool []string, project *v
 	return input.String(), nil
 }
 
+func (w *WorkflowService) GetDfxJsonData() (string, error) {
+	filePath := "templates/icp-dfx.json"
+	content, err := temp.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
+
 func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo, workflowType consts.WorkflowType) (string, error) {
 	if project == nil {
 		return "", errors.New("project is nil")

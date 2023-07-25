@@ -16,6 +16,7 @@ type ChainTemplateDetail struct {
 	RepositoryName string       `json:"repositoryName"`
 	Version        string       `json:"version"`
 	Branch         string       `json:"branch"`
+	ShowUrl        string       `json:"showUrl"`
 	CreateTime     time.Time    `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
 	UpdateTime     time.Time    `json:"update_time"`
 	DeleteTime     sql.NullTime `json:"delete_time"`

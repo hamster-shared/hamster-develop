@@ -75,6 +75,8 @@ to quickly create a Cobra application.`,
 		application.SetBean[*service.ContainerDeployService]("containerDeployService", containerDeployService)
 		frontendPackageService := service.NewFrontendPackageService()
 		application.SetBean[*service.FrontendPackageService]("frontendPackageService", frontendPackageService)
+		icpDfxDataService := service.NewDfxDataService()
+		application.SetBean[*service.DfxDataService]("icpDfxDataService", icpDfxDataService)
 		templateService.Init(db)
 		projectService.Init(db)
 		application.SetBean[service.IProjectService]("projectService", projectService)
