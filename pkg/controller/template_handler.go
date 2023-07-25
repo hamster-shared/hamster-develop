@@ -77,6 +77,21 @@ func (h *HandlerServer) frontendTemplateDetail(gin *gin.Context) {
 	}
 	Success(data, gin)
 }
+
+func (h *HandlerServer) chainTemplateDetail(gin *gin.Context) {
+	idStr := gin.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	data, err := h.templateService.GetChainTemplateDetail(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
 func (h *HandlerServer) templateShow(gin *gin.Context) {
 	templateTypeStr := gin.Query("type")
 	templateType, err := strconv.Atoi(templateTypeStr)

@@ -41,6 +41,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
 	api.GET("/templates/:id", h.handlerServer.templateDetail)
 	api.GET("/frontend-templates/:id", h.handlerServer.frontendTemplateDetail)
+	api.GET("/chain-templates/:id", h.handlerServer.chainTemplateDetail)
 	api.GET("/templates/show", h.handlerServer.templateShow)
 	api.POST("/templates/:id/download", h.handlerServer.templateDownload)
 	api.Use(h.handlerServer.Authorize())

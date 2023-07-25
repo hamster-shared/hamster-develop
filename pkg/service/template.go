@@ -16,6 +16,7 @@ type ITemplateService interface {
 	//GetTemplateDetail get template detail by template id
 	GetTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
 	GetFrontendTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
+	GetChainTemplateDetail(templateId int) (*vo.ChainTemplateVo, error)
 	TemplateShow(templateType, languageType, deploymentType int) (*[]vo.TemplateVo, error)
 	TemplateDownload(id int, repoName string) string
 }
@@ -90,11 +91,22 @@ func (t *TemplateService) GetFrontendTemplateDetail(templateId int) (*vo.Templat
 	return &dataVo, nil
 }
 
+func (t *TemplateService) GetChainTemplateDetail(templateId int) (*vo.ChainTemplateVo, error) {
+	var data db2.ChainTemplateDetail
+	var dataVo vo.ChainTemplateVo
+	result := t.db.Table("t_chain_template_detail").Where("template_id = ? ", templateId).First(&data)
+	if result.Error != nil {
+		return &dataVo, result.Error
+	}
+	copier.Copy(&dataVo, &data)
+	return &dataVo, nil
+}
+
 func (t *TemplateService) TemplateShow(templateType, languageType, deploymentType int) (*[]vo.TemplateVo, error) {
 	var list []db2.Template
 	var listVo []vo.TemplateVo
 	sql := ""
-	if deploymentType == 1 {
+	if deploymentType == 1 || deploymentType == 3 {
 		sql = "select  t.*  from t_template t left join t_template_type ttt on t.template_type_id = ttt.id where ttt.type = ? and t.whether_display = 1 and t.language_type = ? and t.deploy_type = ?"
 		res := t.db.Raw(sql, templateType, languageType, deploymentType).Scan(&list)
 		if res.Error != nil {

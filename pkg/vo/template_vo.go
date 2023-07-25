@@ -43,3 +43,16 @@ type TemplateDetailVo struct {
 	DefaultFile       string `json:"defaultFile"`
 	LabelDisplay      string `json:"labelDisplay"`
 }
+
+type ChainTemplateVo struct {
+	Id             uint   `json:"id"`
+	TemplateId     string `json:"template_id"`
+	Name           string `json:"name"`
+	Audited        bool   `json:"audited"`
+	Description    string `json:"description"`
+	Author         string `json:"author"`
+	RepositoryUrl  string `json:"repositoryUrl"`
+	RepositoryName string `json:"repositoryName"`
+	Version        string `json:"version"`
+	Branch         string `json:"branch"`
+}
