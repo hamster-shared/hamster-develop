@@ -1,4 +1,4 @@
-FROM docker.io/hamstershare/debian_docker_cli:20220719
+FROM docker.io/hamstershare/debian_docker_cli:20220725
 RUN npm install -g yarn truffle
 
 COPY ./aline-test /usr/local/bin/aline-test
