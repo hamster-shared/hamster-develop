@@ -19,10 +19,16 @@ stages:
       - name: Filter Info
         run: |
           mkdir -p build/artifacts
-          cd contracts
-          for i in `ls *.sol`;do
-            if [ -e "../build/`echo $i|sed 's/\.sol//g'`.json" ]; then
-              cp -R ../build/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
+          cd build
+          for i in `ls *.json`;do
+            bytecode=$(jq -r '.bytecode' $i)
+            length=$(jq '.abi | length' $i)
+            if [ "$bytecode" = "0x" ]; then
+              echo $i
+            elif [ "$length" -eq 0 ]; then
+              echo $i
+            else
+              cp -R $i ./artifacts
             fi
           done;
   Output Results:
