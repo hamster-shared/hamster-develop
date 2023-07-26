@@ -55,4 +55,5 @@ type ChainTemplateVo struct {
 	RepositoryName string `json:"repositoryName"`
 	Version        string `json:"version"`
 	Branch         string `json:"branch"`
+	ShowUrl        string `json:"showUrl"`
 }

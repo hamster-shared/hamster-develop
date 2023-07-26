@@ -287,6 +287,15 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 			workflowDeployRes.ExecFile = file1
 			workflowService.UpdateWorkflow(workflowDeployRes)
 		}
+		if project.DeployType == int(consts.INTERNET_COMPUTER) {
+			dfxDataService := application.GetBean[*service.DfxDataService]("icpDfxDataService")
+			content, err := workflowService.GetDfxJsonData()
+			if err != nil {
+				logger.Errorf("init dfx json data failed:%s", err)
+			} else {
+				dfxDataService.SaveDfxJsonData(project.Id.String(), content)
+			}
+		}
 	}
 	if project.Type == uint(consts.BLOCKCHAIN) {
 		containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
@@ -300,6 +309,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		if err != nil {
 			logger.Errorf("init blockchain k8s param failed: %s", err)
 		}
+
 	}
 	Success(id, g)
 }

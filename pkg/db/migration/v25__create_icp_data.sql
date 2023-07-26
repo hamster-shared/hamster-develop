@@ -1,7 +1,8 @@
 create table t_icp_dfx_data (
     id int primary key auto_increment,
     project_id char(36)  comment 'project id',
-    dfx_data   varchar(255)
+    dfx_data   text,
+    create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '创建时间'
 );
 
 create table t_chain_template_detail(
