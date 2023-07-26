@@ -66,6 +66,23 @@ func (i *IcpService) CreateIdentity(userId uint) (vo vo.UserIcpInfoVo, error err
 	return vo, nil
 }
 
+func (i *IcpService) GetAccountInfo(userId uint) (vo vo.UserIcpInfoVo, error error) {
+	var userIcp db.UserIcp
+	err := i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).First(&userIcp).Error
+	if err != nil {
+		return vo, err
+	}
+	ledgerBalanceCmd := "dfx ledger balance --network ic"
+	balance, err := i.execDfxCommand(ledgerBalanceCmd)
+	if err != nil {
+		return vo, err
+	}
+	vo.UserId = int(userIcp.FkUserId)
+	vo.AccountId = userIcp.AccountId
+	vo.IcpBalance = strings.TrimSpace(balance)
+	return vo, nil
+}
+
 func (i *IcpService) getLedgerInfo(identityName string) (string, string, error) {
 	var mutex sync.Mutex
 	mutex.Lock()

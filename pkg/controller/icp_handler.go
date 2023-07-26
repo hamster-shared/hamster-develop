@@ -70,15 +70,27 @@ func (h *HandlerServer) getWalletInfo(gin *gin.Context) {
 }
 
 func (h *HandlerServer) getAccountInfo(gin *gin.Context) {
-	Success("", gin)
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	icpInfoVo, err := icpService.GetAccountInfo(user.Id)
+	if err != err {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(icpInfoVo, gin)
 }
 
 func (h *HandlerServer) createIdentity(gin *gin.Context) {
 	icpService := application.GetBean[*service.IcpService]("icpService")
 	userAny, _ := gin.Get("user")
 	user, _ := userAny.(db2.User)
-	icpService.CreateIdentity(user.Id)
-	Success("", gin)
+	icpInfoVo, err := icpService.CreateIdentity(user.Id)
+	if err != err {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(icpInfoVo, gin)
 }
 
 func (h *HandlerServer) redeemFaucetCoupon(gin *gin.Context) {
