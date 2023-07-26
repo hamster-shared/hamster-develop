@@ -330,6 +330,8 @@ func (p *ProjectService) ParsingEVMFrame(repoContents []*github.RepositoryConten
 			return consts.Foundry, nil
 		} else if strings.Contains(fileName, "hardhat.config.js") {
 			return consts.Hardhat, nil
+		} else if strings.Contains(fileName, ".waffle.json") {
+			return consts.Waffle, nil
 		}
 	}
 	return 0, fmt.Errorf("parsing frame error")
