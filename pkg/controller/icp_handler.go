@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/hamster-shared/hamster-develop/pkg/application"
+	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	"strconv"
@@ -73,6 +74,10 @@ func (h *HandlerServer) getAccountInfo(gin *gin.Context) {
 }
 
 func (h *HandlerServer) createIdentity(gin *gin.Context) {
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	icpService.CreateIdentity(user.Id)
 	Success("", gin)
 }
 
