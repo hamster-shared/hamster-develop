@@ -143,7 +143,7 @@ func (h *HandlerServer) templateDownload(gin *gin.Context) {
 }
 
 func (h *HandlerServer) getDfxJsonData(gin *gin.Context) {
-	projectId := gin.Param("projectId")
+	projectId := gin.Param("id")
 	if projectId == "" {
 		Fail("project id is empty", gin)
 		return
@@ -158,7 +158,7 @@ func (h *HandlerServer) getDfxJsonData(gin *gin.Context) {
 }
 
 func (h *HandlerServer) updateDfxJsonData(gin *gin.Context) {
-	idStr := gin.Param("id")
+	idStr := gin.Param("dfxId")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		Fail(err.Error(), gin)

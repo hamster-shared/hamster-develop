@@ -133,8 +133,8 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/workflows/:id/detail/:detailId/logs/:stageName", h.handlerServer.getWorkflowStageLog)
 
 	//ICP-api
-	api.GET("/dfx/data/:projectId", h.handlerServer.getDfxJsonData)
-	api.PUT("/dfx/data/:id", h.handlerServer.updateDfxJsonData)
+	api.GET("/projects/:id/dfx-json", h.handlerServer.getDfxJsonData)
+	api.PUT("/projects/:id/dfx-json/:dfxId", h.handlerServer.updateDfxJsonData)
 
 	// ======== old api =========//
 	// pipeline
