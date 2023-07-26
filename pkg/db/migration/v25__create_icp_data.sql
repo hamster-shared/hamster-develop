@@ -316,3 +316,13 @@ Lint and fix files
 yarn lint
 ```'
 );
+
+
+create table t_user_icp (
+    id int primary key auto_increment,
+    fk_user_id int  comment 'user id',
+    identity_name varchar(50)  comment 'ident ity name',
+    account_id varchar(100)  comment 'dfx ledger account-id',
+    principal_id varchar(100)  comment 'dfx identity get-principal',
+    wallet_id varchar(100)  comment 'dfx identity --network ic get-wallet'
+);
