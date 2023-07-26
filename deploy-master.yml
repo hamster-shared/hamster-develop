@@ -39,6 +39,8 @@ spec:
           image: hamstershare/hamster-develop:${PIPELINE_ID}
           imagePullPolicy: Always
           env:
+            - name: HOME
+              value: /home/ubuntu
             - name: DB_HOST
               value: mysql
             - name: DB_PASSWORD
@@ -113,6 +115,8 @@ spec:
             - mountPath: /root/pipelines
               name: aline-pipelines
             - mountPath: /root/workdir
+              name: aline-workdir
+            - mountPath: /home/ubuntu/workdir
               name: aline-workdir
             - mountPath: /certs
               name: docker-tls
@@ -191,6 +195,8 @@ spec:
               name: aptos-move-cache
             - mountPath: /certs
               name: docker-tls
+            - mountPath: /home/ubuntu/workdir
+              name: aline-workdir
           securityContext:
             privileged: true
       volumes:
