@@ -324,5 +324,8 @@ create table t_user_icp (
     identity_name varchar(50)  comment 'ident ity name',
     account_id varchar(100)  comment 'dfx ledger account-id',
     principal_id varchar(100)  comment 'dfx identity get-principal',
-    wallet_id varchar(100)  comment 'dfx identity --network ic get-wallet'
+    wallet_id varchar(100)  comment 'dfx identity --network ic get-wallet',
+    create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '创建时间',
+    update_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '更新时间',
+    delete_time timestamp NULL comment '删除时间'
 );
