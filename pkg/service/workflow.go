@@ -584,6 +584,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 		} else if workflowType == consts.Build {
 			if project.DeployType == int(consts.IPFS) {
 				filePath = "templates/frontend-build.yml"
+			} else if project.DeployType == int(consts.INTERNET_COMPUTER) {
+				filePath = "templates/icp-build.yml"
 			} else {
 				if project.FrameType == 1 || project.FrameType == 2 {
 					filePath = "templates/frontend-image-build.yml"
@@ -594,6 +596,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 		} else if workflowType == consts.Deploy {
 			if project.DeployType == int(consts.IPFS) {
 				filePath = "templates/frontend-deploy.yml"
+			} else if project.DeployType == int(consts.INTERNET_COMPUTER) {
+				filePath = "templates/icp-deploy.yml"
 			} else {
 				filePath = "templates/frontend-k8s-deploy.yml"
 			}
