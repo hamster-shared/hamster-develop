@@ -124,11 +124,13 @@ func (i *IcpService) QueryIcpCanisterList(page, size int) (*vo.IcpCanisterPage, 
 	var total int64
 	var pageData vo.IcpCanisterPage
 	var canisters []db.IcpCanister
+	var vo []vo.IcpCanisterVo
 	err := i.db.Model(db.IcpCanister{}).Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&canisters).Offset(-1).Limit(-1).Count(&total).Error
 	if err != nil {
 		return &pageData, err
 	}
-	pageData.Data = canisters
+	copier.Copy(&vo, &canisters)
+	pageData.Data = vo
 	pageData.Page = page
 	pageData.PageSize = size
 	pageData.Total = int(total)
