@@ -332,6 +332,7 @@ create table t_user_icp (
 
 create table t_icp_canister (
     id int primary key auto_increment,
+    project_id  char(36),
     canister_id varchar(50),
     canister_name varchar(50),
     cycles  decimal(10,2),

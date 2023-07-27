@@ -13,6 +13,7 @@ type IcpDfxDataVo struct {
 
 type IcpCanisterVo struct {
 	Id           int               `json:"id"`
+	ProjectId    string            `json:"projectId"`
 	CanisterId   string            `json:"canisterId"`
 	CanisterName string            `json:"canisterName"`
 	Cycles       string            ` json:"cycles"`

@@ -48,6 +48,11 @@ func (h *HandlerServer) updateDfxJsonData(gin *gin.Context) {
 }
 
 func (h *HandlerServer) getCanisterList(gin *gin.Context) {
+	projectId := gin.Param("id")
+	if projectId == "" {
+		Fail("project id is empty", gin)
+		return
+	}
 	pageStr := gin.DefaultQuery("page", "1")
 	sizeStr := gin.DefaultQuery("size", "10")
 	page, err := strconv.Atoi(pageStr)
@@ -61,7 +66,7 @@ func (h *HandlerServer) getCanisterList(gin *gin.Context) {
 		return
 	}
 	icpService := application.GetBean[*service.IcpService]("icpService")
-	data, err := icpService.QueryIcpCanisterList(page, size)
+	data, err := icpService.QueryIcpCanisterList(projectId, page, size)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
