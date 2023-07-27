@@ -8,6 +8,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
+	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"os/exec"
 	"regexp"
@@ -266,4 +267,63 @@ func (i *IcpService) execDfxCommand(cmd string) (string, error) {
 		return "", err
 	}
 	return string(output), nil
+}
+
+func (i *IcpService) QueryIcpCanisterList(projectId string, page, size int) (*vo.IcpCanisterPage, error) {
+	var total int64
+	var pageData vo.IcpCanisterPage
+	var canisters []db.IcpCanister
+	var vo []vo.IcpCanisterVo
+	err := i.db.Model(db.IcpCanister{}).Where("project_id = ?", projectId).Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&canisters).Offset(-1).Limit(-1).Count(&total).Error
+	if err != nil {
+		return &pageData, err
+	}
+	copier.Copy(&vo, &canisters)
+	pageData.Data = vo
+	pageData.Page = page
+	pageData.PageSize = size
+	pageData.Total = int(total)
+	return &pageData, nil
+}
+
+func (i *IcpService) SaveDfxJsonData(projectId string, jsonData string) error {
+	var dfxData db.IcpDfxData
+	err := i.db.Where("project_id = ?", projectId).First(&dfxData).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			dfxData.ProjectId = projectId
+			dfxData.DfxData = jsonData
+			dfxData.CreateTime = sql.NullTime{
+				Time:  time.Now(),
+				Valid: true,
+			}
+			err = i.db.Create(&dfxData).Error
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+func (i *IcpService) QueryDfxJsonDataByProjectId(projectId string) (vo.IcpDfxDataVo, error) {
+	var data db.IcpDfxData
+	var vo vo.IcpDfxDataVo
+	err := i.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId).First(&data).Error
+	if err != nil {
+		return vo, err
+	}
+	copier.Copy(&vo, &data)
+	return vo, nil
+}
+func (i *IcpService) UpdateDfxJsonData(id int, jsonData string) error {
+	var data db.IcpDfxData
+	err := i.db.Model(db.IcpDfxData{}).Where("id = ?", id).First(&data).Error
+	if err != nil {
+		return err
+	}
+	data.DfxData = jsonData
+	err = i.db.Save(&data).Error
+	return err
 }

@@ -50,8 +50,16 @@ func (t *TemplateService) GetTemplateTypeList(templateType int) (*[]vo.TemplateT
 func (t *TemplateService) GetTemplatesByTypeId(templateTypeId, languageType, deployType int) (*[]vo.TemplateVo, error) {
 	var list []db2.Template
 	var listVo []vo.TemplateVo
-	if deployType == 1 {
+	if deployType == 1 || deployType == 3 {
 		result := t.db.Model(db2.Template{}).Where("template_type_id = ? and language_type = ? and deploy_type = ? ", templateTypeId, languageType, deployType).Find(&list)
+		if result.Error != nil {
+			return &listVo, result.Error
+		}
+		if len(list) > 0 {
+			copier.Copy(&listVo, &list)
+		}
+	} else if deployType == 2 {
+		result := t.db.Model(db2.Template{}).Where("template_type_id = ? and language_type = ? and deploy_type = != 3 ", templateTypeId, languageType).Find(&list)
 		if result.Error != nil {
 			return &listVo, result.Error
 		}

@@ -108,6 +108,7 @@ const (
 	Truffle EVMFrameType = iota + 1
 	Foundry
 	Hardhat
+	Waffle
 )
 
 // check type
