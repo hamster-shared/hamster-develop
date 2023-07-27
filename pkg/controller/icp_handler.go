@@ -16,8 +16,8 @@ func (h *HandlerServer) getDfxJsonData(gin *gin.Context) {
 		Fail("project id is empty", gin)
 		return
 	}
-	dfxDataService := application.GetBean[*service.DfxDataService]("icpDfxDataService")
-	data, err := dfxDataService.QueryDfxJsonDataByProjectId(projectId)
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	data, err := icpService.QueryDfxJsonDataByProjectId(projectId)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -38,8 +38,8 @@ func (h *HandlerServer) updateDfxJsonData(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	dfxDataService := application.GetBean[*service.DfxDataService]("icpDfxDataService")
-	err = dfxDataService.UpdateDfxJsonData(id, updateData.JsonData)
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	err = icpService.UpdateDfxJsonData(id, updateData.JsonData)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -48,7 +48,25 @@ func (h *HandlerServer) updateDfxJsonData(gin *gin.Context) {
 }
 
 func (h *HandlerServer) getCanisterList(gin *gin.Context) {
-	Success("", gin)
+	pageStr := gin.DefaultQuery("page", "1")
+	sizeStr := gin.DefaultQuery("size", "10")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	data, err := icpService.QueryIcpCanisterList(page, size)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
 }
 
 func (h *HandlerServer) rechargeCanister(gin *gin.Context) {

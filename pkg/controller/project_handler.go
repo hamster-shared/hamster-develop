@@ -288,12 +288,12 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 			workflowService.UpdateWorkflow(workflowDeployRes)
 		}
 		if project.DeployType == int(consts.INTERNET_COMPUTER) {
-			dfxDataService := application.GetBean[*service.DfxDataService]("icpDfxDataService")
+			icpService := application.GetBean[*service.IcpService]("icpService")
 			content, err := workflowService.GetDfxJsonData()
 			if err != nil {
 				logger.Errorf("init dfx json data failed:%s", err)
 			} else {
-				dfxDataService.SaveDfxJsonData(project.Id.String(), content)
+				icpService.SaveDfxJsonData(project.Id.String(), content)
 			}
 		}
 	}

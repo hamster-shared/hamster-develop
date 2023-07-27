@@ -329,3 +329,13 @@ create table t_user_icp (
     update_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '更新时间',
     delete_time timestamp NULL comment '删除时间'
 );
+
+create table t_icp_canister (
+    id int primary key auto_increment,
+    canister_id varchar(50),
+    canister_name varchar(50),
+    cycles  decimal(10,2),
+    status  tinyint,
+    create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '创建时间',
+    update_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment '更新时间'
+);
