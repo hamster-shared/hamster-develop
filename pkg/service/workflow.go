@@ -138,12 +138,28 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 		return vo.DeployResultVo{}, errors.New("No Artifacts")
 	}
 
+	var project db.Project
+	err = w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	if err != nil {
+		return vo.DeployResultVo{}, err
+	}
+
 	params := make(map[string]string)
+
+	if int(consts.INTERNET_COMPUTER) == project.DeployType {
+		var icpDfx db.IcpDfxData
+		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
+		if err != nil {
+			return vo.DeployResultVo{}, err
+		}
+		params["dfxJson"] = icpDfx.DfxData
+	}
+
 	params["baseDir"] = "dist"
 	params["ArtifactUrl"] = "file://" + buildJobDetail.Artifactorys[0].Url
 	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
 	params["ipfsGateway"] = os.Getenv("ipfs_gateway")
-	return w.ExecProjectWorkflow(projectId, user, 3, params)
+	return w.ExecProjectWorkflow(projectId, user, uint(consts.Deploy), params)
 }
 
 func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth, deployParam parameter.K8sDeployParam) (vo.DeployResultVo, error) {

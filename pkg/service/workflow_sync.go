@@ -14,6 +14,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
+	"gorm.io/gorm"
 	"io"
 	"log"
 	"net/http"
@@ -166,37 +167,72 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		} else if project.Type == uint(consts.BLOCKCHAIN) {
 			image = "https://g.alpha.hamsternet.io/ipfs/QmPbUjgPNW1eBVxh1zVgF9F7porBWijYrAeMth9QDPwEXk"
 		}
-		for _, deploy := range detail.ActionResult.Deploys {
-			var data db.FrontendPackage
-			err := w.db.Model(db.FrontendPackage{}).Where("workflow_detail_id = ?", buildWorkflowDetailId).First(&data).Error
-			if err == nil {
-				data.Domain = deploy.Url
-				err := w.db.Save(&data).Error
-				if err != nil {
-					log.Println("save frontend package failed: ", err.Error())
-				}
-				var packageDeploy db.FrontendDeploy
-				if project.DeployType == int(consts.IPFS) {
-					packageDeploy.DeployInfo = deploy.Cid
-				}
-				packageDeploy.ProjectId = project.Id
-				packageDeploy.WorkflowId = workflowDetail.WorkflowId
-				packageDeploy.WorkflowDetailId = workflowDetail.Id
-				packageDeploy.PackageId = data.Id
-				packageDeploy.Domain = deploy.Url
-				packageDeploy.Version = data.Version
-				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
-				packageDeploy.Name = project.Name
-				packageDeploy.Branch = data.Branch
-				packageDeploy.CreateTime = time.Now()
-				packageDeploy.Image = image
-				err = w.db.Save(&packageDeploy).Error
-				if err != nil {
-					log.Println("save frontend deploy failed: ", err.Error())
-				}
 
+		// ipfs info save
+		if project.DeployType == int(consts.IPFS) {
+			for _, deploy := range detail.ActionResult.Deploys {
+				var data db.FrontendPackage
+				err := w.db.Model(db.FrontendPackage{}).Where("workflow_detail_id = ?", buildWorkflowDetailId).First(&data).Error
+				if err == nil {
+					data.Domain = deploy.Url
+					err := w.db.Save(&data).Error
+					if err != nil {
+						log.Println("save frontend package failed: ", err.Error())
+					}
+					var packageDeploy db.FrontendDeploy
+
+					packageDeploy.DeployInfo = deploy.Cid
+					packageDeploy.ProjectId = project.Id
+					packageDeploy.WorkflowId = workflowDetail.WorkflowId
+					packageDeploy.WorkflowDetailId = workflowDetail.Id
+					packageDeploy.PackageId = data.Id
+					packageDeploy.Domain = deploy.Url
+					packageDeploy.Version = data.Version
+					packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
+					packageDeploy.Name = project.Name
+					packageDeploy.Branch = data.Branch
+					packageDeploy.CreateTime = time.Now()
+					packageDeploy.Image = image
+					err = w.db.Save(&packageDeploy).Error
+					if err != nil {
+						log.Println("save frontend deploy failed: ", err.Error())
+					}
+
+				}
 			}
 		}
+
+		// icp deploy info
+		if project.DeployType == int(consts.INTERNET_COMPUTER) {
+			for _, deploy := range detail.ActionResult.Deploys {
+
+				var icpCanister db.IcpCanister
+
+				canisterId := strings.Split(deploy.Url, "=")[1]
+
+				// 使用First查询满足条件的第一条数据
+				if err := w.db.Model(db.IcpCanister{}).Where("project_id = ? and canister_id = ?", project.Id.String(), canisterId).First(&icpCanister).Error; err != nil {
+					if err == gorm.ErrRecordNotFound {
+						fmt.Println("数据不存在")
+						icpCanister.CanisterId = canisterId
+						icpCanister.CreateTime = sql.NullTime{Time: time.Now(), Valid: true}
+					} else {
+						fmt.Println("查询数据时发生错误:", err)
+						continue
+					}
+				}
+
+				icpCanister.CanisterName = deploy.Name
+				icpCanister.Status = db.Running
+				icpCanister.Cycles = sql.NullString{Valid: false}
+				icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+				if err := w.db.Save(&icpCanister).Error; err != nil {
+					fmt.Println("保存数据时发生错误:", err)
+					continue
+				}
+			}
+		}
+
 	}
 }
 
