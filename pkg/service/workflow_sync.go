@@ -216,6 +216,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 						fmt.Println("数据不存在")
 						icpCanister.CanisterId = canisterId
 						icpCanister.CreateTime = sql.NullTime{Time: time.Now(), Valid: true}
+						icpCanister.ProjectId = project.Id.String()
 					} else {
 						fmt.Println("查询数据时发生错误:", err)
 						continue
