@@ -23,12 +23,12 @@ stages:
         run: |
           envsubst < deploy-master.yml | kubectl -n hamster apply -f -
 
-  deploy-worker:
-    needs:
-      - init
-    steps:
-      - name: deploy-worker
-        run: |
-          export DOCKER2_IP=$(kubectl get endpoints -n hamster docker2 -o jsonpath='{.subsets[0].addresses[0].ip}:{.subsets[0].ports[0].port}')
-          envsubst < deploy-worker.yml | kubectl -n hamster apply -f -
+#  deploy-worker:
+#    needs:
+#      - init
+#    steps:
+#      - name: deploy-worker
+#        run: |
+#          export DOCKER2_IP=$(kubectl get endpoints -n hamster docker2 -o jsonpath='{.subsets[0].addresses[0].ip}:{.subsets[0].ports[0].port}')
+#          envsubst < deploy-worker.yml | kubectl -n hamster apply -f -
 

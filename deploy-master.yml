@@ -39,6 +39,8 @@ spec:
           image: hamstershare/hamster-develop:${PIPELINE_ID}
           imagePullPolicy: Always
           env:
+            - name: IC_NETWORK
+              value: http://dfx.icp:4939
             - name: HOME
               value: /home/ubuntu
             - name: DB_HOST
@@ -116,6 +118,8 @@ spec:
               name: aline-pipelines
             - mountPath: /root/workdir
               name: aline-workdir
+            - mountPath: /home/ubuntu/pipelines
+              name: aline-pipelines
             - mountPath: /home/ubuntu/workdir
               name: aline-workdir
             - mountPath: /certs

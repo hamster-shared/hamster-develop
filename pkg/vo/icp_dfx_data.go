@@ -1,8 +1,8 @@
 package vo
 
 import (
-	"database/sql"
 	"github.com/hamster-shared/hamster-develop/pkg/db"
+	"time"
 )
 
 type IcpDfxDataVo struct {
@@ -18,6 +18,6 @@ type IcpCanisterVo struct {
 	CanisterName string            `json:"canisterName"`
 	Cycles       string            ` json:"cycles"`
 	Status       db.CanisterStatus `json:"status"`
-	CreateTime   sql.NullTime      `json:"createTime"`
-	UpdateTime   sql.NullTime      `json:"updateTime"`
+	CreateTime   time.Time         `json:"createTime"`
+	UpdateTime   time.Time         `json:"updateTime"`
 }
