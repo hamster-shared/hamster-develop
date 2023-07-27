@@ -6,9 +6,11 @@ import (
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/db"
+	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"gorm.io/gorm"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -35,7 +37,7 @@ func (i *IcpService) CreateIdentity(userId uint) (vo vo.UserIcpInfoVo, error err
 		return vo, err
 	}
 	identityName := strconv.Itoa(int(userId))
-	newIdentityCmd := "dfx identity new " + identityName
+	newIdentityCmd := "dfx identity new " + identityName + " --storage-mode plaintext"
 	_, error = i.execDfxCommand(newIdentityCmd)
 	if err != nil {
 		return vo, err
@@ -81,6 +83,153 @@ func (i *IcpService) GetAccountInfo(userId uint) (vo vo.UserIcpInfoVo, error err
 	vo.AccountId = userIcp.AccountId
 	vo.IcpBalance = strings.TrimSpace(balance)
 	return vo, nil
+}
+
+func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam parameter.RedeemFaucetCouponParam) (vo vo.UserIcpWalletVo, error error) {
+	var userIcp db.UserIcp
+	err := i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).First(&userIcp).Error
+	if err != nil {
+		return vo, err
+	}
+	redeemCouponCmd := "dfx wallet --network ic redeem-faucet-coupon " + redeemFaucetCouponParam.Coupon
+	output, err := i.execDfxCommand(redeemCouponCmd)
+	if err != nil {
+		return vo, err
+	}
+	walletId := ""
+	split := strings.Split(output, "\n")
+	for _, str := range split {
+		if strings.Contains(str, "new wallet:") {
+			lastIndex := strings.LastIndex(str, ":")
+			if lastIndex != -1 {
+				walletId = strings.TrimSpace(str[lastIndex+1:])
+			}
+		}
+	}
+	if walletId == "" {
+		return vo, errors.New("failed to generate wallet")
+	}
+	userIcp.WalletId = walletId
+	error = i.db.Model(db.UserIcp{}).Updates(&userIcp).Error
+	if error != nil {
+		return vo, errors.New("failed to save wallet ID")
+	}
+	return i.GetWalletInfo(userId)
+}
+
+func (i *IcpService) GetWalletInfo(userId uint) (vo vo.UserIcpWalletVo, error error) {
+	var userIcp db.UserIcp
+	err := i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).First(&userIcp).Error
+	if err != nil {
+		return vo, err
+	}
+	walletBalanceCmd := "dfx wallet balance --network ic"
+	balance, err := i.execDfxCommand(walletBalanceCmd)
+	if err != nil {
+		return vo, err
+	}
+	vo.UserId = int(userIcp.FkUserId)
+	vo.WalletId = userIcp.WalletId
+	vo.CyclesBalance = balance
+	return vo, nil
+}
+
+func (i *IcpService) RechargeWallet(userId uint) (vo vo.UserIcpWalletVo, error error) {
+	var userIcp db.UserIcp
+	err := i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).First(&userIcp).Error
+	if err != nil {
+		return vo, err
+	}
+	if userIcp.WalletId == "" {
+		walletId, err := i.InitWallet(userIcp)
+		if err != nil {
+			return vo, err
+		}
+		userIcp.WalletId = walletId
+		err = i.db.Model(db.UserIcp{}).Updates(&userIcp).Error
+		if err != nil {
+			return vo, err
+		}
+	} else {
+		err := i.WalletTopUp(userIcp.IdentityName, userIcp.WalletId)
+		if err != nil {
+			return vo, err
+		}
+	}
+	return i.GetWalletInfo(userId)
+}
+
+func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error error) {
+	var mutex sync.Mutex
+	mutex.Lock()
+	defer mutex.Unlock()
+	useIdentityCmd := "dfx identity use " + userIcp.IdentityName
+	_, err := i.execDfxCommand(useIdentityCmd)
+	if err != nil {
+		return "", err
+	}
+	balance, err := i.getLedgerIcpBalance()
+	if err != nil {
+		return "", err
+	}
+	createCanisterCmd := "dfx ledger --network ic create-canister " + userIcp.PrincipalId + " --amount " + balance
+	output, err := i.execDfxCommand(createCanisterCmd)
+	logger.Infof("userid-> %s create-canister result is: %s \n", userIcp.IdentityName, output)
+	if err != nil {
+		return "", err
+	}
+
+	re := regexp.MustCompile(`Canister created with id: "(.*?)"`)
+	matches := re.FindStringSubmatch(output)
+	if len(matches) > 1 {
+		walletId = matches[1]
+	} else {
+		return "", errors.New("failure to create-canister")
+	}
+	deployWalletCmd := "dfx identity --network ic deploy-wallet " + walletId
+	output, err = i.execDfxCommand(deployWalletCmd)
+	logger.Infof("userid-> %s walletId-> %s deploy-wallet result is: %s \n", userIcp.IdentityName, walletId, output)
+	if err != nil {
+		return "", err
+	}
+	return walletId, nil
+}
+
+func (i *IcpService) WalletTopUp(identityName string, walletId string) (error error) {
+	var mutex sync.Mutex
+	mutex.Lock()
+	defer mutex.Unlock()
+	useIdentityCmd := "dfx identity use " + identityName
+	_, err := i.execDfxCommand(useIdentityCmd)
+	if err != nil {
+		return err
+	}
+	balance, err := i.getLedgerIcpBalance()
+	if err != nil {
+		return err
+	}
+
+	walletTopUpCmd := "  dfx ledger --network ic top-up " + walletId + " --amount " + balance
+	output, err := i.execDfxCommand(walletTopUpCmd)
+	if err != nil {
+		return err
+	}
+	logger.Infof("identityName-> %s walletId-> %s top-up result is: %s \n", identityName, walletId, output)
+	return nil
+}
+
+func (i *IcpService) getLedgerIcpBalance() (string, error) {
+	ledgerBalanceCmd := "dfx ledger balance --network ic"
+	balance, err := i.execDfxCommand(ledgerBalanceCmd)
+	if err != nil {
+		return "", err
+	}
+	balanceSplit := strings.Split(balance, " ")
+	if len(balanceSplit) > 0 {
+		return balanceSplit[0], nil
+	} else {
+		return "", errors.New("failure to obtain ICP balances")
+	}
 }
 
 func (i *IcpService) getLedgerInfo(identityName string) (string, string, error) {

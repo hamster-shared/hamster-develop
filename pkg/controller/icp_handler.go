@@ -62,11 +62,27 @@ func (h *HandlerServer) rechargeCanister(gin *gin.Context) {
 }
 
 func (h *HandlerServer) rechargeWallet(gin *gin.Context) {
-	Success("", gin)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	walletInfoVo, err := icpService.RechargeWallet(user.Id)
+	if err != err {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(walletInfoVo, gin)
 }
 
 func (h *HandlerServer) getWalletInfo(gin *gin.Context) {
-	Success("", gin)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	walletInfoVo, err := icpService.GetWalletInfo(user.Id)
+	if err != err {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(walletInfoVo, gin)
 }
 
 func (h *HandlerServer) getAccountInfo(gin *gin.Context) {
@@ -100,5 +116,13 @@ func (h *HandlerServer) redeemFaucetCoupon(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	Success("", gin)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	walletInfoVo, err := icpService.RedeemFaucetCoupon(user.Id, redeemFaucetCouponParam)
+	if err != err {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(walletInfoVo, gin)
 }
