@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.2.1
+	github.com/aviate-labs/agent-go v0.2.0
 	github.com/dontpanicdao/caigo v0.4.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-resty/resty/v2 v2.7.0
@@ -29,7 +30,6 @@ require (
 
 require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.1 // indirect
-	github.com/aviate-labs/agent-go v0.2.0 // indirect
 	github.com/aviate-labs/leb128 v0.3.0 // indirect
 	github.com/aviate-labs/secp256k1 v0.0.0-5e6736a // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
