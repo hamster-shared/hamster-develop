@@ -12,6 +12,7 @@ const (
 
 type IcpCanister struct {
 	Id           int            `json:"id"`
+	ProjectId    string         `json:"projectId"`
 	CanisterId   string         `json:"canisterId"`
 	CanisterName string         `json:"canisterName"`
 	Cycles       sql.NullString `gorm:"type:decimal(10,2)" json:"cycles"`

@@ -120,12 +120,12 @@ func (i *IcpService) execDfxCommand(cmd string) (string, error) {
 	return string(output), nil
 }
 
-func (i *IcpService) QueryIcpCanisterList(page, size int) (*vo.IcpCanisterPage, error) {
+func (i *IcpService) QueryIcpCanisterList(projectId string, page, size int) (*vo.IcpCanisterPage, error) {
 	var total int64
 	var pageData vo.IcpCanisterPage
 	var canisters []db.IcpCanister
 	var vo []vo.IcpCanisterVo
-	err := i.db.Model(db.IcpCanister{}).Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&canisters).Offset(-1).Limit(-1).Count(&total).Error
+	err := i.db.Model(db.IcpCanister{}).Where("project_id = ?", projectId).Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&canisters).Offset(-1).Limit(-1).Count(&total).Error
 	if err != nil {
 		return &pageData, err
 	}
