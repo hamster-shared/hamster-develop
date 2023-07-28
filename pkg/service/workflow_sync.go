@@ -208,7 +208,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 
 				var icpCanister db.IcpCanister
 
-				canisterId := strings.Split(deploy.Url, "=")[1]
+				canisterId := deploy.Url
 
 				// 使用First查询满足条件的第一条数据
 				if err := w.db.Model(db.IcpCanister{}).Where("project_id = ? and canister_id = ?", project.Id.String(), canisterId).First(&icpCanister).Error; err != nil {
