@@ -1,18 +1,21 @@
 ### 创建项目
-POST http://localhost:8080/api/projects
+POST https://develop.hamster.newtouch.com/api/projects
 Content-Type: application/json
-Access-Token: ZHLIsR7EZjgwkE7z0Pco/pp1db7YfjJ/NUg/4YKTXD0FYXhHLiicYiQzL4yoJ2J/
+Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg
 
 {
-  "name":"my-contract-Erc913",
-  "type":1,
-  "templateOwner":"hamster-template",
-  "frameType":1,
-  "deployType":1,
-  "repoOwner":"jian-guo-s",
-  "templateRepo":"ERC4907",
-  "userId":53070354,
-  "templateUrl":"https://github.com/hamster-contract/ERC4907.git"
+  "name": "my-hamster-vue3",
+  "type": 2,
+  "templateOwner": "hamster-template",
+  "frameType": 1,
+  "deployType": 3,
+  "repoOwner": "mohaijiang",
+  "templateRepo": "vuejs",
+  "userId": 3366709,
+  "templateUrl": "https://github.com/hamster-template/vuejs.git",
+  "labelDisplay": "",
+  "gistId": "",
+  "defaultFile": ""
 }
 
 ### template

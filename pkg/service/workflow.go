@@ -384,11 +384,15 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 	}
 	deployResult.WorkflowId = workflow.Id
 	deployResult.DetailId = dbDetail.Id
-	err = w.engine.ExecuteJobDetail(workflowKey, detail.Id)
-	if err != nil {
+	if err = w.engine.SaveJobUserId(workflowKey, strconv.Itoa(int(user.Id))); err != nil {
 		logger.Errorf("execute job detail fail, err is %s", err.Error())
 		return deployResult, err
 	}
+	if err = w.engine.ExecuteJobDetail(workflowKey, detail.Id); err != nil {
+		logger.Errorf("execute job detail fail, err is %s", err.Error())
+		return deployResult, err
+	}
+
 	return deployResult, nil
 }
 
