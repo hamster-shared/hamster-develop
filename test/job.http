@@ -4,7 +4,7 @@ Content-Type: application/json
 Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg
 
 {
-  "name": "my-hamster-vue3",
+  "name": "my-hamster-vue4",
   "type": 2,
   "templateOwner": "hamster-template",
   "frameType": 1,
@@ -534,3 +534,13 @@ Access-Token: HZhJloi4k18J/kH40XRIVb61RXAQ0A1EfVAChpkPQlvl/iSJhYCFgGnhJgd93IIN
 POST http://localhost:8080/api/projects/94907f38-3fa5-48f7-be92-d22df47f4c8f/workflows/3356/detail/4918/container/deploy
 Content-Type: application/json
 Access-Token: HZhJloi4k18J/kH40XRIVb61RXAQ0A1EfVAChpkPQlvl/iSJhYCFgGnhJgd93IIN
+
+
+### 创建身份
+POST https://develop.hamster.newtouch.com/api/projects/:id/create/identity
+Content-Type: application/json
+Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg
+
+{
+
+}
