@@ -114,6 +114,8 @@ spec:
           ports:
             - containerPort: 8080
           volumeMounts:
+            - mountPath: /home/ubuntu/.config/dfx
+              name: dfx-config
             - mountPath: /root/pipelines
               name: aline-pipelines
             - mountPath: /root/workdir
@@ -129,6 +131,9 @@ spec:
               mountPath: "/root/.kube"
               readOnly: true
       volumes:
+        - name: dfx-config
+          persistentVolumeClaim:
+            claimName: dfx-config
         - name: aline-pipelines
           persistentVolumeClaim:
             claimName: aline-pipelines
