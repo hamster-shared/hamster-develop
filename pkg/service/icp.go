@@ -22,13 +22,30 @@ import (
 	"time"
 )
 
+var (
+	NewIdentity    = "dfx identity new %s --storage-mode plaintext"
+	LedgerBalance  = "dfx ledger balance --network %s"
+	RedeemCoupon   = "dfx wallet redeem-faucet-coupon %s --network %s"
+	WalletBalance  = "dfx wallet balance --network %s"
+	UseIdentity    = "dfx identity use %s"
+	DepositCycles  = "dfx canister deposit-cycles %s %s --network %s"
+	CreateCanister = "dfx ledger create-canister %s --amount %s --network %s "
+	DeployWallet   = "dfx identity deploy-wallet %s --network %s"
+	WalletTopUp    = "dfx ledger top-up %s --amount %s --network %s"
+	AccountId      = "dfx ledger account-id"
+	GetPrincipal   = "dfx identity get-principal"
+	CanisterStatus = "dfx canister status %s --network %s"
+)
+
 type IcpService struct {
-	db *gorm.DB
+	db      *gorm.DB
+	network string
 }
 
-func NewIcpService() *IcpService {
+func NewIcpService(network string) *IcpService {
 	return &IcpService{
-		db: application.GetBean[*gorm.DB]("db"),
+		db:      application.GetBean[*gorm.DB]("db"),
+		network: network,
 	}
 }
 
@@ -42,7 +59,8 @@ func (i *IcpService) CreateIdentity(userId uint) (vo vo.UserIcpInfoVo, error err
 		return vo, err
 	}
 	identityName := strconv.Itoa(int(userId))
-	newIdentityCmd := "dfx identity new " + identityName + " --storage-mode plaintext"
+	newIdentitySprintf := NewIdentity
+	newIdentityCmd := fmt.Sprintf(newIdentitySprintf, identityName)
 	_, error = i.execDfxCommand(newIdentityCmd)
 	if err != nil {
 		return vo, err
@@ -79,7 +97,8 @@ func (i *IcpService) GetAccountInfo(userId uint) (vo vo.UserIcpInfoVo, error err
 	if err != nil {
 		return vo, err
 	}
-	ledgerBalanceCmd := "dfx ledger balance --network ic"
+	ledgerBalanceSprintf := LedgerBalance
+	ledgerBalanceCmd := fmt.Sprintf(ledgerBalanceSprintf, i.network)
 	balance, err := i.execDfxCommand(ledgerBalanceCmd)
 	if err != nil {
 		return vo, err
@@ -96,7 +115,8 @@ func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam par
 	if err != nil {
 		return vo, err
 	}
-	redeemCouponCmd := "dfx wallet --network ic redeem-faucet-coupon " + redeemFaucetCouponParam.Coupon
+	redeemCouponSprintf := RedeemCoupon
+	redeemCouponCmd := fmt.Sprintf(redeemCouponSprintf, redeemFaucetCouponParam.Coupon, i.network)
 	output, err := i.execDfxCommand(redeemCouponCmd)
 	if err != nil {
 		return vo, err
@@ -128,7 +148,8 @@ func (i *IcpService) GetWalletInfo(userId uint) (vo vo.IcpCanisterBalanceVo, err
 	if err != nil {
 		return vo, err
 	}
-	walletBalanceCmd := "dfx wallet balance --network ic"
+	walletBalanceSprintf := WalletBalance
+	walletBalanceCmd := fmt.Sprintf(walletBalanceSprintf, i.network)
 	balance, err := i.execDfxCommand(walletBalanceCmd)
 	if err != nil {
 		return vo, err
@@ -204,13 +225,14 @@ func (i *IcpService) canisterRechargeCycles(identityName string, cycles string, 
 	var mutex sync.Mutex
 	mutex.Lock()
 	defer mutex.Unlock()
-	useIdentityCmd := "dfx identity use " + identityName
+	useIdentitySprintf := UseIdentity
+	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
 	_, err := i.execDfxCommand(useIdentityCmd)
 	if err != nil {
 		return err
 	}
-
-	depositCyclesCmd := "dfx canister deposit-cycles" + cycles + " " + canisterId + " --network ic "
+	depositCyclesSprintf := DepositCycles
+	depositCyclesCmd := fmt.Sprintf(depositCyclesSprintf, cycles, canisterId, i.network)
 	output, err := i.execDfxCommand(depositCyclesCmd)
 	logger.Infof("userid-> %s canisterId-> %s deposit-cycles result is: %s \n", identityName, canisterId, output)
 	if err != nil {
@@ -223,7 +245,8 @@ func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error erro
 	var mutex sync.Mutex
 	mutex.Lock()
 	defer mutex.Unlock()
-	useIdentityCmd := "dfx identity use " + userIcp.IdentityName
+	useIdentitySprintf := UseIdentity
+	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, userIcp.IdentityName)
 	_, err := i.execDfxCommand(useIdentityCmd)
 	if err != nil {
 		return "", err
@@ -232,7 +255,8 @@ func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error erro
 	if err != nil {
 		return "", err
 	}
-	createCanisterCmd := "dfx ledger --network ic create-canister " + userIcp.PrincipalId + " --amount " + balance
+	createCanisterSprintf := CreateCanister
+	createCanisterCmd := fmt.Sprintf(createCanisterSprintf, userIcp.PrincipalId, balance, i.network)
 	output, err := i.execDfxCommand(createCanisterCmd)
 	logger.Infof("userid-> %s create-canister result is: %s \n", userIcp.IdentityName, output)
 	if err != nil {
@@ -246,7 +270,8 @@ func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error erro
 	} else {
 		return "", errors.New("failure to create-canister")
 	}
-	deployWalletCmd := "dfx identity --network ic deploy-wallet " + walletId
+	deployWalletSprintf := DeployWallet
+	deployWalletCmd := fmt.Sprintf(deployWalletSprintf, walletId, i.network)
 	output, err = i.execDfxCommand(deployWalletCmd)
 	logger.Infof("userid-> %s walletId-> %s deploy-wallet result is: %s \n", userIcp.IdentityName, walletId, output)
 	if err != nil {
@@ -259,7 +284,8 @@ func (i *IcpService) WalletTopUp(identityName string, walletId string) (error er
 	var mutex sync.Mutex
 	mutex.Lock()
 	defer mutex.Unlock()
-	useIdentityCmd := "dfx identity use " + identityName
+	useIdentitySprintf := UseIdentity
+	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
 	_, err := i.execDfxCommand(useIdentityCmd)
 	if err != nil {
 		return err
@@ -268,8 +294,8 @@ func (i *IcpService) WalletTopUp(identityName string, walletId string) (error er
 	if err != nil {
 		return err
 	}
-
-	walletTopUpCmd := "  dfx ledger --network ic top-up " + walletId + " --amount " + balance
+	walletTopUpSprintf := WalletTopUp
+	walletTopUpCmd := fmt.Sprintf(walletTopUpSprintf, walletId, balance, i.network)
 	output, err := i.execDfxCommand(walletTopUpCmd)
 	if err != nil {
 		return err
@@ -279,7 +305,8 @@ func (i *IcpService) WalletTopUp(identityName string, walletId string) (error er
 }
 
 func (i *IcpService) getLedgerIcpBalance() (string, error) {
-	ledgerBalanceCmd := "dfx ledger balance --network ic"
+	ledgerBalanceSprintf := LedgerBalance
+	ledgerBalanceCmd := fmt.Sprintf(ledgerBalanceSprintf, i.network)
 	balance, err := i.execDfxCommand(ledgerBalanceCmd)
 	if err != nil {
 		return "", err
@@ -296,17 +323,18 @@ func (i *IcpService) getLedgerInfo(identityName string) (string, string, error) 
 	var mutex sync.Mutex
 	mutex.Lock()
 	defer mutex.Unlock()
-	useIdentityCmd := "dfx identity use " + identityName
+	useIdentitySprintf := UseIdentity
+	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
 	_, err := i.execDfxCommand(useIdentityCmd)
 	if err != nil {
 		return "", "", err
 	}
-	accountIdCmd := "dfx ledger account-id"
+	accountIdCmd := AccountId
 	accountId, err := i.execDfxCommand(accountIdCmd)
 	if err != nil {
 		return "", "", err
 	}
-	pIdCmd := "dfx identity get-principal"
+	pIdCmd := GetPrincipal
 	pId, err := i.execDfxCommand(pIdCmd)
 	if err != nil {
 		return "", "", err
@@ -379,7 +407,8 @@ func (i *IcpService) QueryIcpCanisterList(projectId string, page, size int) (*vo
 
 func (i *IcpService) queryCanisterStatus(canisterId string) (vo.CanisterStatusRes, error) {
 	var res vo.CanisterStatusRes
-	canisterCmd := fmt.Sprintf("dfx canister status %s --network %s", canisterId, os.Getenv("IC_NETWORK"))
+	canisterStatusSprintf := CanisterStatus
+	canisterCmd := fmt.Sprintf(canisterStatusSprintf, canisterId, i.network)
 	cmd := exec.Command("bash", "-c", canisterCmd)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -438,6 +467,7 @@ func (i *IcpService) SaveDfxJsonData(projectId string, jsonData string) error {
 	}
 	return nil
 }
+
 func (i *IcpService) QueryDfxJsonDataByProjectId(projectId string) (vo.IcpDfxDataVo, error) {
 	var data db.IcpDfxData
 	var vo vo.IcpDfxDataVo
@@ -448,6 +478,7 @@ func (i *IcpService) QueryDfxJsonDataByProjectId(projectId string) (vo.IcpDfxDat
 	copier.Copy(&vo, &data)
 	return vo, nil
 }
+
 func (i *IcpService) UpdateDfxJsonData(id int, jsonData string) error {
 	var data db.IcpDfxData
 	err := i.db.Model(db.IcpDfxData{}).Where("id = ?", id).First(&data).Error
