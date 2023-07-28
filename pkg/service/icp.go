@@ -2,6 +2,7 @@ package service
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
@@ -10,6 +11,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -86,7 +88,7 @@ func (i *IcpService) GetAccountInfo(userId uint) (vo vo.UserIcpInfoVo, error err
 	return vo, nil
 }
 
-func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam parameter.RedeemFaucetCouponParam) (vo vo.UserIcpWalletVo, error error) {
+func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam parameter.RedeemFaucetCouponParam) (vo vo.IcpCanisterBalanceVo, error error) {
 	var userIcp db.UserIcp
 	err := i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).First(&userIcp).Error
 	if err != nil {
@@ -118,7 +120,7 @@ func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam par
 	return i.GetWalletInfo(userId)
 }
 
-func (i *IcpService) GetWalletInfo(userId uint) (vo vo.UserIcpWalletVo, error error) {
+func (i *IcpService) GetWalletInfo(userId uint) (vo vo.IcpCanisterBalanceVo, error error) {
 	var userIcp db.UserIcp
 	err := i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).First(&userIcp).Error
 	if err != nil {
@@ -130,12 +132,12 @@ func (i *IcpService) GetWalletInfo(userId uint) (vo vo.UserIcpWalletVo, error er
 		return vo, err
 	}
 	vo.UserId = int(userIcp.FkUserId)
-	vo.WalletId = userIcp.WalletId
+	vo.CanisterId = userIcp.WalletId
 	vo.CyclesBalance = balance
 	return vo, nil
 }
 
-func (i *IcpService) RechargeWallet(userId uint) (vo vo.UserIcpWalletVo, error error) {
+func (i *IcpService) RechargeWallet(userId uint) (vo vo.IcpCanisterBalanceVo, error error) {
 	var userIcp db.UserIcp
 	err := i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).First(&userIcp).Error
 	if err != nil {
@@ -158,6 +160,53 @@ func (i *IcpService) RechargeWallet(userId uint) (vo vo.UserIcpWalletVo, error e
 		}
 	}
 	return i.GetWalletInfo(userId)
+}
+
+func (i *IcpService) RechargeCanister(userId uint, rechargeCanisterParam parameter.RechargeCanisterParam) (vo vo.IcpCanisterBalanceVo, error error) {
+	var userIcp db.UserIcp
+	err := i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).First(&userIcp).Error
+	if err != nil {
+		return vo, err
+	}
+	// 判断当前目录是否存在 dfx.json 文件
+	if _, err := os.Stat("dfx.json"); os.IsNotExist(err) {
+		// 不存在，则新建并写入数据 {}
+		data := map[string]interface{}{}
+		dataJSON, err := json.Marshal(data)
+		if err != nil {
+			return vo, err
+		}
+		err = os.WriteFile("dfx.json", dataJSON, 0644)
+		if err != nil {
+			return vo, err
+		}
+	}
+	depositCycles := rechargeCanisterParam.Amount * 1e12
+	i.canisterRechargeCycles(userIcp.IdentityName, strconv.FormatFloat(float64(depositCycles), 'f', -1, 64), rechargeCanisterParam.CanisterId)
+	err = os.Remove("dfx.json")
+	if err != nil {
+		return vo, err
+	}
+	return vo, nil
+}
+
+func (i *IcpService) canisterRechargeCycles(identityName string, cycles string, canisterId string) (error error) {
+	var mutex sync.Mutex
+	mutex.Lock()
+	defer mutex.Unlock()
+	useIdentityCmd := "dfx identity use " + identityName
+	_, err := i.execDfxCommand(useIdentityCmd)
+	if err != nil {
+		return err
+	}
+
+	depositCyclesCmd := "dfx canister deposit-cycles" + cycles + " " + canisterId + " --network ic "
+	output, err := i.execDfxCommand(depositCyclesCmd)
+	logger.Infof("userid-> %s canisterId-> %s deposit-cycles result is: %s \n", identityName, canisterId, output)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error error) {

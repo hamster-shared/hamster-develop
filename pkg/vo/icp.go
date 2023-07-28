@@ -6,9 +6,9 @@ type UserIcpInfoVo struct {
 	IcpBalance string `json:"icpBalance"`
 }
 
-type UserIcpWalletVo struct {
+type IcpCanisterBalanceVo struct {
 	UserId        int    `json:"userId"`
-	WalletId      string `json:"walletId"`
+	CanisterId    string `json:"canisterId"`
 	CyclesBalance string `json:"cyclesBalance"`
 }
 

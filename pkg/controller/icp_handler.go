@@ -81,7 +81,15 @@ func (h *HandlerServer) rechargeCanister(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	Success("", gin)
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	canisterBalanceVo, err := icpService.RechargeCanister(user.Id, rechargeCanisterParam)
+	if err != err {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(canisterBalanceVo, gin)
 }
 
 func (h *HandlerServer) rechargeWallet(gin *gin.Context) {

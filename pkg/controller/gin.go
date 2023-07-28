@@ -136,7 +136,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/dfx-json", h.handlerServer.getDfxJsonData)
 	api.PUT("/projects/:id/dfx-json/:dfxId", h.handlerServer.updateDfxJsonData)
 	api.GET("/projects/:id/canister/list", h.handlerServer.getCanisterList)       //罐列表
-	api.POST("/projects/:id/recharge/canister", h.handlerServer.rechargeCanister) //给应用罐罐充值cycles--通过icp
+	api.POST("/projects/:id/recharge/canister", h.handlerServer.rechargeCanister) //给应用罐罐充值cycles
 	api.POST("/projects/:id/recharge/wallet", h.handlerServer.rechargeWallet)     //充值钱包
 	api.GET("/projects/:id/wallet/info", h.handlerServer.getWalletInfo)           //查询钱包罐信息
 	api.GET("/projects/:id/account/info", h.handlerServer.getAccountInfo)         //查询icp信息accountId和余额
