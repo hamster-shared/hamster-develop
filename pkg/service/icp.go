@@ -379,7 +379,7 @@ func (i *IcpService) QueryIcpCanisterList(projectId string, page, size int) (*vo
 
 func (i *IcpService) queryCanisterStatus(canisterId string) (vo.CanisterStatusRes, error) {
 	var res vo.CanisterStatusRes
-	canisterCmd := fmt.Sprintf("dfx canister status %s", canisterId)
+	canisterCmd := fmt.Sprintf("dfx canister status %s --network %s", canisterId, os.Getenv("IC_NETWORK"))
 	cmd := exec.Command("bash", "-c", canisterCmd)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
