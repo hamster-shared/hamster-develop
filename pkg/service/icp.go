@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/db"
@@ -12,6 +13,7 @@ import (
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"os"
+	"math"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -327,12 +329,84 @@ func (i *IcpService) QueryIcpCanisterList(projectId string, page, size int) (*vo
 	if err != nil {
 		return &pageData, err
 	}
+	for _, canister := range canisters {
+		if !canister.Cycles.Valid {
+			data, err := i.queryCanisterStatus(canister.CanisterId)
+			if err == nil {
+				canister.Cycles = sql.NullString{
+					String: data.Balance,
+					Valid:  true,
+				}
+				canister.UpdateTime = sql.NullTime{
+					Time:  time.Now(),
+					Valid: true,
+				}
+				i.db.Save(&canister)
+			}
+		} else {
+			isThreeHoursAgo := isTimeThreeHoursAgo(canister.UpdateTime.Time, time.Now())
+			if isThreeHoursAgo {
+				data, err := i.queryCanisterStatus(canister.CanisterId)
+				if err == nil {
+					canister.Cycles = sql.NullString{
+						String: data.Balance,
+						Valid:  true,
+					}
+					canister.UpdateTime = sql.NullTime{
+						Time:  time.Now(),
+						Valid: true,
+					}
+					i.db.Save(&canister)
+				}
+			}
+		}
+	}
 	copier.Copy(&vo, &canisters)
 	pageData.Data = vo
 	pageData.Page = page
 	pageData.PageSize = size
 	pageData.Total = int(total)
 	return &pageData, nil
+}
+
+func (i *IcpService) queryCanisterStatus(canisterId string) (vo.CanisterStatusRes, error) {
+	var res vo.CanisterStatusRes
+	canisterCmd := fmt.Sprintf("dfx canister status %s", canisterId)
+	cmd := exec.Command("bash", "-c", canisterCmd)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		logger.Errorf("cmd exec failed: %s", err)
+		return res, err
+	}
+	re := regexp.MustCompile(`Balance: ([0-9_]+) Cycles`)
+	matches := re.FindStringSubmatch(string(out))
+	if len(matches) > 1 {
+		value := matches[1]
+		value = strings.ReplaceAll(value, "_", "")
+		number, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			logger.Errorf("balance parse int failed:%s", err)
+			return res, err
+		}
+		data := float64(number) / math.Pow(10, 12)
+		balance := fmt.Sprintf("%.2f\n", data)
+		res.Balance = balance
+	} else {
+		logger.Info("balance not found!")
+	}
+	statusRegex := regexp.MustCompile(`Status: (.+)`)
+	statusMatch := statusRegex.FindStringSubmatch(string(out))
+	if len(statusMatch) > 1 {
+		res.Status = statusMatch[1]
+	} else {
+		logger.Info("status not found!")
+	}
+	return res, nil
+}
+
+func isTimeThreeHoursAgo(t time.Time, now time.Time) bool {
+	duration := now.Sub(t)
+	return duration >= 3*time.Hour
 }
 
 func (i *IcpService) SaveDfxJsonData(projectId string, jsonData string) error {

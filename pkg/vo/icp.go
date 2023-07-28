@@ -18,3 +18,8 @@ type IcpCanisterPage struct {
 	Page     int             `json:"page"`
 	PageSize int             `json:"pageSize"`
 }
+
+type CanisterStatusRes struct {
+	Status  string `json:"status"`
+	Balance string `json:"balance"`
+}
