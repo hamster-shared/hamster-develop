@@ -12,8 +12,8 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
-	"os"
 	"math"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -189,6 +189,14 @@ func (i *IcpService) RechargeCanister(userId uint, rechargeCanisterParam paramet
 	if err != nil {
 		return vo, err
 	}
+	data, err := i.queryCanisterStatus(rechargeCanisterParam.CanisterId)
+	if err != nil {
+		return vo, err
+	}
+
+	vo.UserId = int(userId)
+	vo.CanisterId = rechargeCanisterParam.CanisterId
+	vo.CyclesBalance = data.Balance
 	return vo, nil
 }
 
@@ -390,7 +398,7 @@ func (i *IcpService) queryCanisterStatus(canisterId string) (vo.CanisterStatusRe
 		}
 		data := float64(number) / math.Pow(10, 12)
 		balance := fmt.Sprintf("%.2f\n", data)
-		res.Balance = balance
+		res.Balance = balance + "T"
 	} else {
 		logger.Info("balance not found!")
 	}
