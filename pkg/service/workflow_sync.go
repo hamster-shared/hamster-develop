@@ -18,6 +18,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strconv"
@@ -208,7 +209,10 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 
 				var icpCanister db.IcpCanister
 
-				canisterId := deploy.Url
+				canisterId, err := extractDomain(deploy.Url)
+				if err != nil {
+					continue
+				}
 
 				// 使用First查询满足条件的第一条数据
 				if err := w.db.Model(db.IcpCanister{}).Where("project_id = ? and canister_id = ?", project.Id.String(), canisterId).First(&icpCanister).Error; err != nil {
@@ -235,6 +239,23 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		}
 
 	}
+}
+
+func extractDomain(urlStr string) (string, error) {
+
+	if strings.Contains(urlStr, "canisterId=") && len(strings.Split(urlStr, "canisterId=")[1]) > 1 {
+		return strings.Split(urlStr, "canisterId=")[1], nil
+	}
+
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return "", err
+	}
+	hostParts := strings.Split(parsedURL.Hostname(), ".")
+	if len(hostParts) < 3 {
+		return "", fmt.Errorf("invalid URL")
+	}
+	return strings.Join(hostParts[:len(hostParts)-2], "-"), nil
 }
 
 func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
