@@ -79,7 +79,7 @@ func (h *HandlerServer) getIcpAccount(gin *gin.Context) {
 	userAny, _ := gin.Get("user")
 	user, _ := userAny.(db2.User)
 	icpAccount, err := icpService.GetIcpAccount(user.Id)
-	if err != err {
+	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
@@ -97,7 +97,7 @@ func (h *HandlerServer) rechargeCanister(gin *gin.Context) {
 	user, _ := userAny.(db2.User)
 	icpService := application.GetBean[*service.IcpService]("icpService")
 	canisterBalanceVo, err := icpService.RechargeCanister(user.Id, rechargeCanisterParam)
-	if err != err {
+	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
@@ -109,7 +109,7 @@ func (h *HandlerServer) rechargeWallet(gin *gin.Context) {
 	user, _ := userAny.(db2.User)
 	icpService := application.GetBean[*service.IcpService]("icpService")
 	walletInfoVo, err := icpService.RechargeWallet(user.Id)
-	if err != err {
+	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
@@ -121,7 +121,7 @@ func (h *HandlerServer) getWalletInfo(gin *gin.Context) {
 	user, _ := userAny.(db2.User)
 	icpService := application.GetBean[*service.IcpService]("icpService")
 	walletInfoVo, err := icpService.GetWalletInfo(user.Id)
-	if err != err {
+	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
@@ -133,7 +133,7 @@ func (h *HandlerServer) getAccountInfo(gin *gin.Context) {
 	userAny, _ := gin.Get("user")
 	user, _ := userAny.(db2.User)
 	icpInfoVo, err := icpService.GetAccountInfo(user.Id)
-	if err != err {
+	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
@@ -145,7 +145,7 @@ func (h *HandlerServer) createIdentity(gin *gin.Context) {
 	userAny, _ := gin.Get("user")
 	user, _ := userAny.(db2.User)
 	icpInfoVo, err := icpService.CreateIdentity(user.Id)
-	if err != err {
+	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
@@ -163,7 +163,7 @@ func (h *HandlerServer) redeemFaucetCoupon(gin *gin.Context) {
 	user, _ := userAny.(db2.User)
 	icpService := application.GetBean[*service.IcpService]("icpService")
 	walletInfoVo, err := icpService.RedeemFaucetCoupon(user.Id, redeemFaucetCouponParam)
-	if err != err {
+	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
