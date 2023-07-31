@@ -40,7 +40,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: IC_NETWORK
-              value: http://dfx.icp:4939
+              value: ic
             - name: HOME
               value: /home/ubuntu
             - name: DB_HOST
