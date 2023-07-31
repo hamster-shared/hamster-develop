@@ -109,6 +109,28 @@ func (i *IcpService) GetAccountInfo(userId uint) (vo vo.UserIcpInfoVo, error err
 	return vo, nil
 }
 
+func (i *IcpService) GetIcpAccount(userId uint) (vo vo.IcpAccountVo, error error) {
+	var userIcp db.UserIcp
+	err := i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).First(&userIcp).Error
+	vo.UserId = int(userId)
+	vo.WalletIdFlag = false
+	vo.AccountIdFlag = false
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return vo, nil
+		} else {
+			return vo, err
+		}
+	}
+	if userIcp.AccountId != "" {
+		vo.AccountIdFlag = true
+	}
+	if userIcp.WalletId != "" {
+		vo.WalletIdFlag = true
+	}
+	return vo, nil
+}
+
 func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam parameter.RedeemFaucetCouponParam) (vo vo.IcpCanisterBalanceVo, error error) {
 	var userIcp db.UserIcp
 	err := i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).First(&userIcp).Error

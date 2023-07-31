@@ -74,6 +74,18 @@ func (h *HandlerServer) getCanisterList(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) getIcpAccount(gin *gin.Context) {
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	icpAccount, err := icpService.GetIcpAccount(user.Id)
+	if err != err {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(icpAccount, gin)
+}
+
 func (h *HandlerServer) rechargeCanister(gin *gin.Context) {
 	var rechargeCanisterParam parameter.RechargeCanisterParam
 	err := gin.BindJSON(&rechargeCanisterParam)
