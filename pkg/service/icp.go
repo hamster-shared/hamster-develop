@@ -55,7 +55,7 @@ func (i *IcpService) CreateIdentity(userId uint) (vo vo.UserIcpInfoVo, error err
 	if err == nil {
 		return vo, errors.New("you have created an identity")
 	}
-	if err != gorm.ErrRecordNotFound {
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return vo, err
 	}
 	identityName := strconv.Itoa(int(userId))
