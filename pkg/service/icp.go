@@ -31,6 +31,7 @@ var (
 	DepositCycles  = "dfx canister deposit-cycles %s %s --network %s"
 	CreateCanister = "dfx ledger create-canister %s --amount %s --network %s "
 	DeployWallet   = "dfx identity deploy-wallet %s --network %s"
+	GetWallet      = "dfx identity get-wallet --network %s"
 	WalletTopUp    = "dfx ledger top-up %s --amount %s --network %s"
 	AccountId      = "dfx ledger account-id"
 	GetPrincipal   = "dfx identity get-principal"
@@ -154,7 +155,10 @@ func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam par
 		}
 	}
 	if walletId == "" {
-		return vo, errors.New("failed to generate wallet")
+		walletId, err = i.GetWalletIdByDfx(userIcp.IdentityName)
+		if err != nil {
+			return vo, err
+		}
 	}
 	userIcp.WalletId = walletId
 	error = i.db.Model(db.UserIcp{}).Updates(&userIcp).Error
@@ -180,6 +184,31 @@ func (i *IcpService) GetWalletInfo(userId uint) (vo vo.IcpCanisterBalanceVo, err
 	vo.CanisterId = userIcp.WalletId
 	vo.CyclesBalance = balance
 	return vo, nil
+}
+
+func (i *IcpService) GetWalletIdByDfx(identityName string) (walletId string, err error) {
+	var mutex sync.Mutex
+	mutex.Lock()
+	defer mutex.Unlock()
+	useIdentitySprintf := UseIdentity
+	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
+	_, err = i.execDfxCommand(useIdentityCmd)
+	if err != nil {
+		return "", err
+	}
+	getWalletSprintf := GetWallet
+	getWalletCmd := fmt.Sprintf(getWalletSprintf, i.network)
+	output, err := i.execDfxCommand(getWalletCmd)
+	if err != nil {
+		return "", err
+	}
+	re := regexp.MustCompile(`([a-z0-9-]+-[a-z0-9-]+-[a-z0-9-]+-[a-z0-9-]+-[a-z0-9-]+)`)
+	matches := re.FindStringSubmatch(output)
+	if len(matches) > 1 {
+		return matches[1], nil
+	} else {
+		return "", errors.New("fail to get walletId")
+	}
 }
 
 func (i *IcpService) RechargeWallet(userId uint) (vo vo.IcpCanisterBalanceVo, error error) {
@@ -290,7 +319,10 @@ func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error erro
 	if len(matches) > 1 {
 		walletId = matches[1]
 	} else {
-		return "", errors.New("failure to create-canister")
+		walletId, err = i.GetWalletIdByDfx(userIcp.IdentityName)
+		if err != nil {
+			return "", err
+		}
 	}
 	deployWalletSprintf := DeployWallet
 	deployWalletCmd := fmt.Sprintf(deployWalletSprintf, walletId, i.network)
@@ -375,6 +407,7 @@ func (i *IcpService) execDfxCommand(cmd string) (string, error) {
 		logger.Errorf("%s Failed to execute command: %s", cmd, err)
 		return "", err
 	}
+	logger.Infof("%s Exit result: %s", cmd, string(output))
 	return string(output), nil
 }
 

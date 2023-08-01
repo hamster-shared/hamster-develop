@@ -36,6 +36,26 @@ func TestIcpService_CreateIdentity(t *testing.T) {
 	fmt.Printf("identity: %s \naccount-id: %s \nprincipal-id: %s \n", "test1113", strings.TrimSpace(accountId), strings.TrimSpace(pId))
 }
 
+func TestIcpService_GetWalletIdByDfx(t *testing.T) {
+	useIdentityCmd := "dfx identity use identity_abing"
+	_, err := execDfxCommand(useIdentityCmd)
+	if err != nil {
+		panic(err)
+	}
+	getWalletCmd := "dfx identity get-wallet --network ic"
+	output, err := execDfxCommand(getWalletCmd)
+	if err != nil {
+		panic(err)
+	}
+	re := regexp.MustCompile(`([a-z0-9-]+-[a-z0-9-]+-[a-z0-9-]+-[a-z0-9-]+-[a-z0-9-]+)`)
+	matches := re.FindStringSubmatch(output)
+	if len(matches) > 1 {
+		fmt.Printf("walletId is: %s \n", matches[1])
+	} else {
+		fmt.Errorf("fail to get walletId")
+	}
+}
+
 func execDfxCommand(cmd string) (string, error) {
 	output, err := exec.Command("bash", "-c", cmd).Output()
 	if exitError, ok := err.(*exec.ExitError); ok {
