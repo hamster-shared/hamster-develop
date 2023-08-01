@@ -6,7 +6,7 @@ stages:
       - name: set workdir
         uses: workdir
         with:
-          workdir: /Users/sunjianguo/GolandProjects/hamster-develop
+          workdir: /Users/abing/Develop/GO/GOPATH/src/github.com/hamster-develop
   build:
     steps:
       - name: build
@@ -15,13 +15,13 @@ stages:
           docker buildx build -t hamstershare/hamster-develop:${PIPELINE_ID} --platform=linux/amd64 --push .
 #          docker buildx build -f Dockerfile_worker -t hamstershare/hamster-develop-worker:${PIPELINE_ID} --platform=linux/amd64 --push .
 
-  deploy-master:
-    needs:
-      - init
-    steps:
-      - name: deploy-master
-        run: |
-          envsubst < deploy-master.yml | kubectl -n hamster apply -f -
+#  deploy-master:
+#    needs:
+#      - init
+#    steps:
+#      - name: deploy-master
+#        run: |
+#          envsubst < deploy-master.yml | kubectl -n hamster apply -f -
 
 #  deploy-worker:
 #    needs:
