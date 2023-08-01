@@ -501,6 +501,15 @@ func (i *IcpService) QueryDfxJsonDataByProjectId(projectId string) (vo.IcpDfxDat
 	return vo, nil
 }
 
+func (i *IcpService) IsConfigJsonData(projectId string) bool {
+	var data db.IcpDfxData
+	err := i.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId).First(&data).Error
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func (i *IcpService) UpdateDfxJsonData(id int, jsonData string) error {
 	var data db.IcpDfxData
 	err := i.db.Model(db.IcpDfxData{}).Where("id = ?", id).First(&data).Error

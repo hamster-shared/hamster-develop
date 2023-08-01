@@ -170,7 +170,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		}
 
 		// ipfs info save
-		if project.DeployType == int(consts.IPFS) {
+		if project.DeployType == int(consts.IPFS) || project.DeployType == int(consts.CONTAINER) {
 			for _, deploy := range detail.ActionResult.Deploys {
 				var data db.FrontendPackage
 				err := w.db.Model(db.FrontendPackage{}).Where("workflow_detail_id = ?", buildWorkflowDetailId).First(&data).Error
@@ -182,7 +182,9 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 					}
 					var packageDeploy db.FrontendDeploy
 
-					packageDeploy.DeployInfo = deploy.Cid
+					if project.DeployType == int(consts.IPFS) {
+						packageDeploy.DeployInfo = deploy.Cid
+					}
 					packageDeploy.ProjectId = project.Id
 					packageDeploy.WorkflowId = workflowDetail.WorkflowId
 					packageDeploy.WorkflowDetailId = workflowDetail.Id

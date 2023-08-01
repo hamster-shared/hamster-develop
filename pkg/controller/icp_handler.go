@@ -25,6 +25,17 @@ func (h *HandlerServer) getDfxJsonData(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) isConfigJsonData(gin *gin.Context) {
+	projectId := gin.Param("id")
+	if projectId == "" {
+		Fail("project id is empty", gin)
+		return
+	}
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	data := icpService.IsConfigJsonData(projectId)
+	Success(data, gin)
+}
+
 func (h *HandlerServer) updateDfxJsonData(gin *gin.Context) {
 	idStr := gin.Param("dfxId")
 	id, err := strconv.Atoi(idStr)
@@ -40,6 +51,27 @@ func (h *HandlerServer) updateDfxJsonData(gin *gin.Context) {
 	}
 	icpService := application.GetBean[*service.IcpService]("icpService")
 	err = icpService.UpdateDfxJsonData(id, updateData.JsonData)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success("", gin)
+}
+
+func (h *HandlerServer) saveDfxJsonData(gin *gin.Context) {
+	projectId := gin.Param("id")
+	if projectId == "" {
+		Fail("project id is empty", gin)
+		return
+	}
+	var updateData parameter.UpdateDfxData
+	err := gin.BindJSON(&updateData)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	err = icpService.SaveDfxJsonData(projectId, updateData.JsonData)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
