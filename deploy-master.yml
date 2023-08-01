@@ -130,6 +130,9 @@ spec:
             - name: kubeconfig
               mountPath: "/root/.kube"
               readOnly: true
+            - name: ubuntu-kubeconfig
+              mountPath: "/home/ubuntu/.kube"
+              readOnly: true
       volumes:
         - name: dfx-config
           persistentVolumeClaim:
@@ -151,7 +154,12 @@ spec:
             items:
               - key: "kubeconfig"
                 path: "config"
-
+        - name: ubuntu-kubeconfig
+          configMap:
+            name: kubeconfig
+            items:
+              - key: "kubeconfig"
+                path: "config"
 ---
 apiVersion: v1
 kind: Service
