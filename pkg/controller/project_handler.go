@@ -287,15 +287,6 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 			workflowDeployRes.ExecFile = file1
 			workflowService.UpdateWorkflow(workflowDeployRes)
 		}
-		if project.DeployType == int(consts.INTERNET_COMPUTER) {
-			icpService := application.GetBean[*service.IcpService]("icpService")
-			content, err := workflowService.GetDfxJsonData()
-			if err != nil {
-				logger.Errorf("init dfx json data failed:%s", err)
-			} else {
-				icpService.SaveDfxJsonData(project.Id.String(), content)
-			}
-		}
 	}
 	if project.Type == uint(consts.BLOCKCHAIN) {
 		containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
