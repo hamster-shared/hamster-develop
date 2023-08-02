@@ -187,9 +187,11 @@ func (i *IcpService) GetWalletInfo(userId uint) (vo vo.IcpCanisterBalanceVo, err
 }
 
 func (i *IcpService) GetWalletIdByDfx(identityName string) (walletId string, err error) {
-	var mutex sync.Mutex
-	mutex.Lock()
-	defer mutex.Unlock()
+	lock, err := utils.Lock()
+	if err != nil {
+		return "", err
+	}
+	defer utils.Unlock(lock)
 	useIdentitySprintf := UseIdentity
 	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
 	_, err = i.execDfxCommand(useIdentityCmd)
