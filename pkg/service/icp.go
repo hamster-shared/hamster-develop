@@ -9,6 +9,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
+	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
@@ -18,7 +19,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -286,12 +286,14 @@ func (i *IcpService) RechargeCanister(userId uint, rechargeCanisterParam paramet
 }
 
 func (i *IcpService) canisterRechargeCycles(identityName string, cycles string, canisterId string) (error error) {
-	var mutex sync.Mutex
-	mutex.Lock()
-	defer mutex.Unlock()
+	lock, err := utils.Lock()
+	if err != nil {
+		return err
+	}
+	defer utils.Unlock(lock)
 	useIdentitySprintf := UseIdentity
 	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
-	_, err := i.execDfxCommand(useIdentityCmd)
+	_, err = i.execDfxCommand(useIdentityCmd)
 	if err != nil {
 		return err
 	}
@@ -306,12 +308,14 @@ func (i *IcpService) canisterRechargeCycles(identityName string, cycles string, 
 }
 
 func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error error) {
-	var mutex sync.Mutex
-	mutex.Lock()
-	defer mutex.Unlock()
+	lock, err := utils.Lock()
+	if err != nil {
+		return "", err
+	}
+	defer utils.Unlock(lock)
 	useIdentitySprintf := UseIdentity
 	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, userIcp.IdentityName)
-	_, err := i.execDfxCommand(useIdentityCmd)
+	_, err = i.execDfxCommand(useIdentityCmd)
 	if err != nil {
 		return "", err
 	}
@@ -348,12 +352,14 @@ func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error erro
 }
 
 func (i *IcpService) WalletTopUp(identityName string, walletId string) (error error) {
-	var mutex sync.Mutex
-	mutex.Lock()
-	defer mutex.Unlock()
+	lock, err := utils.Lock()
+	if err != nil {
+		return err
+	}
+	defer utils.Unlock(lock)
 	useIdentitySprintf := UseIdentity
 	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
-	_, err := i.execDfxCommand(useIdentityCmd)
+	_, err = i.execDfxCommand(useIdentityCmd)
 	if err != nil {
 		return err
 	}
@@ -387,12 +393,14 @@ func (i *IcpService) getLedgerIcpBalance() (string, error) {
 }
 
 func (i *IcpService) getLedgerInfo(identityName string) (string, string, error) {
-	var mutex sync.Mutex
-	mutex.Lock()
-	defer mutex.Unlock()
+	lock, err := utils.Lock()
+	if err != nil {
+		return "", "", err
+	}
+	defer utils.Unlock(lock)
 	useIdentitySprintf := UseIdentity
 	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
-	_, err := i.execDfxCommand(useIdentityCmd)
+	_, err = i.execDfxCommand(useIdentityCmd)
 	if err != nil {
 		return "", "", err
 	}
