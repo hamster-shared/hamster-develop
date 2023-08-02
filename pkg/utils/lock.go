@@ -7,10 +7,11 @@ import (
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"os"
+	"time"
 )
 
 const (
-	ICP_LOCK_KEY = "icp_lock_resource"
+	ICP_LOCK_KEY = "icp-lock"
 	NAMESPACE    = "hamster"
 )
 
@@ -37,17 +38,15 @@ func Lock() (*lockgate.LockHandle, error) {
 	// Case 1: simple blocking lock
 	logger.Info("try to lock:", ICP_LOCK_KEY)
 
-	//_, lock, err := locker.Acquire(ICP_LOCK_KEY, lockgate.AcquireOptions{Shared: false, Timeout: 30 * time.Second})
-	//if err != nil {
-	//	logger.Error(os.Stderr, "ERROR: failed to lock %s: %s\n", ICP_LOCK_KEY, err)
-	//	return nil, err
-	//}
-	//return &lock, err
-	return nil, nil
+	_, lock, err := locker.Acquire(ICP_LOCK_KEY, lockgate.AcquireOptions{Shared: false, Timeout: 30 * time.Second})
+	if err != nil {
+		logger.Error(os.Stderr, "ERROR: failed to lock %s: %s\n", ICP_LOCK_KEY, err)
+		return nil, err
+	}
+	return &lock, err
 }
 
 func Unlock(lock *lockgate.LockHandle) error {
-	//logger.Info("try to release lock:", ICP_LOCK_KEY)
-	//return locker.Release(*lock)
-	return nil
+	logger.Info("try to release lock:", ICP_LOCK_KEY)
+	return locker.Release(*lock)
 }
