@@ -446,7 +446,21 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 			detail.StageInfo = string(data)
 			detail.Duration = jobDetail.Duration
 		}
+
 	}
+
+	// if workflow status is error , need get error from jobDetail
+
+	if detail.Status == vo.WORKFLOW_STATUS_FAIL {
+		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.WorkflowId)
+		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
+		if err != nil {
+			logger.Warnf("get job history fail, err is %s", err.Error())
+			return &detail, err
+		}
+		detail.ErrorInfo = jobDetail.Error
+	}
+
 	return &detail, nil
 }
 
