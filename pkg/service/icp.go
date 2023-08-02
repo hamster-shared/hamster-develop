@@ -161,7 +161,7 @@ func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam par
 		}
 	}
 	userIcp.WalletId = walletId
-	error = i.db.Model(db.UserIcp{}).Updates(&userIcp).Error
+	error = i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).Updates(&userIcp).Error
 	if error != nil {
 		return vo, errors.New("failed to save wallet ID")
 	}
@@ -223,7 +223,7 @@ func (i *IcpService) RechargeWallet(userId uint) (vo vo.IcpCanisterBalanceVo, er
 			return vo, err
 		}
 		userIcp.WalletId = walletId
-		err = i.db.Model(db.UserIcp{}).Updates(&userIcp).Error
+		err = i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).Updates(&userIcp).Error
 		if err != nil {
 			return vo, err
 		}
@@ -275,7 +275,7 @@ func (i *IcpService) RechargeCanister(userId uint, rechargeCanisterParam paramet
 		String: data.Balance,
 		Valid:  true,
 	}
-	err = i.db.Model(db.IcpCanister{}).Updates(&icpCanister).Error
+	err = i.db.Model(db.IcpCanister{}).Where("canister_id = ?", rechargeCanisterParam.CanisterId).Updates(&icpCanister).Error
 	if err != nil {
 		return vo, err
 	}
