@@ -434,7 +434,7 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	}
 
 	_ = copier.Copy(&detail, &workflowDetail)
-	if workflowDetail.Status == vo.WORKFLOW_STATUS_RUNNING {
+	if workflowDetail.Status == uint(model.STATUS_RUNNING) {
 		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.WorkflowId)
 		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
 		if err != nil {
@@ -451,7 +451,7 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 
 	// if workflow status is error , need get error from jobDetail
 
-	if detail.Status == vo.WORKFLOW_STATUS_FAIL {
+	if detail.Status == uint(model.STATUS_FAIL) {
 		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.WorkflowId)
 		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
 		if err != nil {
@@ -783,7 +783,7 @@ func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int) error {
 func (w *WorkflowService) CheckRunningJob() {
 
 	var workflowList []db.WorkflowDetail
-	err := w.db.Model(db.WorkflowDetail{}).Where("status = ?", vo.WORKFLOW_STATUS_RUNNING).Find(&workflowList).Error
+	err := w.db.Model(db.WorkflowDetail{}).Where("status = ?", uint(model.STATUS_RUNNING)).Find(&workflowList).Error
 	if err != nil {
 		return
 	}
@@ -811,7 +811,7 @@ func (w *WorkflowService) CheckRunningJob() {
 	for _, flow := range stopList {
 		workflowKey := w.GetWorkflowKey(flow.ProjectId.String(), flow.WorkflowId)
 		jobDetail, _ := w.engine.GetJobHistory(workflowKey, int(flow.ExecNumber))
-		flow.Status = vo.WORKFLOW_STATUS_CANCEL
+		flow.Status = uint(model.STATUS_STOP)
 		if jobDetail != nil {
 			stageInfo, err := json.Marshal(jobDetail.Stages)
 			if err == nil {
