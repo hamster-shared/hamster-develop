@@ -266,9 +266,22 @@ func (i *IcpService) RechargeCanister(userId uint, rechargeCanisterParam paramet
 		return vo, err
 	}
 
+	var icpCanister db.IcpCanister
+	err = i.db.Model(db.IcpCanister{}).Where("canister_id = ?", rechargeCanisterParam.CanisterId).First(&icpCanister).Error
+	if err != nil {
+		return vo, err
+	}
+	icpCanister.Cycles = sql.NullString{
+		String: data.Balance,
+		Valid:  true,
+	}
+	err = i.db.Model(db.IcpCanister{}).Updates(&icpCanister).Error
+	if err != nil {
+		return vo, err
+	}
 	vo.UserId = int(userId)
 	vo.CanisterId = rechargeCanisterParam.CanisterId
-	vo.CyclesBalance = data.Balance
+	vo.CyclesBalance = data.Balance + "T"
 	return vo, nil
 }
 
