@@ -169,39 +169,36 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 			image = "https://g.alpha.hamsternet.io/ipfs/QmPbUjgPNW1eBVxh1zVgF9F7porBWijYrAeMth9QDPwEXk"
 		}
 
-		// ipfs info save
-		if project.DeployType == int(consts.IPFS) || project.DeployType == int(consts.CONTAINER) {
-			for _, deploy := range detail.ActionResult.Deploys {
-				var data db.FrontendPackage
-				err := w.db.Model(db.FrontendPackage{}).Where("workflow_detail_id = ?", buildWorkflowDetailId).First(&data).Error
-				if err == nil {
-					data.Domain = deploy.Url
-					err := w.db.Save(&data).Error
-					if err != nil {
-						log.Println("save frontend package failed: ", err.Error())
-					}
-					var packageDeploy db.FrontendDeploy
-
-					if project.DeployType == int(consts.IPFS) {
-						packageDeploy.DeployInfo = deploy.Cid
-					}
-					packageDeploy.ProjectId = project.Id
-					packageDeploy.WorkflowId = workflowDetail.WorkflowId
-					packageDeploy.WorkflowDetailId = workflowDetail.Id
-					packageDeploy.PackageId = data.Id
-					packageDeploy.Domain = deploy.Url
-					packageDeploy.Version = data.Version
-					packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
-					packageDeploy.Name = project.Name
-					packageDeploy.Branch = data.Branch
-					packageDeploy.CreateTime = time.Now()
-					packageDeploy.Image = image
-					err = w.db.Save(&packageDeploy).Error
-					if err != nil {
-						log.Println("save frontend deploy failed: ", err.Error())
-					}
-
+		for _, deploy := range detail.ActionResult.Deploys {
+			var data db.FrontendPackage
+			err := w.db.Model(db.FrontendPackage{}).Where("workflow_detail_id = ?", buildWorkflowDetailId).First(&data).Error
+			if err == nil {
+				data.Domain = deploy.Url
+				err := w.db.Save(&data).Error
+				if err != nil {
+					log.Println("save frontend package failed: ", err.Error())
 				}
+				var packageDeploy db.FrontendDeploy
+
+				if project.DeployType == int(consts.IPFS) {
+					packageDeploy.DeployInfo = deploy.Cid
+				}
+				packageDeploy.ProjectId = project.Id
+				packageDeploy.WorkflowId = workflowDetail.WorkflowId
+				packageDeploy.WorkflowDetailId = workflowDetail.Id
+				packageDeploy.PackageId = data.Id
+				packageDeploy.Domain = deploy.Url
+				packageDeploy.Version = data.Version
+				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
+				packageDeploy.Name = project.Name
+				packageDeploy.Branch = data.Branch
+				packageDeploy.CreateTime = time.Now()
+				packageDeploy.Image = image
+				err = w.db.Save(&packageDeploy).Error
+				if err != nil {
+					log.Println("save frontend deploy failed: ", err.Error())
+				}
+
 			}
 		}
 
@@ -210,7 +207,6 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 			for _, deploy := range detail.ActionResult.Deploys {
 
 				var icpCanister db.IcpCanister
-
 				canisterId, err := extractDomain(deploy.Url)
 				if err != nil {
 					continue
