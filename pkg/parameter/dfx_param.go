@@ -6,7 +6,7 @@ type UpdateDfxData struct {
 
 type RechargeCanisterParam struct {
 	CanisterId string  `json:"canisterId" binding:"required"`
-	Amount     float32 `json:"amount" binding:"required"`
+	Amount     float64 `json:"amount" binding:"required"`
 }
 
 type RedeemFaucetCouponParam struct {

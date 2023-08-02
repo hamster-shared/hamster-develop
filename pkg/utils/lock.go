@@ -2,11 +2,11 @@ package utils
 
 import (
 	"github.com/hamster-shared/aline-engine/logger"
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"os"
-	"github.com/werf/kubedog/pkg/kube"
 )
 
 const (
@@ -43,7 +43,7 @@ func Lock() (*lockgate.LockHandle, error) {
 	//	return nil, err
 	//}
 	//return &lock, err
-	return nil,nil,
+	return nil, nil
 }
 
 func Unlock(lock *lockgate.LockHandle) error {

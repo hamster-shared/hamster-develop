@@ -258,7 +258,7 @@ func (i *IcpService) RechargeCanister(userId uint, rechargeCanisterParam paramet
 		}
 	}
 	depositCycles := rechargeCanisterParam.Amount * 1e12
-	i.canisterRechargeCycles(userIcp.IdentityName, strconv.FormatFloat(float64(depositCycles), 'f', -1, 64), rechargeCanisterParam.CanisterId)
+	i.canisterRechargeCycles(userIcp.IdentityName, strconv.FormatFloat(depositCycles, 'f', -1, 64), rechargeCanisterParam.CanisterId)
 	err = os.Remove("dfx.json")
 	if err != nil {
 		return vo, err
