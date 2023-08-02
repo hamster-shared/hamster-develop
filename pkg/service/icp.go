@@ -257,8 +257,15 @@ func (i *IcpService) RechargeCanister(userId uint, rechargeCanisterParam paramet
 			return vo, err
 		}
 	}
-	depositCycles := rechargeCanisterParam.Amount * 1e12
-	i.canisterRechargeCycles(userIcp.IdentityName, strconv.FormatFloat(depositCycles, 'f', -1, 64), rechargeCanisterParam.CanisterId)
+	amount, err := strconv.ParseFloat(rechargeCanisterParam.Amount, 64)
+	if err != nil {
+		return vo, err
+	}
+	depositCycles := amount * 1e12
+	err = i.canisterRechargeCycles(userIcp.IdentityName, strconv.FormatFloat(depositCycles, 'f', -1, 64), rechargeCanisterParam.CanisterId)
+	if err != nil {
+		return vo, err
+	}
 	err = os.Remove("dfx.json")
 	if err != nil {
 		return vo, err
@@ -302,10 +309,10 @@ func (i *IcpService) canisterRechargeCycles(identityName string, cycles string, 
 	depositCyclesSprintf := DepositCycles
 	depositCyclesCmd := fmt.Sprintf(depositCyclesSprintf, cycles, canisterId, i.network)
 	output, err := i.execDfxCommand(depositCyclesCmd)
-	logger.Infof("userid-> %s canisterId-> %s deposit-cycles result is: %s \n", identityName, canisterId, output)
 	if err != nil {
 		return err
 	}
+	logger.Infof("userid-> %s canisterId-> %s deposit-cycles result is: %s \n", identityName, canisterId, output)
 	return nil
 }
 
@@ -424,7 +431,7 @@ func (i *IcpService) execDfxCommand(cmd string) (string, error) {
 	output, err := exec.Command("bash", "-c", cmd).Output()
 	if exitError, ok := err.(*exec.ExitError); ok {
 		logger.Errorf("%s Exit status: %d, Exit str: %s", cmd, exitError.ExitCode(), string(exitError.Stderr))
-		return "", err
+		return "", errors.New(string(exitError.Stderr))
 	} else if err != nil {
 		// 输出其他类型的错误
 		logger.Errorf("%s Failed to execute command: %s", cmd, err)
