@@ -482,7 +482,7 @@ func (i *IcpService) queryCanisterStatus(canisterId string) (vo.CanisterStatusRe
 		}
 		data := float64(number) / math.Pow(10, 12)
 		balance := fmt.Sprintf("%.2f\n", data)
-		res.Balance = balance + "T"
+		res.Balance = balance
 	} else {
 		logger.Info("balance not found!")
 	}
