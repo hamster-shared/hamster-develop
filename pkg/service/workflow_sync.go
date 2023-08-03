@@ -196,7 +196,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 				packageDeploy.Domain = deploy.Url
 				packageDeploy.Version = data.Version
 				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
-				packageDeploy.Name = project.Name
+				packageDeploy.Name = data.Name
 				packageDeploy.Branch = data.Branch
 				packageDeploy.CreateTime = time.Now()
 				packageDeploy.Image = image
