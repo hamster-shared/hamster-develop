@@ -2,17 +2,16 @@ package utils
 
 import (
 	"github.com/hamster-shared/aline-engine/logger"
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"os"
 	"time"
-
-	"github.com/werf/kubedog/pkg/kube"
 )
 
 const (
-	ICP_LOCK_KEY = "icp_lock_resource"
+	ICP_LOCK_KEY = "icp-lock"
 	NAMESPACE    = "hamster"
 )
 

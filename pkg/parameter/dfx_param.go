@@ -5,8 +5,8 @@ type UpdateDfxData struct {
 }
 
 type RechargeCanisterParam struct {
-	CanisterId string  `json:"canisterId" binding:"required"`
-	Amount     float32 `json:"amount" binding:"required"`
+	CanisterId string `json:"canisterId" binding:"required"`
+	Amount     string `json:"amount" binding:"required"`
 }
 
 type RedeemFaucetCouponParam struct {
