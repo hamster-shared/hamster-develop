@@ -468,18 +468,20 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 	if err != nil {
 		return err
 	}
+	logger.Info(mv)
+	logger.Info(len(mv))
 	if len(mv) > 0 {
-		for i, s := range mv {
+		for _, s := range mv {
 			contract := db.Contract{
 				ProjectId:        projectId,
 				WorkflowId:       workflowId,
 				WorkflowDetailId: workflowDetail.Id,
-				Name:             strings.TrimSuffix(artis[i].Name, path.Ext(artis[i].Name)),
+				Name:             strings.TrimSuffix(artis[s.Index].Name, path.Ext(artis[s.Index].Name)),
 				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
 				BuildTime:        workflowDetail.CreateTime,
 				AbiInfo:          "",
 				ByteCode:         byteCode,
-				AptosMv:          s,
+				AptosMv:          s.Mv,
 				CreateTime:       time.Now(),
 				Type:             uint(consts.Aptos),
 				Status:           consts.STATUS_SUCCESS,
@@ -601,9 +603,14 @@ func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, 
 	return w.saveContractToDatabase(&contract)
 }
 
-func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr []string, byteCode string, err error) {
-	var mvs []string
-	for _, arti := range artis {
+type AptosBuildInfo struct {
+	Mv    string
+	Index int
+}
+
+func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr []AptosBuildInfo, byteCode string, err error) {
+	var mvs []AptosBuildInfo
+	for i, arti := range artis {
 		// 以 .bcs 结尾，认为是 byteCode
 		if strings.HasSuffix(arti.Url, ".bcs") {
 			byteCode, err = utils.FileToHexString(arti.Url)
@@ -613,13 +620,16 @@ func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr 
 			}
 			continue
 		}
+		var data AptosBuildInfo
 		if strings.HasSuffix(arti.Url, ".mv") {
 			mv, err := utils.FileToHexString(arti.Url)
 			if err != nil {
 				logger.Errorf("hex string failed: %s", err.Error())
 				return mvs, "", err
 			}
-			mvs = append(mvs, mv)
+			data.Mv = mv
+			data.Index = i
+			mvs = append(mvs, data)
 			continue
 		}
 		logger.Warnf("aptos contract file name is not end with .bcs or .mv: %s", arti.Url)
