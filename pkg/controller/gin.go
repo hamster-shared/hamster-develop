@@ -137,6 +137,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/dfx-json/check", h.handlerServer.isConfigJsonData)
 	api.PUT("/projects/:id/dfx-json/:dfxId", h.handlerServer.updateDfxJsonData)
 	api.POST("/projects/:id/dfx-json", h.handlerServer.saveDfxJsonData)
+	api.GET("/projects/:id/canister", h.handlerServer.getCanisterInfo)
 	api.GET("/projects/:id/canister/list", h.handlerServer.getCanisterList)       //罐列表
 	api.GET("/projects/:id/icp/account", h.handlerServer.getIcpAccount)           //获取icp的账户信息
 	api.POST("/projects/:id/recharge/canister", h.handlerServer.rechargeCanister) //给应用罐罐充值cycles

@@ -123,6 +123,12 @@ func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDet
 		projectName := project.Name
 		if project.Type == uint(consts.BLOCKCHAIN) {
 			projectName = fmt.Sprintf("%s_node_polkadot", project.Name)
+		} else if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.INTERNET_COMPUTER) {
+			if project.FrameType == 1 {
+				projectName = fmt.Sprintf("%s_%s_ic", project.Name, "vuejs")
+			} else if project.FrameType == 2 {
+				projectName = fmt.Sprintf("%s_%s_ic", project.Name, "reactjs")
+			}
 		}
 		for range detail.ActionResult.Artifactorys {
 			frontendPackage := db.FrontendPackage{
@@ -486,8 +492,10 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 				Type:             uint(consts.Aptos),
 				Status:           consts.STATUS_SUCCESS,
 			}
-			err := w.saveContractToDatabase(&contract)
-			logger.Errorf("save aptos contract to database failed:%s", err)
+			err = w.saveContractToDatabase(&contract)
+			if err != nil {
+				logger.Errorf("save contract to database failed: %s", err.Error())
+			}
 		}
 	}
 	// logger.Tracef("aptos contract: %+v", contract)

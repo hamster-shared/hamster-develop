@@ -106,6 +106,21 @@ func (h *HandlerServer) getCanisterList(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) getCanisterInfo(gin *gin.Context) {
+	projectId := gin.Param("id")
+	if projectId == "" {
+		Fail("project id is empty", gin)
+		return
+	}
+	icpService := application.GetBean[*service.IcpService]("icpService")
+	data, err := icpService.QueryIcpCanister(projectId)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) getIcpAccount(gin *gin.Context) {
 	icpService := application.GetBean[*service.IcpService]("icpService")
 	userAny, _ := gin.Get("user")
