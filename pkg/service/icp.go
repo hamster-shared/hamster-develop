@@ -441,7 +441,7 @@ func (i *IcpService) getLedgerIcpBalance() (string, error) {
 		} else {
 			return "", errors.New("insufficient icp balance")
 		}
-		return strconv.FormatFloat(amount, 'f', -1, 64), nil
+		return strconv.FormatFloat(amount, 'f', 8, 64), nil
 	} else {
 		return "", errors.New("failure to obtain ICP balances")
 	}

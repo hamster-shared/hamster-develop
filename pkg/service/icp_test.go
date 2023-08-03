@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -88,6 +89,23 @@ Canister created with id: "gastn-uqaaa-aaaae-aaafq-cai"
 	} else {
 		fmt.Println("String not found.")
 	}
+}
+
+func TestIcpService_getLedgerIcpBalance(t *testing.T) {
+
+	amount, err := strconv.ParseFloat("0.01010000", 64)
+	if err != nil {
+		panic(t)
+	}
+	fmt.Println(amount)
+	if amount > 0.0002 {
+		amount -= 0.0002
+	} else {
+		panic(t)
+	}
+	fmt.Println(amount)
+	float := strconv.FormatFloat(amount, 'f', 8, 64)
+	fmt.Println(float)
 }
 
 var ic0, _ = url.Parse("https://ic0.app/")
