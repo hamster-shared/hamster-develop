@@ -468,24 +468,28 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 	if err != nil {
 		return err
 	}
-
-	contract := db.Contract{
-		ProjectId:        projectId,
-		WorkflowId:       workflowId,
-		WorkflowDetailId: workflowDetail.Id,
-		Name:             strings.TrimSuffix(artis[0].Name, path.Ext(artis[0].Name)),
-		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-		BuildTime:        workflowDetail.CreateTime,
-		AbiInfo:          "",
-		ByteCode:         byteCode,
-		AptosMv:          mv,
-		CreateTime:       time.Now(),
-		Type:             uint(consts.Aptos),
-		Status:           consts.STATUS_SUCCESS,
+	if len(mv) > 0 {
+		for i, s := range mv {
+			contract := db.Contract{
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
+				WorkflowDetailId: workflowDetail.Id,
+				Name:             strings.TrimSuffix(artis[i].Name, path.Ext(artis[i].Name)),
+				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+				BuildTime:        workflowDetail.CreateTime,
+				AbiInfo:          "",
+				ByteCode:         byteCode,
+				AptosMv:          s,
+				CreateTime:       time.Now(),
+				Type:             uint(consts.Aptos),
+				Status:           consts.STATUS_SUCCESS,
+			}
+			err := w.saveContractToDatabase(&contract)
+			logger.Errorf("save aptos contract to database failed:%s", err)
+		}
 	}
-
 	// logger.Tracef("aptos contract: %+v", contract)
-	return w.saveContractToDatabase(&contract)
+	return nil
 }
 
 func getSuiModuleName(project *db.Project) string {
@@ -597,26 +601,28 @@ func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, 
 	return w.saveContractToDatabase(&contract)
 }
 
-func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (mv string, byteCode string, err error) {
+func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr []string, byteCode string, err error) {
+	var mvs []string
 	for _, arti := range artis {
 		// 以 .bcs 结尾，认为是 byteCode
 		if strings.HasSuffix(arti.Url, ".bcs") {
 			byteCode, err = utils.FileToHexString(arti.Url)
 			if err != nil {
 				logger.Errorf("hex string failed: %s", err.Error())
-				return "", "", err
+				return mvs, "", err
 			}
 			continue
 		}
 		if strings.HasSuffix(arti.Url, ".mv") {
-			mv, err = utils.FileToHexString(arti.Url)
+			mv, err := utils.FileToHexString(arti.Url)
 			if err != nil {
 				logger.Errorf("hex string failed: %s", err.Error())
-				return "", "", err
+				return mvs, "", err
 			}
+			mvs = append(mvs, mv)
 			continue
 		}
 		logger.Warnf("aptos contract file name is not end with .bcs or .mv: %s", arti.Url)
 	}
-	return mv, byteCode, nil
+	return mvs, byteCode, nil
 }
