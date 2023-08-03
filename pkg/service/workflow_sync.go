@@ -123,6 +123,12 @@ func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDet
 		projectName := project.Name
 		if project.Type == uint(consts.BLOCKCHAIN) {
 			projectName = fmt.Sprintf("%s_node_polkadot", project.Name)
+		} else if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.INTERNET_COMPUTER) {
+			if project.FrameType == 1 {
+				projectName = fmt.Sprintf("%s_%s_ic", project.Name, "vuejs")
+			} else if project.FrameType == 2 {
+				projectName = fmt.Sprintf("%s_%s_ic", project.Name, "reactjs")
+			}
 		}
 		for range detail.ActionResult.Artifactorys {
 			frontendPackage := db.FrontendPackage{
@@ -190,7 +196,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 				packageDeploy.Domain = deploy.Url
 				packageDeploy.Version = data.Version
 				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
-				packageDeploy.Name = project.Name
+				packageDeploy.Name = data.Name
 				packageDeploy.Branch = data.Branch
 				packageDeploy.CreateTime = time.Now()
 				packageDeploy.Image = image
@@ -468,24 +474,32 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 	if err != nil {
 		return err
 	}
-
-	contract := db.Contract{
-		ProjectId:        projectId,
-		WorkflowId:       workflowId,
-		WorkflowDetailId: workflowDetail.Id,
-		Name:             strings.TrimSuffix(artis[0].Name, path.Ext(artis[0].Name)),
-		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-		BuildTime:        workflowDetail.CreateTime,
-		AbiInfo:          "",
-		ByteCode:         byteCode,
-		AptosMv:          mv,
-		CreateTime:       time.Now(),
-		Type:             uint(consts.Aptos),
-		Status:           consts.STATUS_SUCCESS,
+	logger.Info(mv)
+	logger.Info(len(mv))
+	if len(mv) > 0 {
+		for _, s := range mv {
+			contract := db.Contract{
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
+				WorkflowDetailId: workflowDetail.Id,
+				Name:             strings.TrimSuffix(artis[s.Index].Name, path.Ext(artis[s.Index].Name)),
+				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+				BuildTime:        workflowDetail.CreateTime,
+				AbiInfo:          "",
+				ByteCode:         byteCode,
+				AptosMv:          s.Mv,
+				CreateTime:       time.Now(),
+				Type:             uint(consts.Aptos),
+				Status:           consts.STATUS_SUCCESS,
+			}
+			err = w.saveContractToDatabase(&contract)
+			if err != nil {
+				logger.Errorf("save contract to database failed: %s", err.Error())
+			}
+		}
 	}
-
 	// logger.Tracef("aptos contract: %+v", contract)
-	return w.saveContractToDatabase(&contract)
+	return nil
 }
 
 func getSuiModuleName(project *db.Project) string {
@@ -597,26 +611,36 @@ func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, 
 	return w.saveContractToDatabase(&contract)
 }
 
-func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (mv string, byteCode string, err error) {
-	for _, arti := range artis {
+type AptosBuildInfo struct {
+	Mv    string
+	Index int
+}
+
+func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr []AptosBuildInfo, byteCode string, err error) {
+	var mvs []AptosBuildInfo
+	for i, arti := range artis {
 		// 以 .bcs 结尾，认为是 byteCode
 		if strings.HasSuffix(arti.Url, ".bcs") {
 			byteCode, err = utils.FileToHexString(arti.Url)
 			if err != nil {
 				logger.Errorf("hex string failed: %s", err.Error())
-				return "", "", err
+				return mvs, "", err
 			}
 			continue
 		}
+		var data AptosBuildInfo
 		if strings.HasSuffix(arti.Url, ".mv") {
-			mv, err = utils.FileToHexString(arti.Url)
+			mv, err := utils.FileToHexString(arti.Url)
 			if err != nil {
 				logger.Errorf("hex string failed: %s", err.Error())
-				return "", "", err
+				return mvs, "", err
 			}
+			data.Mv = mv
+			data.Index = i
+			mvs = append(mvs, data)
 			continue
 		}
 		logger.Warnf("aptos contract file name is not end with .bcs or .mv: %s", arti.Url)
 	}
-	return mv, byteCode, nil
+	return mvs, byteCode, nil
 }

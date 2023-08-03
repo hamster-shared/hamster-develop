@@ -465,6 +465,15 @@ func (i *IcpService) execDfxCommand(cmd string) (string, error) {
 	return string(output), nil
 }
 
+func (i *IcpService) QueryIcpCanister(projectId string) (string, error) {
+	var data db.IcpCanister
+	err := i.db.Model(db.IcpCanister{}).Where("project_id = ?", projectId).First(&data).Error
+	if err != nil {
+		return "", err
+	}
+	return data.CanisterId, nil
+}
+
 func (i *IcpService) QueryIcpCanisterList(projectId string, page, size int) (*vo.IcpCanisterPage, error) {
 	var total int64
 	var pageData vo.IcpCanisterPage
