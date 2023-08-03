@@ -41,6 +41,8 @@ spec:
           env:
             - name: IC_NETWORK
               value: ic
+            - name: IPC_TEST
+              value: "true"
             - name: HOME
               value: /home/ubuntu
             - name: DB_HOST
