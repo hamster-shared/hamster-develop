@@ -98,6 +98,17 @@ func (i *IcpService) GetAccountInfo(userId uint) (vo vo.UserIcpInfoVo, error err
 	if err != nil {
 		return vo, err
 	}
+	lock, err := utils.Lock()
+	if err != nil {
+		return vo, err
+	}
+	defer utils.Unlock(lock)
+	useIdentitySprintf := UseIdentity
+	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, userIcp.IdentityName)
+	_, err = i.execDfxCommand(useIdentityCmd)
+	if err != nil {
+		return vo, err
+	}
 	ledgerBalanceSprintf := LedgerBalance
 	ledgerBalanceCmd := fmt.Sprintf(ledgerBalanceSprintf, i.network)
 	balance, err := i.execDfxCommand(ledgerBalanceCmd)
@@ -188,6 +199,17 @@ func (i *IcpService) GetWalletInfo(userId uint) (vo vo.IcpCanisterBalanceVo, err
 		vo.CanisterId = userIcp.WalletId
 		vo.CyclesBalance = "0.0000000 TC (trillion cycles)"
 		return vo, nil
+	}
+	lock, err := utils.Lock()
+	if err != nil {
+		return vo, err
+	}
+	defer utils.Unlock(lock)
+	useIdentitySprintf := UseIdentity
+	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, userIcp.IdentityName)
+	_, err = i.execDfxCommand(useIdentityCmd)
+	if err != nil {
+		return vo, err
 	}
 	walletBalanceSprintf := WalletBalance
 	walletBalanceCmd := fmt.Sprintf(walletBalanceSprintf, i.network)
