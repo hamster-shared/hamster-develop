@@ -395,7 +395,16 @@ func (i *IcpService) getLedgerIcpBalance() (string, error) {
 	}
 	balanceSplit := strings.Split(balance, " ")
 	if len(balanceSplit) > 0 {
-		return balanceSplit[0], nil
+		amount, err := strconv.ParseFloat(balanceSplit[0], 64)
+		if err != nil {
+			return "", err
+		}
+		if amount > 0.0002 {
+			amount -= 0.0002
+		} else {
+			return "", errors.New("insufficient icp balance")
+		}
+		return strconv.FormatFloat(amount, 'f', -1, 64), nil
 	} else {
 		return "", errors.New("failure to obtain ICP balances")
 	}
