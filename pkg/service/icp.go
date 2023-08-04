@@ -156,6 +156,7 @@ func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam par
 		if error != nil {
 			return vo, errors.New("failed to save wallet ID")
 		}
+		return i.GetWalletInfo(userId)
 	}
 	redeemCouponSprintf := RedeemCoupon
 	redeemCouponCmd := fmt.Sprintf(redeemCouponSprintf, redeemFaucetCouponParam.Coupon, i.network)
