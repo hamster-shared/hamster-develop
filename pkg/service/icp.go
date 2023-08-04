@@ -151,6 +151,7 @@ func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam par
 	}
 	icpTest := os.Getenv("IPC_TEST")
 	if icpTest == "true" && redeemFaucetCouponParam.Coupon == "icp-test-coupon-cai" {
+		time.Sleep(3 * time.Second)
 		userIcp.WalletId = "icp-test-wallet-id"
 		error = i.db.Model(db.UserIcp{}).Where("fk_user_id = ?", userId).Updates(&userIcp).Error
 		if error != nil {
