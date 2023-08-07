@@ -150,7 +150,8 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 		var icpDfx db.IcpDfxData
 		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
 		if err != nil {
-			return vo.DeployResultVo{}, err
+			logger.Errorf("db error : %s", err.Error())
+			return vo.DeployResultVo{}, fmt.Errorf("dfx.json not configuration")
 		}
 		params["dfxJson"] = icpDfx.DfxData
 	}
