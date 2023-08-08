@@ -163,7 +163,11 @@ func (i *IcpService) RedeemFaucetCoupon(userId uint, redeemFaucetCouponParam par
 	redeemCouponCmd := fmt.Sprintf(redeemCouponSprintf, redeemFaucetCouponParam.Coupon, i.network)
 	output, err := i.execDfxCommand(redeemCouponCmd)
 	if err != nil {
-		return vo, err
+		if strings.Contains(err.Error(), "Error: ") {
+			return vo, errors.New("Code is expired or not redeemable")
+		} else {
+			return vo, err
+		}
 	}
 	walletId := ""
 	split := strings.Split(output, "\n")
