@@ -210,12 +210,16 @@ spec:
               name: aline-pipelines
             - mountPath: /root/workdir
               name: aline-workdir
-            - mountPath: /root/.move
+            - mountPath: /home/ubuntu/.move
               name: aptos-move-cache
             - mountPath: /certs
               name: docker-tls
             - mountPath: /home/ubuntu/workdir
               name: aline-workdir
+            - mountPath: /var/lib/cargo/registry
+              name: cargo-build-registry
+            - mountPath: /var/lib/cargo/git
+              name: cargo-build-git
           securityContext:
             privileged: true
       volumes:
@@ -231,7 +235,12 @@ spec:
         - name: aptos-move-cache
           persistentVolumeClaim:
             claimName: aptos-move-cache
-
+        - name: cargo-build-git
+          persistentVolumeClaim:
+            claimName: cargo-build-git
+        - name: cargo-build-registry
+          persistentVolumeClaim:
+            claimName: cargo-build-registry
 ---
 apiVersion: v1
 kind: Service
