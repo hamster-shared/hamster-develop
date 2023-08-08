@@ -13,7 +13,7 @@ stages:
       - Initialization
     steps:
       - name: Compile Contract
-        runs-on: docker.io/hamstershare/aptoslabs-tools:aptos-node-v1.3.0
+        runs-on: aptoslabs/tools:aptos-node-v1.6.1
         volumes:
           - /root/.move:/root/.move
         run: |
