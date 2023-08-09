@@ -22,10 +22,5 @@ docker: linux-test
 	docker build -t hamstershare/hamster-develop:latest .
 	docker push hamstershare/hamster-develop:latest
 
-
-deploy: linux
-	scp ./aline ubuntu@ec2-34-232-105-81.compute-1.amazonaws.com:/home/ubuntu/
-	ssh ubuntu@ec2-34-232-105-81.compute-1.amazonaws.com "sudo mv /home/ubuntu/aline /usr/local/bin"
-
 clean:
 	rm -rf aline aline-test aline-worker aline-worker-test
