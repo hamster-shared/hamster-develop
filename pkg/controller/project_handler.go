@@ -164,6 +164,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
 	repo, res, err := githubService.GetRepo(token, user.Username, createData.Name)
+
 	if err != nil {
 		if res != nil {
 			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
@@ -206,6 +207,26 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	if createData.Type == int(consts.BLOCKCHAIN) {
 		createData.DeployType = 2
 	}
+
+	var evmTemplateType consts.EVMFrameType
+	if createData.Type == int(consts.CONTRACT) && createData.FrameType == consts.Evm {
+		githubService := application.GetBean[*service.GithubService]("githubService")
+		// get all files
+		repoContents, err := githubService.GetRepoFileList(token, user.Username, createData.Name)
+		if err != nil {
+			log.Println(err.Error())
+			Fail(err.Error(), g)
+			return
+		}
+		// get EVM contract frame: truffle\foundry\hardhat
+		frame, err := h.projectService.ParsingEVMFrame(repoContents)
+		if err != nil {
+			Fail(err.Error(), g)
+			return
+		}
+		evmTemplateType = frame
+	}
+
 	data := vo.CreateProjectParam{
 		Name:         createData.Name,
 		Type:         createData.Type,
@@ -229,7 +250,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	}
 	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
 		//project.EvmTemplateType = createData.EvmTemplateType
-		project.EvmTemplateType = uint(consts.Truffle)
+		project.EvmTemplateType = uint(evmTemplateType)
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) && project.Type != uint(consts.BLOCKCHAIN) {

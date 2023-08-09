@@ -15,13 +15,12 @@ stages:
       - name: Compile Contract
         run: |
           npm install
-          npm install truffle --save-dev
-          npx truffle compile
+          truffle compile
       - name: Filter Info
         run: |
           mkdir -p build/artifacts
           cd build/contracts
-          for i in `ls *.json`;do
+          for i in `find . -type f -name '*.json'`;do
              bytecode=$(jq -r '.bytecode' $i)
              length=$(jq '.abi | length' $i)
              if [ "$bytecode" = "0x" ]; then

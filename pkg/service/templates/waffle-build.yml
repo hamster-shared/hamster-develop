@@ -20,7 +20,7 @@ stages:
         run: |
           mkdir -p build/artifacts
           cd build
-          for i in `ls *.json`;do
+          for i in `find . -type f -name '*.json'`;do
             bytecode=$(jq -r '.bytecode' $i)
             length=$(jq '.abi | length' $i)
             if [ "$bytecode" = "0x" ]; then
