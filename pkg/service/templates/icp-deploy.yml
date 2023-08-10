@@ -1,0 +1,10 @@
+version: 1.0
+name: [[.Name]]
+stages:
+  Deploy to ICP :
+    steps:
+      - name: icp deploy
+        uses: icp-deploy
+        with:
+          arti_url: ${{ param.ArtifactUrl }}
+          dfx_json: ${{ param.dfxJson }}

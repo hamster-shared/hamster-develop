@@ -28,6 +28,7 @@ type FrontendDeployType int
 const (
 	IPFS FrontendDeployType = iota + 1
 	CONTAINER
+	INTERNET_COMPUTER
 )
 
 // jian-guo

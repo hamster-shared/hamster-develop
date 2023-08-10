@@ -39,6 +39,12 @@ spec:
           image: hamstershare/hamster-develop:${PIPELINE_ID}
           imagePullPolicy: Always
           env:
+            - name: IC_NETWORK
+              value: ic
+            - name: IPC_TEST
+              value: "true"
+            - name: HOME
+              value: /home/ubuntu
             - name: DB_HOST
               value: mysql
             - name: DB_PASSWORD
@@ -110,9 +116,15 @@ spec:
           ports:
             - containerPort: 8080
           volumeMounts:
+            - mountPath: /home/ubuntu/.config/dfx
+              name: dfx-config
             - mountPath: /root/pipelines
               name: aline-pipelines
             - mountPath: /root/workdir
+              name: aline-workdir
+            - mountPath: /home/ubuntu/pipelines
+              name: aline-pipelines
+            - mountPath: /home/ubuntu/workdir
               name: aline-workdir
             - mountPath: /certs
               name: docker-tls
@@ -120,7 +132,13 @@ spec:
             - name: kubeconfig
               mountPath: "/root/.kube"
               readOnly: true
+            - name: ubuntu-kubeconfig
+              mountPath: "/home/ubuntu/.kube"
+              readOnly: true
       volumes:
+        - name: dfx-config
+          persistentVolumeClaim:
+            claimName: dfx-config
         - name: aline-pipelines
           persistentVolumeClaim:
             claimName: aline-pipelines
@@ -138,7 +156,12 @@ spec:
             items:
               - key: "kubeconfig"
                 path: "config"
-
+        - name: ubuntu-kubeconfig
+          configMap:
+            name: kubeconfig
+            items:
+              - key: "kubeconfig"
+                path: "config"
 ---
 apiVersion: v1
 kind: Service
@@ -187,10 +210,16 @@ spec:
               name: aline-pipelines
             - mountPath: /root/workdir
               name: aline-workdir
-            - mountPath: /root/.move
+            - mountPath: /home/ubuntu/.move
               name: aptos-move-cache
             - mountPath: /certs
               name: docker-tls
+            - mountPath: /home/ubuntu/workdir
+              name: aline-workdir
+            - mountPath: /var/lib/cargo/registry
+              name: cargo-build-registry
+            - mountPath: /var/lib/cargo/git
+              name: cargo-build-git
           securityContext:
             privileged: true
       volumes:
@@ -206,7 +235,12 @@ spec:
         - name: aptos-move-cache
           persistentVolumeClaim:
             claimName: aptos-move-cache
-
+        - name: cargo-build-git
+          persistentVolumeClaim:
+            claimName: cargo-build-git
+        - name: cargo-build-registry
+          persistentVolumeClaim:
+            claimName: cargo-build-registry
 ---
 apiVersion: v1
 kind: Service

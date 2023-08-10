@@ -11,6 +11,7 @@ RUN echo \
       "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
       $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 RUN apt-get update && \
-    apt-get install -y -qq --no-install-recommends docker-ce-cli nodejs npm cmake make yarn ;\
+    apt-get install -y -qq --no-install-recommends docker-ce-cli nodejs npm cmake make yarn jq ;\
     rm -rf /var/lib/apt/lists/*
 RUN npm install -g truffle
+RUN  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"

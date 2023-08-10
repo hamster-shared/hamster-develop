@@ -300,6 +300,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		if err != nil {
 			logger.Errorf("init blockchain k8s param failed: %s", err)
 		}
+
 	}
 	Success(id, g)
 }
