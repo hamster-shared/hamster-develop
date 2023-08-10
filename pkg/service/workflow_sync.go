@@ -14,9 +14,11 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
+	"gorm.io/gorm"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strconv"
@@ -121,6 +123,12 @@ func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDet
 		projectName := project.Name
 		if project.Type == uint(consts.BLOCKCHAIN) {
 			projectName = fmt.Sprintf("%s_node_polkadot", project.Name)
+		} else if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.INTERNET_COMPUTER) {
+			if project.FrameType == 1 {
+				projectName = fmt.Sprintf("%s_%s_ic", project.Name, "vuejs")
+			} else if project.FrameType == 2 {
+				projectName = fmt.Sprintf("%s_%s_ic", project.Name, "reactjs")
+			}
 		}
 		for range detail.ActionResult.Artifactorys {
 			frontendPackage := db.FrontendPackage{
@@ -155,17 +163,18 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		var image string
 		if project.Type == uint(consts.FRONTEND) {
 			if project.FrameType == 1 {
-				image = "https://develop-images.api.hamsternet.io/vue.png"
+				image = "https://g.alpha.hamsternet.io/ipfs/QmdhtgKNuQn2aqkdTn4DxRQidSLmmtggtpaBgh8vuyVjxd"
 			} else if project.FrameType == 2 {
-				image = "https://develop-images.api.hamsternet.io/react.png"
+				image = "https://g.alpha.hamsternet.io/ipfs/QmUcXKszQxwT21dnqf67vFxzBgFwT8iWEsxExeGA1oFf6N"
 			} else if project.FrameType == 3 {
-				image = "https://static.devops.hamsternet.io/ipfs/QmW8DNyCUrvDHaG4a4aKjkDNTbYDy9kwFxhFno2nKmgTKt"
+				image = "https://g.alpha.hamsternet.io/ipfs/QmW8DNyCUrvDHaG4a4aKjkDNTbYDy9kwFxhFno2nKmgTKt"
 			} else {
-				image = "https://static.devops.hamsternet.io/ipfs/QmPsa61VtwQH3ixzZys7EF9VG1zV7LQHDYjEYBfZpnmPDy"
+				image = "https://g.alpha.hamsternet.io/ipfs/QmPsa61VtwQH3ixzZys7EF9VG1zV7LQHDYjEYBfZpnmPDy"
 			}
 		} else if project.Type == uint(consts.BLOCKCHAIN) {
-			image = "https://static.devops.hamsternet.io/ipfs/QmPbUjgPNW1eBVxh1zVgF9F7porBWijYrAeMth9QDPwEXk"
+			image = "https://g.alpha.hamsternet.io/ipfs/QmPbUjgPNW1eBVxh1zVgF9F7porBWijYrAeMth9QDPwEXk"
 		}
+
 		for _, deploy := range detail.ActionResult.Deploys {
 			var data db.FrontendPackage
 			err := w.db.Model(db.FrontendPackage{}).Where("workflow_detail_id = ?", buildWorkflowDetailId).First(&data).Error
@@ -176,6 +185,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 					log.Println("save frontend package failed: ", err.Error())
 				}
 				var packageDeploy db.FrontendDeploy
+
 				if project.DeployType == int(consts.IPFS) {
 					packageDeploy.DeployInfo = deploy.Cid
 				}
@@ -186,7 +196,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 				packageDeploy.Domain = deploy.Url
 				packageDeploy.Version = data.Version
 				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
-				packageDeploy.Name = project.Name
+				packageDeploy.Name = data.Name
 				packageDeploy.Branch = data.Branch
 				packageDeploy.CreateTime = time.Now()
 				packageDeploy.Image = image
@@ -197,7 +207,59 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 
 			}
 		}
+
+		// icp deploy info
+		if project.DeployType == int(consts.INTERNET_COMPUTER) {
+			for _, deploy := range detail.ActionResult.Deploys {
+
+				var icpCanister db.IcpCanister
+				canisterId, err := extractDomain(deploy.Url)
+				if err != nil {
+					continue
+				}
+
+				// 使用First查询满足条件的第一条数据
+				if err := w.db.Model(db.IcpCanister{}).Where("project_id = ? and canister_id = ?", project.Id.String(), canisterId).First(&icpCanister).Error; err != nil {
+					if err == gorm.ErrRecordNotFound {
+						fmt.Println("数据不存在")
+						icpCanister.CanisterId = canisterId
+						icpCanister.CreateTime = sql.NullTime{Time: time.Now(), Valid: true}
+						icpCanister.ProjectId = project.Id.String()
+					} else {
+						fmt.Println("查询数据时发生错误:", err)
+						continue
+					}
+				}
+
+				icpCanister.CanisterName = deploy.Name
+				icpCanister.Status = db.Running
+				icpCanister.Cycles = sql.NullString{Valid: false}
+				icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+				if err := w.db.Save(&icpCanister).Error; err != nil {
+					fmt.Println("保存数据时发生错误:", err)
+					continue
+				}
+			}
+		}
+
 	}
+}
+
+func extractDomain(urlStr string) (string, error) {
+
+	if strings.Contains(urlStr, "canisterId=") && len(strings.Split(urlStr, "canisterId=")[1]) > 1 {
+		return strings.Split(urlStr, "canisterId=")[1], nil
+	}
+
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return "", err
+	}
+	hostParts := strings.Split(parsedURL.Hostname(), ".")
+	if len(hostParts) < 3 {
+		return "", fmt.Errorf("invalid URL")
+	}
+	return strings.Join(hostParts[:len(hostParts)-2], "-"), nil
 }
 
 func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
@@ -412,24 +474,32 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 	if err != nil {
 		return err
 	}
-
-	contract := db.Contract{
-		ProjectId:        projectId,
-		WorkflowId:       workflowId,
-		WorkflowDetailId: workflowDetail.Id,
-		Name:             strings.TrimSuffix(artis[0].Name, path.Ext(artis[0].Name)),
-		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-		BuildTime:        workflowDetail.CreateTime,
-		AbiInfo:          "",
-		ByteCode:         byteCode,
-		AptosMv:          mv,
-		CreateTime:       time.Now(),
-		Type:             uint(consts.Aptos),
-		Status:           consts.STATUS_SUCCESS,
+	logger.Info(mv)
+	logger.Info(len(mv))
+	if len(mv) > 0 {
+		for _, s := range mv {
+			contract := db.Contract{
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
+				WorkflowDetailId: workflowDetail.Id,
+				Name:             strings.TrimSuffix(artis[s.Index].Name, path.Ext(artis[s.Index].Name)),
+				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+				BuildTime:        workflowDetail.CreateTime,
+				AbiInfo:          "",
+				ByteCode:         byteCode,
+				AptosMv:          s.Mv,
+				CreateTime:       time.Now(),
+				Type:             uint(consts.Aptos),
+				Status:           consts.STATUS_SUCCESS,
+			}
+			err = w.saveContractToDatabase(&contract)
+			if err != nil {
+				logger.Errorf("save contract to database failed: %s", err.Error())
+			}
+		}
 	}
-
 	// logger.Tracef("aptos contract: %+v", contract)
-	return w.saveContractToDatabase(&contract)
+	return nil
 }
 
 func getSuiModuleName(project *db.Project) string {
@@ -541,26 +611,36 @@ func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, 
 	return w.saveContractToDatabase(&contract)
 }
 
-func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (mv string, byteCode string, err error) {
-	for _, arti := range artis {
+type AptosBuildInfo struct {
+	Mv    string
+	Index int
+}
+
+func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr []AptosBuildInfo, byteCode string, err error) {
+	var mvs []AptosBuildInfo
+	for i, arti := range artis {
 		// 以 .bcs 结尾，认为是 byteCode
 		if strings.HasSuffix(arti.Url, ".bcs") {
 			byteCode, err = utils.FileToHexString(arti.Url)
 			if err != nil {
 				logger.Errorf("hex string failed: %s", err.Error())
-				return "", "", err
+				return mvs, "", err
 			}
 			continue
 		}
+		var data AptosBuildInfo
 		if strings.HasSuffix(arti.Url, ".mv") {
-			mv, err = utils.FileToHexString(arti.Url)
+			mv, err := utils.FileToHexString(arti.Url)
 			if err != nil {
 				logger.Errorf("hex string failed: %s", err.Error())
-				return "", "", err
+				return mvs, "", err
 			}
+			data.Mv = mv
+			data.Index = i
+			mvs = append(mvs, data)
 			continue
 		}
 		logger.Warnf("aptos contract file name is not end with .bcs or .mv: %s", arti.Url)
 	}
-	return mv, byteCode, nil
+	return mvs, byteCode, nil
 }

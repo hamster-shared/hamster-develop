@@ -15,24 +15,22 @@ stages:
       - name: Compile Contract
         run: |
           npm install
-          npm install truffle --save-dev
-          npx truffle compile
+          npm run compile
       - name: Filter Info
         run: |
           mkdir -p build/artifacts
-          cd build/contracts
+          cd build
           for i in `ls *.json`;do
-             bytecode=$(jq -r '.bytecode' $i)
-             length=$(jq '.abi | length' $i)
-             if [ "$bytecode" = "0x" ]; then
-                echo $i
-             elif [ "$length" -eq 0 ]; then
-                echo $i
-             else
-               cp -R $i ../artifacts
-             fi
+            bytecode=$(jq -r '.bytecode' $i)
+            length=$(jq '.abi | length' $i)
+            if [ "$bytecode" = "0x" ]; then
+              echo $i
+            elif [ "$length" -eq 0 ]; then
+              echo $i
+            else
+              cp -R $i ./artifacts
+            fi
           done;
-
   Output Results:
       needs:
         - Build Contract

@@ -15,6 +15,9 @@ stages:
     steps:
       - name: Compile Code
         runs-on: docker.io/paritytech/ci-linux:production
+        volumes:
+          - /var/lib/cargo/registry:/var/lib/cargo/registry
+          - /var/lib/cargo/git:/var/lib/cargo/git
         run: |
           cargo build --locked --release
       - name: Create Dockerfile

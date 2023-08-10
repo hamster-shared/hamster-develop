@@ -28,6 +28,7 @@ type FrontendDeployType int
 const (
 	IPFS FrontendDeployType = iota + 1
 	CONTAINER
+	INTERNET_COMPUTER
 )
 
 // jian-guo
@@ -107,6 +108,7 @@ const (
 	Truffle EVMFrameType = iota + 1
 	Foundry
 	Hardhat
+	Waffle
 )
 
 // check type
@@ -141,3 +143,5 @@ const Gateway = "hamster.newtouch.com"
 
 // al
 //const Gateway = "c.alpha.hamsternet.io"
+
+const Namespace = "hamster-container"

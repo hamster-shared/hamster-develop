@@ -13,6 +13,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+	"os"
 	"time"
 )
 
@@ -75,6 +76,12 @@ to quickly create a Cobra application.`,
 		application.SetBean[*service.ContainerDeployService]("containerDeployService", containerDeployService)
 		frontendPackageService := service.NewFrontendPackageService()
 		application.SetBean[*service.FrontendPackageService]("frontendPackageService", frontendPackageService)
+		icNetwork := os.Getenv("IC_NETWORK")
+		if icNetwork == "" {
+			icNetwork = "local"
+		}
+		icpService := service.NewIcpService(icNetwork)
+		application.SetBean[*service.IcpService]("icpService", icpService)
 		templateService.Init(db)
 		projectService.Init(db)
 		application.SetBean[service.IProjectService]("projectService", projectService)
