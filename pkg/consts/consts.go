@@ -100,6 +100,8 @@ const (
 	Ton
 	StarkWare
 	Sui
+	FileCoin
+	InternetComputer
 )
 
 type EVMFrameType int

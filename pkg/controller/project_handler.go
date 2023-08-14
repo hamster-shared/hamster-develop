@@ -253,7 +253,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		project.EvmTemplateType = uint(evmTemplateType)
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) && project.Type != uint(consts.BLOCKCHAIN) {
+	if !(project.Type == uint(consts.CONTRACT) && (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer)) && project.Type != uint(consts.BLOCKCHAIN) {
 		workflowCheckData := parameter.SaveWorkflowParam{
 			ProjectId:  id,
 			Type:       consts.Check,
@@ -290,7 +290,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		workflowService.UpdateWorkflow(workflowBuildRes)
 	}
 
-	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) {
+	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) || (project.Type == uint(consts.CONTRACT) && project.FrameType == consts.InternetComputer) {
 		workflowDeployData := parameter.SaveWorkflowParam{
 			ProjectId:  id,
 			Type:       consts.Deploy,

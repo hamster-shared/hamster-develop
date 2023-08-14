@@ -603,6 +603,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 				filePath = "templates/aptos-build.yml"
 			} else if project.FrameType == consts.Sui {
 				filePath = "templates/sui-build.yml"
+			} else if project.FrameType == consts.InternetComputer {
+				filePath = "templates/icp-contract-build.yml"
 			} else {
 				if project.EvmTemplateType == uint(consts.Truffle) {
 					filePath = "templates/truffle-build.yml"
@@ -611,6 +613,10 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 				} else {
 					filePath = "templates/hardhat-build.yml"
 				}
+			}
+		} else if workflowType == consts.Deploy {
+			if project.FrameType == consts.InternetComputer {
+				filePath = "templates/icp-contract-deploy.yml"
 			}
 		}
 	} else if project.Type == uint(consts.FRONTEND) {
@@ -856,7 +862,7 @@ func hasCommonElements(arr1, arr2 []string) bool {
 }
 
 func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
-	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) && project.Type != uint(consts.BLOCKCHAIN) {
+	if !(project.Type == uint(consts.CONTRACT) && (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer)) && project.Type != uint(consts.BLOCKCHAIN) {
 		workflowCheckData := parameter.SaveWorkflowParam{
 			ProjectId:  project.Id,
 			Type:       consts.Check,
@@ -891,7 +897,7 @@ func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 		w.UpdateWorkflow(workflowBuildRes)
 	}
 
-	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) {
+	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) || (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer) {
 		workflowDeployData := parameter.SaveWorkflowParam{
 			ProjectId:  project.Id,
 			Type:       consts.Deploy,
