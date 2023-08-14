@@ -754,18 +754,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	}
 	fileContent := string(content)
 
-	tmpl := template.New("test")
-	if workflowType == consts.Deploy {
-		tmpl = tmpl.Delims("[[", "]]")
-	}
-	if project.Type == uint(consts.CONTRACT) {
-		if workflowType == consts.Build && (project.FrameType == consts.Aptos || project.FrameType == consts.Sui) {
-			tmpl = tmpl.Delims("[[", "]]")
-		}
-	}
-	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) && workflowType == consts.Build {
-		tmpl = tmpl.Delims("[[", "]]")
-	}
+	tmpl := template.New("test").Delims("[[", "]]")
 
 	tmpl, err = tmpl.Parse(fileContent)
 

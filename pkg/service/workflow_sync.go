@@ -302,6 +302,8 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		contractName := getSuiModuleName(project)
 		err = w.syncContractSui(projectId, workflowId, workflowDetail, jobDetail.Artifactorys, contractName)
 		return
+	case consts.InternetComputer:
+		w.syncInternetComputer(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
 	default:
 		for _, arti := range jobDetail.Artifactorys {
 			err = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
@@ -643,4 +645,30 @@ func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr 
 		logger.Warnf("aptos contract file name is not end with .bcs or .mv: %s", arti.Url)
 	}
 	return mvs, byteCode, nil
+}
+
+func (w *WorkflowService) syncInternetComputer(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
+
+	for _, arti := range artis {
+		contract := db.Contract{
+			ProjectId:        projectId,
+			WorkflowId:       workflowId,
+			WorkflowDetailId: workflowDetail.Id,
+			Name:             arti.Name,
+			Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+			BuildTime:        workflowDetail.CreateTime,
+			AbiInfo:          "",
+			ByteCode:         "",
+			CreateTime:       time.Now(),
+			Type:             uint(consts.InternetComputer),
+			Status:           consts.STATUS_SUCCESS,
+		}
+		err := w.saveContractToDatabase(&contract)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+
 }

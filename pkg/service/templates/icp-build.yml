@@ -1,21 +1,21 @@
 version: 1.0
-name: {{ .Name }}
+name: [[ .Name ]]
 stages:
   Initialization:
     steps:
       - name: Clone Code from Github
         uses: git-checkout
         with:
-          url: {{ .RepositoryUrl }}
+          url: [[ .RepositoryUrl ]]
           branch: main
   Build FrontEnd:
     needs:
       - Initialization
     steps:
       - name: Compile Code
-        uses: icp-build
-        with:
-          dfx_json: ${{ param.dfxJson }}
+        run: |
+          npm install
+          npm run build
   Output Results:
     needs:
       - Build FrontEnd
@@ -23,8 +23,6 @@ stages:
       - name: Save Package
         uses: hamster-artifactory
         with:
-          name: icp-build.zip
+          name: frontend.zip
           path: |
-            .dfx
-            dfx.json
-            canister_ids.json
+            dist
