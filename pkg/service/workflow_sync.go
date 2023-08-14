@@ -1,10 +1,12 @@
 package service
 
 import (
+	"bufio"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	"github.com/aviate-labs/agent-go/candid"
 	jober "github.com/hamster-shared/aline-engine/job"
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/aline-engine/model"
@@ -302,6 +304,8 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		contractName := getSuiModuleName(project)
 		err = w.syncContractSui(projectId, workflowId, workflowDetail, jobDetail.Artifactorys, contractName)
 		return
+	case consts.InternetComputer:
+		w.syncInternetComputer(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
 	default:
 		for _, arti := range jobDetail.Artifactorys {
 			err = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
@@ -643,4 +647,94 @@ func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr 
 		logger.Warnf("aptos contract file name is not end with .bcs or .mv: %s", arti.Url)
 	}
 	return mvs, byteCode, nil
+}
+
+func (w *WorkflowService) syncInternetComputer(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
+
+	var abiInfo string
+	for _, arti := range artis {
+		if strings.HasSuffix(arti.Name, "did") {
+			// analysis did
+			didContent, err := readDid(arti.Url)
+			if err != nil {
+				return err
+			}
+
+			discription, err := candid.ParseDID([]byte(didContent))
+			if err != nil {
+				return err
+			}
+
+			bytes, err := json.Marshal(discription)
+			if err != nil {
+				return err
+			}
+			abiInfo = string(bytes)
+		}
+	}
+
+	for _, arti := range artis {
+		if strings.HasSuffix(arti.Name, "zip") {
+			contract := db.Contract{
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
+				WorkflowDetailId: workflowDetail.Id,
+				Name:             arti.Name,
+				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+				BuildTime:        workflowDetail.CreateTime,
+				AbiInfo:          abiInfo,
+				ByteCode:         "",
+				CreateTime:       time.Now(),
+				Type:             uint(consts.InternetComputer),
+				Status:           consts.STATUS_SUCCESS,
+			}
+			err := w.saveContractToDatabase(&contract)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return nil
+
+}
+
+func readDid(filePath string) (string, error) {
+	// 打开输入文件进行读取
+	inputFile, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println("Error opening input file:", err)
+		return "", err
+	}
+	defer inputFile.Close()
+
+	// 打开输出文件进行写入
+	var convertedContent string
+
+	scanner := bufio.NewScanner(inputFile)
+	var currentLine string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		currentLine += line
+		// 写入当前行
+		convertedContent += currentLine
+		currentLine = ""
+	}
+
+	// 写入最后一行
+	if currentLine != "" {
+		convertedContent += currentLine
+	}
+
+	if scanner.Err() != nil {
+		fmt.Println("Error reading input file:", scanner.Err())
+		return "", err
+	}
+
+	fmt.Println("File formatting completed.")
+	fmt.Println(convertedContent)
+
+	return convertedContent, err
 }

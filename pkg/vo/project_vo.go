@@ -2,6 +2,7 @@ package vo
 
 import (
 	"github.com/google/go-github/v48/github"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	uuid "github.com/iris-contrib/go.uuid"
 	"time"
 )
@@ -31,20 +32,20 @@ type ProjectListVo struct {
 }
 
 type ProjectDetailVo struct {
-	Id              uuid.UUID     `json:"id"`
-	Name            string        `json:"name"`
-	Type            uint          `json:"type"`
-	RepositoryUrl   string        `json:"repositoryUrl"`
-	FrameType       uint          `json:"frameType"` // see# consts.Evm
-	Branch          string        `json:"branch"`
-	DeployType      int           `json:"deployType"`
-	GistId          string        `json:"gistId"`
-	DefaultFile     string        `json:"defaultFile"`
-	LabelDisplay    string        `json:"labelDisplay"`
-	RecentCheck     RecentCheckVo `json:"recentCheck"`
-	RecentBuild     RecentBuildVo `json:"recentBuild"`
-	RecentDeploy    interface{}   `json:"recentDeploy"`
-	EvmTemplateType uint          `json:"evmTemplateType"`
+	Id              uuid.UUID               `json:"id"`
+	Name            string                  `json:"name"`
+	Type            uint                    `json:"type"`
+	RepositoryUrl   string                  `json:"repositoryUrl"`
+	FrameType       consts.ProjectFrameType `json:"frameType"` // see# consts.Evm
+	Branch          string                  `json:"branch"`
+	DeployType      int                     `json:"deployType"`
+	GistId          string                  `json:"gistId"`
+	DefaultFile     string                  `json:"defaultFile"`
+	LabelDisplay    string                  `json:"labelDisplay"`
+	RecentCheck     RecentCheckVo           `json:"recentCheck"`
+	RecentBuild     RecentBuildVo           `json:"recentBuild"`
+	RecentDeploy    interface{}             `json:"recentDeploy"`
+	EvmTemplateType uint                    `json:"evmTemplateType"`
 }
 
 type RecentCheckVo struct {
@@ -79,16 +80,16 @@ type PackageDeployVo struct {
 }
 
 type CreateProjectParam struct {
-	Name         string `json:"name"`
-	Type         int    `json:"type"`
-	Branch       string `json:"branch"`
-	TemplateUrl  string `json:"templateUrl"`
-	FrameType    uint   `json:"frameType"`
-	DeployType   int    `json:"deployType"`
-	UserId       int64  `json:"userId"`
-	GistId       string `json:"gistId"`
-	DefaultFile  string `json:"defaultFile"`
-	LabelDisplay string `json:"labelDisplay"`
+	Name         string                  `json:"name"`
+	Type         int                     `json:"type"`
+	Branch       string                  `json:"branch"`
+	TemplateUrl  string                  `json:"templateUrl"`
+	FrameType    consts.ProjectFrameType `json:"frameType"`
+	DeployType   int                     `json:"deployType"`
+	UserId       int64                   `json:"userId"`
+	GistId       string                  `json:"gistId"`
+	DefaultFile  string                  `json:"defaultFile"`
+	LabelDisplay string                  `json:"labelDisplay"`
 }
 
 type UpdateProjectParam struct {
@@ -134,6 +135,6 @@ type RepoVo struct {
 }
 
 type RepoFrameType struct {
-	Type     uint `json:"type"`
-	EvmFrame uint `json:"evmFrame"`
+	Type     consts.ProjectFrameType `json:"type"`
+	EvmFrame uint                    `json:"evmFrame"`
 }

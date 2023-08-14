@@ -80,7 +80,7 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		Type:        importData.Type,
 		Branch:      "main",
 		TemplateUrl: importData.CloneURL,
-		FrameType:   uint(importData.Ecosystem),
+		FrameType:   consts.ProjectFrameType(importData.Ecosystem),
 		DeployType:  1,
 		UserId:      int64(user.Id),
 	}
@@ -130,7 +130,7 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
-	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
 		project.EvmTemplateType = uint(evmTemplateType)
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
@@ -209,7 +209,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	}
 
 	var evmTemplateType consts.EVMFrameType
-	if createData.Type == int(consts.CONTRACT) && createData.FrameType == consts.Evm {
+	if createData.Type == int(consts.CONTRACT) && createData.FrameType == uint(consts.Evm) {
 		githubService := application.GetBean[*service.GithubService]("githubService")
 		// get all files
 		repoContents, err := githubService.GetRepoFileList(token, user.Username, createData.Name)
@@ -231,7 +231,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Name:         createData.Name,
 		Type:         createData.Type,
 		TemplateUrl:  *repo.CloneURL,
-		FrameType:    createData.FrameType,
+		FrameType:    consts.ProjectFrameType(createData.FrameType),
 		DeployType:   createData.DeployType,
 		UserId:       int64(user.Id),
 		LabelDisplay: createData.LabelDisplay,
@@ -248,7 +248,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
-	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
 		//project.EvmTemplateType = createData.EvmTemplateType
 		project.EvmTemplateType = uint(evmTemplateType)
 	}
@@ -887,7 +887,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Name:        createData.Name,
 		Type:        createData.Type,
 		TemplateUrl: *repo.CloneURL,
-		FrameType:   createData.FrameType,
+		FrameType:   consts.ProjectFrameType(createData.FrameType),
 		UserId:      int64(user.Id),
 	}
 	id, err := h.projectService.CreateProject(data)
@@ -900,7 +900,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
 		//project.EvmTemplateType = createData.EvmTemplateType
 		project.EvmTemplateType = uint(consts.Truffle)
 	}
