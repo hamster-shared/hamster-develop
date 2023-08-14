@@ -95,7 +95,7 @@ type ProjectFrameType uint
 
 // project frame type
 const (
-	Evm uint = iota + 1
+	Evm ProjectFrameType = iota + 1
 	Aptos
 	Ton
 	StarkWare

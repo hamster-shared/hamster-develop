@@ -14,8 +14,7 @@ stages:
     steps:
       - name: Compile Code
         run: |
-          npm install
-          npm run build
+          dfx build
   Output Results:
     needs:
       - Build FrontEnd
@@ -25,4 +24,6 @@ stages:
         with:
           name: frontend.zip
           path: |
-            dist
+            dfx.json
+            canister_ids.json
+            .dfx

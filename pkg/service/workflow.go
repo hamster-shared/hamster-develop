@@ -114,6 +114,14 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) {
 		image := fmt.Sprintf("%s/%s-%d:%d", consts.DockerHubName, strings.ToLower(user.Username), user.Id, time.Now().Unix())
 		params["imageName"] = image
+	} else if project.FrameType == consts.InternetComputer {
+		var icpDfx db.IcpDfxData
+		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
+		if err != nil {
+			logger.Errorf("db error : %s", err.Error())
+			return vo.DeployResultVo{}, fmt.Errorf("dfx.json not configuration")
+		}
+		params["dfxJson"] = icpDfx.DfxData
 	} else {
 		params = nil
 	}

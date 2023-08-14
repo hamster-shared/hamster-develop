@@ -128,7 +128,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 		project.Creator = createData.UserId
 		project.CreateTime = time.Now()
 		project.UpdateTime = time.Now()
-		project.FrameType = createData.FrameType
+		project.FrameType = consts.ProjectFrameType(createData.FrameType)
 		project.Type = uint(createData.Type)
 		project.RepositoryUrl = createData.TemplateUrl
 		project.Branch = "main"
@@ -350,7 +350,7 @@ func getEvmFrameType(fileName string) consts.EVMFrameType {
 	return 0
 }
 
-func parsingToml(fileContent *github.RepositoryContent, name, userName, token string) (uint, error) {
+func parsingToml(fileContent *github.RepositoryContent, name, userName, token string) (consts.ProjectFrameType, error) {
 	githubService := application.GetBean[*GithubService]("githubService")
 	content, err := githubService.GetFileContent(token, userName, name, fileContent.GetPath())
 	if err != nil {
@@ -377,7 +377,7 @@ func parsingToml(fileContent *github.RepositoryContent, name, userName, token st
 	return 0, fmt.Errorf("dependencies did not have sui or aptos, it may be not sui or aptos")
 }
 
-func parsingPackageJson(fileContent *github.RepositoryContent, name, userName, token string) (uint, error) {
+func parsingPackageJson(fileContent *github.RepositoryContent, name, userName, token string) (consts.ProjectFrameType, error) {
 	githubService := application.GetBean[*GithubService]("githubService")
 	content, err := githubService.GetFileContent(token, userName, name, fileContent.GetPath())
 	if err != nil {
