@@ -15,8 +15,8 @@ insert into t_template (
              'This template demonstrates a basic calculator dapp. It uses an orthogonally persistent cell variable to store an arbitrary precision integer that represents the result of the most recent calculation.',
              1,
              '0.0.1',
-             5,
              1,
+             6,
              'https://g.alpha.hamsternet.io/ipfs/QmUiEafbupgSwDWWpG5Q8fXrHLBHhMBfJK1APzdcgWnjFT'
          );
 INSERT INTO t_template_detail (
