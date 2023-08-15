@@ -59,7 +59,7 @@ func (t *TemplateService) GetTemplatesByTypeId(templateTypeId, languageType, dep
 			copier.Copy(&listVo, &list)
 		}
 	} else if deployType == 2 {
-		result := t.db.Model(db2.Template{}).Where("template_type_id = ? and language_type = ? and deploy_type != 3 ", templateTypeId, languageType).Find(&list)
+		result := t.db.Model(db2.Template{}).Where("template_type_id = ? and language_type = ? and (deploy_type != 3 or deploy_type is null)", templateTypeId, languageType).Find(&list)
 		if result.Error != nil {
 			return &listVo, result.Error
 		}
