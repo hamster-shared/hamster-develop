@@ -16,7 +16,7 @@ insert into t_template (
              1,
              '0.0.1',
              1,
-             6,
+             7,
              'https://g.alpha.hamsternet.io/ipfs/QmUiEafbupgSwDWWpG5Q8fXrHLBHhMBfJK1APzdcgWnjFT'
          );
 INSERT INTO t_template_detail (
