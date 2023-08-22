@@ -19,8 +19,9 @@ windows:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64  go build -ldflags="-s -w" -o aline-worker.exe ./bin/aline-worker
 
 docker: linux-test
-	docker build -t hamstershare/hamster-develop:latest .
-	docker push hamstershare/hamster-develop:latest
+	timestamp=$$(date +"%Y%m%d%H%M%S"); \
+	docker build -t hamstershare/hamster-develop:$$timestamp . && \
+	docker push hamstershare/hamster-develop:$$timestamp
 
 clean:
 	rm -rf aline aline-test aline-worker aline-worker-test

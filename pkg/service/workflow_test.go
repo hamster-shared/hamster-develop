@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	"github.com/aviate-labs/agent-go/candid"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/stretchr/testify/assert"
@@ -88,4 +89,26 @@ func TestSyncUrl(t *testing.T) {
 	url, err := extractDomain(log)
 	assert.NoError(t, err)
 	fmt.Println(url)
+}
+
+func TestDidToJson(t *testing.T) {
+	didUrl := "/Users/abing/GitHub/Hamster/Template/examples/motoko/whoami/.dfx/local/canisters/whoami/whoami.did"
+	// analysis did
+	didContent, err := readDid(didUrl)
+	if err != nil {
+		panic(t)
+	}
+
+	discription, err := candid.ParseDID([]byte(didContent))
+	if err != nil {
+		panic(t)
+	}
+
+	bytes, err := json.Marshal(discription)
+	if err != nil {
+		panic(t)
+	}
+	fmt.Println("-------json----")
+	fmt.Println(string(bytes))
+	fmt.Println("-------json----")
 }
