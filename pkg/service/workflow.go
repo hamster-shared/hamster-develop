@@ -159,7 +159,8 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
 	params["ipfsGateway"] = os.Getenv("ipfs_gateway")
 
-	if int(consts.INTERNET_COMPUTER) == project.DeployType {
+	// if icp deploy frontend or deploy contract
+	if int(consts.INTERNET_COMPUTER) == project.DeployType || consts.InternetComputer == project.FrameType {
 		var icpDfx db.IcpDfxData
 		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
 		if err != nil {
