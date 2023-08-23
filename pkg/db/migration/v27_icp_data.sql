@@ -54,7 +54,7 @@ INSERT INTO t_template_detail (
           'calc',
           'main',
           '0.0.1',
-          '',
+          'https://raw.githubusercontent.com/hamster-template/calc/main/src/Main.mo',
           'Overview',
           'This example demonstrates a basic calculator dapp. It uses an orthogonally persistent cell variable to store an arbitrary precision integer that represents the result of the most recent calculation.
 
