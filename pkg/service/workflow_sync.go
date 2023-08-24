@@ -252,10 +252,6 @@ func extractDomain(urlStr string) (string, error) {
 		return strings.Split(urlStr, "canisterId=")[1], nil
 	}
 
-	if strings.Contains(urlStr, "id=") && len(strings.Split(urlStr, "id=")[1]) > 1 {
-		return strings.Split(urlStr, "id=")[1], nil
-	}
-
 	parsedURL, err := url.Parse(urlStr)
 	if err != nil {
 		return "", err
@@ -282,10 +278,6 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		return
 	}
 
-	if len(jobDetail.Artifactorys) == 0 {
-		return
-	}
-
 	projectService := application.GetBean[IProjectService]("projectService")
 	project, err := projectService.GetProjectById(projectIdStr)
 
@@ -294,26 +286,33 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		return
 	}
 
-	switch project.FrameType {
-	case consts.StarkWare:
-		err = w.syncContractStarknet(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
-		return
-	case consts.Aptos:
-		err = w.syncContractAptos(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
-		return
-	case consts.Ton:
-		return
-	case consts.Sui:
-		contractName := getSuiModuleName(project)
-		err = w.syncContractSui(projectId, workflowId, workflowDetail, jobDetail.Artifactorys, contractName)
-		return
-	case consts.InternetComputer:
-		err = w.syncInternetComputer(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
-		return
-	default:
-		for _, arti := range jobDetail.Artifactorys {
-			err = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
+	// 同步构建物
+	if len(jobDetail.Artifactorys) > 0 {
+		switch project.FrameType {
+		case consts.StarkWare:
+			err = w.syncContractStarknet(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+			return
+		case consts.Aptos:
+			err = w.syncContractAptos(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+			return
+		case consts.Ton:
+			return
+		case consts.Sui:
+			contractName := getSuiModuleName(project)
+			err = w.syncContractSui(projectId, workflowId, workflowDetail, jobDetail.Artifactorys, contractName)
+			return
+		case consts.InternetComputer:
+			err = w.syncInternetComputerBuild(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+			return
+		default:
+			for _, arti := range jobDetail.Artifactorys {
+				err = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
+			}
 		}
+	}
+
+	if len(jobDetail.Deploys) > 0 {
+		err = w.syncInternetComputerDeploy(projectId, workflowId, workflowDetail, jobDetail)
 	}
 
 	if err != nil {
@@ -431,11 +430,13 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 				reportList = append(reportList, report)
 			}
 		}
-		logger.Tracef("len(reportList): %d ", len(reportList))
-		err = begin.Save(&reportList).Error
-		if err != nil {
-			logger.Errorf("Save report fail, err is %s", err.Error())
-			// return
+		if len(reportList) > 0 {
+			logger.Tracef("len(reportList): %d ", len(reportList))
+			err = begin.Save(&reportList).Error
+			if err != nil {
+				logger.Errorf("Save report fail, err is %s", err.Error())
+				// return
+			}
 		}
 		begin.Commit()
 	}
@@ -653,7 +654,7 @@ func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr 
 	return mvs, byteCode, nil
 }
 
-func (w *WorkflowService) syncInternetComputer(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
+func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
 
 	var abiInfo string
 	for _, arti := range artis {
@@ -702,6 +703,47 @@ func (w *WorkflowService) syncInternetComputer(projectId uuid.UUID, workflowId u
 
 	return nil
 
+}
+
+func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, jobDetail *model.JobDetail) error {
+
+	for _, deploy := range jobDetail.Deploys {
+		deployInfo := db.ContractDeploy{}
+		deployInfo.ProjectId = projectId
+		deployInfo.Type = uint(consts.InternetComputer)
+		deployInfo.Status = 2 // deployed
+		deployInfo.CreateTime = time.Now()
+
+		buildWorkflowDetailId := jobDetail.Parameter["buildWorkflowDetailId"]
+		var buildWorkflowDetail db.WorkflowDetail
+		err := w.db.Model(&db.WorkflowDetail{}).Where("id = ?", buildWorkflowDetailId).First(&buildWorkflowDetail).Error
+		if err != nil {
+			return err
+		}
+		deployInfo.Version = strconv.Itoa(int(buildWorkflowDetail.ExecNumber))
+		var contract db.Contract
+		err = w.db.Model(&db.Contract{}).Where("project_id = ? and workflow_detail_id = ?", projectId.String(), buildWorkflowDetailId).First(&contract).Error
+		if err != nil {
+			return err
+		}
+		deployInfo.ContractId = contract.Id
+		deployInfo.AbiInfo = contract.AbiInfo
+		deployInfo.DeployTime = deployInfo.CreateTime
+		icNetwork := os.Getenv("IC_NETWORK")
+		if icNetwork == "" {
+			icNetwork = "local"
+		}
+		deployInfo.Network = icNetwork
+		canisterId, err := extractDomain(deploy.Url)
+		deployInfo.Address = canisterId
+
+		err = w.db.Save(&deployInfo).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func readDid(filePath string) (string, error) {
