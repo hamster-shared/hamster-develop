@@ -210,39 +210,6 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 			}
 		}
 
-		// icp deploy info
-		if project.DeployType == int(consts.INTERNET_COMPUTER) || project.FrameType == consts.InternetComputer {
-			for _, deploy := range detail.ActionResult.Deploys {
-				var icpCanister db.IcpCanister
-				canisterId, err := extractDomain(deploy.Url)
-				if err != nil {
-					continue
-				}
-
-				// 使用First查询满足条件的第一条数据
-				if err := w.db.Model(db.IcpCanister{}).Where("project_id = ? and canister_id = ?", project.Id.String(), canisterId).First(&icpCanister).Error; err != nil {
-					if err == gorm.ErrRecordNotFound {
-						fmt.Println("数据不存在")
-						icpCanister.CanisterId = canisterId
-						icpCanister.CreateTime = sql.NullTime{Time: time.Now(), Valid: true}
-						icpCanister.ProjectId = project.Id.String()
-					} else {
-						fmt.Println("查询数据时发生错误:", err)
-						continue
-					}
-				}
-
-				icpCanister.CanisterName = deploy.Name
-				icpCanister.Status = db.Running
-				icpCanister.Cycles = sql.NullString{Valid: false}
-				icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
-				if err := w.db.Save(&icpCanister).Error; err != nil {
-					fmt.Println("保存数据时发生错误:", err)
-					continue
-				}
-			}
-		}
-
 	}
 }
 
@@ -250,10 +217,6 @@ func extractDomain(urlStr string) (string, error) {
 
 	if strings.Contains(urlStr, "canisterId=") && len(strings.Split(urlStr, "canisterId=")[1]) > 1 {
 		return strings.Split(urlStr, "canisterId=")[1], nil
-	}
-
-	if strings.Contains(urlStr, "id=") && len(strings.Split(urlStr, "id=")[1]) > 1 {
-		return strings.Split(urlStr, "id=")[1], nil
 	}
 
 	parsedURL, err := url.Parse(urlStr)
@@ -282,10 +245,6 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		return
 	}
 
-	if len(jobDetail.Artifactorys) == 0 {
-		return
-	}
-
 	projectService := application.GetBean[IProjectService]("projectService")
 	project, err := projectService.GetProjectById(projectIdStr)
 
@@ -294,25 +253,34 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		return
 	}
 
-	switch project.FrameType {
-	case consts.StarkWare:
-		err = w.syncContractStarknet(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
-		return
-	case consts.Aptos:
-		err = w.syncContractAptos(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
-		return
-	case consts.Ton:
-		return
-	case consts.Sui:
-		contractName := getSuiModuleName(project)
-		err = w.syncContractSui(projectId, workflowId, workflowDetail, jobDetail.Artifactorys, contractName)
-		return
-	case consts.InternetComputer:
-		err = w.syncInternetComputer(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
-		return
-	default:
-		for _, arti := range jobDetail.Artifactorys {
-			err = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
+	// 同步构建物
+	if len(jobDetail.Artifactorys) > 0 {
+		switch project.FrameType {
+		case consts.StarkWare:
+			err = w.syncContractStarknet(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+			return
+		case consts.Aptos:
+			err = w.syncContractAptos(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+			return
+		case consts.Ton:
+			return
+		case consts.Sui:
+			contractName := getSuiModuleName(project)
+			err = w.syncContractSui(projectId, workflowId, workflowDetail, jobDetail.Artifactorys, contractName)
+			return
+		case consts.InternetComputer:
+			err = w.syncInternetComputerBuild(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+			return
+		default:
+			for _, arti := range jobDetail.Artifactorys {
+				err = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
+			}
+		}
+	}
+
+	if len(jobDetail.Deploys) > 0 {
+		if project.DeployType == int(consts.INTERNET_COMPUTER) || project.FrameType == consts.InternetComputer {
+			err = w.syncInternetComputerDeploy(projectId, workflowId, workflowDetail, jobDetail)
 		}
 	}
 
@@ -431,11 +399,13 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 				reportList = append(reportList, report)
 			}
 		}
-		logger.Tracef("len(reportList): %d ", len(reportList))
-		err = begin.Save(&reportList).Error
-		if err != nil {
-			logger.Errorf("Save report fail, err is %s", err.Error())
-			// return
+		if len(reportList) > 0 {
+			logger.Tracef("len(reportList): %d ", len(reportList))
+			err = begin.Save(&reportList).Error
+			if err != nil {
+				logger.Errorf("Save report fail, err is %s", err.Error())
+				// return
+			}
 		}
 		begin.Commit()
 	}
@@ -653,7 +623,7 @@ func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr 
 	return mvs, byteCode, nil
 }
 
-func (w *WorkflowService) syncInternetComputer(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
+func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
 
 	var abiInfo string
 	for _, arti := range artis {
@@ -702,6 +672,84 @@ func (w *WorkflowService) syncInternetComputer(projectId uuid.UUID, workflowId u
 
 	return nil
 
+}
+
+func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, jobDetail *model.JobDetail) error {
+
+	for _, deploy := range jobDetail.Deploys {
+		var deployInfo db.ContractDeploy
+		var contract db.Contract
+		buildWorkflowDetailId := jobDetail.Parameter["buildWorkflowDetailId"]
+		err := w.db.Model(&db.Contract{}).Where("project_id = ? and workflow_detail_id = ?", projectId.String(), buildWorkflowDetailId).First(&contract).Error
+		if err != nil {
+			continue
+		}
+
+		var buildWorkflowDetail db.WorkflowDetail
+		err = w.db.Model(&db.WorkflowDetail{}).Where("id = ?", buildWorkflowDetailId).First(&buildWorkflowDetail).Error
+		if err != nil {
+			continue
+		}
+
+		version := buildWorkflowDetail.ExecNumber
+
+		err = w.db.Model(&db.ContractDeploy{}).Where("contract_id = ? and project_id = ? and version = ?", contract.Id, projectId.String(), version).First(&deployInfo).Error
+		if err != nil {
+			deployInfo = db.ContractDeploy{
+				ProjectId:  projectId,
+				ContractId: contract.Id,
+				Version:    strconv.Itoa(int(version)),
+			}
+		}
+		deployInfo.Type = uint(consts.InternetComputer)
+		deployInfo.Status = 2 // deployed
+		deployInfo.CreateTime = time.Now()
+
+		deployInfo.AbiInfo = contract.AbiInfo
+		deployInfo.DeployTime = deployInfo.CreateTime
+		icNetwork := os.Getenv("IC_NETWORK")
+		if icNetwork == "" {
+			icNetwork = "local"
+		}
+		deployInfo.Network = icNetwork
+		//deploy.Name
+		deployInfo.Name = deploy.Name
+		canisterId, err := extractDomain(deploy.Url)
+		if err != nil {
+			continue
+		}
+		deployInfo.Address = canisterId
+
+		err = w.db.Save(&deployInfo).Error
+		if err != nil {
+			return err
+		}
+
+		var icpCanister db.IcpCanister
+
+		// 使用First查询满足条件的第一条数据
+		if err := w.db.Model(db.IcpCanister{}).Where("project_id = ? and canister_id = ?", projectId.String(), canisterId).First(&icpCanister).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				fmt.Println("数据不存在")
+				icpCanister.CanisterId = canisterId
+				icpCanister.CreateTime = sql.NullTime{Time: time.Now(), Valid: true}
+				icpCanister.ProjectId = projectId.String()
+			} else {
+				fmt.Println("查询数据时发生错误:", err)
+				continue
+			}
+		}
+
+		icpCanister.CanisterName = deploy.Name
+		icpCanister.Status = db.Running
+		icpCanister.Cycles = sql.NullString{Valid: false}
+		icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+		if err := w.db.Save(&icpCanister).Error; err != nil {
+			fmt.Println("保存数据时发生错误:", err)
+			continue
+		}
+	}
+	return nil
 }
 
 func readDid(filePath string) (string, error) {

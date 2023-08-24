@@ -19,6 +19,7 @@ type ContractInfoVo struct {
 type DeployInfVo struct {
 	Network string `json:"network"`
 	Address string `json:"address"`
+	Name    string `json:"name"`
 }
 
 type ContractVo struct {
