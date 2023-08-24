@@ -211,9 +211,8 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		}
 
 		// icp deploy info
-		if project.DeployType == int(consts.INTERNET_COMPUTER) {
+		if project.DeployType == int(consts.INTERNET_COMPUTER) || project.FrameType == consts.InternetComputer {
 			for _, deploy := range detail.ActionResult.Deploys {
-
 				var icpCanister db.IcpCanister
 				canisterId, err := extractDomain(deploy.Url)
 				if err != nil {
@@ -251,6 +250,10 @@ func extractDomain(urlStr string) (string, error) {
 
 	if strings.Contains(urlStr, "canisterId=") && len(strings.Split(urlStr, "canisterId=")[1]) > 1 {
 		return strings.Split(urlStr, "canisterId=")[1], nil
+	}
+
+	if strings.Contains(urlStr, "id=") && len(strings.Split(urlStr, "id=")[1]) > 1 {
+		return strings.Split(urlStr, "id=")[1], nil
 	}
 
 	parsedURL, err := url.Parse(urlStr)
@@ -305,7 +308,8 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		err = w.syncContractSui(projectId, workflowId, workflowDetail, jobDetail.Artifactorys, contractName)
 		return
 	case consts.InternetComputer:
-		w.syncInternetComputer(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+		err = w.syncInternetComputer(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+		return
 	default:
 		for _, arti := range jobDetail.Artifactorys {
 			err = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
