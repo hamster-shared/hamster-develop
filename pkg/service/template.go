@@ -136,6 +136,9 @@ func (t *TemplateService) TemplateShow(templateType, languageType, deploymentTyp
 		}
 	}
 	copier.Copy(&listVo, &list)
+	if len(listVo) > 4 {
+		listVo = listVo[0:4]
+	}
 	return &listVo, nil
 }
 

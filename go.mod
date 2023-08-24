@@ -14,6 +14,7 @@ require (
 	github.com/hamster-shared/aline-engine v1.0.4-0.20230823100645-6953af5f17c2
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
+	github.com/karrick/godirwalk v1.17.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1

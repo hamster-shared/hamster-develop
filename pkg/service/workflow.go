@@ -643,7 +643,7 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 			} else if project.DeployType == int(consts.INTERNET_COMPUTER) {
 				filePath = "templates/icp-build.yml"
 			} else {
-				if project.FrameType == 1 || project.FrameType == 2 {
+				if project.FrameType == 1 || project.FrameType == 2 || project.FrameType == 5 {
 					filePath = "templates/frontend-image-build.yml"
 				} else {
 					filePath = "templates/frontend-node-image-build.yml"
