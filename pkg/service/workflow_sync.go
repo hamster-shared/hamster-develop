@@ -210,39 +210,6 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 			}
 		}
 
-		// icp deploy info
-		if project.DeployType == int(consts.INTERNET_COMPUTER) || project.FrameType == consts.InternetComputer {
-			for _, deploy := range detail.ActionResult.Deploys {
-				var icpCanister db.IcpCanister
-				canisterId, err := extractDomain(deploy.Url)
-				if err != nil {
-					continue
-				}
-
-				// 使用First查询满足条件的第一条数据
-				if err := w.db.Model(db.IcpCanister{}).Where("project_id = ? and canister_id = ?", project.Id.String(), canisterId).First(&icpCanister).Error; err != nil {
-					if err == gorm.ErrRecordNotFound {
-						fmt.Println("数据不存在")
-						icpCanister.CanisterId = canisterId
-						icpCanister.CreateTime = sql.NullTime{Time: time.Now(), Valid: true}
-						icpCanister.ProjectId = project.Id.String()
-					} else {
-						fmt.Println("查询数据时发生错误:", err)
-						continue
-					}
-				}
-
-				icpCanister.CanisterName = deploy.Name
-				icpCanister.Status = db.Running
-				icpCanister.Cycles = sql.NullString{Valid: false}
-				icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
-				if err := w.db.Save(&icpCanister).Error; err != nil {
-					fmt.Println("保存数据时发生错误:", err)
-					continue
-				}
-			}
-		}
-
 	}
 }
 
@@ -312,7 +279,9 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 	}
 
 	if len(jobDetail.Deploys) > 0 {
-		err = w.syncInternetComputerDeploy(projectId, workflowId, workflowDetail, jobDetail)
+		if project.DeployType == int(consts.INTERNET_COMPUTER) || project.FrameType == consts.InternetComputer {
+			err = w.syncInternetComputerDeploy(projectId, workflowId, workflowDetail, jobDetail)
+		}
 	}
 
 	if err != nil {
@@ -708,25 +677,34 @@ func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflo
 func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, jobDetail *model.JobDetail) error {
 
 	for _, deploy := range jobDetail.Deploys {
-		deployInfo := db.ContractDeploy{}
-		deployInfo.ProjectId = projectId
+		var deployInfo db.ContractDeploy
+		var contract db.Contract
+		buildWorkflowDetailId := jobDetail.Parameter["buildWorkflowDetailId"]
+		err := w.db.Model(&db.Contract{}).Where("project_id = ? and workflow_detail_id = ?", projectId.String(), buildWorkflowDetailId).First(&contract).Error
+		if err != nil {
+			continue
+		}
+
+		var buildWorkflowDetail db.WorkflowDetail
+		err = w.db.Model(&db.WorkflowDetail{}).Where("id = ?", buildWorkflowDetailId).First(&buildWorkflowDetail).Error
+		if err != nil {
+			continue
+		}
+
+		version := buildWorkflowDetail.ExecNumber
+
+		err = w.db.Model(&db.ContractDeploy{}).Where("contract_id = ? and project_id = ? and version = ?", contract.Id, projectId.String(), version).First(&deployInfo).Error
+		if err != nil {
+			deployInfo = db.ContractDeploy{
+				ProjectId:  projectId,
+				ContractId: contract.Id,
+				Version:    strconv.Itoa(int(version)),
+			}
+		}
 		deployInfo.Type = uint(consts.InternetComputer)
 		deployInfo.Status = 2 // deployed
 		deployInfo.CreateTime = time.Now()
 
-		buildWorkflowDetailId := jobDetail.Parameter["buildWorkflowDetailId"]
-		var buildWorkflowDetail db.WorkflowDetail
-		err := w.db.Model(&db.WorkflowDetail{}).Where("id = ?", buildWorkflowDetailId).First(&buildWorkflowDetail).Error
-		if err != nil {
-			return err
-		}
-		deployInfo.Version = strconv.Itoa(int(buildWorkflowDetail.ExecNumber))
-		var contract db.Contract
-		err = w.db.Model(&db.Contract{}).Where("project_id = ? and workflow_detail_id = ?", projectId.String(), buildWorkflowDetailId).First(&contract).Error
-		if err != nil {
-			return err
-		}
-		deployInfo.ContractId = contract.Id
 		deployInfo.AbiInfo = contract.AbiInfo
 		deployInfo.DeployTime = deployInfo.CreateTime
 		icNetwork := os.Getenv("IC_NETWORK")
@@ -734,15 +712,43 @@ func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workfl
 			icNetwork = "local"
 		}
 		deployInfo.Network = icNetwork
+		//deploy.Name
+		deployInfo.Name = deploy.Name
 		canisterId, err := extractDomain(deploy.Url)
+		if err != nil {
+			continue
+		}
 		deployInfo.Address = canisterId
 
 		err = w.db.Save(&deployInfo).Error
 		if err != nil {
 			return err
 		}
-	}
 
+		var icpCanister db.IcpCanister
+
+		// 使用First查询满足条件的第一条数据
+		if err := w.db.Model(db.IcpCanister{}).Where("project_id = ? and canister_id = ?", projectId.String(), canisterId).First(&icpCanister).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				fmt.Println("数据不存在")
+				icpCanister.CanisterId = canisterId
+				icpCanister.CreateTime = sql.NullTime{Time: time.Now(), Valid: true}
+				icpCanister.ProjectId = projectId.String()
+			} else {
+				fmt.Println("查询数据时发生错误:", err)
+				continue
+			}
+		}
+
+		icpCanister.CanisterName = deploy.Name
+		icpCanister.Status = db.Running
+		icpCanister.Cycles = sql.NullString{Valid: false}
+		icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+		if err := w.db.Save(&icpCanister).Error; err != nil {
+			fmt.Println("保存数据时发生错误:", err)
+			continue
+		}
+	}
 	return nil
 }
 
