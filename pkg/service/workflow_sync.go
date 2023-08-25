@@ -20,7 +20,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"strconv"
@@ -211,23 +210,6 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		}
 
 	}
-}
-
-func extractDomain(urlStr string) (string, error) {
-
-	if strings.Contains(urlStr, "canisterId=") && len(strings.Split(urlStr, "canisterId=")[1]) > 1 {
-		return strings.Split(urlStr, "canisterId=")[1], nil
-	}
-
-	parsedURL, err := url.Parse(urlStr)
-	if err != nil {
-		return "", err
-	}
-	hostParts := strings.Split(parsedURL.Hostname(), ".")
-	if len(hostParts) < 3 {
-		return "", fmt.Errorf("invalid URL")
-	}
-	return strings.Join(hostParts[:len(hostParts)-2], "-"), nil
 }
 
 func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workflowDetail db.WorkflowDetail) {
@@ -714,10 +696,7 @@ func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workfl
 		deployInfo.Network = icNetwork
 		//deploy.Name
 		deployInfo.Name = deploy.Name
-		canisterId, err := extractDomain(deploy.Url)
-		if err != nil {
-			continue
-		}
+		canisterId := deploy.Cid
 		deployInfo.Address = canisterId
 
 		err = w.db.Save(&deployInfo).Error
