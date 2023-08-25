@@ -251,7 +251,7 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			err = w.syncContractSui(projectId, workflowId, workflowDetail, jobDetail.Artifactorys, contractName)
 			return
 		case consts.InternetComputer:
-			err = w.syncInternetComputerBuild(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+			err = w.syncInternetComputerBuild(projectId, workflowId, workflowDetail, jobDetail)
 			return
 		default:
 			for _, arti := range jobDetail.Artifactorys {
@@ -605,10 +605,10 @@ func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr 
 	return mvs, byteCode, nil
 }
 
-func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
+func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, jobDetail *model.JobDetail) error {
 
 	var abiInfo string
-	for _, arti := range artis {
+	for _, arti := range jobDetail.Artifactorys {
 		if strings.HasSuffix(arti.Name, "did") {
 			// analysis did
 			didContent, err := readDid(arti.Url)
@@ -629,7 +629,7 @@ func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflo
 		}
 	}
 
-	for _, arti := range artis {
+	for _, arti := range jobDetail.Artifactorys {
 		if strings.HasSuffix(arti.Name, "zip") {
 			contract := db.Contract{
 				ProjectId:        projectId,
@@ -643,6 +643,7 @@ func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflo
 				CreateTime:       time.Now(),
 				Type:             uint(consts.InternetComputer),
 				Status:           consts.STATUS_SUCCESS,
+				Branch:           jobDetail.CodeInfo,
 			}
 			err := w.saveContractToDatabase(&contract)
 			if err != nil {
@@ -721,6 +722,7 @@ func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workfl
 
 		icpCanister.CanisterName = deploy.Name
 		icpCanister.Status = db.Running
+		icpCanister.Contract = fmt.Sprintf("%#%s", contract.Name, contract.Version)
 		icpCanister.Cycles = sql.NullString{Valid: false}
 		icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
 		if err := w.db.Save(&icpCanister).Error; err != nil {
