@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"github.com/aviate-labs/agent-go/candid"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
-	"github.com/stretchr/testify/assert"
+	"github.com/mohaijiang/agent-go/candid"
 	"io"
 	"log"
 	"net/http"
@@ -82,13 +81,6 @@ func TestGetSuiModelName(t *testing.T) {
 	}
 	fmt.Println(config.Package.Name)
 
-}
-
-func TestSyncUrl(t *testing.T) {
-	log := "https://sne54-qiaaa-aaaag-abt6q-cai.icp0.io/"
-	url, err := extractDomain(log)
-	assert.NoError(t, err)
-	fmt.Println(url)
 }
 
 func TestDidToJson(t *testing.T) {
