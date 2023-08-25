@@ -2,11 +2,11 @@ package service
 
 import (
 	"fmt"
-	"github.com/aviate-labs/agent-go"
-	"github.com/aviate-labs/agent-go/candid"
-	"github.com/aviate-labs/agent-go/identity"
-	"github.com/aviate-labs/agent-go/ledger"
-	"github.com/aviate-labs/agent-go/principal"
+	"github.com/mohaijiang/agent-go"
+	"github.com/mohaijiang/agent-go/candid"
+	"github.com/mohaijiang/agent-go/identity"
+	"github.com/mohaijiang/agent-go/ledger"
+	"github.com/mohaijiang/agent-go/principal"
 	"net/url"
 	"os"
 	"os/exec"
