@@ -722,7 +722,7 @@ func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workfl
 
 		icpCanister.CanisterName = deploy.Name
 		icpCanister.Status = db.Running
-		icpCanister.Contract = fmt.Sprintf("%#%s", contract.Name, contract.Version)
+		icpCanister.Contract = strings.Join([]string{contract.Name, contract.Version}, "_#")
 		icpCanister.Cycles = sql.NullString{Valid: false}
 		icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
 		if err := w.db.Save(&icpCanister).Error; err != nil {
