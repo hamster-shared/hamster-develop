@@ -154,7 +154,13 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 
 	params := make(map[string]string)
 
-	if int(consts.INTERNET_COMPUTER) == project.DeployType {
+	params["baseDir"] = "dist"
+	params["ArtifactUrl"] = "file://" + buildJobDetail.Artifactorys[0].Url
+	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
+	params["ipfsGateway"] = os.Getenv("ipfs_gateway")
+
+	// if icp deploy frontend or deploy contract
+	if int(consts.INTERNET_COMPUTER) == project.DeployType || consts.InternetComputer == project.FrameType {
 		var icpDfx db.IcpDfxData
 		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
 		if err != nil {
@@ -162,12 +168,13 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 			return vo.DeployResultVo{}, fmt.Errorf("dfx.json not configuration")
 		}
 		params["dfxJson"] = icpDfx.DfxData
+		for _, arti := range buildJobDetail.Artifactorys {
+			if strings.HasSuffix(arti.Url, "zip") {
+				params["ArtifactUrl"] = "file://" + arti.Url
+			}
+		}
 	}
 
-	params["baseDir"] = "dist"
-	params["ArtifactUrl"] = "file://" + buildJobDetail.Artifactorys[0].Url
-	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
-	params["ipfsGateway"] = os.Getenv("ipfs_gateway")
 	return w.ExecProjectWorkflow(projectId, user, uint(consts.Deploy), params)
 }
 
@@ -636,7 +643,7 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 			} else if project.DeployType == int(consts.INTERNET_COMPUTER) {
 				filePath = "templates/icp-build.yml"
 			} else {
-				if project.FrameType == 1 || project.FrameType == 2 {
+				if project.FrameType == 1 || project.FrameType == 2 || project.FrameType == 5 {
 					filePath = "templates/frontend-image-build.yml"
 				} else {
 					filePath = "templates/frontend-node-image-build.yml"

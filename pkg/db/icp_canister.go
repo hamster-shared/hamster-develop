@@ -19,4 +19,5 @@ type IcpCanister struct {
 	Status       CanisterStatus `json:"status"`
 	CreateTime   sql.NullTime   `json:"createTime"`
 	UpdateTime   sql.NullTime   `json:"updateTime"`
+	Contract     string         `json:"contract"`
 }
