@@ -20,4 +20,5 @@ type IcpCanisterVo struct {
 	Status       db.CanisterStatus `json:"status"`
 	CreateTime   time.Time         `json:"createTime"`
 	UpdateTime   time.Time         `json:"updateTime"`
+	Contract     string            `json:"contract"`
 }
