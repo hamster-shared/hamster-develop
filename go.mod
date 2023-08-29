@@ -14,6 +14,7 @@ require (
 	github.com/hamster-shared/aline-engine v1.0.4-0.20230825063842-3fc9444bdbfd
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
+	github.com/karrick/godirwalk v1.17.0
 	github.com/mohaijiang/agent-go v0.3.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
@@ -37,6 +38,7 @@ require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.1 // indirect
 	github.com/avelino/slugify v0.0.0-20180501145920-855f152bd774 // indirect
 	github.com/aviate-labs/leb128 v0.3.0 // indirect
+	github.com/aviate-labs/secp256k1 v0.0.0-5e6736a // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
@@ -71,6 +73,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gookit/color v1.5.2 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
+	github.com/herumi/bls-go-binary v1.28.2 // indirect
 	github.com/holiman/uint256 v1.2.3 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
