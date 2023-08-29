@@ -85,15 +85,27 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 					}
 				}
 			}
+			//recentDeploy
+			var workflowDeployData db2.WorkflowDetail
 			if projectType == int(consts.CONTRACT) {
-				var deployData db2.ContractDeploy
-				err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
-				if err == nil {
-					_ = copier.Copy(&recentDeploy, &deployData)
+				if project.FrameType == consts.InternetComputer {
+					err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
+					if err == nil {
+						var backendDeploy db2.BackendDeploy
+						err = p.db.Model(db2.BackendDeploy{}).Where("project_id = ? and workflow_detail_id = ? ", project.Id, workflowDeployData.Id).Order("deploy_time DESC").Limit(1).Find(&backendDeploy).Error
+						if err == nil {
+							_ = copier.Copy(&recentDeploy, &backendDeploy)
+						}
+					}
+				} else {
+					var deployData db2.ContractDeploy
+					err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+					if err == nil {
+						_ = copier.Copy(&recentDeploy, &deployData)
+					}
 				}
 				data.RecentDeploy = recentDeploy
 			} else {
-				var workflowDeployData db2.WorkflowDetail
 				var packageDeploy vo.PackageDeployVo
 				var deployData db2.FrontendDeploy
 				err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
