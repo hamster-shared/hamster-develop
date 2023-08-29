@@ -5,15 +5,22 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/dontpanicdao/caigo/types"
+	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/goperate/convert/core/array"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
+	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
+	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"io"
@@ -193,9 +200,26 @@ func (c *ContractService) DoStarknetDeclare(compiledContract []byte) (txHash str
 //	return declare.TransactionHash, declare.ClassHash, nil
 //}
 
-func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
+func (c *ContractService) SaveDeploy(deployParam parameter.ContractDeployParam) (uint, error) {
+	var entity db2.ContractDeploy
+	_ = c.db.Model(&db2.ContractDeploy{}).Where("deploy_tx_hash = ?", deployParam.DeployTxHash).First(&entity).Error
+	projectId, err := uuid.FromString(deployParam.ProjectId)
+	if err != nil {
+		return 0, err
+	}
+
+	projectService := application.GetBean[ProjectService]("projectService")
+	project, err := projectService.GetProject(projectId.String())
+	_ = copier.Copy(&entity, &deployParam)
+	entity.DeployTime = time.Now()
+	entity.ProjectId = projectId
+
+	if project.FrameType == consts.Evm {
+		entity.Status = consts.STATUS_SUCCESS
+	}
+
 	var contract db2.Contract
-	err := c.db.Model(db2.Contract{}).Where("id = ?", entity.ContractId).First(&contract).Error
+	err = c.db.Model(db2.Contract{}).Where("id = ?", entity.ContractId).First(&contract).Error
 	if err != nil {
 		return 0, err
 	}
@@ -222,7 +246,7 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 	if contract.AbiInfo == "" {
 		contract.AbiInfo = entity.AbiInfo
 	}
-	err = c.db.Create(&entity).Error
+	err = c.db.Save(&entity).Error
 	if err != nil {
 		return 0, err
 	}
@@ -429,6 +453,42 @@ func (c *ContractService) GetContractDeployInfo(id int) (db2.ContractDeploy, err
 	return result, err
 }
 
+func (c *ContractService) SaveDeployIng(deployingParam parameter.ContractDeployIngParam) error {
+	// check tx exists
+	projectId, err := uuid.FromString(deployingParam.ProjectId)
+	if err != nil {
+		return err
+	}
+	go func() {
+		receipt, transaction, err := getEthReceipt(deployingParam.RpcURL, deployingParam.DeployTxHash)
+		if err != nil {
+			logger.Info("sync contract deploy fail: ", err)
+			return
+		}
+
+		var deployInfo db2.ContractDeploy
+
+		_ = c.db.Model(&db2.ContractDeploy{}).Where("deploy_tx_hash = ?", deployingParam.DeployTxHash).First(&deployInfo).Error
+
+		deployInfo.ProjectId = projectId
+		deployInfo.ContractId = deployingParam.ContractId
+		deployInfo.Version = deployingParam.Version
+		deployInfo.Network = deployingParam.Network
+		deployInfo.DeployTime = transaction.Time()
+		deployInfo.Address = receipt.ContractAddress.Hex()
+		deployInfo.CreateTime = time.Now()
+		deployInfo.Type = uint(consts.Evm)
+		deployInfo.DeployTxHash = deployingParam.DeployTxHash
+		deployInfo.Status = consts.STATUS_SUCCESS
+		err = c.db.Save(&deployInfo).Error
+		if err != nil {
+			logger.Error("save db t_contract_deploy error : ", err)
+		}
+	}()
+
+	return nil
+}
+
 func networkDistinct(oldNetwork, newNetwork string) string {
 	arr := strings.Split(oldNetwork, ",")
 	exist := false
@@ -442,4 +502,72 @@ func networkDistinct(oldNetwork, newNetwork string) string {
 		return oldNetwork
 	}
 	return fmt.Sprintf("%s,%s", oldNetwork, newNetwork)
+}
+
+func getEthReceipt(rpcURL string, txHash string) (*ethtypes.Receipt, *ethtypes.Transaction, error) {
+	// 连接以太坊节点
+	client, err := ethclient.Dial(rpcURL)
+	if err != nil {
+		logger.Error(err)
+		return nil, nil, err
+	}
+
+	// 你要查询的合约部署交易的哈希
+	transactionHash := common.HexToHash(txHash)
+
+	// 获取交易的详细信息
+	transaction, _, err := client.TransactionByHash(context.Background(), transactionHash)
+	if err != nil {
+		logger.Error(err)
+		return nil, nil, err
+	}
+
+	// 确认交易是合约创建交易
+	if transaction.To() != nil {
+		err = errors.New("Transaction is not a contract deployment")
+		logger.Error(err)
+		return nil, nil, err
+	}
+	// 等待合约部署成功
+	receipt, err := waitForContractDeployment(client, transaction.Hash(), 15*time.Second)
+	if err != nil {
+		logger.Error(err)
+		return nil, nil, err
+	}
+
+	fmt.Printf("Contract deployed at address: %s\n", receipt.ContractAddress.Hex())
+	return receipt, transaction, err
+}
+
+// 等待合约部署成功
+func waitForContractDeployment(client *ethclient.Client, transactionHash common.Hash, timeout time.Duration) (*ethtypes.Receipt, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// 创建一个通道来接收区块头
+
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("timeout")
+			return nil, errors.New("timeout")
+		default:
+			receipt, err := client.TransactionReceipt(ctx, transactionHash)
+			if err != nil {
+				return nil, err
+			}
+
+			if receipt == nil {
+				// 交易还未被打包，继续等待
+				continue
+			}
+
+			// 如果交易被打包，并且合约地址不是空，返回交易收据
+			if receipt.ContractAddress != common.HexToAddress("0xB362Eba0f3f42Ad32394f84ecb9c8d42bF1f2839") {
+				return receipt, nil
+			}
+
+			time.Sleep(time.Second)
+		}
+	}
 }

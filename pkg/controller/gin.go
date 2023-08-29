@@ -97,6 +97,7 @@ func (h *HttpServer) StartHttpServer() {
 
 	api.GET("/projects/:id/frontend/reports", h.handlerServer.projectFrontendReports)
 	api.GET("/projects/:id/packages", h.handlerServer.projectPackages)
+	api.POST("/projects/:id/contract/deploying", h.handlerServer.saveContractDeployIngInfo)
 	api.POST("/projects/:id/contract/deploy", h.handlerServer.saveContractDeployInfo)
 	api.GET("/projects/:id/contract/deploy/:contractDeployId", h.handlerServer.contractDeployInfo)
 
