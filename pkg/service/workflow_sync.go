@@ -631,7 +631,7 @@ func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflo
 
 	for _, arti := range jobDetail.Artifactorys {
 		if strings.HasSuffix(arti.Name, "zip") {
-			contract := db.Contract{
+			backendPackage := db.BackendPackage{
 				ProjectId:        projectId,
 				WorkflowId:       workflowId,
 				WorkflowDetailId: workflowDetail.Id,
@@ -639,13 +639,12 @@ func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflo
 				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
 				BuildTime:        workflowDetail.CreateTime,
 				AbiInfo:          abiInfo,
-				ByteCode:         "",
 				CreateTime:       time.Now(),
-				Type:             uint(consts.InternetComputer),
-				Status:           consts.STATUS_SUCCESS,
+				Type:             consts.InternetComputer,
+				Status:           consts.DEPLOY_STATUS_SUCCESS,
 				Branch:           jobDetail.CodeInfo,
 			}
-			err := w.saveContractToDatabase(&contract)
+			err := w.db.Save(&backendPackage).Error
 			if err != nil {
 				return err
 			}
@@ -660,10 +659,10 @@ func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflo
 func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, jobDetail *model.JobDetail) error {
 
 	for _, deploy := range jobDetail.Deploys {
-		var deployInfo db.ContractDeploy
-		var contract db.Contract
+		var deployInfo db.BackendDeploy
+		var deployPackage db.BackendPackage
 		buildWorkflowDetailId := jobDetail.Parameter["buildWorkflowDetailId"]
-		err := w.db.Model(&db.Contract{}).Where("project_id = ? and workflow_detail_id = ?", projectId.String(), buildWorkflowDetailId).First(&contract).Error
+		err := w.db.Model(&db.BackendPackage{}).Where("project_id = ? and workflow_detail_id = ?", projectId.String(), buildWorkflowDetailId).First(&deployPackage).Error
 		if err != nil {
 			continue
 		}
@@ -676,24 +675,26 @@ func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workfl
 
 		version := buildWorkflowDetail.ExecNumber
 
-		err = w.db.Model(&db.ContractDeploy{}).Where("contract_id = ? and project_id = ? and version = ?", contract.Id, projectId.String(), version).First(&deployInfo).Error
+		err = w.db.Model(&db.ContractDeploy{}).Where("contract_id = ? and project_id = ? and version = ?", deployPackage.Id, projectId.String(), version).First(&deployInfo).Error
 		if err != nil {
-			deployInfo = db.ContractDeploy{
-				ProjectId:  projectId,
-				ContractId: contract.Id,
-				Version:    strconv.Itoa(int(version)),
+			deployInfo = db.BackendDeploy{
+				ProjectId: projectId,
+				PackageId: deployPackage.Id,
+				Version:   strconv.Itoa(int(version)),
 			}
 		}
-		deployInfo.Type = uint(consts.InternetComputer)
-		deployInfo.Status = 2 // deployed
+		deployInfo.Type = consts.InternetComputer
+		deployInfo.Status = consts.DEPLOY_STATUS_SUCCESS // deployed
 		deployInfo.CreateTime = time.Now()
 
-		deployInfo.AbiInfo = contract.AbiInfo
+		deployInfo.AbiInfo = deployPackage.AbiInfo
 		deployInfo.DeployTime = deployInfo.CreateTime
 		icNetwork := os.Getenv("IC_NETWORK")
 		if icNetwork == "" {
 			icNetwork = "local"
 		}
+		deployInfo.WorkflowId = workflowId
+		deployInfo.WorkflowDetailId = workflowDetail.Id
 		deployInfo.Network = icNetwork
 		//deploy.Name
 		deployInfo.Name = deploy.Name
@@ -722,7 +723,7 @@ func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workfl
 
 		icpCanister.CanisterName = deploy.Name
 		icpCanister.Status = db.Running
-		icpCanister.Contract = strings.Join([]string{contract.Name, contract.Version}, "_#")
+		icpCanister.Contract = strings.Join([]string{deployPackage.Name, deployPackage.Version}, "_#")
 		icpCanister.Cycles = sql.NullString{Valid: false}
 		icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
 		if err := w.db.Save(&icpCanister).Error; err != nil {

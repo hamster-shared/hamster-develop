@@ -130,6 +130,14 @@ const (
 	STATUS_FAIL    = 3
 )
 
+type DeployStatus int
+
+const (
+	DEPLOY_STATUS_RUNNING DeployStatus = STATUS_RUNNING
+	DEPLOY_STATUS_SUCCESS DeployStatus = STATUS_SUCCESS
+	DEPLOY_STATUS_FAIL    DeployStatus = STATUS_FAIL
+)
+
 const RepositoryDir = "repository"
 
 const (
