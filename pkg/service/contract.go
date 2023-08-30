@@ -307,10 +307,12 @@ func (c *ContractService) QueryContractByWorkflow(id string, workflowId, workflo
 		return contracts, err
 	}
 	if project.FrameType == consts.InternetComputer {
-		err = c.db.Model(db2.BackendPackage{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&contracts).Error
+		var backendPackages []db2.BackendPackage
+		err = c.db.Model(db2.BackendPackage{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&backendPackages).Error
 		if err != nil {
 			return contracts, err
 		}
+		_ = copier.Copy(&contracts, &backendPackages)
 	} else {
 		res := c.db.Model(db2.Contract{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&contracts)
 		if res != nil {
