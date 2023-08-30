@@ -14,6 +14,7 @@ type BackendPackage struct {
 	Name             string                  `json:"name"`
 	Version          string                  `json:"version"`
 	BuildTime        time.Time               `json:"buildTime"`
+	Network          string                  `json:"network"`
 	AbiInfo          string                  `json:"abiInfo"`
 	CreateTime       time.Time               `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
 	Type             consts.ProjectFrameType `json:"type"`   // see #consts.ProjectFrameType

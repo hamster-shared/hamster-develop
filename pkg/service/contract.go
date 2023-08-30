@@ -208,7 +208,7 @@ func (c *ContractService) SaveDeploy(deployParam parameter.ContractDeployParam) 
 		return 0, err
 	}
 
-	projectService := application.GetBean[ProjectService]("projectService")
+	projectService := application.GetBean[*ProjectService]("projectService")
 	project, err := projectService.GetProject(projectId.String())
 	_ = copier.Copy(&entity, &deployParam)
 	entity.DeployTime = time.Now()
@@ -472,7 +472,7 @@ func (c *ContractService) SaveDeployIng(deployingParam parameter.ContractDeployI
 		return err
 	}
 	go func() {
-		receipt, transaction, err := getEthReceipt(deployingParam.RpcURL, deployingParam.DeployTxHash)
+		receipt, transaction, err := getEthReceipt(deployingParam.RpcUrl, deployingParam.DeployTxHash)
 		if err != nil {
 			logger.Info("sync contract deploy fail: ", err)
 			return

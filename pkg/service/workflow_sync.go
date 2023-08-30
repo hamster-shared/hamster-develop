@@ -730,6 +730,8 @@ func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workfl
 			fmt.Println("保存数据时发生错误:", err)
 			continue
 		}
+
+		deployPackage.Network = utils.RemoveDuplicatesAndJoin(deployPackage.Network+","+icNetwork, ",")
 	}
 	return nil
 }

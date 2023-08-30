@@ -18,5 +18,5 @@ type ContractDeployIngParam struct {
 	Version      string `json:"version"`
 	Network      string `json:"network"`
 	DeployTxHash string `json:"deployTxHash"`
-	RpcURL       string `json:"rpc_url"`
+	RpcUrl       string `json:"rpcUrl"`
 }

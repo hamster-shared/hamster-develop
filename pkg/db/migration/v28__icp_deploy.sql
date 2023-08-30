@@ -51,3 +51,5 @@ create table t_backend_deploy
 
 alter table t_contract_deploy drop column name;
 
+alter table t_backend_package
+    add network varchar(50);
