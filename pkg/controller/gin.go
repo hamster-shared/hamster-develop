@@ -105,7 +105,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)
 	api.DELETE("/workflows/:workflowId/detail/:detailId", h.handlerServer.deleteWorkflow)
 	api.GET("/workflows/:id/detail/:detailId", h.handlerServer.workflowDetail)
-	api.GET("/workflows/:id/detail/:detailId/contract", h.handlerServer.workflowContract)
+	api.GET("/projects/:id/workflows/:workflowId/detail/:detailId/contract", h.handlerServer.workflowContract)
 	//delete frontend deploy
 	api.DELETE("/package/:id/deploy-info", h.handlerServer.deleteWorkflowDeploy)
 	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)

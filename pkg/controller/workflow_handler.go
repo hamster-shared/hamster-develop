@@ -63,9 +63,10 @@ func (h *HandlerServer) workflowDetail(gin *gin.Context) {
 }
 
 func (h *HandlerServer) workflowContract(gin *gin.Context) {
-	idStr := gin.Param("id")
+	id := gin.Param("id")
+	workflowIdStr := gin.Param("workflowId")
 	workflowDetailIdStr := gin.Param("detailId")
-	workflowId, err := strconv.Atoi(idStr)
+	workflowId, err := strconv.Atoi(workflowIdStr)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -76,7 +77,7 @@ func (h *HandlerServer) workflowContract(gin *gin.Context) {
 		return
 	}
 	contractService := application.GetBean[*service.ContractService]("contractService")
-	data, err := contractService.QueryContractByWorkflow(workflowId, workflowDetailId)
+	data, err := contractService.QueryContractByWorkflow(id, workflowId, workflowDetailId)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

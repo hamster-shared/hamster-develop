@@ -299,11 +299,23 @@ func (c *ContractService) QueryContracts(projectId string, query, version, netwo
 	return vo.NewPage[db2.Contract](afterData, len(contracts), page, size), nil
 }
 
-func (c *ContractService) QueryContractByWorkflow(workflowId, workflowDetailId int) ([]db2.Contract, error) {
+func (c *ContractService) QueryContractByWorkflow(id string, workflowId, workflowDetailId int) ([]db2.Contract, error) {
+	var project db2.Project
 	var contracts []db2.Contract
-	res := c.db.Model(db2.Contract{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&contracts)
-	if res != nil {
-		return contracts, res.Error
+	err := c.db.Where("id = ? ", id).First(&project).Error
+	if err != nil {
+		return contracts, err
+	}
+	if project.FrameType == consts.InternetComputer {
+		err = c.db.Model(db2.BackendPackage{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&contracts).Error
+		if err != nil {
+			return contracts, err
+		}
+	} else {
+		res := c.db.Model(db2.Contract{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&contracts)
+		if res != nil {
+			return contracts, res.Error
+		}
 	}
 	return contracts, nil
 }

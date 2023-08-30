@@ -91,8 +91,11 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 				if project.FrameType == consts.InternetComputer {
 					err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
 					if err == nil {
+						recentDeploy.Id = workflowDeployData.Id
+						recentDeploy.Status = workflowDeployData.Status
+						recentDeploy.DeployTime = workflowDeployData.StartTime
 						var backendDeploy db2.BackendDeploy
-						err = p.db.Model(db2.BackendDeploy{}).Where("project_id = ? and workflow_detail_id = ? ", project.Id, workflowDeployData.Id).Order("deploy_time DESC").Limit(1).Find(&backendDeploy).Error
+						err = p.db.Model(db2.BackendDeploy{}).Where("project_id = ? and workflow_detail_id = ? ", data.Id, workflowDeployData.Id).Order("deploy_time DESC").Limit(1).First(&backendDeploy).Error
 						if err == nil {
 							_ = copier.Copy(&recentDeploy, &backendDeploy)
 						}
@@ -182,15 +185,29 @@ func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 			}
 		}
 	}
+	var workflowDeployData db2.WorkflowDetail
 	if data.Type == uint(consts.CONTRACT) {
-		var deployData db2.ContractDeploy
-		err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
-		if err == nil {
-			_ = copier.Copy(&recentDeploy, &deployData)
+		if data.FrameType == consts.InternetComputer {
+			err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
+			if err == nil {
+				recentDeploy.Id = workflowDeployData.Id
+				recentDeploy.Status = workflowDeployData.Status
+				recentDeploy.DeployTime = workflowDeployData.StartTime
+				var backendDeploy db2.BackendDeploy
+				err = p.db.Model(db2.BackendDeploy{}).Where("project_id = ? and workflow_detail_id = ? ", data.Id, workflowDeployData.Id).Order("deploy_time DESC").Limit(1).First(&backendDeploy).Error
+				if err == nil {
+					_ = copier.Copy(&recentDeploy, &backendDeploy)
+				}
+			}
+		} else {
+			var deployData db2.ContractDeploy
+			err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+			if err == nil {
+				_ = copier.Copy(&recentDeploy, &deployData)
+			}
 		}
 		detail.RecentDeploy = recentDeploy
 	} else {
-		var workflowDeployData db2.WorkflowDetail
 		var packageDeploy vo.PackageDeployVo
 		var deployData db2.FrontendDeploy
 		err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
