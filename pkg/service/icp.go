@@ -512,9 +512,12 @@ func (i *IcpService) QueryIcpCanisterList(projectId string, page, size int) (*vo
 		return &pageData, err
 	}
 	for _, canister := range canisters {
+		logger.Info(canister.Cycles)
 		if !canister.Cycles.Valid {
 			data, err := i.queryCanisterStatus(canister.CanisterId)
+			logger.Debugf("balance data is %s:", data.Balance)
 			if err == nil {
+				logger.Info("start save balance")
 				canister.Cycles = sql.NullString{
 					String: data.Balance,
 					Valid:  true,
@@ -555,12 +558,14 @@ func (i *IcpService) queryCanisterStatus(canisterId string) (vo.CanisterStatusRe
 	var res vo.CanisterStatusRes
 	canisterStatusSprintf := CanisterStatus
 	canisterCmd := fmt.Sprintf(canisterStatusSprintf, canisterId, i.network)
+	logger.Infof("exec cmd is %s", canisterCmd)
 	cmd := exec.Command("bash", "-c", canisterCmd)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		logger.Errorf("cmd exec failed: %s", err)
 		return res, err
 	}
+	logger.Infof("status is:%s", string(out))
 	re := regexp.MustCompile(`Balance: ([0-9_]+) Cycles`)
 	matches := re.FindStringSubmatch(string(out))
 	if len(matches) > 1 {

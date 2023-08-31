@@ -42,7 +42,8 @@ insert into t_template (
     whether_display,
     language_type,
     logo,
-    image
+    image,
+    deploy_type
 ) values (
     48,
     7,
@@ -53,7 +54,8 @@ insert into t_template (
     1,
     1,
     'https://g.alpha.hamsternet.io/ipfs/QmNpaEzye5ipuD3vAqfCw7y95XgkBRMVaXc7SeyBvaCQhz',
-    'https://g.alpha.hamsternet.io/ipfs/QmPbUjgPNW1eBVxh1zVgF9F7porBWijYrAeMth9QDPwEXk'
+    'https://g.alpha.hamsternet.io/ipfs/QmPbUjgPNW1eBVxh1zVgF9F7porBWijYrAeMth9QDPwEXk',
+    2
          );
 
 INSERT INTO t_template_detail (
