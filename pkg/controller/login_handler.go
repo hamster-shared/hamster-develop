@@ -150,12 +150,13 @@ func (h *HandlerServer) getUserCount(gin *gin.Context) {
 }
 
 func (h *HandlerServer) saveUserWallet(gin *gin.Context) {
+	var userId uint
 	userAny, exit := gin.Get("user")
-	if !exit {
-		Failed(http.StatusUnauthorized, "access not authorized", gin)
-		return
+
+	if exit {
+		user, _ := userAny.(db2.User)
+		userId = user.Id
 	}
-	user, _ := userAny.(db2.User)
 	userService := application.GetBean[*service.UserService]("userService")
 	wallet := &db2.UserWallet{}
 	err := gin.BindJSON(wallet)
@@ -163,7 +164,7 @@ func (h *HandlerServer) saveUserWallet(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	userService.SaveUserWallet(user.Id, wallet.Address)
+	userService.SaveUserWallet(userId, wallet.Address)
 	Success("", gin)
 
 }
