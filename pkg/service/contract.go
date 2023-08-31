@@ -337,48 +337,104 @@ func (c *ContractService) QueryContractByVersion(projectId string, version strin
 
 func (c *ContractService) QueryContractDeployByVersion(projectId string, version string) (vo.ContractDeployInfoVo, error) {
 	var data vo.ContractDeployInfoVo
-	var contractDeployData []db2.ContractDeploy
-	res := c.db.Model(db2.ContractDeploy{}).Where("project_id = ? and version = ?", projectId, version).Find(&contractDeployData)
-	if res.Error != nil {
-		return data, res.Error
+	var project db2.Project
+	err := c.db.Where("id = ? ", projectId).First(&project).Error
+	if err != nil {
+		return data, err
 	}
-	contractInfo := make(map[string]vo.ContractInfoVo)
-	if len(contractDeployData) > 0 {
-		arr := array.NewObjArray(contractDeployData, "ContractId")
-		res2 := arr.ToIdMapArray().(map[uint][]db2.ContractDeploy)
-		for u, deploys := range res2 {
-			var contractData db2.Contract
-			res := c.db.Model(db2.Contract{}).Where("id = ?", u).First(&contractData)
-			var contractInfoVo vo.ContractInfoVo
-			copier.Copy(&contractInfoVo, &contractData)
-			if res.Error == nil {
-				var deployInfo []vo.DeployInfVo
-				if len(deploys) > 0 {
-					for _, deploy := range deploys {
-						var deployData vo.DeployInfVo
-						copier.Copy(&deployData, &deploy)
-						deployInfo = append(deployInfo, deployData)
-						if deploy.AbiInfo != "" && contractInfoVo.AbiInfo == "" {
-							contractInfoVo.AbiInfo = deploy.AbiInfo
+
+	if project.FrameType == consts.InternetComputer {
+		var backendDeployData []db2.BackendDeploy
+		res := c.db.Model(db2.BackendDeploy{}).Where("project_id = ? and version = ?", projectId, version).Find(&backendDeployData)
+		if res.Error != nil {
+			return data, res.Error
+		}
+		contractInfo := make(map[string]vo.ContractInfoVo)
+		if len(backendDeployData) > 0 {
+			arr := array.NewObjArray(backendDeployData, "PackageId")
+			res2 := arr.ToIdMapArray().(map[uint][]db2.BackendDeploy)
+			for u, deploys := range res2 {
+				var backendPackageData db2.BackendPackage
+				res := c.db.Model(db2.BackendPackage{}).Where("id = ?", u).First(&backendPackageData)
+				var contractInfoVo vo.ContractInfoVo
+				copier.Copy(&contractInfoVo, &backendPackageData)
+				if res.Error == nil {
+					var deployInfo []vo.DeployInfVo
+					if len(deploys) > 0 {
+						for _, deploy := range deploys {
+							var deployData vo.DeployInfVo
+							copier.Copy(&deployData, &deploy)
+							deployInfo = append(deployInfo, deployData)
+							if deploy.AbiInfo != "" && contractInfoVo.AbiInfo == "" {
+								contractInfoVo.AbiInfo = deploy.AbiInfo
+							}
 						}
 					}
+					contractInfoVo.DeployInfo = deployInfo
+					contractInfo[backendPackageData.Name] = contractInfoVo
 				}
-				contractInfoVo.DeployInfo = deployInfo
-				contractInfo[contractData.Name] = contractInfoVo
 			}
 		}
+		data.Version = version
+		data.ContractInfo = contractInfo
+	} else {
+		var contractDeployData []db2.ContractDeploy
+		res := c.db.Model(db2.ContractDeploy{}).Where("project_id = ? and version = ?", projectId, version).Find(&contractDeployData)
+		if res.Error != nil {
+			return data, res.Error
+		}
+		contractInfo := make(map[string]vo.ContractInfoVo)
+		if len(contractDeployData) > 0 {
+			arr := array.NewObjArray(contractDeployData, "ContractId")
+			res2 := arr.ToIdMapArray().(map[uint][]db2.ContractDeploy)
+			for u, deploys := range res2 {
+				var contractData db2.Contract
+				res := c.db.Model(db2.Contract{}).Where("id = ?", u).First(&contractData)
+				var contractInfoVo vo.ContractInfoVo
+				copier.Copy(&contractInfoVo, &contractData)
+				if res.Error == nil {
+					var deployInfo []vo.DeployInfVo
+					if len(deploys) > 0 {
+						for _, deploy := range deploys {
+							var deployData vo.DeployInfVo
+							copier.Copy(&deployData, &deploy)
+							deployInfo = append(deployInfo, deployData)
+							if deploy.AbiInfo != "" && contractInfoVo.AbiInfo == "" {
+								contractInfoVo.AbiInfo = deploy.AbiInfo
+							}
+						}
+					}
+					contractInfoVo.DeployInfo = deployInfo
+					contractInfo[contractData.Name] = contractInfoVo
+				}
+			}
+		}
+		data.Version = version
+		data.ContractInfo = contractInfo
 	}
-	data.Version = version
-	data.ContractInfo = contractInfo
 	return data, nil
 }
 
 func (c *ContractService) QueryVersionList(projectId string) ([]string, error) {
 	var data []string
-	res := c.db.Model(db2.Contract{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Find(&data)
-	if res.Error != nil {
-		return data, res.Error
+	var project db2.Project
+	err := c.db.Where("id = ? ", projectId).First(&project).Error
+	if err != nil {
+		return data, err
 	}
+
+	if project.FrameType == consts.InternetComputer {
+		res := c.db.Model(db2.BackendPackage{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Find(&data)
+		if res.Error != nil {
+			return data, res.Error
+		}
+	} else {
+		res := c.db.Model(db2.Contract{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Find(&data)
+		if res.Error != nil {
+			return data, res.Error
+		}
+	}
+
 	return data, nil
 }
 
