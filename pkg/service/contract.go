@@ -5,15 +5,22 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/dontpanicdao/caigo/types"
+	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/goperate/convert/core/array"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
+	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
+	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"io"
@@ -193,9 +200,26 @@ func (c *ContractService) DoStarknetDeclare(compiledContract []byte) (txHash str
 //	return declare.TransactionHash, declare.ClassHash, nil
 //}
 
-func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
+func (c *ContractService) SaveDeploy(deployParam parameter.ContractDeployParam) (uint, error) {
+	var entity db2.ContractDeploy
+	_ = c.db.Model(&db2.ContractDeploy{}).Where("deploy_tx_hash = ?", deployParam.DeployTxHash).First(&entity).Error
+	projectId, err := uuid.FromString(deployParam.ProjectId)
+	if err != nil {
+		return 0, err
+	}
+
+	projectService := application.GetBean[*ProjectService]("projectService")
+	project, err := projectService.GetProject(projectId.String())
+	_ = copier.Copy(&entity, &deployParam)
+	entity.DeployTime = time.Now()
+	entity.ProjectId = projectId
+
+	if project.FrameType == consts.Evm {
+		entity.Status = consts.STATUS_SUCCESS
+	}
+
 	var contract db2.Contract
-	err := c.db.Model(db2.Contract{}).Where("id = ?", entity.ContractId).First(&contract).Error
+	err = c.db.Model(db2.Contract{}).Where("id = ?", entity.ContractId).First(&contract).Error
 	if err != nil {
 		return 0, err
 	}
@@ -222,7 +246,7 @@ func (c *ContractService) SaveDeploy(entity db2.ContractDeploy) (uint, error) {
 	if contract.AbiInfo == "" {
 		contract.AbiInfo = entity.AbiInfo
 	}
-	err = c.db.Create(&entity).Error
+	err = c.db.Save(&entity).Error
 	if err != nil {
 		return 0, err
 	}
@@ -275,11 +299,25 @@ func (c *ContractService) QueryContracts(projectId string, query, version, netwo
 	return vo.NewPage[db2.Contract](afterData, len(contracts), page, size), nil
 }
 
-func (c *ContractService) QueryContractByWorkflow(workflowId, workflowDetailId int) ([]db2.Contract, error) {
+func (c *ContractService) QueryContractByWorkflow(id string, workflowId, workflowDetailId int) ([]db2.Contract, error) {
+	var project db2.Project
 	var contracts []db2.Contract
-	res := c.db.Model(db2.Contract{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&contracts)
-	if res != nil {
-		return contracts, res.Error
+	err := c.db.Where("id = ? ", id).First(&project).Error
+	if err != nil {
+		return contracts, err
+	}
+	if project.FrameType == consts.InternetComputer {
+		var backendPackages []db2.BackendPackage
+		err = c.db.Model(db2.BackendPackage{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&backendPackages).Error
+		if err != nil {
+			return contracts, err
+		}
+		_ = copier.Copy(&contracts, &backendPackages)
+	} else {
+		res := c.db.Model(db2.Contract{}).Where("workflow_id = ? and workflow_detail_id = ?", workflowId, workflowDetailId).Order("version DESC").Find(&contracts)
+		if res != nil {
+			return contracts, res.Error
+		}
 	}
 	return contracts, nil
 }
@@ -299,48 +337,104 @@ func (c *ContractService) QueryContractByVersion(projectId string, version strin
 
 func (c *ContractService) QueryContractDeployByVersion(projectId string, version string) (vo.ContractDeployInfoVo, error) {
 	var data vo.ContractDeployInfoVo
-	var contractDeployData []db2.ContractDeploy
-	res := c.db.Model(db2.ContractDeploy{}).Where("project_id = ? and version = ?", projectId, version).Find(&contractDeployData)
-	if res.Error != nil {
-		return data, res.Error
+	var project db2.Project
+	err := c.db.Where("id = ? ", projectId).First(&project).Error
+	if err != nil {
+		return data, err
 	}
-	contractInfo := make(map[string]vo.ContractInfoVo)
-	if len(contractDeployData) > 0 {
-		arr := array.NewObjArray(contractDeployData, "ContractId")
-		res2 := arr.ToIdMapArray().(map[uint][]db2.ContractDeploy)
-		for u, deploys := range res2 {
-			var contractData db2.Contract
-			res := c.db.Model(db2.Contract{}).Where("id = ?", u).First(&contractData)
-			var contractInfoVo vo.ContractInfoVo
-			copier.Copy(&contractInfoVo, &contractData)
-			if res.Error == nil {
-				var deployInfo []vo.DeployInfVo
-				if len(deploys) > 0 {
-					for _, deploy := range deploys {
-						var deployData vo.DeployInfVo
-						copier.Copy(&deployData, &deploy)
-						deployInfo = append(deployInfo, deployData)
-						if deploy.AbiInfo != "" && contractInfoVo.AbiInfo == "" {
-							contractInfoVo.AbiInfo = deploy.AbiInfo
+
+	if project.FrameType == consts.InternetComputer {
+		var backendDeployData []db2.BackendDeploy
+		res := c.db.Model(db2.BackendDeploy{}).Where("project_id = ? and version = ?", projectId, version).Find(&backendDeployData)
+		if res.Error != nil {
+			return data, res.Error
+		}
+		contractInfo := make(map[string]vo.ContractInfoVo)
+		if len(backendDeployData) > 0 {
+			arr := array.NewObjArray(backendDeployData, "PackageId")
+			res2 := arr.ToIdMapArray().(map[uint][]db2.BackendDeploy)
+			for u, deploys := range res2 {
+				var backendPackageData db2.BackendPackage
+				res := c.db.Model(db2.BackendPackage{}).Where("id = ?", u).First(&backendPackageData)
+				var contractInfoVo vo.ContractInfoVo
+				copier.Copy(&contractInfoVo, &backendPackageData)
+				if res.Error == nil {
+					var deployInfo []vo.DeployInfVo
+					if len(deploys) > 0 {
+						for _, deploy := range deploys {
+							var deployData vo.DeployInfVo
+							copier.Copy(&deployData, &deploy)
+							deployInfo = append(deployInfo, deployData)
+							if deploy.AbiInfo != "" && contractInfoVo.AbiInfo == "" {
+								contractInfoVo.AbiInfo = deploy.AbiInfo
+							}
 						}
 					}
+					contractInfoVo.DeployInfo = deployInfo
+					contractInfo[backendPackageData.Name] = contractInfoVo
 				}
-				contractInfoVo.DeployInfo = deployInfo
-				contractInfo[contractData.Name] = contractInfoVo
 			}
 		}
+		data.Version = version
+		data.ContractInfo = contractInfo
+	} else {
+		var contractDeployData []db2.ContractDeploy
+		res := c.db.Model(db2.ContractDeploy{}).Where("project_id = ? and version = ?", projectId, version).Find(&contractDeployData)
+		if res.Error != nil {
+			return data, res.Error
+		}
+		contractInfo := make(map[string]vo.ContractInfoVo)
+		if len(contractDeployData) > 0 {
+			arr := array.NewObjArray(contractDeployData, "ContractId")
+			res2 := arr.ToIdMapArray().(map[uint][]db2.ContractDeploy)
+			for u, deploys := range res2 {
+				var contractData db2.Contract
+				res := c.db.Model(db2.Contract{}).Where("id = ?", u).First(&contractData)
+				var contractInfoVo vo.ContractInfoVo
+				copier.Copy(&contractInfoVo, &contractData)
+				if res.Error == nil {
+					var deployInfo []vo.DeployInfVo
+					if len(deploys) > 0 {
+						for _, deploy := range deploys {
+							var deployData vo.DeployInfVo
+							copier.Copy(&deployData, &deploy)
+							deployInfo = append(deployInfo, deployData)
+							if deploy.AbiInfo != "" && contractInfoVo.AbiInfo == "" {
+								contractInfoVo.AbiInfo = deploy.AbiInfo
+							}
+						}
+					}
+					contractInfoVo.DeployInfo = deployInfo
+					contractInfo[contractData.Name] = contractInfoVo
+				}
+			}
+		}
+		data.Version = version
+		data.ContractInfo = contractInfo
 	}
-	data.Version = version
-	data.ContractInfo = contractInfo
 	return data, nil
 }
 
 func (c *ContractService) QueryVersionList(projectId string) ([]string, error) {
 	var data []string
-	res := c.db.Model(db2.Contract{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Find(&data)
-	if res.Error != nil {
-		return data, res.Error
+	var project db2.Project
+	err := c.db.Where("id = ? ", projectId).First(&project).Error
+	if err != nil {
+		return data, err
 	}
+
+	if project.FrameType == consts.InternetComputer {
+		res := c.db.Model(db2.BackendPackage{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Find(&data)
+		if res.Error != nil {
+			return data, res.Error
+		}
+	} else {
+		res := c.db.Model(db2.Contract{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Find(&data)
+		if res.Error != nil {
+			return data, res.Error
+		}
+	}
+
 	return data, nil
 }
 
@@ -429,6 +523,42 @@ func (c *ContractService) GetContractDeployInfo(id int) (db2.ContractDeploy, err
 	return result, err
 }
 
+func (c *ContractService) SaveDeployIng(deployingParam parameter.ContractDeployIngParam) error {
+	// check tx exists
+	projectId, err := uuid.FromString(deployingParam.ProjectId)
+	if err != nil {
+		return err
+	}
+	go func() {
+		receipt, transaction, err := getEthReceipt(deployingParam.RpcUrl, deployingParam.DeployTxHash)
+		if err != nil {
+			logger.Info("sync contract deploy fail: ", err)
+			return
+		}
+
+		var deployInfo db2.ContractDeploy
+
+		_ = c.db.Model(&db2.ContractDeploy{}).Where("deploy_tx_hash = ?", deployingParam.DeployTxHash).First(&deployInfo).Error
+
+		deployInfo.ProjectId = projectId
+		deployInfo.ContractId = deployingParam.ContractId
+		deployInfo.Version = deployingParam.Version
+		deployInfo.Network = deployingParam.Network
+		deployInfo.DeployTime = transaction.Time()
+		deployInfo.Address = receipt.ContractAddress.Hex()
+		deployInfo.CreateTime = time.Now()
+		deployInfo.Type = uint(consts.Evm)
+		deployInfo.DeployTxHash = deployingParam.DeployTxHash
+		deployInfo.Status = consts.STATUS_SUCCESS
+		err = c.db.Save(&deployInfo).Error
+		if err != nil {
+			logger.Error("save db t_contract_deploy error : ", err)
+		}
+	}()
+
+	return nil
+}
+
 func networkDistinct(oldNetwork, newNetwork string) string {
 	arr := strings.Split(oldNetwork, ",")
 	exist := false
@@ -442,4 +572,72 @@ func networkDistinct(oldNetwork, newNetwork string) string {
 		return oldNetwork
 	}
 	return fmt.Sprintf("%s,%s", oldNetwork, newNetwork)
+}
+
+func getEthReceipt(rpcURL string, txHash string) (*ethtypes.Receipt, *ethtypes.Transaction, error) {
+	// 连接以太坊节点
+	client, err := ethclient.Dial(rpcURL)
+	if err != nil {
+		logger.Error(err)
+		return nil, nil, err
+	}
+
+	// 你要查询的合约部署交易的哈希
+	transactionHash := common.HexToHash(txHash)
+
+	// 获取交易的详细信息
+	transaction, _, err := client.TransactionByHash(context.Background(), transactionHash)
+	if err != nil {
+		logger.Error(err)
+		return nil, nil, err
+	}
+
+	// 确认交易是合约创建交易
+	if transaction.To() != nil {
+		err = errors.New("Transaction is not a contract deployment")
+		logger.Error(err)
+		return nil, nil, err
+	}
+	// 等待合约部署成功
+	receipt, err := waitForContractDeployment(client, transaction.Hash(), 15*time.Second)
+	if err != nil {
+		logger.Error(err)
+		return nil, nil, err
+	}
+
+	fmt.Printf("Contract deployed at address: %s\n", receipt.ContractAddress.Hex())
+	return receipt, transaction, err
+}
+
+// 等待合约部署成功
+func waitForContractDeployment(client *ethclient.Client, transactionHash common.Hash, timeout time.Duration) (*ethtypes.Receipt, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// 创建一个通道来接收区块头
+
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("timeout")
+			return nil, errors.New("timeout")
+		default:
+			receipt, err := client.TransactionReceipt(ctx, transactionHash)
+			if err != nil {
+				return nil, err
+			}
+
+			if receipt == nil {
+				// 交易还未被打包，继续等待
+				continue
+			}
+
+			// 如果交易被打包，并且合约地址不是空，返回交易收据
+			if receipt.ContractAddress != common.HexToAddress("0xB362Eba0f3f42Ad32394f84ecb9c8d42bF1f2839") {
+				return receipt, nil
+			}
+
+			time.Sleep(time.Second)
+		}
+	}
 }

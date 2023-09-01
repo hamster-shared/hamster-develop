@@ -80,7 +80,7 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		Type:        importData.Type,
 		Branch:      "main",
 		TemplateUrl: importData.CloneURL,
-		FrameType:   uint(importData.Ecosystem),
+		FrameType:   consts.ProjectFrameType(importData.Ecosystem),
 		DeployType:  1,
 		UserId:      int64(user.Id),
 	}
@@ -130,7 +130,7 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
-	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
 		project.EvmTemplateType = uint(evmTemplateType)
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
@@ -164,6 +164,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
 	repo, res, err := githubService.GetRepo(token, user.Username, createData.Name)
+
 	if err != nil {
 		if res != nil {
 			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
@@ -206,11 +207,31 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	if createData.Type == int(consts.BLOCKCHAIN) {
 		createData.DeployType = 2
 	}
+
+	var evmTemplateType consts.EVMFrameType
+	if createData.Type == int(consts.CONTRACT) && createData.FrameType == uint(consts.Evm) {
+		githubService := application.GetBean[*service.GithubService]("githubService")
+		// get all files
+		repoContents, err := githubService.GetRepoFileList(token, user.Username, createData.Name)
+		if err != nil {
+			log.Println(err.Error())
+			Fail(err.Error(), g)
+			return
+		}
+		// get EVM contract frame: truffle\foundry\hardhat
+		frame, err := h.projectService.ParsingEVMFrame(repoContents)
+		if err != nil {
+			Fail(err.Error(), g)
+			return
+		}
+		evmTemplateType = frame
+	}
+
 	data := vo.CreateProjectParam{
 		Name:         createData.Name,
 		Type:         createData.Type,
 		TemplateUrl:  *repo.CloneURL,
-		FrameType:    createData.FrameType,
+		FrameType:    consts.ProjectFrameType(createData.FrameType),
 		DeployType:   createData.DeployType,
 		UserId:       int64(user.Id),
 		LabelDisplay: createData.LabelDisplay,
@@ -227,12 +248,12 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
-	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
 		//project.EvmTemplateType = createData.EvmTemplateType
-		project.EvmTemplateType = uint(consts.Truffle)
+		project.EvmTemplateType = uint(evmTemplateType)
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) && project.Type != uint(consts.BLOCKCHAIN) {
+	if !(project.Type == uint(consts.CONTRACT) && (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer)) && project.Type != uint(consts.BLOCKCHAIN) {
 		workflowCheckData := parameter.SaveWorkflowParam{
 			ProjectId:  id,
 			Type:       consts.Check,
@@ -269,7 +290,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		workflowService.UpdateWorkflow(workflowBuildRes)
 	}
 
-	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) {
+	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) || (project.Type == uint(consts.CONTRACT) && project.FrameType == consts.InternetComputer) {
 		workflowDeployData := parameter.SaveWorkflowParam{
 			ProjectId:  id,
 			Type:       consts.Deploy,
@@ -866,7 +887,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Name:        createData.Name,
 		Type:        createData.Type,
 		TemplateUrl: *repo.CloneURL,
-		FrameType:   createData.FrameType,
+		FrameType:   consts.ProjectFrameType(createData.FrameType),
 		UserId:      int64(user.Id),
 	}
 	id, err := h.projectService.CreateProject(data)
@@ -879,7 +900,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	if project.Type == uint(consts.CONTRACT) && project.FrameType == uint(consts.Evm) {
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
 		//project.EvmTemplateType = createData.EvmTemplateType
 		project.EvmTemplateType = uint(consts.Truffle)
 	}

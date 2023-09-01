@@ -19,13 +19,9 @@ windows:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64  go build -ldflags="-s -w" -o aline-worker.exe ./bin/aline-worker
 
 docker: linux-test
-	docker build -t hamstershare/hamster-develop:latest .
-	docker push hamstershare/hamster-develop:latest
-
-
-deploy: linux
-	scp ./aline ubuntu@ec2-34-232-105-81.compute-1.amazonaws.com:/home/ubuntu/
-	ssh ubuntu@ec2-34-232-105-81.compute-1.amazonaws.com "sudo mv /home/ubuntu/aline /usr/local/bin"
+	timestamp=$$(date +"%Y%m%d%H%M%S"); \
+	docker build -t hamstershare/hamster-develop:$$timestamp . && \
+	docker push hamstershare/hamster-develop:$$timestamp
 
 clean:
 	rm -rf aline aline-test aline-worker aline-worker-test

@@ -7,7 +7,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
-	"github.com/stretchr/testify/assert"
+	"github.com/mohaijiang/agent-go/candid"
 	"io"
 	"log"
 	"net/http"
@@ -83,9 +83,24 @@ func TestGetSuiModelName(t *testing.T) {
 
 }
 
-func TestSyncUrl(t *testing.T) {
-	log := "https://sne54-qiaaa-aaaag-abt6q-cai.icp0.io/"
-	url, err := extractDomain(log)
-	assert.NoError(t, err)
-	fmt.Println(url)
+func TestDidToJson(t *testing.T) {
+	didUrl := "/Users/abing/GitHub/Hamster/Template/examples/motoko/whoami/.dfx/local/canisters/whoami/whoami.did"
+	// analysis did
+	didContent, err := readDid(didUrl)
+	if err != nil {
+		panic(t)
+	}
+
+	discription, err := candid.ParseDID([]byte(didContent))
+	if err != nil {
+		panic(t)
+	}
+
+	bytes, err := json.Marshal(discription)
+	if err != nil {
+		panic(t)
+	}
+	fmt.Println("-------json----")
+	fmt.Println(string(bytes))
+	fmt.Println("-------json----")
 }

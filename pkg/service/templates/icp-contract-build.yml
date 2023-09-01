@@ -8,21 +8,23 @@ stages:
         with:
           url: [[ .RepositoryUrl ]]
           branch: main
-  Build FrontEnd:
+  Build:
     needs:
       - Initialization
     steps:
       - name: Compile Code
-        run: |
-          npm install
-          npm run build
+        uses: icp-build
+        with:
+          dfx_json: ${{ param.dfxJson }}
   Output Results:
     needs:
-      - Build FrontEnd
+      - Build
     steps:
       - name: Save Package
         uses: hamster-artifactory
         with:
-          name: frontend.zip
+          name: icp-build.zip
           path: |
-            dist
+            dfx.json
+            canister_ids.json
+            .dfx

@@ -95,11 +95,13 @@ type ProjectFrameType uint
 
 // project frame type
 const (
-	Evm uint = iota + 1
+	Evm ProjectFrameType = iota + 1
 	Aptos
 	Ton
 	StarkWare
 	Sui
+	FileCoin
+	InternetComputer
 )
 
 type EVMFrameType int
@@ -126,6 +128,14 @@ const (
 	STATUS_RUNNING = 1
 	STATUS_SUCCESS = 2
 	STATUS_FAIL    = 3
+)
+
+type DeployStatus int
+
+const (
+	DEPLOY_STATUS_RUNNING DeployStatus = STATUS_RUNNING
+	DEPLOY_STATUS_SUCCESS DeployStatus = STATUS_SUCCESS
+	DEPLOY_STATUS_FAIL    DeployStatus = STATUS_FAIL
 )
 
 const RepositoryDir = "repository"

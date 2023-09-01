@@ -114,6 +114,14 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) {
 		image := fmt.Sprintf("%s/%s-%d:%d", consts.DockerHubName, strings.ToLower(user.Username), user.Id, time.Now().Unix())
 		params["imageName"] = image
+	} else if project.FrameType == consts.InternetComputer {
+		var icpDfx db.IcpDfxData
+		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
+		if err != nil {
+			logger.Errorf("db error : %s", err.Error())
+			return vo.DeployResultVo{}, fmt.Errorf("dfx.json not configuration")
+		}
+		params["dfxJson"] = icpDfx.DfxData
 	} else {
 		params = nil
 	}
@@ -146,7 +154,13 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 
 	params := make(map[string]string)
 
-	if int(consts.INTERNET_COMPUTER) == project.DeployType {
+	params["baseDir"] = "dist"
+	params["ArtifactUrl"] = "file://" + buildJobDetail.Artifactorys[0].Url
+	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
+	params["ipfsGateway"] = os.Getenv("ipfs_gateway")
+
+	// if icp deploy frontend or deploy contract
+	if int(consts.INTERNET_COMPUTER) == project.DeployType || consts.InternetComputer == project.FrameType {
 		var icpDfx db.IcpDfxData
 		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
 		if err != nil {
@@ -154,12 +168,13 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 			return vo.DeployResultVo{}, fmt.Errorf("dfx.json not configuration")
 		}
 		params["dfxJson"] = icpDfx.DfxData
+		for _, arti := range buildJobDetail.Artifactorys {
+			if strings.HasSuffix(arti.Url, "zip") {
+				params["ArtifactUrl"] = "file://" + arti.Url
+			}
+		}
 	}
 
-	params["baseDir"] = "dist"
-	params["ArtifactUrl"] = "file://" + buildJobDetail.Artifactorys[0].Url
-	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
-	params["ipfsGateway"] = os.Getenv("ipfs_gateway")
 	return w.ExecProjectWorkflow(projectId, user, uint(consts.Deploy), params)
 }
 
@@ -603,6 +618,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 				filePath = "templates/aptos-build.yml"
 			} else if project.FrameType == consts.Sui {
 				filePath = "templates/sui-build.yml"
+			} else if project.FrameType == consts.InternetComputer {
+				filePath = "templates/icp-contract-build.yml"
 			} else {
 				if project.EvmTemplateType == uint(consts.Truffle) {
 					filePath = "templates/truffle-build.yml"
@@ -611,6 +628,10 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 				} else {
 					filePath = "templates/hardhat-build.yml"
 				}
+			}
+		} else if workflowType == consts.Deploy {
+			if project.FrameType == consts.InternetComputer {
+				filePath = "templates/icp-contract-deploy.yml"
 			}
 		}
 	} else if project.Type == uint(consts.FRONTEND) {
@@ -622,7 +643,7 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 			} else if project.DeployType == int(consts.INTERNET_COMPUTER) {
 				filePath = "templates/icp-build.yml"
 			} else {
-				if project.FrameType == 1 || project.FrameType == 2 {
+				if project.FrameType == 1 || project.FrameType == 2 || project.FrameType == 5 {
 					filePath = "templates/frontend-image-build.yml"
 				} else {
 					filePath = "templates/frontend-node-image-build.yml"
@@ -740,18 +761,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	}
 	fileContent := string(content)
 
-	tmpl := template.New("test")
-	if workflowType == consts.Deploy {
-		tmpl = tmpl.Delims("[[", "]]")
-	}
-	if project.Type == uint(consts.CONTRACT) {
-		if workflowType == consts.Build && (project.FrameType == consts.Aptos || project.FrameType == consts.Sui) {
-			tmpl = tmpl.Delims("[[", "]]")
-		}
-	}
-	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) && workflowType == consts.Build {
-		tmpl = tmpl.Delims("[[", "]]")
-	}
+	tmpl := template.New("test").Delims("[[", "]]")
 
 	tmpl, err = tmpl.Parse(fileContent)
 
@@ -856,7 +866,7 @@ func hasCommonElements(arr1, arr2 []string) bool {
 }
 
 func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
-	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) && project.Type != uint(consts.BLOCKCHAIN) {
+	if !(project.Type == uint(consts.CONTRACT) && (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer)) && project.Type != uint(consts.BLOCKCHAIN) {
 		workflowCheckData := parameter.SaveWorkflowParam{
 			ProjectId:  project.Id,
 			Type:       consts.Check,
@@ -891,7 +901,7 @@ func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 		w.UpdateWorkflow(workflowBuildRes)
 	}
 
-	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) {
+	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) || (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer) {
 		workflowDeployData := parameter.SaveWorkflowParam{
 			ProjectId:  project.Id,
 			Type:       consts.Deploy,

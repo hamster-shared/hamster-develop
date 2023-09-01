@@ -1,0 +1,35 @@
+FROM debian:latest
+
+RUN apt update &&\
+    apt install -y -qq --no-install-recommends apt-transport-https ca-certificates curl git gnupg lsb-release clang libssl-dev protobuf-compiler;
+
+RUN mkdir -m 0755 -p /etc/apt/keyrings
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+
+
+
+RUN echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+RUN apt-get update && \
+    apt-get install -y -qq --no-install-recommends docker-ce-cli nodejs cmake make jq sudo  && \
+    npm install -g yarn truffle
+
+WORKDIR /home/ubuntu
+ENV HOME /home/ubuntu
+
+RUN  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+
+RUN dfx cache install
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+ENV PATH "$HOME/.cargo/bin:$PATH"
+RUN "$HOME/.cargo/bin/rustup" default stable && \
+    "$HOME/.cargo/bin/rustup" update && \
+    "$HOME/.cargo/bin/rustup" target add wasm32-unknown-unknown && \
+    "$HOME/.cargo/bin/rustup" update nightly && \
+    "$HOME/.cargo/bin/rustup" target add wasm32-unknown-unknown --toolchain nightly
+

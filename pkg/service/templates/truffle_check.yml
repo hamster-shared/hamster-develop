@@ -1,13 +1,14 @@
 version: 1.0
-name: {{.Name}}
+name: [[ .Name ]]
 stages:
   Initialization:
     steps:
       - name: Clone Code from Github
         uses: git-checkout
         with:
-          url: {{ .RepositoryUrl }}
+          url: [[ .RepositoryUrl ]]
           branch: main
+
       - name: Run "npm install"
         run: |
             npm install

@@ -1,12 +1,12 @@
 version: 1.0
-name: {{ .Name }}
+name: [[ .Name ]]
 stages:
   Initialization:
     steps:
       - name: Clone Code from Github
         uses: git-checkout
         with:
-          url: {{ .RepositoryUrl }}
+          url: [[ .RepositoryUrl ]]
           branch: main
   Build Contract:
     needs:
@@ -15,13 +15,12 @@ stages:
       - name: Compile Contract
         run: |
           npm install
-          npm install --save-dev hardhat
           npx hardhat compile
       - name: Filter Info
         run: |
           mkdir -p build/artifacts
           cd artifacts/contracts
-          for i in `ls */**.json`;do
+          for i in `find . -type f -name '*.json'`;do
              bytecode=$(jq -r '.bytecode' $i)
              length=$(jq '.abi | length' $i)
              if [ "$bytecode" = "0x" ]; then

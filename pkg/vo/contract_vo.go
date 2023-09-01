@@ -19,6 +19,7 @@ type ContractInfoVo struct {
 type DeployInfVo struct {
 	Network string `json:"network"`
 	Address string `json:"address"`
+	Name    string `json:"name"`
 }
 
 type ContractVo struct {
@@ -32,4 +33,5 @@ type ContractVo struct {
 	ByteCode         string    `json:"byteCode"`
 	Type             uint      `json:"type"` // see #consts.ProjectFrameType
 	AptosMv          string    `json:"aptosMv"`
+	Branch           string    `json:"branch"`
 }
