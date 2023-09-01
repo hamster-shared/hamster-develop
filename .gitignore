@@ -42,3 +42,4 @@ go.sum
 hamster-develop
 /.env
 
+pipeline2.yml

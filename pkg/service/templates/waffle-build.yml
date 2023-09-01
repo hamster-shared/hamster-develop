@@ -1,13 +1,14 @@
 version: 1.0
-name: {{.Name}}
+name: [[ .Name ]]
 stages:
   Initialization:
     steps:
       - name: Clone Code from Github
         uses: git-checkout
         with:
-          url: {{ .RepositoryUrl }}
+          url: [[ .RepositoryUrl ]]
           branch: main
+
   Build Contract:
     needs:
       - Initialization
@@ -20,7 +21,7 @@ stages:
         run: |
           mkdir -p build/artifacts
           cd build
-          for i in `ls *.json`;do
+          for i in `find . -type f -name '*.json'`;do
             bytecode=$(jq -r '.bytecode' $i)
             length=$(jq '.abi | length' $i)
             if [ "$bytecode" = "0x" ]; then

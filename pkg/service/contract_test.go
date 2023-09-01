@@ -7,13 +7,17 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/dontpanicdao/caigo/gateway"
 	"github.com/dontpanicdao/caigo/types"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 func NewTestContractService() *ContractService {
@@ -106,4 +110,34 @@ func TestReadToml(t *testing.T) {
 			fmt.Println(k)
 		}
 	}
+}
+
+func TestSyncEvmContract(t *testing.T) {
+	// 连接以太坊节点
+	client, err := ethclient.Dial("https://rpc-moonbeam.hamster.newtouch.com")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 你要查询的合约部署交易的哈希
+	transactionHash := common.HexToHash("0x4a20c425a3a11b1a1d0eaceb2169b10b6ec04b71ce810b6670b1e73f83eb8c54")
+
+	// 获取交易的详细信息
+	transaction, _, err := client.TransactionByHash(context.Background(), transactionHash)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 确认交易是合约创建交易
+	if transaction.To() != nil {
+		log.Fatalf("Transaction is not a contract deployment")
+	}
+
+	// 等待合约部署成功
+	receipt, err := waitForContractDeployment(client, transaction.Hash(), 15*time.Second)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Contract deployed at address: %s\n", receipt.ContractAddress.Hex())
 }

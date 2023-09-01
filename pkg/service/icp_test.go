@@ -2,11 +2,10 @@ package service
 
 import (
 	"fmt"
-	"github.com/aviate-labs/agent-go"
-	"github.com/aviate-labs/agent-go/candid"
-	"github.com/aviate-labs/agent-go/identity"
-	"github.com/aviate-labs/agent-go/ledger"
-	"github.com/aviate-labs/agent-go/principal"
+	"github.com/mohaijiang/agent-go"
+	"github.com/mohaijiang/agent-go/candid"
+	"github.com/mohaijiang/agent-go/identity"
+	"github.com/mohaijiang/agent-go/principal"
 	"net/url"
 	"os"
 	"os/exec"
@@ -15,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestIcpService_CreateIdentity(t *testing.T) {
@@ -139,11 +137,13 @@ func TestIcpService_AgentGo(t *testing.T) {
 	fmt.Println(status.Version)
 	canisterId := "ryjl3-tyaaa-aaaaa-aaaba-cai"
 	ledgerID, _ := principal.Decode(canisterId)
-	a := agent.New(agent.Config{
+	a, err := agent.New(agent.Config{
 		Identity:     id,
 		ClientConfig: &agent.ClientConfig{Host: ic0},
 	})
-
+	if err != nil {
+		panic(t)
+	}
 	//获取控制者
 	controllers, err := a.GetCanisterControllers(ledgerID)
 	if err != nil {
@@ -164,11 +164,13 @@ func TestIcpService_AgentGo_Fail(t *testing.T) {
 	canisterId := "aaaaa-aa"
 	ledgerID, _ := principal.Decode(canisterId)
 	ed25519Identity, _ := identity.NewRandomEd25519Identity()
-	a := agent.New(agent.Config{
+	a, err := agent.New(agent.Config{
 		Identity:     ed25519Identity,
 		ClientConfig: &agent.ClientConfig{Host: ic0},
 	})
-
+	if err != nil {
+		panic(t)
+	}
 	//查询方法
 	args, err := candid.EncodeValueString("record { canister_id = \"ryjl3-tyaaa-aaaaa-aaaba-cai\" }")
 	if err != nil {
@@ -181,32 +183,4 @@ func TestIcpService_AgentGo_Fail(t *testing.T) {
 		panic(t)
 	}
 	fmt.Println(callRaw)
-}
-
-func TestIcpService_AgentGo_Transfer(t *testing.T) {
-	canisterId := "ryjl3-tyaaa-aaaaa-aaaba-cai"
-	ledgerID, _ := principal.Decode(canisterId)
-	a := ledger.New(ledgerID, ic0)
-	p, _ := principal.Decode("aaaaa-aa")
-	subAccount := ledger.SubAccount(principal.DefaultSubAccount)
-	tokens, err := a.Transfer(ledger.TransferArgs{
-		Memo: 0,
-		Amount: ledger.Tokens{
-			E8S: 100_000,
-		},
-		Fee: ledger.Tokens{
-			E8S: 10_000,
-		},
-		FromSubAccount: &subAccount,
-		To:             p.AccountIdentifier(principal.DefaultSubAccount),
-		CreatedAtTime: &ledger.TimeStamp{
-			TimestampNanos: uint64(time.Now().UnixNano()),
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if *tokens != 1 {
-		t.Error(tokens)
-	}
 }
