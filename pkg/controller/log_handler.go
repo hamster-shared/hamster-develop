@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -180,7 +181,7 @@ func (h *HandlerServer) getDeployFrontendLog(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	name := fmt.Sprintf("%s-%s", username, project.Name)
+	name := fmt.Sprintf("%s-%s", strings.ToLower(username), strings.ToLower(project.Name))
 	req, err := utils.GetPodLogs(name, name, consts.Namespace)
 	if err != nil {
 		log.Println("get pod logs failed", err.Error())
