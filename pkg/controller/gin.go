@@ -148,6 +148,17 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/:id/create/identity", h.handlerServer.createIdentity)     //创建icp身份
 	api.POST("/projects/:id/redeem/coupon", h.handlerServer.redeemFaucetCoupon)   //通过优惠卷生成钱包罐
 
+	//arrange-api
+	api.POST("/projects/:id/arrange", h.handlerServer.saveContractArrange)                             //保存编排信息
+	api.POST("/projects/:id/arrange/execute", h.handlerServer.saveContractArrangeExecute)              //保存编排执行信息
+	api.POST("/projects/:id/arrange/execute/update", h.handlerServer.updateContractArrangeExecute)     //更新执行信息
+	api.GET("/projects/:id/arrange/execute/:executeId", h.handlerServer.getContractArrangeExecuteInfo) //根据执行id获取执行信息
+	api.GET("/projects/:id/arrange/contract/:version", h.handlerServer.getDeployArrangeContractList)   //根据项目ID和版本获取部署的合约列表
+	//
+	//保存部署成的合约信息
+	//
+	//查询某个那版本下已经部署的合约
+
 	// ======== old api =========//
 	// pipeline
 	//create pipeline job
