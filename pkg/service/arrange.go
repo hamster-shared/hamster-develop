@@ -46,6 +46,33 @@ func (a *ArrangeService) SaveContractArrange(param parameter.ContractArrangePara
 	return strconv.Itoa(int(arrange.Id)), nil
 }
 
+func (a *ArrangeService) UpdateContractArrange(param parameter.ContractArrangeParam) (string, error) {
+	projectId, err := uuid.FromString(param.ProjectId)
+	if err != nil {
+		return "", err
+	}
+	var project db2.Project
+	err = a.db.Model(db2.Project{}).Where("id = ?", projectId).First(&project).Error
+	if err != nil {
+		return "", err
+	}
+	var contractArrange db2.ContractArrange
+	err = a.db.Model(db2.ContractArrange{}).Where("project_id = ?", projectId).First(&contractArrange).Error
+	if err != nil {
+		return "", err
+	}
+	contractArrange.OriginalArrange = param.OriginalArrange
+	if param.Version != "" {
+		contractArrange.Version = param.Version
+	}
+	contractArrange.UpdateTime = time.Now()
+	err = a.db.Model(db2.ContractArrange{}).Where("project_id = ?", projectId).Updates(&contractArrange).Error
+	if err != nil {
+		return "", err
+	}
+	return strconv.Itoa(int(contractArrange.Id)), nil
+}
+
 func (a *ArrangeService) SaveContractArrangeExecute(param parameter.ContractArrangeExecuteParam) (string, error) {
 	projectId, err := uuid.FromString(param.ProjectId)
 	if err != nil {

@@ -23,6 +23,22 @@ func (h *HandlerServer) saveContractArrange(gin *gin.Context) {
 	Success(arrangeId, gin)
 }
 
+func (h *HandlerServer) updateContractArrange(gin *gin.Context) {
+	var contractArrangeParam parameter.ContractArrangeParam
+	err := gin.BindJSON(&contractArrangeParam)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	arrangeService := application.GetBean[*service.ArrangeService]("arrangeService")
+	arrangeId, err := arrangeService.UpdateContractArrange(contractArrangeParam)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(arrangeId, gin)
+}
+
 func (h *HandlerServer) saveContractArrangeExecute(gin *gin.Context) {
 	var contractArrangeExecuteParam parameter.ContractArrangeExecuteParam
 	err := gin.BindJSON(&contractArrangeExecuteParam)

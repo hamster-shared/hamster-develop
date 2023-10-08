@@ -150,6 +150,7 @@ func (h *HttpServer) StartHttpServer() {
 
 	//arrange-api
 	api.POST("/projects/:id/arrange", h.handlerServer.saveContractArrange)                             //保存编排信息
+	api.PUT("/projects/:id/arrange", h.handlerServer.updateContractArrange)                            //更新编排信息
 	api.POST("/projects/:id/arrange/execute", h.handlerServer.saveContractArrangeExecute)              //保存编排执行信息
 	api.PUT("/projects/:id/arrange/execute", h.handlerServer.updateContractArrangeExecute)             //更新执行信息
 	api.GET("/projects/:id/arrange/execute/:executeId", h.handlerServer.getContractArrangeExecuteInfo) //根据执行id获取执行信息
