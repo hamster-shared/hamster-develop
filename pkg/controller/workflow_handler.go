@@ -9,6 +9,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	uuid "github.com/iris-contrib/go.uuid"
 	"strconv"
+	"strings"
 )
 
 func (h *HandlerServer) workflowList(gin *gin.Context) {
@@ -181,8 +182,10 @@ func (h *HandlerServer) contractFileContent(gin *gin.Context) {
 	tokenAny, _ := gin.Get("token")
 	token, _ := tokenAny.(string)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	//path := fmt.Sprintf("contracts%s", name)
-	path := fmt.Sprintf("%s", name)
+	path := fmt.Sprintf("contracts%s", name)
+	if strings.Contains(name, "contracts") {
+		path = fmt.Sprintf("%s", name)
+	}
 	content, err := githubService.GetFileContent(token, user.Username, data.Name, path)
 	if err != nil {
 		Fail(err.Error(), gin)
