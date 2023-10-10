@@ -350,33 +350,45 @@ func removeElements(arr1 []vo.RepoVo, arr2 []db2.Project) []vo.RepoVo {
 //	return 0, fmt.Errorf("parsing frame error")
 //}
 
+type FrameType struct {
+	isTruffle bool
+	isHardhat bool
+	isFoundry bool
+	isWaffle  bool
+}
+
+func (ft *FrameType) GetEvmFrameType() (consts.EVMFrameType, error) {
+	if ft.isTruffle {
+		return consts.Truffle, nil
+	} else if ft.isHardhat {
+		return consts.Hardhat, nil
+	} else if ft.isFoundry {
+		return consts.Foundry, nil
+	} else if ft.isWaffle {
+		return consts.Waffle, nil
+	} else {
+		return 0, fmt.Errorf("parsing frame error")
+	}
+}
+
 func (p *ProjectService) ParsingEVMFrame(repoContents []*github.RepositoryContent) (consts.EVMFrameType, error) {
+
+	ft := FrameType{}
+
 	for _, v := range repoContents {
 		fileName := v.GetName()
 		if strings.Contains(fileName, "truffle-config.js") {
-			return consts.Truffle, nil
-		} else if strings.Contains(fileName, "hardhat.config.js") {
-			return consts.Hardhat, nil
+			ft.isTruffle = true
+		} else if strings.Contains(fileName, "hardhat.config.js") || strings.Contains(fileName, "hardhat.config.ts") {
+			ft.isHardhat = true
 		} else if strings.Contains(fileName, "foundry.toml") {
-			return consts.Foundry, nil
+			ft.isFoundry = true
 		} else if strings.Contains(fileName, ".waffle.json") {
-			return consts.Waffle, nil
+			ft.isWaffle = true
 		}
 	}
-	return 0, fmt.Errorf("parsing frame error")
-}
 
-func getEvmFrameType(fileName string) consts.EVMFrameType {
-	if strings.Contains(fileName, "truffle-config.js") {
-		return consts.Truffle
-	}
-	if strings.Contains(fileName, "foundry.toml") {
-		return consts.Foundry
-	}
-	if strings.Contains(fileName, "hardhat.config.js") {
-		return consts.Hardhat
-	}
-	return 0
+	return ft.GetEvmFrameType()
 }
 
 func parsingToml(fileContent *github.RepositoryContent, name, userName, token string) (consts.ProjectFrameType, error) {
