@@ -355,10 +355,10 @@ func (p *ProjectService) ParsingEVMFrame(repoContents []*github.RepositoryConten
 		fileName := v.GetName()
 		if strings.Contains(fileName, "truffle-config.js") {
 			return consts.Truffle, nil
-		} else if strings.Contains(fileName, "foundry.toml") {
-			return consts.Foundry, nil
 		} else if strings.Contains(fileName, "hardhat.config.js") {
 			return consts.Hardhat, nil
+		} else if strings.Contains(fileName, "foundry.toml") {
+			return consts.Foundry, nil
 		} else if strings.Contains(fileName, ".waffle.json") {
 			return consts.Waffle, nil
 		}
