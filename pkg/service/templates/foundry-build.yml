@@ -12,18 +12,30 @@ stages:
     needs:
       - Initialization
     steps:
+      - name: install dependency
+        runs-on: node:18
+        run: |
+          npm install
       - name: Compile Contract
         runs-on: ghcr.io/foundry-rs/foundry:latest
         run: |
+          forge install
           forge build
       - name: Filter Info
         run: |
           mkdir -p build/artifacts
-          cd src
-          for i in `ls *.sol`;do
-            if [ -e "../out/$i/`echo $i|sed 's/\.sol//g'`.json" ]; then
-              cp -R ../out/$i/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
-            fi
+          cd out
+          for i in `find . -type f -name '*.json'`;do
+             bytecode=$(jq -r '.bytecode' $i)
+             length=$(jq '.abi | length' $i)
+             if [ "$bytecode" = "0x" ]; then
+                echo $i
+             elif [ "$length" -eq 0 ]; then
+                echo $i
+             else
+               echo "ok: $i"
+               cp -R $i ../build/artifacts
+             fi
           done;
   Output Results:
     needs:
