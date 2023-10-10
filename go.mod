@@ -11,7 +11,7 @@ require (
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
 	github.com/gorilla/websocket v1.5.0
-	github.com/hamster-shared/aline-engine v1.0.4-0.20230906055538-92bd6d65dee5
+	github.com/hamster-shared/aline-engine v1.0.4-0.20231010133549-03a118ff17d2
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/mohaijiang/agent-go v0.3.1

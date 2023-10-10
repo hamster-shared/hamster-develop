@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/mohaijiang/agent-go/candid"
@@ -103,4 +104,39 @@ func TestDidToJson(t *testing.T) {
 	fmt.Println("-------json----")
 	fmt.Println(string(bytes))
 	fmt.Println("-------json----")
+}
+
+func TestReadContract(t *testing.T) {
+	data, _ := os.ReadFile("/Users/mohaijiang/pipelines/jobs/bff4e8d0-7288-4398-b3f2-f762b675982f_4190/artifactory/4/Marketplace.json")
+	m := make(map[string]any)
+
+	err := json.Unmarshal(data, &m)
+	if err != nil {
+		logger.Errorf("unmarshal contract abi failed: %s", err.Error())
+		panic(err)
+	}
+
+	abiByte, err := json.Marshal(m["abi"])
+	if err != nil {
+		logger.Errorf("marshal contract abi failed: %s", err.Error())
+		panic(err)
+	}
+	abiInfo := string(abiByte)
+
+	foundryBytecode, ok := m["bytecode"].(map[string]interface{})
+	if ok {
+		byteCode, ok := foundryBytecode["object"].(string)
+		if !ok {
+			logger.Errorf("contract bytecode is not string")
+			panic(err)
+		}
+		fmt.Println(abiInfo, byteCode)
+	} else {
+		byteCode, ok := m["bytecode"].(string)
+		if !ok {
+			logger.Errorf("contract bytecode is not string")
+			panic(err)
+		}
+		fmt.Println(abiInfo, byteCode)
+	}
 }

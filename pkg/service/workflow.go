@@ -78,12 +78,22 @@ func (w *WorkflowService) getEvmAbiInfoAndByteCode(arti model.Artifactory) (abiI
 	}
 	abiInfo = string(abiByte)
 
-	byteCode, ok := m["bytecode"].(string)
-	if !ok {
-		logger.Errorf("contract bytecode is not string")
-		return "", "", err
+	foundryBytecode, ok := m["bytecode"].(map[string]interface{})
+	if ok {
+		byteCode, ok := foundryBytecode["object"].(string)
+		if !ok {
+			logger.Errorf("contract bytecode is not string")
+			return "", "", err
+		}
+		return abiInfo, byteCode, nil
+	} else {
+		byteCode, ok := m["bytecode"].(string)
+		if !ok {
+			logger.Errorf("contract bytecode is not string")
+			return "", "", err
+		}
+		return abiInfo, byteCode, nil
 	}
-	return abiInfo, byteCode, nil
 }
 
 func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.UserAuth) (vo.DeployResultVo, error) {
