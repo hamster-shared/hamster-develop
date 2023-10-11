@@ -8,6 +8,7 @@ require (
 	github.com/ethereum/go-ethereum v1.12.2
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-resty/resty/v2 v2.7.0
+	github.com/golang-jwt/jwt/v4 v4.3.0
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
 	github.com/gorilla/websocket v1.5.0

@@ -66,3 +66,13 @@ func (u *UserService) SaveUserWallet(userId uint, address string) int64 {
 	}
 	return count
 }
+
+func (u *UserService) GetUserWalletById(id int) (db2.UserWallet, error) {
+	var userWallet db2.UserWallet
+	err := u.db.Model(db2.UserWallet{}).Where("id = ?", id).First(&userWallet).Error
+	return userWallet, err
+}
+
+func (u *UserService) UpdateUserWallet(userWallet db2.UserWallet) error {
+	return u.db.Save(&userWallet).Error
+}

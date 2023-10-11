@@ -12,6 +12,7 @@ type User struct {
 	HtmlUrl    string    `json:"htmlUrl"`
 	FirstState int       `json:"firstState"`
 	UserEmail  string    `json:"userEmail"`
+	LoginType  int       `json:"loginType"`
 	CreateTime time.Time `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
 }
 
@@ -20,4 +21,5 @@ type UserWallet struct {
 	Address    string    `gorm:"address" json:"address"`
 	CreateTime time.Time `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
 	UserId     uint      `gorm:"user_id" json:"user_id"`
+	FirstState int       `json:"firstState"`
 }
