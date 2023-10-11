@@ -72,6 +72,7 @@ func (h *HttpServer) StartHttpServer() {
 	// repository
 	api.GET("/repositories", h.handlerServer.getRepositories)
 	api.GET("/repository/type", h.handlerServer.repositoryType)
+	api.GET("/repository/selection", h.handlerServer.getGitHubRepositorySelection)
 	/*
 		创建项目返回项目 ID
 		缺登录的接口

@@ -4,15 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v48/github"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/pkg/errors"
 	"github.com/wujiangweiphp/go-curl"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -269,6 +272,7 @@ func deleteOwnerDir(owner string) {
 	deleteCmd.Dir = utils.DefaultRepoDir()
 	deleteCmd.Start()
 }
+
 func (g *GithubService) GetFileContent(token, owner, repo, path string) (string, error) {
 	client := utils.NewGithubClient(g.ctx, token)
 	fileContent, _, _, err := client.Repositories.GetContents(g.ctx, owner, repo, path, nil)
@@ -338,12 +342,28 @@ func (g *GithubService) GetRepoFileList(token, owner, fileName string) ([]*githu
 	return repoContent, nil
 }
 
-func (g *GithubService) GetGitHubAppInfo(token string) (*github.Installation, error) {
-	client := utils.NewGithubClient(g.ctx, token)
-	installation, _, err := client.Apps.GetInstallation(g.ctx, 297807)
-	if err != nil {
-		log.Println("get github user info failed ", err.Error())
-		return nil, err
+func (g *GithubService) GetGitHubAppInstallationForUser(username string) (string, error) {
+	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
+	if exist {
+		return "", errors.New("请联系管理员配置GITHUB_APP_ID")
 	}
-	return installation, nil
+	appId, err := strconv.Atoi(appIdString)
+	if err != nil {
+		return "", err
+	}
+	appPemPath, exist := os.LookupEnv("GITHUB_APP_PEM")
+	if exist {
+		return "", errors.New("请联系管理员配置GITHUB_APP_ID")
+	}
+	ctx := context.Background()
+	atr, err := ghinstallation.NewAppsTransportKeyFromFile(http.DefaultTransport, int64(appId), appPemPath)
+	if err != nil {
+		return "", err
+	}
+	client := github.NewClient(&http.Client{Transport: atr})
+	installation, _, err := client.Apps.FindUserInstallation(ctx, username)
+	if err != nil {
+		return "", err
+	}
+	return *installation.RepositorySelection, nil
 }

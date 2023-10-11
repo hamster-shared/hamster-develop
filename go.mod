@@ -4,11 +4,12 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.2.1
+	github.com/bradleyfalzon/ghinstallation/v2 v2.7.0
 	github.com/dontpanicdao/caigo v0.4.1
 	github.com/ethereum/go-ethereum v1.12.2
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-resty/resty/v2 v2.7.0
-	github.com/golang-jwt/jwt/v4 v4.3.0
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
 	github.com/gorilla/websocket v1.5.0
@@ -41,7 +42,6 @@ require (
 	github.com/aviate-labs/leb128 v0.3.0 // indirect
 	github.com/aviate-labs/secp256k1 v0.0.0-5e6736a // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
-	github.com/bradleyfalzon/ghinstallation/v2 v2.7.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
@@ -66,7 +66,6 @@ require (
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/gnostic v0.6.9 // indirect

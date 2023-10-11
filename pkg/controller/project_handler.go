@@ -1109,3 +1109,15 @@ func (h *HandlerServer) repositoryType(gin *gin.Context) {
 	}
 	Success(repoFrameType, gin)
 }
+
+func (h *HandlerServer) getGitHubRepositorySelection(gin *gin.Context) {
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	selection, err := githubService.GetGitHubAppInstallationForUser(user.Username)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(selection, gin)
+}
