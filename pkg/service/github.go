@@ -337,3 +337,13 @@ func (g *GithubService) GetRepoFileList(token, owner, fileName string) ([]*githu
 	}
 	return repoContent, nil
 }
+
+func (g *GithubService) GetGitHubAppInfo(token string) (*github.Installation, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	installation, _, err := client.Apps.GetInstallation(g.ctx, 297807)
+	if err != nil {
+		log.Println("get github user info failed ", err.Error())
+		return nil, err
+	}
+	return installation, nil
+}
