@@ -113,6 +113,16 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: ipfs_gateway
+            - name: JWT_SECRET
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: JWT_SECRET
+            - name: INSTALL_AUTH_CLIENT_SECRETS
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: INSTALL_AUTH_CLIENT_SECRETS
           ports:
             - containerPort: 8080
           volumeMounts:

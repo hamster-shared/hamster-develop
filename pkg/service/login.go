@@ -70,6 +70,87 @@ func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (vo.UserVo, er
 	return userVo, nil
 }
 
+func (l *LoginService) LoginWithGithubV2(data parameter.LoginParam) (string, error) {
+	data.ClientSecret = os.Getenv("CLIENT_SECRETS")
+	var userData db2.User
+	var token parameter.Token
+	url := "https://github.com/login/oauth/access_token"
+	res, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
+		"client_id":     data.ClientId,
+		"client_secret": data.ClientSecret,
+		"code":          data.Code,
+	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
+	if res.StatusCode() != 200 {
+		return "", err
+	}
+	if err != nil {
+		return "", err
+	}
+	userInfo, err := l.githubService.GetUserInfo(token.AccessToken)
+	if err != nil {
+		return "", err
+	}
+	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.ID).First(&userData).Error
+	if err != nil {
+		userData.Id = uint(*userInfo.ID)
+		userData.Username = *userInfo.Login
+		userData.AvatarUrl = *userInfo.AvatarURL
+		userData.HtmlUrl = *userInfo.HTMLURL
+		userData.CreateTime = time.Now()
+		userData.LoginType = consts.GitHub
+		l.db.Save(&userData)
+	}
+	jwtToken, err := utils.GenerateJWT(int(userData.Id), consts.GitHub)
+	return jwtToken, err
+}
+
+// true:need install false: not need install
+func (l *LoginService) GithubInstallAuth(data parameter.LoginParam, userWallet db2.UserWallet) (bool, error) {
+	data.ClientSecret = os.Getenv("INSTALL_AUTH_CLIENT_SECRETS")
+	var userData db2.User
+	var token parameter.Token
+	result := false
+	url := "https://github.com/login/oauth/access_token"
+	res, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
+		"client_id":     data.ClientId,
+		"client_secret": data.ClientSecret,
+		"code":          data.Code,
+	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
+	if res.StatusCode() != 200 {
+		return result, err
+	}
+	if err != nil {
+		return result, err
+	}
+	userInfo, err := l.githubService.GetUserInfo(token.AccessToken)
+	if err != nil {
+		return result, err
+	}
+	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.ID).First(&userData).Error
+	if err != nil {
+		result = true
+	}
+	if userData.Token == "" {
+		userWallet.UserId = userData.Id
+		l.db.Save(&userWallet)
+		return result, nil
+	}
+	result = true
+	return result, nil
+}
+
+func (l *LoginService) MetamaskLogin(data parameter.MetaMaskLoginParam) (string, error) {
+	var userWallet db2.UserWallet
+	err := l.db.Model(db2.UserWallet{}).Where("address = ?", data.Address).First(&userWallet).Error
+	if err != nil {
+		userWallet.CreateTime = time.Now()
+		userWallet.Address = data.Address
+		l.db.Save(&userWallet)
+	}
+	jwtToken, err := utils.GenerateJWT(int(userWallet.Id), consts.Metamask)
+	return jwtToken, err
+}
+
 func (l *LoginService) GithubInstall(code string) (string, error) {
 	var userData db2.User
 	var token parameter.Token
@@ -106,6 +187,53 @@ func (l *LoginService) GithubInstall(code string) (string, error) {
 	l.db.Save(&userData)
 	accessToken := utils.AesEncrypt(token.AccessToken, consts.SecretKey)
 	return accessToken, nil
+}
+
+func (l *LoginService) GithubInstallV2(code string, loginType int, userWallet db2.UserWallet) error {
+	var userData db2.User
+	var token parameter.Token
+	url := "https://github.com/login/oauth/access_token"
+	_, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
+		//"client_id":     consts.AppsClientId,
+		"client_id": os.Getenv("APPS_CLIENT_ID"),
+		//"client_secret": consts.AppsClientSecrets,
+		"client_secret": os.Getenv("APPS_CLIENT_SECRETS"),
+		"code":          code,
+	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
+	if err != nil {
+		return err
+	}
+	userInfo, err := l.githubService.GetUserInfo(token.AccessToken)
+	if err != nil {
+		log.Println("github install v2 failed:user not found", err.Error())
+		return err
+	}
+	email, err := l.githubService.GetUserEmail(token.AccessToken)
+	if err != nil {
+		log.Println("v2 github install failed:get email failed", err.Error())
+		return err
+	}
+	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.ID).First(&userData).Error
+	if err != nil {
+		if loginType == consts.GitHub {
+			log.Println("v2 user not found!")
+			return err
+		}
+		userData.Id = uint(*userInfo.ID)
+		userData.Username = *userInfo.Login
+		userData.AvatarUrl = *userInfo.AvatarURL
+		userData.HtmlUrl = *userInfo.HTMLURL
+		userData.CreateTime = time.Now()
+		userData.LoginType = consts.GitHub
+	}
+	userData.Token = token.AccessToken
+	userData.UserEmail = email
+	l.db.Save(&userData)
+	if loginType == consts.Metamask {
+		userWallet.UserId = userData.Id
+		l.db.Save(&userWallet)
+	}
+	return nil
 }
 
 func (l *LoginService) GithubRepoAuth(authData parameter.AuthParam) (string, error) {

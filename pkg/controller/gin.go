@@ -31,6 +31,8 @@ func (h *HttpServer) StartHttpServer() {
 	api.Use(h.handlerServer.RequestLog())
 
 	api.POST("/login", h.handlerServer.loginWithGithub)
+	api.POST("/v2/login", h.handlerServer.githubLogin)
+	api.POST("/metamask/login", h.handlerServer.metamaskLogin)
 	api.POST("/github/install", h.handlerServer.githubInstall)
 	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
 	api.POST("/github/webhook", h.handlerServer.githubWebHook)
@@ -45,6 +47,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/templates/show", h.handlerServer.templateShow)
 	api.POST("/templates/:id/download", h.handlerServer.templateDownload)
 	api.Use(h.handlerServer.Authorize())
+	//api.Use(h.handlerServer.JwtAuthorize())
 	api.POST("/user/wallet", h.handlerServer.saveUserWallet)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
@@ -56,7 +59,13 @@ func (h *HttpServer) StartHttpServer() {
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)
 	api.POST("/projects/check-name", h.handlerServer.checkName)
 	api.GET("/user", h.handlerServer.getUseInfo)
-	api.PUT("/user/first/state", h.handlerServer.updateFirstState)
+	api.GET("/v2/user", h.handlerServer.getUseInfoV2)
+	api.PUT("/user/first/state", h.handlerServer.updateFirstStateV2)
+	api.PUT("/v2/user/first/state", h.handlerServer.updateFirstStateV2)
+	// new add
+	api.GET("/github/install", h.handlerServer.githubInstallCheck)
+	api.POST("/github/install/auth", h.handlerServer.githubInstallAuth)
+	api.POST("/v2/github/install", h.handlerServer.githubInstallV2)
 	// set check pipeline
 	api.POST("/project/:id/workflow/setting", h.handlerServer.workflowSetting)
 	api.GET("/project/:id/workflow/setting/check", h.handlerServer.workflowSettingCheck)
