@@ -143,10 +143,10 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 		project.Creator = createData.UserId
 		project.CreateTime = time.Now()
 		project.UpdateTime = time.Now()
-		project.FrameType = consts.ProjectFrameType(createData.FrameType)
+		project.FrameType = createData.FrameType
 		project.Type = uint(createData.Type)
 		project.RepositoryUrl = createData.TemplateUrl
-		project.Branch = "main"
+		project.Branch = createData.Branch
 		project.DeployType = createData.DeployType
 		project.LabelDisplay = createData.LabelDisplay
 		project.GistId = createData.GistId

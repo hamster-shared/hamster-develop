@@ -109,7 +109,7 @@ func (w *WorkflowService) ExecProjectCheckWorkflow(projectId uuid.UUID, user vo.
 		params["projectUrl"] = project.RepositoryUrl
 		params["userId"] = strconv.Itoa(int(user.Id))
 	}
-	checkData, err := w.ExecProjectWorkflow(projectId, user, 1, params)
+	checkData, err := w.ExecProjectWorkflow(project, user, 1, params)
 	return checkData, err
 }
 
@@ -135,7 +135,7 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	} else {
 		params = nil
 	}
-	data, err := w.ExecProjectWorkflow(projectId, user, 2, params)
+	data, err := w.ExecProjectWorkflow(project, user, 2, params)
 	return data, err
 }
 
@@ -185,7 +185,7 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 		}
 	}
 
-	return w.ExecProjectWorkflow(projectId, user, uint(consts.Deploy), params)
+	return w.ExecProjectWorkflow(project, user, uint(consts.Deploy), params)
 }
 
 func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth, deployParam parameter.K8sDeployParam) (vo.DeployResultVo, error) {
@@ -259,7 +259,7 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 	//params["gateway"] = consts.Gateway
 	params["gateway"] = os.Getenv("GATEWAY")
 	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
-	return w.ExecProjectWorkflow(projectId, user, 3, params)
+	return w.ExecProjectWorkflow(project, user, 3, params)
 }
 
 func (w *WorkflowService) ExecProjectBuildWorkflowAptos(projectID uuid.UUID, user vo.UserAuth) (vo.DeployResultVo, error) {
@@ -280,24 +280,24 @@ func (w *WorkflowService) ExecProjectBuildWorkflowAptos(projectID uuid.UUID, use
 		aptos_param += fmt.Sprintf("%s=%s,", k, v)
 	}
 	params["aptos_param"] = aptos_param
-	return w.ExecProjectWorkflow(projectID, user, 2, params)
+	return w.ExecProjectWorkflow(project, user, 2, params)
 }
 
-func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserAuth, workflowType uint, params map[string]string) (vo.DeployResultVo, error) {
+func (w *WorkflowService) ExecProjectWorkflow(project db.Project, user vo.UserAuth, workflowType uint, params map[string]string) (vo.DeployResultVo, error) {
 
 	// query project workflow
 
 	var workflow db.Workflow
 	var deployResult vo.DeployResultVo
 	err := w.db.Where(&db.Workflow{
-		ProjectId: projectId,
+		ProjectId: project.Id,
 		Type:      workflowType,
 	}).First(&workflow).Error
 	if err != nil {
 		return deployResult, errors.New("no check workflow in the project ")
 	}
 
-	workflowKey := w.GetWorkflowKey(projectId.String(), workflow.Id)
+	workflowKey := w.GetWorkflowKey(project.Id.String(), workflow.Id)
 
 	logger.Tracef("workflow key is %s", workflowKey)
 	job, err := w.engine.GetJob(workflowKey)
@@ -334,6 +334,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 		}
 	}
 	met, token := setMetaScanToken(workflow)
+	params["branch"] = project.Branch
 	if met {
 		params["scanToken"] = token
 	}
@@ -379,7 +380,7 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 
 		dbDetail = db.WorkflowDetail{
 			Type:        workflowType,
-			ProjectId:   projectId,
+			ProjectId:   project.Id,
 			WorkflowId:  workflow.Id,
 			ExecNumber:  uint(detail.Id),
 			StageInfo:   string(stageInfo),
