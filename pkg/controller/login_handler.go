@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
@@ -261,6 +262,7 @@ func (h *HandlerServer) JwtAuthorize() gin.HandlerFunc {
 		}
 		log.Println(loginType)
 		gin.Set("loginType", int(loginType))
+		githubToken := ""
 		userService := application.GetBean[*service.UserService]("userService")
 		if loginType == consts.GitHub {
 			user, err := userService.GetUserById(int64(userId))
@@ -269,6 +271,7 @@ func (h *HandlerServer) JwtAuthorize() gin.HandlerFunc {
 				gin.Abort()
 				return
 			}
+			githubToken = user.Token
 			gin.Set("user", user)
 		}
 		if loginType == consts.Metamask {
@@ -279,7 +282,18 @@ func (h *HandlerServer) JwtAuthorize() gin.HandlerFunc {
 				return
 			}
 			gin.Set("user", userWallet)
+			if userWallet.UserId != 0 {
+				user, err := userService.GetUserById(int64(userId))
+				if err != nil {
+					logger.Errorf("wallet user id is error: %s", err)
+					Failed(http.StatusUnauthorized, err.Error(), gin)
+					gin.Abort()
+					return
+				}
+				githubToken = user.Token
+			}
 		}
+		gin.Set("token", githubToken)
 		gin.Next()
 	}
 }

@@ -60,7 +60,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/check-name", h.handlerServer.checkName)
 	api.GET("/user", h.handlerServer.getUseInfo)
 	api.GET("/v2/user", h.handlerServer.getUseInfoV2)
-	api.PUT("/user/first/state", h.handlerServer.updateFirstState)
+	api.PUT("/user/first/state", h.handlerServer.updateFirstStateV2)
 	api.PUT("/v2/user/first/state", h.handlerServer.updateFirstStateV2)
 	// new add
 	api.GET("/github/install", h.handlerServer.githubInstallCheck)
