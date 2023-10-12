@@ -281,7 +281,6 @@ func (h *HandlerServer) JwtAuthorize() gin.HandlerFunc {
 				gin.Abort()
 				return
 			}
-			gin.Set("user", userWallet)
 			if userWallet.UserId != 0 {
 				user, err := userService.GetUserById(int64(userId))
 				if err != nil {
@@ -291,6 +290,9 @@ func (h *HandlerServer) JwtAuthorize() gin.HandlerFunc {
 					return
 				}
 				githubToken = user.Token
+				gin.Set("user", user)
+			} else {
+				gin.Set("user", userWallet)
 			}
 		}
 		gin.Set("token", githubToken)

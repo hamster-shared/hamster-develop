@@ -67,7 +67,11 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	tokenAny, _ := g.Get("token")
 	token, _ := tokenAny.(string)
 	userAny, _ := g.Get("user")
-	user, _ := userAny.(db2.User)
+	user, ok := userAny.(db2.User)
+	if !ok {
+		Fail("user info is not user", g)
+		return
+	}
 	importData := parameter.ImportProjectParam{}
 	err := g.BindJSON(&importData)
 	if err != nil {
