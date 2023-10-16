@@ -163,3 +163,26 @@ func TestGetGitHubAppInfo(t *testing.T) {
 	//}
 	fmt.Println(installation)
 }
+
+func TestGetRepo(t *testing.T) {
+	token := "ghu_MZi4pD28DHbfrYfKHBuMooIYNgtJMk2zJpeW"
+	owner := "abing258"
+	ctx := context.Background()
+	client := utils.NewGithubClient(ctx, token)
+	repo, _, err := client.Repositories.Get(ctx, owner, "computeshare-server")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("仓库的信息是%v\n", repo)
+	commits, _, err := client.Repositories.ListCommits(ctx, "abing258", "computeshare-server", &github.CommitsListOptions{SHA: "main"})
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, commit := range commits {
+		//fmt.Printf("仓库的commit信息是%v\n", commits)
+		message := *commit.Commit.Message
+		time := *commit.Commit.Author.Date
+		sha := *commit.SHA
+		fmt.Println(fmt.Sprintf("SHA信息 %s, 提交时间是 %s, Message是 %s \n", sha, time, message))
+	}
+}
