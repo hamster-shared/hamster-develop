@@ -132,8 +132,6 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 			return vo.DeployResultVo{}, fmt.Errorf("dfx.json not configuration")
 		}
 		params["dfxJson"] = icpDfx.DfxData
-	} else {
-		params = nil
 	}
 	data, err := w.ExecProjectWorkflow(project, user, 2, params)
 	return data, err
