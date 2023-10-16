@@ -560,7 +560,11 @@ func (w *WorkflowService) getStarknetAbiInfoAndByteCode(artiUrl string) (abiInfo
 func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, arti model.Artifactory) error {
 	abiInfo, byteCode, err := w.getEvmAbiInfoAndByteCode(arti)
 	if err != nil {
-		return err
+		return nil
+	}
+
+	if byteCode == "" || byteCode == "0x" {
+		return nil
 	}
 
 	contract := db.Contract{
