@@ -438,6 +438,31 @@ func (c *ContractService) QueryVersionList(projectId string) ([]string, error) {
 	return data, nil
 }
 
+func (c *ContractService) QueryVersionAndCodeInfoList(projectId string) ([]vo.ContractVersionAndCodeInfoVo, error) {
+	var contractVersionAndCodeInfoVoList []vo.ContractVersionAndCodeInfoVo
+	var project db2.Project
+	err := c.db.Where("id = ? ", projectId).First(&project).Error
+	if err != nil {
+		return contractVersionAndCodeInfoVoList, err
+	}
+
+	if project.FrameType == consts.InternetComputer {
+		res := c.db.Model(db2.BackendPackage{}).Distinct("version").Select("version", "branch", "code_info").Where("project_id = ?", projectId).Find(&contractVersionAndCodeInfoVoList)
+		if res.Error != nil {
+			return contractVersionAndCodeInfoVoList, res.Error
+		}
+	} else {
+		res := c.db.Model(db2.Contract{}).Distinct("version").Select("version", "branch", "code_info").Where("project_id = ?", projectId).Find(&contractVersionAndCodeInfoVoList)
+		if res.Error != nil {
+			return contractVersionAndCodeInfoVoList, res.Error
+		}
+	}
+	for _, infoVo := range contractVersionAndCodeInfoVoList {
+		infoVo.Url = project.RepositoryUrl + "/" + infoVo.Branch
+	}
+	return contractVersionAndCodeInfoVoList, nil
+}
+
 func (c *ContractService) QueryContractNameList(projectId string) ([]string, error) {
 	var data []string
 	res := c.db.Model(db2.Contract{}).Distinct("name").Select("name").Where("project_id = ?", projectId).Find(&data)

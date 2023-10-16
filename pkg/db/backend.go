@@ -20,6 +20,7 @@ type BackendPackage struct {
 	Type             consts.ProjectFrameType `json:"type"`   // see #consts.ProjectFrameType
 	Status           consts.DeployStatus     `json:"status"` // see #consts.
 	Branch           string                  `json:"branch"`
+	CodeInfo         string                  `json:"codeInfo"`
 }
 
 type BackendDeploy struct {

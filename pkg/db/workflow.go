@@ -29,6 +29,7 @@ type WorkflowDetail struct {
 	StageInfo   string
 	TriggerUser string
 	TriggerMode uint
+	CodeBranch  string
 	CodeInfo    string
 	Status      uint
 	StartTime   time.Time

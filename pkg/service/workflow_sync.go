@@ -61,10 +61,12 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	}
 	workflowDetail.StageInfo = string(stageInfo)
 	workflowDetail.UpdateTime = time.Now()
-	workflowDetail.CodeInfo, err = w.engine.GetCodeInfo(message.JobName, message.JobId)
+	codeInfo, err := w.engine.GetCodeInfo(message.JobName, message.JobId)
 	if err != nil {
 		logger.Warnf("get code info failed: %v", err)
 	}
+	workflowDetail.CodeBranch = codeInfo.Branch
+	workflowDetail.CodeInfo = fmt.Sprintf("%s | commit on %s | %s", codeInfo.CommitId, codeInfo.CommitDate, codeInfo.CommitMessage)
 	workflowDetail.Duration = jobDetail.Duration
 
 	if workflowDetail.Status != uint(message.Status) {
@@ -424,6 +426,8 @@ func (w *WorkflowService) syncContractStarknet(projectId uuid.UUID, workflowId u
 		CreateTime:       time.Now(),
 		Type:             uint(consts.StarkWare),
 		Status:           consts.STATUS_SUCCESS,
+		Branch:           workflowDetail.CodeBranch,
+		CodeInfo:         workflowDetail.CodeInfo,
 	}
 
 	return w.saveContractToDatabase(&contract)
@@ -451,6 +455,8 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 				CreateTime:       time.Now(),
 				Type:             uint(consts.Aptos),
 				Status:           consts.STATUS_SUCCESS,
+				Branch:           workflowDetail.CodeBranch,
+				CodeInfo:         workflowDetail.CodeInfo,
 			}
 			err = w.saveContractToDatabase(&contract)
 			if err != nil {
@@ -518,6 +524,8 @@ func (w *WorkflowService) syncContractSui(projectId uuid.UUID, workflowId uint, 
 		CreateTime:       time.Now(),
 		Type:             uint(consts.Sui),
 		Status:           consts.STATUS_SUCCESS,
+		Branch:           workflowDetail.CodeBranch,
+		CodeInfo:         workflowDetail.CodeInfo,
 	}
 
 	// logger.Tracef("aptos contract: %+v", contract)
@@ -642,7 +650,8 @@ func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflo
 				CreateTime:       time.Now(),
 				Type:             consts.InternetComputer,
 				Status:           consts.DEPLOY_STATUS_SUCCESS,
-				Branch:           jobDetail.CodeInfo,
+				Branch:           workflowDetail.CodeBranch,
+				CodeInfo:         workflowDetail.CodeInfo,
 			}
 			err := w.db.Save(&backendPackage).Error
 			if err != nil {

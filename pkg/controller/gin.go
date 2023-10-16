@@ -159,6 +159,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/:id/redeem/coupon", h.handlerServer.redeemFaucetCoupon)   //通过优惠卷生成钱包罐
 
 	//arrange-api
+	api.GET("/projects/:id/version/info", h.handlerServer.getVersionAndCodeInfoList)                   //获取版本列表和codeInfo
 	api.POST("/projects/:id/arrange", h.handlerServer.saveContractArrange)                             //保存编排信息
 	api.PUT("/projects/:id/arrange", h.handlerServer.updateContractArrange)                            //更新编排信息
 	api.POST("/projects/:id/arrange/execute", h.handlerServer.saveContractArrangeExecute)              //保存编排执行信息

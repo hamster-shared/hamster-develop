@@ -35,3 +35,10 @@ type ContractVo struct {
 	AptosMv          string    `json:"aptosMv"`
 	Branch           string    `json:"branch"`
 }
+
+type ContractVersionAndCodeInfoVo struct {
+	Version  string `json:"version"`
+	Branch   string `json:"branch"`
+	CodeInfo string `json:"codeInfo"`
+	Url      string `json:"url"`
+}

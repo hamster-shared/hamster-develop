@@ -100,6 +100,17 @@ func (h *HandlerServer) versionList(gin *gin.Context) {
 	Success(data, gin)
 }
 
+func (h *HandlerServer) getVersionAndCodeInfoList(gin *gin.Context) {
+	id := gin.Param("id")
+	contractService := application.GetBean[*service.ContractService]("contractService")
+	data, err := contractService.QueryVersionAndCodeInfoList(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) queryContractNameList(gin *gin.Context) {
 	id := gin.Param("id")
 	contractService := application.GetBean[*service.ContractService]("contractService")
