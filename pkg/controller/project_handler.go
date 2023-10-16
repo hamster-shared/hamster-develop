@@ -67,7 +67,11 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	tokenAny, _ := g.Get("token")
 	token, _ := tokenAny.(string)
 	userAny, _ := g.Get("user")
-	user, _ := userAny.(db2.User)
+	user, ok := userAny.(db2.User)
+	if !ok {
+		Fail("user info is not user", g)
+		return
+	}
 	importData := parameter.ImportProjectParam{}
 	err := g.BindJSON(&importData)
 	if err != nil {
@@ -75,10 +79,27 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
+
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	// parsing url
+	owner, name, err := service.ParsingGitHubURL(importData.CloneURL)
+	if err != nil {
+		log.Println(err.Error())
+		Fail(err.Error(), g)
+		return
+	}
+
+	repo, _, err := githubService.GetRepo(token, owner, name)
+	if err != nil {
+		log.Println(err.Error())
+		Fail(err.Error(), g)
+		return
+	}
+
 	data := vo.CreateProjectParam{
 		Name:        importData.Name,
 		Type:        importData.Type,
-		Branch:      "main",
+		Branch:      *repo.DefaultBranch,
 		TemplateUrl: importData.CloneURL,
 		FrameType:   consts.ProjectFrameType(importData.Ecosystem),
 		DeployType:  1,
@@ -92,17 +113,11 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	if data.Type == int(consts.BLOCKCHAIN) {
 		data.DeployType = int(consts.CONTAINER)
 	}
-	// parsing url
-	owner, name, err := service.ParsingGitHubURL(importData.CloneURL)
-	if err != nil {
-		log.Println(err.Error())
-		Fail(err.Error(), g)
-		return
-	}
+
 	var evmTemplateType consts.EVMFrameType
 	// if frame type == evm, need to choose evm template type
 	if data.Type == int(consts.CONTRACT) && data.FrameType == consts.Evm {
-		githubService := application.GetBean[*service.GithubService]("githubService")
+
 		// get all files
 		repoContents, err := githubService.GetRepoFileList(token, owner, name)
 		if err != nil {
