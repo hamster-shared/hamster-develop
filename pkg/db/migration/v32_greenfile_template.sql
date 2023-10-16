@@ -15,7 +15,7 @@ insert into t_template (
     label_display
 ) values (
             81,
-            2,
+            6,
             'GreenfieldMarketplaceContracts',
             'Greenfield-data-marketplace is a marketplace protocol for safely and efficiently buying and selling data uploaded in Greenfield.',
             1,
