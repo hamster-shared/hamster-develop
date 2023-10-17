@@ -6,7 +6,6 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
-	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"strconv"
 	"time"
@@ -123,12 +122,15 @@ func (a *ArrangeService) GetContractArrangeExecuteInfo(executeId string) (info d
 }
 
 func (a *ArrangeService) GetDeployArrangeContractList(projectId, version string) (list []vo.DeployContractListVo, err error) {
-	var contractDeploys []db2.ContractDeploy
-	err = a.db.Model(db2.ContractDeploy{}).Where("project_id = ? and version = ?", projectId, version).Find(&contractDeploys).Error
+	var deployContractList []vo.DeployContractListVo
+	err = a.db.Raw("SELECT cd.id, c.name AS contractName, cd.contract_id, cd.project_id, cd.version, cd.deploy_time, cd.network, cd.address, cd.type, cd.declare_tx_hash, cd.deploy_time, cd.status, cd.abi_info from t_contract_deploy cd LEFT JOIN t_contract c ON cd.contract_id = c.id WHERE cd.project_id = ? AND cd.version = ?", projectId, version).Scan(&deployContractList).Error
 	if err != nil {
 		return list, err
 	}
-	var deployContractList []vo.DeployContractListVo
-	copier.Copy(&deployContractList, &contractDeploys)
+	location := time.FixedZone("GMT+8", 8*60*60)
+	for _, deployContract := range deployContractList {
+		deployContract.DeployTime = deployContract.DeployTime.In(location)
+		deployContract.DeployTimeFormat = deployContract.DeployTime.Format("02.Jan.2006 15:04 MST")
+	}
 	return deployContractList, nil
 }
