@@ -4,15 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v48/github"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/pkg/errors"
 	"github.com/wujiangweiphp/go-curl"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -269,6 +272,7 @@ func deleteOwnerDir(owner string) {
 	deleteCmd.Dir = utils.DefaultRepoDir()
 	deleteCmd.Start()
 }
+
 func (g *GithubService) GetFileContent(token, owner, repo, path string) (string, error) {
 	client := utils.NewGithubClient(g.ctx, token)
 	fileContent, _, _, err := client.Repositories.GetContents(g.ctx, owner, repo, path, nil)
@@ -319,11 +323,11 @@ func (g *GithubService) GetRepoList(token, owner, filter string, page, size int)
 	return repoListVo, nil
 }
 
-func (g *GithubService) GetRepoFileList(token, owner, fileName string) ([]*github.RepositoryContent, error) {
+func (g *GithubService) GetRepoFileList(token, owner, fileName string, branch string) ([]*github.RepositoryContent, error) {
 	client := utils.NewGithubClient(g.ctx, token)
 	// 设置查询选项，包含ref和message参数
 	opts := &github.RepositoryContentGetOptions{
-		Ref: "main",
+		Ref: branch,
 	}
 	_, contents, _, err := client.Repositories.GetContents(g.ctx, owner, fileName, "", opts)
 	if err != nil {
@@ -336,4 +340,30 @@ func (g *GithubService) GetRepoFileList(token, owner, fileName string) ([]*githu
 		}
 	}
 	return repoContent, nil
+}
+
+func (g *GithubService) GetGitHubAppInstallationForUser(username string) (string, error) {
+	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
+	if exist {
+		return "", errors.New("请联系管理员配置GITHUB_APP_ID")
+	}
+	appId, err := strconv.Atoi(appIdString)
+	if err != nil {
+		return "", err
+	}
+	appPemPath, exist := os.LookupEnv("GITHUB_APP_PEM")
+	if exist {
+		return "", errors.New("请联系管理员配置GITHUB_APP_ID")
+	}
+	ctx := context.Background()
+	atr, err := ghinstallation.NewAppsTransportKeyFromFile(http.DefaultTransport, int64(appId), appPemPath)
+	if err != nil {
+		return "", err
+	}
+	client := github.NewClient(&http.Client{Transport: atr})
+	installation, _, err := client.Apps.FindUserInstallation(ctx, username)
+	if err != nil {
+		return "", err
+	}
+	return *installation.RepositorySelection, nil
 }

@@ -3,11 +3,14 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v48/github"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"io"
+	"log"
+	"net/http"
 	"strings"
 	"testing"
 )
@@ -98,4 +101,88 @@ func TestDeleteRepo(t *testing.T) {
 	}
 
 	//deleteRepo(ctx, client, owner, repoName)
+}
+
+func TestGetGitHubAppInfo(t *testing.T) {
+	appId := int64(294815)
+	//installationID := int64(34695244)
+	pemPath := "/Users/abing/Desktop/hamster-test.2023-10-09.private-key.pem"
+	////tr := http.DefaultTransport
+	////_, err := ghinstallation.NewKeyFromFile(tr, appId, installationID, pemPath)
+	////if err != nil {
+	////	log.Fatal(err)
+	////}
+	//ctx := context.Background()
+	////_, err = itr.Token(ctx)
+	////fmt.Println("Fetching token:", err)
+	////client := github.NewClient(&http.Client{Transport: itr})
+	////installation, _, err := client.Apps.GetInstallation(ctx, installationID)
+	////if err != nil {
+	////	log.Fatal(err)
+	////}
+	////fmt.Println(installation)
+	//
+	atr, err := ghinstallation.NewAppsTransportKeyFromFile(http.DefaultTransport, appId, pemPath)
+	if err != nil {
+		panic(err)
+	}
+	client := github.NewClient(&http.Client{Transport: atr})
+	//getInstallation, _, err := client.Apps.GetInstallation(ctx, installationID)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//fmt.Println(fmt.Sprintf("用户是 %s, installationID是 %d, 选择的仓库权限是 %s \n", *getInstallation.Account.Login, *getInstallation.ID, *getInstallation.RepositorySelection))
+	//
+	//opt := &github.ListOptions{}
+	//installations, _, err := client.Apps.ListInstallations(ctx, opt)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//for i, installation := range installations {
+	//	fmt.Println(i, "安装者是--> ", installation)
+	//}
+	ctx := context.Background()
+	//opt := &github.ListOptions{}
+	githubClient := utils.NewGithubClient(ctx, "ghu_CTh3pu2XMAQNF0Rm3rfWUuG3pCm8PF0WlA81")
+	userInstallations, _, err := githubClient.Apps.ListUserInstallations(ctx, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for i, installation := range userInstallations {
+		fmt.Println(i, "用户安装的app有--> ", installation)
+		fmt.Println(fmt.Sprintf("用户是 %s, installationID是 %d, appId是%d,  选择的仓库权限是 %s \n", *installation.Account.Login, *installation.ID, *installation.AppID, *installation.RepositorySelection))
+	}
+
+	installation, _, err := client.Apps.FindUserInstallation(ctx, "abing258")
+	if err != nil {
+		log.Fatal(err)
+	}
+	//for i, installation := range userInstallations {
+	//	fmt.Println(i, "用户安装的app有--> ", installation)
+	//	fmt.Println(fmt.Sprintf("用户是 %s, installationID是 %d, appId是%d,  选择的仓库权限是 %s \n", *installation.Account.Login, *installation.ID, *installation.AppID, *installation.RepositorySelection))
+	//}
+	fmt.Println(installation)
+}
+
+func TestGetRepo(t *testing.T) {
+	token := "ghu_MZi4pD28DHbfrYfKHBuMooIYNgtJMk2zJpeW"
+	owner := "abing258"
+	ctx := context.Background()
+	client := utils.NewGithubClient(ctx, token)
+	repo, _, err := client.Repositories.Get(ctx, owner, "computeshare-server")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("仓库的信息是%v\n", repo)
+	commits, _, err := client.Repositories.ListCommits(ctx, "abing258", "computeshare-server", &github.CommitsListOptions{SHA: "main"})
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, commit := range commits {
+		//fmt.Printf("仓库的commit信息是%v\n", commits)
+		message := *commit.Commit.Message
+		time := *commit.Commit.Author.Date
+		sha := *commit.SHA
+		fmt.Println(fmt.Sprintf("SHA信息 %s, 提交时间是 %s, Message是 %s \n", sha, time, message))
+	}
 }

@@ -123,12 +123,16 @@ func (a *ArrangeService) GetContractArrangeExecuteInfo(executeId string) (info d
 }
 
 func (a *ArrangeService) GetDeployArrangeContractList(projectId, version string) (list []vo.DeployContractListVo, err error) {
-	var contractDeploys []db2.ContractDeploy
-	err = a.db.Model(db2.ContractDeploy{}).Where("project_id = ? and version = ?", projectId, version).Find(&contractDeploys).Error
+	var deployContractList []vo.DeployContractListVo
+	err = a.db.Raw("SELECT cd.id, c.name AS contract_name, cd.contract_id, cd.project_id, cd.version, cd.deploy_time, cd.network, cd.address, cd.type, cd.declare_tx_hash, cd.deploy_time, cd.status, cd.abi_info from t_contract_deploy cd LEFT JOIN t_contract c ON cd.contract_id = c.id WHERE cd.project_id = ? AND cd.version = ?", projectId, version).Scan(&deployContractList).Error
 	if err != nil {
 		return list, err
 	}
-	var deployContractList []vo.DeployContractListVo
-	copier.Copy(&deployContractList, &contractDeploys)
-	return deployContractList, nil
+	for _, deployContractVo := range deployContractList {
+		var deployContract vo.DeployContractListVo
+		copier.Copy(&deployContract, &deployContractVo)
+		deployContract.DeployTimeFormat = deployContractVo.DeployTime.Format("Jan-02-2006 03:04:05 PM MST")
+		list = append(list, deployContract)
+	}
+	return list, nil
 }

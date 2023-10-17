@@ -44,7 +44,7 @@ func NewTestContractService() *ContractService {
 func TestQueryContract(t *testing.T) {
 
 	contractService := NewTestContractService()
-	_, err := contractService.QueryContractByWorkflow(1, 1)
+	_, err := contractService.QueryContractByWorkflow("id", 1, 1)
 	assert.NoError(t, err)
 }
 

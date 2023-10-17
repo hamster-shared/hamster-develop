@@ -3,10 +3,12 @@ name: frontend
 stages:
   Initialization:
     steps:
-      - name: set workdir
-        uses: workdir
+      - name: git-clone
+        uses: git-checkout
         with:
-          workdir: /Users/mohaijiang/tmp/vercel/examples/vue
+          url: https://github.com/abing258/frontend-Template.git
+          branch: master
+
   code-compile:
     needs:
       - Initialization
