@@ -119,7 +119,7 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	if data.Type == int(consts.CONTRACT) && data.FrameType == consts.Evm {
 
 		// get all files
-		repoContents, err := githubService.GetRepoFileList(token, owner, name)
+		repoContents, err := githubService.GetRepoFileList(token, owner, name, data.Branch)
 		if err != nil {
 			log.Println(err.Error())
 			Fail(err.Error(), g)
@@ -180,6 +180,8 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	githubService := application.GetBean[*service.GithubService]("githubService")
 	repo, res, err := githubService.GetRepo(token, user.Username, createData.Name)
 
+	branch := "main"
+
 	if err != nil {
 		if res != nil {
 			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
@@ -227,7 +229,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	if createData.Type == int(consts.CONTRACT) && createData.FrameType == uint(consts.Evm) {
 		githubService := application.GetBean[*service.GithubService]("githubService")
 		// get all files
-		repoContents, err := githubService.GetRepoFileList(token, user.Username, createData.Name)
+		repoContents, err := githubService.GetRepoFileList(token, user.Username, createData.Name, branch)
 		if err != nil {
 			log.Println(err.Error())
 			Fail(err.Error(), g)
@@ -1111,8 +1113,13 @@ func (h *HandlerServer) repositoryType(gin *gin.Context) {
 	userAny, _ := gin.Get("user")
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
+
+	// parsing url
+	owner, name, err := service.ParsingGitHubURL(repoUrl)
+
+	repo, _, err := githubService.GetRepo(token, owner, name)
 	// get all files
-	repoContents, err := githubService.GetRepoFileList(token, user.Username, repoName)
+	repoContents, err := githubService.GetRepoFileList(token, user.Username, repoName, *repo.DefaultBranch)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

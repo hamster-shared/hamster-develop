@@ -377,7 +377,7 @@ func (p *ProjectService) ParsingEVMFrame(repoContents []*github.RepositoryConten
 
 	for _, v := range repoContents {
 		fileName := v.GetName()
-		if strings.Contains(fileName, "truffle-config.js") {
+		if strings.Contains(fileName, "truffle-config.js") || strings.Contains(fileName, "truffle-config.ts") {
 			ft.isTruffle = true
 		} else if strings.Contains(fileName, "hardhat.config.js") || strings.Contains(fileName, "hardhat.config.ts") {
 			ft.isHardhat = true
