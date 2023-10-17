@@ -8,7 +8,7 @@ import (
 type DeployContractListVo struct {
 	Id               uint      `json:"id"`
 	ContractId       uint      `json:"contractId"`
-	ContractName     uint      `json:"contractName"`
+	ContractName     string    `json:"contractName"`
 	ProjectId        uuid.UUID `json:"projectId"`
 	Version          string    `json:"version"`
 	DeployTime       time.Time `json:"deployTime"`
