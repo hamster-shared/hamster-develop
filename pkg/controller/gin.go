@@ -161,11 +161,14 @@ func (h *HttpServer) StartHttpServer() {
 	//arrange-api
 	api.GET("/projects/:id/version/info", h.handlerServer.getVersionAndCodeInfoList)                   //获取版本列表和codeInfo
 	api.POST("/projects/:id/arrange", h.handlerServer.saveContractArrange)                             //保存编排信息
+	api.POST("/projects/:id/arrange/name", h.handlerServer.saveContractNameArrange)                    //保存合约名编排信息
+	api.POST("/projects/:id/arrange/cache", h.handlerServer.saveContractArrangeCache)                  //保存单个合约编排信息
 	api.PUT("/projects/:id/arrange", h.handlerServer.updateContractArrange)                            //更新编排信息
 	api.POST("/projects/:id/arrange/execute", h.handlerServer.saveContractArrangeExecute)              //保存编排执行信息
 	api.PUT("/projects/:id/arrange/execute", h.handlerServer.updateContractArrangeExecute)             //更新执行信息
 	api.GET("/projects/:id/arrange/execute/:executeId", h.handlerServer.getContractArrangeExecuteInfo) //根据执行id获取执行信息
 	api.GET("/projects/:id/arrange/contract/:version", h.handlerServer.getDeployArrangeContractList)   //根据项目ID和版本获取部署的合约列表
+	api.GET("/projects/:id/arrange/contract/name", h.handlerServer.getContractArrangeCache)            //获取单个合约的最新编排信息
 	//
 	//保存部署成的合约信息
 	//

@@ -18,4 +18,18 @@ create table t_contract_arrange_execute
     arrange_process_data    text                                       null comment 'Process data for choreographed execution',
     create_time             timestamp default CURRENT_TIMESTAMP    not null comment 'create time',
     update_time             timestamp default CURRENT_TIMESTAMP    not null comment 'update time'
-)
+);
+
+create table t_contract_arrange_cache
+(
+    id                 int auto_increment                     primary key,
+    project_id         char(36)                               not null comment 'project id',
+    contract_id        char(36)                               not null comment 'contract id',
+    contract_name      varchar(100)                           not null comment 'contract name',
+    version            varchar(50)                            not null comment 'contract build version',
+    original_arrange   text                                   not null comment 'original arrange',
+    create_time        timestamp default CURRENT_TIMESTAMP    not null comment 'create time',
+    update_time        timestamp default CURRENT_TIMESTAMP    not null comment 'update time'
+);
+alter table t_contract_arrange
+    add arrange_contract_name text  comment 'contract name arranged';

@@ -21,3 +21,14 @@ type DeployContractListVo struct {
 	Status           uint      `json:"status"` // 1: deploying, 2: success , 3: fail
 	AbiInfo          string    `json:"abiInfo"`
 }
+
+type ContractArrangeCacheVo struct {
+	Id              uint      `json:"id"`
+	ProjectId       uuid.UUID `json:"projectId"`
+	ContractId      uint      `json:"contractId"`
+	ContractName    string    `json:"contractName"`
+	Version         string    `json:"version"`
+	OriginalArrange string    `json:"originalArrange"`
+	CreateTime      time.Time `json:"createTime"`
+	UpdateTime      time.Time `json:"updateTime"`
+}

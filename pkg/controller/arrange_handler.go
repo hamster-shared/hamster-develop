@@ -23,6 +23,22 @@ func (h *HandlerServer) saveContractArrange(gin *gin.Context) {
 	Success(arrangeId, gin)
 }
 
+func (h *HandlerServer) saveContractNameArrange(gin *gin.Context) {
+	var contractNameArrangeParam parameter.ContractNameArrangeParam
+	err := gin.BindJSON(&contractNameArrangeParam)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	arrangeService := application.GetBean[*service.ArrangeService]("arrangeService")
+	arrangeId, err := arrangeService.SaveContractNameArrange(contractNameArrangeParam)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(arrangeId, gin)
+}
+
 func (h *HandlerServer) updateContractArrange(gin *gin.Context) {
 	var contractArrangeParam parameter.ContractArrangeParam
 	err := gin.BindJSON(&contractArrangeParam)
@@ -99,6 +115,38 @@ func (h *HandlerServer) getDeployArrangeContractList(gin *gin.Context) {
 	}
 	arrangeService := application.GetBean[*service.ArrangeService]("arrangeService")
 	arrangeId, err := arrangeService.GetDeployArrangeContractList(id, version)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(arrangeId, gin)
+}
+
+func (h *HandlerServer) saveContractArrangeCache(gin *gin.Context) {
+	var contractArrangeCacheParam parameter.ContractArrangeCacheParam
+	err := gin.BindJSON(&contractArrangeCacheParam)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	arrangeService := application.GetBean[*service.ArrangeService]("arrangeService")
+	arrangeId, err := arrangeService.SaveContractArrangeCache(contractArrangeCacheParam)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(arrangeId, gin)
+}
+
+func (h *HandlerServer) getContractArrangeCache(gin *gin.Context) {
+	var contractArrangeCacheQuery parameter.ContractArrangeCacheQuery
+	err := gin.BindQuery(&contractArrangeCacheQuery)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	arrangeService := application.GetBean[*service.ArrangeService]("arrangeService")
+	arrangeId, err := arrangeService.GetContractArrangeCache(contractArrangeCacheQuery)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

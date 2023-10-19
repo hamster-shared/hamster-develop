@@ -542,9 +542,24 @@ func (c *ContractService) SyncStarkWareContract() {
 	}
 }
 
-func (c *ContractService) GetContractDeployInfo(id int) (db2.ContractDeploy, error) {
-	var result db2.ContractDeploy
-	err := c.db.Model(db2.ContractDeploy{}).First(&result, id).Error
+func (c *ContractService) GetContractDeployInfo(id int) (vo.ContractDeployVo, error) {
+	var result vo.ContractDeployVo
+	err := c.db.Model(db2.ContractDeploy{}).Where("id = ?", id).First(&result).Error
+	if err != nil {
+		return result, err
+	}
+	var project db2.Project
+	err = c.db.Model(db2.Project{}).Where("id = ?", result.ProjectId).First(&project).Error
+	if err != nil {
+		return result, err
+	}
+	var contract db2.Contract
+	err = c.db.Model(db2.Contract{}).Where("id = ?", result.ContractId).First(&contract).Error
+	if err != nil {
+		return result, err
+	}
+	result.Url = project.RepositoryUrl + "/" + contract.Branch
+	result.CodeInfo = contract.CodeInfo
 	return result, err
 }
 

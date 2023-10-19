@@ -1,6 +1,8 @@
 package service
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
@@ -32,18 +34,58 @@ func (a *ArrangeService) SaveContractArrange(param parameter.ContractArrangePara
 	if err != nil {
 		return "", err
 	}
-	arrange := db2.ContractArrange{
-		ProjectId:       projectId,
-		Version:         param.Version,
-		OriginalArrange: param.OriginalArrange,
-		CreateTime:      time.Now(),
-		UpdateTime:      time.Now(),
+	var contractArrange db2.ContractArrange
+	err = a.db.Model(db2.ContractArrange{}).Where("project_id = ? and version = ?", projectId, param.Version).First(&contractArrange).Error
+	if err == nil {
+		contractArrange.OriginalArrange = param.OriginalArrange
+		contractArrange.UpdateTime = time.Now()
+		a.db.Model(db2.ContractArrange{}).Where("id = ?", contractArrange.Id).Updates(&contractArrange)
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		contractArrange.ProjectId = projectId
+		contractArrange.Version = param.Version
+		contractArrange.OriginalArrange = param.OriginalArrange
+		contractArrange.CreateTime = time.Now()
+		contractArrange.UpdateTime = time.Now()
+		a.db.Model(db2.ContractArrange{}).Create(&contractArrange)
+	} else {
+		return "", err
 	}
-	err = a.db.Model(db2.ContractArrange{}).Create(&arrange).Error
+	return strconv.Itoa(int(contractArrange.Id)), nil
+}
+
+func (a *ArrangeService) SaveContractNameArrange(param parameter.ContractNameArrangeParam) (string, error) {
+	projectId, err := uuid.FromString(param.ProjectId)
 	if err != nil {
 		return "", err
 	}
-	return strconv.Itoa(int(arrange.Id)), nil
+	var project db2.Project
+	err = a.db.Model(db2.Project{}).Where("id = ?", projectId).First(&project).Error
+	if err != nil {
+		return "", err
+	}
+
+	jsonData, err := json.Marshal(param.ContractNameArrange)
+	if err != nil {
+		return "", err
+	}
+
+	var contractArrange db2.ContractArrange
+	err = a.db.Model(db2.ContractArrange{}).Where("project_id = ? and version = ?", projectId, param.Version).First(&contractArrange).Error
+	if err == nil {
+		contractArrange.ArrangeContractName = string(jsonData)
+		contractArrange.UpdateTime = time.Now()
+		a.db.Model(db2.ContractArrange{}).Where("id = ?", contractArrange.Id).Updates(&contractArrange)
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		contractArrange.ProjectId = projectId
+		contractArrange.Version = param.Version
+		contractArrange.ArrangeContractName = string(jsonData)
+		contractArrange.CreateTime = time.Now()
+		contractArrange.UpdateTime = time.Now()
+		a.db.Model(db2.ContractArrange{}).Create(&contractArrange)
+	} else {
+		return "", err
+	}
+	return strconv.Itoa(int(contractArrange.Id)), nil
 }
 
 func (a *ArrangeService) UpdateContractArrange(param parameter.ContractArrangeParam) (string, error) {
@@ -135,4 +177,52 @@ func (a *ArrangeService) GetDeployArrangeContractList(projectId, version string)
 		list = append(list, deployContract)
 	}
 	return list, nil
+}
+
+func (a *ArrangeService) SaveContractArrangeCache(param parameter.ContractArrangeCacheParam) (vo.ContractArrangeCacheVo, error) {
+	var vo vo.ContractArrangeCacheVo
+	projectId, err := uuid.FromString(param.ProjectId)
+	if err != nil {
+		return vo, err
+	}
+	var project db2.Project
+	err = a.db.Model(db2.Project{}).Where("id = ?", projectId).First(&project).Error
+	if err != nil {
+		return vo, err
+	}
+	var contractArrangeCache db2.ContractArrangeCache
+	err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and contract_id = ? and contract_name = ? and version = ?", projectId, param.ContractId, param.ContractName, param.Version).First(&contractArrangeCache).Error
+	if err == nil {
+		contractArrangeCache.OriginalArrange = param.OriginalArrange
+		contractArrangeCache.UpdateTime = time.Now()
+		a.db.Model(db2.ContractArrangeCache{}).Where("id = ?", contractArrangeCache.Id).Updates(&contractArrangeCache)
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		contractArrangeCache.ContractId = param.ContractId
+		contractArrangeCache.ProjectId = projectId
+		contractArrangeCache.OriginalArrange = param.OriginalArrange
+		contractArrangeCache.Version = param.Version
+		contractArrangeCache.ContractName = param.ContractName
+		contractArrangeCache.CreateTime = time.Now()
+		contractArrangeCache.UpdateTime = time.Now()
+		a.db.Model(db2.ContractArrangeCache{}).Create(&contractArrangeCache)
+	} else {
+		return vo, err
+	}
+	copier.Copy(&vo, &contractArrangeCache)
+	return vo, nil
+}
+
+func (a *ArrangeService) GetContractArrangeCache(query parameter.ContractArrangeCacheQuery) (vo.ContractArrangeCacheVo, error) {
+	var vo vo.ContractArrangeCacheVo
+	projectId, err := uuid.FromString(query.ProjectId)
+	if err != nil {
+		return vo, err
+	}
+	var contractArrangeCache db2.ContractArrangeCache
+	err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and contract_name = ?", projectId, query.ContractName).Order("update_time desc").Limit(1).First(&contractArrangeCache).Error
+	if err != nil {
+		return vo, err
+	}
+	copier.Copy(&vo, &contractArrangeCache)
+	return vo, nil
 }
