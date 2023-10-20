@@ -1,6 +1,7 @@
 package vo
 
 import (
+	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	uuid "github.com/iris-contrib/go.uuid"
 	"time"
 )
@@ -31,4 +32,9 @@ type ContractArrangeCacheVo struct {
 	OriginalArrange string    `json:"originalArrange"`
 	CreateTime      time.Time `json:"createTime"`
 	UpdateTime      time.Time `json:"updateTime"`
+}
+
+type ToBeArrangedContractListVo struct {
+	UseContract   []db2.Contract `json:"useContract"`
+	NoUseContract []db2.Contract `json:"noUseContract"`
 }

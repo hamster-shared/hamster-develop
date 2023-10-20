@@ -41,6 +41,7 @@ type ContractVo struct {
 
 type ContractVersionAndCodeInfoVo struct {
 	Version  string `json:"version"`
+	Type     int    `json:"type"`
 	Branch   string `json:"branch"`
 	CodeInfo string `json:"codeInfo"`
 	Url      string `json:"url"`
@@ -48,6 +49,7 @@ type ContractVersionAndCodeInfoVo struct {
 
 type ContractDeployVo struct {
 	Id            uint      `json:"id"`
+	ContractName  string    `json:"contractName"`
 	ContractId    uint      `json:"contractId"`
 	ProjectId     uuid.UUID `json:"projectId"`
 	Version       string    `json:"version"`

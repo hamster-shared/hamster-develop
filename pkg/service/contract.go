@@ -438,29 +438,28 @@ func (c *ContractService) QueryVersionList(projectId string) ([]string, error) {
 	return data, nil
 }
 
-func (c *ContractService) QueryVersionAndCodeInfoList(projectId string) ([]vo.ContractVersionAndCodeInfoVo, error) {
-	var contractVersionAndCodeInfoVoList []vo.ContractVersionAndCodeInfoVo
+func (c *ContractService) GetCodeInfoByVersion(projectId, version string) (vo.ContractVersionAndCodeInfoVo, error) {
+	var contractVersionAndCodeInfoVo vo.ContractVersionAndCodeInfoVo
 	var project db2.Project
 	err := c.db.Where("id = ? ", projectId).First(&project).Error
 	if err != nil {
-		return contractVersionAndCodeInfoVoList, err
+		return contractVersionAndCodeInfoVo, err
 	}
 
 	if project.FrameType == consts.InternetComputer {
-		res := c.db.Model(db2.BackendPackage{}).Distinct("version").Select("version", "branch", "code_info").Where("project_id = ?", projectId).Find(&contractVersionAndCodeInfoVoList)
+		res := c.db.Model(db2.BackendPackage{}).Select("version", "branch", "code_info").Where("project_id = ? and version = ?", projectId, version).Order("create_time desc").Limit(1).First(&contractVersionAndCodeInfoVo)
 		if res.Error != nil {
-			return contractVersionAndCodeInfoVoList, res.Error
+			return contractVersionAndCodeInfoVo, res.Error
 		}
 	} else {
-		res := c.db.Model(db2.Contract{}).Distinct("version").Select("version", "branch", "code_info").Where("project_id = ?", projectId).Find(&contractVersionAndCodeInfoVoList)
+		res := c.db.Model(db2.Contract{}).Select("version", "branch", "code_info").Where("project_id = ? and version = ?", projectId, version).Order("create_time desc").Limit(1).First(&contractVersionAndCodeInfoVo)
 		if res.Error != nil {
-			return contractVersionAndCodeInfoVoList, res.Error
+			return contractVersionAndCodeInfoVo, res.Error
 		}
 	}
-	for _, infoVo := range contractVersionAndCodeInfoVoList {
-		infoVo.Url = project.RepositoryUrl + "/" + infoVo.Branch
-	}
-	return contractVersionAndCodeInfoVoList, nil
+	contractVersionAndCodeInfoVo.Type = int(project.Type)
+	contractVersionAndCodeInfoVo.Url = project.RepositoryUrl + "/" + contractVersionAndCodeInfoVo.Branch
+	return contractVersionAndCodeInfoVo, nil
 }
 
 func (c *ContractService) QueryContractNameList(projectId string) ([]string, error) {
@@ -544,20 +543,23 @@ func (c *ContractService) SyncStarkWareContract() {
 
 func (c *ContractService) GetContractDeployInfo(id int) (vo.ContractDeployVo, error) {
 	var result vo.ContractDeployVo
-	err := c.db.Model(db2.ContractDeploy{}).Where("id = ?", id).First(&result).Error
+	var contractDeploy db2.ContractDeploy
+	err := c.db.Model(db2.ContractDeploy{}).Where("id = ?", id).First(&contractDeploy).Error
 	if err != nil {
 		return result, err
 	}
 	var project db2.Project
-	err = c.db.Model(db2.Project{}).Where("id = ?", result.ProjectId).First(&project).Error
+	err = c.db.Model(db2.Project{}).Where("id = ?", contractDeploy.ProjectId).First(&project).Error
 	if err != nil {
 		return result, err
 	}
 	var contract db2.Contract
-	err = c.db.Model(db2.Contract{}).Where("id = ?", result.ContractId).First(&contract).Error
+	err = c.db.Model(db2.Contract{}).Where("id = ?", contractDeploy.ContractId).First(&contract).Error
 	if err != nil {
 		return result, err
 	}
+	copier.Copy(&result, &contractDeploy)
+	result.ContractName = contract.Name
 	result.Url = project.RepositoryUrl + "/" + contract.Branch
 	result.CodeInfo = contract.CodeInfo
 	return result, err

@@ -7,6 +7,26 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 )
 
+func (h *HandlerServer) getToBeArrangedContractList(gin *gin.Context) {
+	id := gin.Param("id")
+	if id == "" {
+		Fail("id is empty", gin)
+		return
+	}
+	version := gin.Param("version")
+	if version == "" {
+		Fail("version is empty", gin)
+		return
+	}
+	arrangeService := application.GetBean[*service.ArrangeService]("arrangeService")
+	data, err := arrangeService.GetToBeArrangedContractList(id, version)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) saveContractArrange(gin *gin.Context) {
 	var contractArrangeParam parameter.ContractArrangeParam
 	err := gin.BindJSON(&contractArrangeParam)

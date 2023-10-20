@@ -6,11 +6,13 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
+	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -21,6 +23,105 @@ type ArrangeService struct {
 func NewArrangeService() *ArrangeService {
 	return &ArrangeService{
 		db: application.GetBean[*gorm.DB]("db"),
+	}
+}
+
+func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToBeArrangedContractListVo, error) {
+	var vo vo.ToBeArrangedContractListVo
+	projectId, err := uuid.FromString(id)
+	if err != nil {
+		return vo, err
+	}
+	var project db2.Project
+	err = a.db.Model(db2.Project{}).Where("id = ?", projectId).First(&project).Error
+	if err != nil {
+		return vo, err
+	}
+	var contracts []db2.Contract
+	err = a.db.Model(db2.Contract{}).Where("project_id = ? and version = ?", projectId, version).Find(&contracts).Error
+	if err != nil {
+		return vo, err
+	}
+	if len(contracts) < 1 {
+		return vo, errors.New("there are no contracts in this version")
+	}
+	var contractNameArrangeParam parameter.ContractNameArrangeParam
+	contractNameArrangeParam.ProjectId = id
+	contractNameArrangeParam.Version = version
+	var contractNameList []string
+	contractMap := make(map[string]db2.Contract)
+	for _, contract := range contracts {
+		contractNameList = append(contractNameList, contract.Name)
+		contractMap[contract.Name] = contract
+	}
+	//获取编排的合约名
+	var arrangeContractName string
+	err = a.db.Model(db2.ContractArrange{}).Select("arrange_contract_name").Where("project_id = ?", projectId).Order("update_time desc").Limit(1).First(&arrangeContractName).Error
+	if err == nil {
+		//存在历史版本
+		var contractNameArrange parameter.ContractNameArrange
+		err := json.Unmarshal([]byte(arrangeContractName), &contractNameArrange)
+		if err != nil {
+			return vo, err
+		}
+		var useContract []db2.Contract
+		var noUseContract []db2.Contract
+		var usedNames []string
+		var saveUsedNames []string
+		var saveNoUsedNames []string
+		for _, name := range contractNameArrange.UseContract {
+			contractName := name
+			if lastIndex := strings.LastIndex(contractName, "("); lastIndex >= 0 {
+				contractName = contractName[:lastIndex]
+			}
+			if contract, exists := contractMap[contractName]; exists {
+				var contractVo db2.Contract
+				copier.Copy(&contractVo, &contract)
+				contractVo.Name = name
+				usedNames = append(usedNames, name)
+				saveUsedNames = append(saveUsedNames, name)
+				useContract = append(useContract, contractVo)
+			}
+		}
+		for _, name := range contractNameArrange.NoUseContract {
+			contractName := name
+			if lastIndex := strings.LastIndex(contractName, "("); lastIndex >= 0 {
+				contractName = contractName[:lastIndex]
+			}
+			if contract, exists := contractMap[contractName]; exists {
+				var contractVo db2.Contract
+				copier.Copy(&contractVo, &contract)
+				contractVo.Name = name
+				usedNames = append(usedNames, name)
+				saveNoUsedNames = append(saveNoUsedNames, name)
+				noUseContract = append(noUseContract, contractVo)
+			}
+		}
+		//获取没有使用的合约名
+		newContractName := utils.Difference(contractNameList, usedNames)
+		for _, name := range newContractName {
+			if contract, exists := contractMap[name]; exists {
+				var contractVo db2.Contract
+				copier.Copy(&contractVo, &contract)
+				contractVo.Name = name
+				saveUsedNames = append(saveUsedNames, name)
+				useContract = append(useContract, contractVo)
+			}
+		}
+		vo.UseContract = useContract
+		vo.NoUseContract = noUseContract
+		contractNameArrangeParam.UseContract = saveUsedNames
+		contractNameArrangeParam.NoUseContract = saveNoUsedNames
+		a.SaveContractNameArrange(contractNameArrangeParam)
+		return vo, nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		//进行初始化
+		contractNameArrangeParam.UseContract = contractNameList
+		a.SaveContractNameArrange(contractNameArrangeParam)
+		vo.UseContract = contracts
+		return vo, nil
+	} else {
+		return vo, err
 	}
 }
 
@@ -63,8 +164,10 @@ func (a *ArrangeService) SaveContractNameArrange(param parameter.ContractNameArr
 	if err != nil {
 		return "", err
 	}
-
-	jsonData, err := json.Marshal(param.ContractNameArrange)
+	var contractNameArrange parameter.ContractNameArrange
+	contractNameArrange.UseContract = param.UseContract
+	contractNameArrange.NoUseContract = param.NoUseContract
+	jsonData, err := json.Marshal(contractNameArrange)
 	if err != nil {
 		return "", err
 	}
