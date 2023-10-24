@@ -436,6 +436,7 @@ func (g *GithubService) getWebHookData(installationId int64) ([]*github.Reposito
 			repos = append(repos, list.Repositories...)
 		}
 	}
+	client.Apps.RevokeInstallationToken(g.ctx)
 	return repos, nil
 }
 
