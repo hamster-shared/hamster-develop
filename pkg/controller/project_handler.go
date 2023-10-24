@@ -2,6 +2,7 @@ package controller
 
 import (
 	"embed"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -170,6 +171,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	createData := parameter.CreateProjectParam{}
 	err := g.BindJSON(&createData)
 	if err != nil {
+		fmt.Println(err)
 		Fail(err.Error(), g)
 		return
 	}
@@ -180,10 +182,10 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	githubService := application.GetBean[*service.GithubService]("githubService")
 	repo, res, err := githubService.GetRepo(token, user.Username, createData.Name)
 
-	branch := "main"
-
 	if err != nil {
+		logger.Info(err)
 		if res != nil {
+			logger.Info("res.StatusCode", res.StatusCode)
 			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 				Failed(http.StatusUnauthorized, "access not authorized", g)
 				return
@@ -191,6 +193,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		}
 		repo, res, err = githubService.CreateRepository(token, createData.Name)
 		if err != nil {
+			logger.Error(err)
 			if res != nil {
 				if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 					Failed(http.StatusUnauthorized, "access not authorized", g)
@@ -205,7 +208,9 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		if flag {
 			repo, res, err = githubService.CreateRepository(token, createData.Name)
 			if err != nil {
+				logger.Error(err)
 				if res != nil {
+					logger.Error("res: ", res.StatusCode)
 					if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 						Failed(http.StatusUnauthorized, "access not authorized", g)
 						return
@@ -216,8 +221,9 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 			}
 		}
 	}
-	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
+	branch, err := githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
 	if err != nil {
+		logger.Error(err)
 		Fail(err.Error(), g)
 		return
 	}
@@ -238,6 +244,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		// get EVM contract frame: truffle\foundry\hardhat
 		frame, err := h.projectService.ParsingEVMFrame(repoContents)
 		if err != nil {
+			logger.Error(err)
 			Fail(err.Error(), g)
 			return
 		}
@@ -254,14 +261,17 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		LabelDisplay: createData.LabelDisplay,
 		GistId:       createData.GistId,
 		DefaultFile:  createData.DefaultFile,
+		Branch:       branch,
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
+		logger.Error(err)
 		Fail(err.Error(), g)
 		return
 	}
 	project, err := h.projectService.GetProject(id.String())
 	if err != nil {
+		logger.Error(err)
 		Fail(err.Error(), g)
 		return
 	}
@@ -336,6 +346,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		}
 		err = containerDeployService.UpdateContainerDeploy(project.Id, deployParam)
 		if err != nil {
+			logger.Error(err)
 			logger.Errorf("init blockchain k8s param failed: %s", err)
 		}
 
@@ -882,7 +893,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 			return
 		}
 	}
-	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateUrl, consts.TemplateRepoName)
+	branch, err := githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateUrl, consts.TemplateRepoName)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -906,6 +917,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		TemplateUrl: *repo.CloneURL,
 		FrameType:   consts.ProjectFrameType(createData.FrameType),
 		UserId:      int64(user.Id),
+		Branch:      branch,
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
