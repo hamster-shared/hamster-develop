@@ -1143,3 +1143,12 @@ func (h *HandlerServer) getGitHubRepositorySelection(gin *gin.Context) {
 	}
 	Success(selection, gin)
 }
+
+func (h *HandlerServer) getChainNetworkList(gin *gin.Context) {
+	list, err := h.projectService.GetChainNetworkList()
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(list, gin)
+}

@@ -424,12 +424,12 @@ func (c *ContractService) QueryVersionList(projectId string) ([]string, error) {
 	}
 
 	if project.FrameType == consts.InternetComputer {
-		res := c.db.Model(db2.BackendPackage{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Find(&data)
+		res := c.db.Model(db2.BackendPackage{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Order("create_time desc").Find(&data)
 		if res.Error != nil {
 			return data, res.Error
 		}
 	} else {
-		res := c.db.Model(db2.Contract{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Find(&data)
+		res := c.db.Model(db2.Contract{}).Distinct("version").Select("version").Where("project_id = ?", projectId).Order("create_time desc").Find(&data)
 		if res.Error != nil {
 			return data, res.Error
 		}

@@ -33,3 +33,17 @@ create table t_contract_arrange_cache
 );
 alter table t_contract_arrange
     add arrange_contract_name text  comment 'contract name arranged';
+
+create table t_chain_network
+(
+    id                 int auto_increment                     primary key,
+    category           varchar(50)                            not null comment 'category',
+    chain_id           varchar(50)                            not null comment 'chain id',
+    chain_name         varchar(50)                            not null comment 'chain name',
+    rpc_url            varchar(100)                           not null comment 'rpc url',
+    symbol             varchar(50)                            not null comment 'symbol',
+    block_explorer_url varchar(100)                               null comment 'block explorer url',
+    decimals           int                                    not null comment 'decimals',
+    create_time        timestamp default CURRENT_TIMESTAMP    not null comment 'create time',
+    update_time        timestamp default CURRENT_TIMESTAMP    not null comment 'update time'
+);

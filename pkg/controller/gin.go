@@ -51,6 +51,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/user/wallet", h.handlerServer.saveUserWallet)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
+	api.GET("/projects/chain/network/list", h.handlerServer.getChainNetworkList)
 	api.POST("/projects", h.handlerServer.createProject)
 	api.POST("/projects/import", h.handlerServer.importProject)
 	api.POST("/projects/code", h.handlerServer.createProjectByCode)

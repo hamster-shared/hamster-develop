@@ -108,8 +108,16 @@ func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToB
 				useContract = append(useContract, contractVo)
 			}
 		}
-		vo.UseContract = useContract
-		vo.NoUseContract = noUseContract
+		if useContract == nil {
+			vo.UseContract = []db2.Contract{}
+		} else {
+			vo.UseContract = useContract
+		}
+		if noUseContract == nil {
+			vo.NoUseContract = []db2.Contract{}
+		} else {
+			vo.NoUseContract = noUseContract
+		}
 		contractNameArrangeParam.UseContract = saveUsedNames
 		contractNameArrangeParam.NoUseContract = saveNoUsedNames
 		a.SaveContractNameArrange(contractNameArrangeParam)
@@ -315,17 +323,15 @@ func (a *ArrangeService) SaveContractArrangeCache(param parameter.ContractArrang
 	return vo, nil
 }
 
-func (a *ArrangeService) GetContractArrangeCache(query parameter.ContractArrangeCacheQuery) (vo.ContractArrangeCacheVo, error) {
-	var vo vo.ContractArrangeCacheVo
+func (a *ArrangeService) GetContractArrangeCache(query parameter.ContractArrangeCacheQuery) (string, error) {
 	projectId, err := uuid.FromString(query.ProjectId)
 	if err != nil {
-		return vo, err
+		return "", err
 	}
 	var contractArrangeCache db2.ContractArrangeCache
-	err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and contract_name = ?", projectId, query.ContractName).Order("update_time desc").Limit(1).First(&contractArrangeCache).Error
+	err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and contract_name = ?", projectId, query.ContractName).Order("update_time desc").Limit(1).Find(&contractArrangeCache).Error
 	if err != nil {
-		return vo, err
+		return "", err
 	}
-	copier.Copy(&vo, &contractArrangeCache)
-	return vo, nil
+	return contractArrangeCache.OriginalArrange, nil
 }
