@@ -37,6 +37,7 @@ alter table t_contract_arrange
 create table t_chain_network
 (
     id                 int auto_increment                     primary key,
+    logo               varchar(100)                           not null comment 'logo',
     category           varchar(50)                            not null comment 'category',
     chain_id           varchar(50)                            not null comment 'chain id',
     chain_name         varchar(50)                            not null comment 'chain name',

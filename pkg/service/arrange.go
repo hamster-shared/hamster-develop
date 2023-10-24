@@ -133,6 +133,66 @@ func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToB
 	}
 }
 
+func (a *ArrangeService) GetArrangedDataList(id, version string) ([]string, error) {
+	var list []string
+	projectId, err := uuid.FromString(id)
+	if err != nil {
+		return list, err
+	}
+	var project db2.Project
+	err = a.db.Model(db2.Project{}).Where("id = ?", projectId).First(&project).Error
+	if err != nil {
+		return list, err
+	}
+
+	//获取编排的合约名
+	var arrangeContractName string
+	err = a.db.Model(db2.ContractArrange{}).Select("arrange_contract_name").Where("project_id = ? and version = ?", projectId, version).Order("update_time desc").Limit(1).First(&arrangeContractName).Error
+	if err == nil {
+		//存在历史版本
+		var contractNameArrange parameter.ContractNameArrange
+		err := json.Unmarshal([]byte(arrangeContractName), &contractNameArrange)
+		if err != nil {
+			return list, err
+		}
+		var ContractArrangeCacheList []db2.ContractArrangeCache
+		err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and version = ?", projectId, version).Find(&ContractArrangeCacheList).Error
+		if err != nil {
+			return list, err
+		}
+		contractNameMap := make(map[string]string)
+		for _, contractArrangeCache := range ContractArrangeCacheList {
+			contractNameMap[contractArrangeCache.ContractName] = contractArrangeCache.OriginalArrange
+		}
+		for _, name := range contractNameArrange.UseContract {
+			if originalArrange, exists := contractNameMap[name]; exists {
+				list = append(list, originalArrange)
+			} else {
+				list = append(list, "")
+			}
+		}
+		return list, nil
+	} else {
+		return list, nil
+	}
+}
+
+func (a *ArrangeService) GetOriginalArrangedData(id, version string) (string, error) {
+	projectId, err := uuid.FromString(id)
+	if err != nil {
+		return "", err
+	}
+	var project db2.Project
+	err = a.db.Model(db2.Project{}).Where("id = ?", projectId).First(&project).Error
+	if err != nil {
+		return "", err
+	}
+
+	var originalArrange string
+	err = a.db.Model(db2.ContractArrange{}).Select("original_arrange").Where("project_id = ? and version = ?", projectId, version).First(&originalArrange).Error
+	return originalArrange, err
+}
+
 func (a *ArrangeService) SaveContractArrange(param parameter.ContractArrangeParam) (string, error) {
 	projectId, err := uuid.FromString(param.ProjectId)
 	if err != nil {

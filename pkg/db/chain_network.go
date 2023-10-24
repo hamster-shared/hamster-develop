@@ -6,6 +6,7 @@ import (
 
 type ChainNetwork struct {
 	Id               uint      `gorm:"primaryKey" json:"id"`
+	Logo             string    `json:"logo"`
 	Category         string    `json:"category"`
 	ChainId          string    `json:"chainId"`
 	ChainName        string    `json:"chainName"`
