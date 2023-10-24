@@ -36,6 +36,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/github/install", h.handlerServer.githubInstall)
 	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
 	api.POST("/github/webhook", h.handlerServer.githubWebHook)
+	api.POST("/v2/github/webhook", h.handlerServer.githubWebHookV2)
 	api.GET("/projects/:id/:username/frontend/logs", h.handlerServer.getDeployFrontendLog)
 	api.GET("/user/count", h.handlerServer.getUserCount)
 	// project_template
@@ -62,10 +63,13 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/v2/user", h.handlerServer.getUseInfoV2)
 	api.PUT("/user/first/state", h.handlerServer.updateFirstStateV2)
 	api.PUT("/v2/user/first/state", h.handlerServer.updateFirstStateV2)
+
 	// new add
 	api.GET("/github/install", h.handlerServer.githubInstallCheck)
 	api.POST("/github/install/auth", h.handlerServer.githubInstallAuth)
 	api.POST("/v2/github/install", h.handlerServer.githubInstallV2)
+	api.GET("/github/users/installations", h.handlerServer.getUsersInstallations)
+	api.GET("/github/installation/:id/repositories", h.handlerServer.getGithubRepos)
 	// set check pipeline
 	api.POST("/project/:id/workflow/setting", h.handlerServer.workflowSetting)
 	api.GET("/project/:id/workflow/setting/check", h.handlerServer.workflowSettingCheck)

@@ -160,3 +160,10 @@ const (
 	GitHub   = 1
 	Metamask = 2
 )
+
+const (
+	INSTALLATION_CREATED = "created"
+	INSTALLATION_DELETED = "deleted"
+	REPO_ADDED           = "added"
+	REPO_REMOVED         = "removed"
+)

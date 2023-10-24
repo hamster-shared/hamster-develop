@@ -544,3 +544,9 @@ Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg
 {
 
 }
+
+
+### get installation info
+GET http://localhost:8080/api/github/users/installations
+Content-Type: application/json
+Access-Token: RVnEcjKOiPXr61IM3hTsrTGoExBRWACMP/XXenFNc0PJ8H9U4dgv+YRrHdQZSHdL

@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -122,6 +123,53 @@ func (h *HandlerServer) githubWebHook(gin *gin.Context) {
 		if err == nil {
 			user.Token = ""
 			userService.UpdateUser(user)
+		}
+	}
+}
+
+func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
+	event := gin.GetHeader("X-GitHub-Event")
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	var githubInstall parameter.GithubWebHookInstall
+	err := gin.BindJSON(&githubInstall)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	if event == "installation" {
+		if githubInstall.Action == "created" {
+			err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), consts.INSTALLATION_CREATED)
+			if err != nil {
+				logger.Errorf("installation.created failed:%s", err)
+				Fail(err.Error(), gin)
+				return
+			}
+		}
+		if githubInstall.Action == "deleted" {
+			err = githubService.GithubAppDelete(githubInstall.Installation.GetID())
+			if err != nil {
+				logger.Errorf("handler installation.deleted failed: %s", err)
+				Fail(err.Error(), gin)
+				return
+			}
+		}
+	}
+	if event == "installation_repositories" {
+		if githubInstall.Action == "added" {
+			err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), consts.REPO_ADDED)
+			if err != nil {
+				logger.Errorf("repo.added failed:%s", err)
+				Fail(err.Error(), gin)
+				return
+			}
+		}
+		if githubInstall.Action == "removed" {
+			err = githubService.RepoRemoved(githubInstall.Installation.GetID(), consts.REPO_REMOVED)
+			if err != nil {
+				logger.Errorf("repo.removed failed:%s", err)
+				Fail(err.Error(), gin)
+				return
+			}
 		}
 	}
 }
@@ -436,39 +484,59 @@ func (h *HandlerServer) updateFirstStateV2(gin *gin.Context) {
 }
 
 func (h *HandlerServer) githubInstallCheck(gin *gin.Context) {
-	loginType, exit := gin.Get("loginType")
-	if !exit {
-		Failed(http.StatusUnauthorized, "access not authorized", gin)
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	data, err := githubService.GetUsersInstallations(token)
+	if err != nil {
+		Fail(err.Error(), gin)
 		return
 	}
-	userAny, exit := gin.Get("user")
-	if !exit {
-		Failed(http.StatusUnauthorized, "access not authorized", gin)
+	res := false
+	if len(data) > 0 {
+		res = true
+	}
+	Success(res, gin)
+}
+
+func (h *HandlerServer) getUsersInstallations(gin *gin.Context) {
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	token = "ghu_4veGLyiEsjoMaVqCO0ErKvN4mJVoG62DXoY7"
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	data, err := githubService.GetUsersInstallations(token)
+	if err != nil {
+		Fail(err.Error(), gin)
 		return
 	}
-	result := true
-	userService := application.GetBean[*service.UserService]("userService")
-	if loginType == consts.GitHub {
-		user, _ := userAny.(db2.User)
-		userInfo, err := userService.GetUserById(int64(user.Id))
-		if err != nil {
-			Failed(http.StatusUnauthorized, err.Error(), gin)
-			return
-		}
-		if userInfo.Token == "" {
-			result = false
-		}
+	Success(data, gin)
+}
+
+func (h *HandlerServer) getGithubRepos(gin *gin.Context) {
+	installIdString := gin.Param("id")
+	installationId, err := strconv.Atoi(installIdString)
+	if err != nil {
+		Fail("installation id is empty or invalid", gin)
+		return
 	}
-	if loginType == consts.Metamask {
-		user, _ := userAny.(db2.UserWallet)
-		userInfo, err := userService.GetUserWalletById(int(user.Id))
-		if err != nil {
-			Failed(http.StatusUnauthorized, err.Error(), gin)
-			return
-		}
-		if userInfo.UserId == 0 {
-			result = false
-		}
+	query := gin.Query("query")
+	pageStr := gin.DefaultQuery("page", "1")
+	sizeStr := gin.DefaultQuery("size", "10")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
 	}
-	Success(result, gin)
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	data, err := githubService.QueryRepos(int64(installationId), page, size, query)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
 }

@@ -1,5 +1,7 @@
 package parameter
 
+import "github.com/google/go-github/v55/github"
+
 type LoginParam struct {
 	Code         string `json:"code"`
 	ClientId     string `json:"clientId"`
@@ -27,6 +29,11 @@ type GithubWebHook struct {
 	Action       string      `json:"action"`
 	Installation interface{} `json:"installation"`
 	Sender       SenderUser  `json:"sender"`
+}
+
+type GithubWebHookInstall struct {
+	Action       string              `json:"action"`
+	Installation github.Installation `json:"installation"`
 }
 
 type SenderUser struct {

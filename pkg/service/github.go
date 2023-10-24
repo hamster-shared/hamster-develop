@@ -6,17 +6,25 @@ import (
 	"fmt"
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v48/github"
+	"github.com/hamster-shared/aline-engine/logger"
+	"github.com/hamster-shared/hamster-develop/pkg/application"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
+	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/pkg/errors"
 	"github.com/wujiangweiphp/go-curl"
+	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type IGithubService interface {
@@ -26,11 +34,13 @@ type IGithubService interface {
 
 type GithubService struct {
 	ctx context.Context
+	db  *gorm.DB
 }
 
 func NewGithubService() *GithubService {
 	return &GithubService{
 		ctx: context.Background(),
+		db:  application.GetBean[*gorm.DB]("db"),
 	}
 }
 
@@ -366,4 +376,161 @@ func (g *GithubService) GetGitHubAppInstallationForUser(username string) (string
 		return "", err
 	}
 	return *installation.RepositorySelection, nil
+}
+
+func (g *GithubService) GetUsersInstallations(token string) ([]*github.Installation, error) {
+	client := utils.NewGithubClient(g.ctx, token)
+	installations, _, err := client.Apps.ListUserInstallations(g.ctx, nil)
+	if err != nil {
+		logger.Errorf("get users installations failed:%s", err)
+		return nil, err
+	}
+	return installations, nil
+}
+
+func (g *GithubService) getWebHookData(installationId int64) ([]*github.Repository, error) {
+	var repos []*github.Repository
+	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
+	if exist {
+		return repos, errors.New("please contact the administrator to configure 'GITHUB_APP_ID'")
+	}
+	appId, err := strconv.Atoi(appIdString)
+	if err != nil {
+		return repos, err
+	}
+	appPemPath, exist := os.LookupEnv("GITHUB_APP_PEM")
+	if exist {
+		return repos, errors.New("please contact the administrator to configure 'GITHUB_APP_ID'")
+	}
+	atr, err := ghinstallation.NewAppsTransportKeyFromFile(http.DefaultTransport, int64(appId), appPemPath)
+	if err != nil {
+		logger.Errorf("get github client by private key failed:%s", err)
+		return repos, err
+	}
+	client := github.NewClient(&http.Client{Transport: atr})
+	token, _, err := client.Apps.CreateInstallationToken(g.ctx, installationId, nil)
+	if err != nil {
+		logger.Errorf("create installation failed:%s", err)
+		return repos, err
+	}
+	tc := oauth2.NewClient(g.ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token.GetToken()}))
+	tokenClient := github.NewClient(tc)
+	opt := github.ListOptions{
+		Page:    1,
+		PerPage: 100,
+	}
+	data, _, err := tokenClient.Apps.ListRepos(g.ctx, &opt)
+	if err != nil {
+		logger.Errorf("get app repos failed:%s", err)
+		return repos, err
+	}
+	repos = append(repos, data.Repositories...)
+	if data.GetTotalCount() > opt.PerPage {
+		totalPages := int(math.Ceil(float64(data.GetTotalCount()) / float64(opt.PerPage)))
+		for i := 2; i <= totalPages; i++ {
+			list, _, err := tokenClient.Apps.ListRepos(g.ctx, &opt)
+			if err != nil {
+				logger.Errorf("get app repos failed:%s", err)
+				return repos, err
+			}
+			repos = append(repos, list.Repositories...)
+		}
+	}
+	return repos, nil
+}
+
+func (g *GithubService) HandlerInstallData(installationId int64, action string) error {
+	repos, err := g.getWebHookData(installationId)
+	if err != nil {
+		err = g.saveFailedData(installationId, action)
+		if err != nil {
+			logger.Errorf("save handler failed:%s", err)
+		}
+		return err
+	}
+	for _, repo := range repos {
+		var repoData db2.GitRepo
+		err = g.db.Model(db2.GitRepo{}).Where("repo_id = ?", repo.GetID()).First(&repoData).Error
+		repoData.InstallationId = installationId
+		repoData.DefaultBranch = repo.GetDefaultBranch()
+		repoData.Name = repo.GetName()
+		repoData.UserId = repo.GetOwner().GetID()
+		repoData.CloneUrl = repo.GetCloneURL()
+		repoData.SshUrl = repo.GetSSHURL()
+		repoData.RepoId = repo.GetID()
+		repoData.CreateTime = repo.GetCreatedAt().Time
+		if err != nil {
+			err = g.db.Model(db2.GitRepo{}).Create(&repoData).Error
+			if err != nil {
+				err = g.saveFailedData(installationId, action)
+				if err != nil {
+					logger.Errorf("save git hub repo failed:%s", err)
+				}
+			}
+		} else {
+			g.db.Model(db2.GitRepo{}).Save(&repoData)
+		}
+	}
+	return nil
+}
+
+func (g *GithubService) saveFailedData(installationId int64, action string) error {
+	var failedData db2.HandlerFailedData
+	err := g.db.Model(db2.HandlerFailedData{}).Where("installation_id = ? and action = ?", installationId, action).First(&failedData).Error
+	if err != nil {
+		failedData.InstallationId = installationId
+		failedData.CreateTime = time.Now()
+		failedData.Action = action
+		err = g.db.Model(db2.HandlerFailedData{}).Create(&failedData).Error
+	}
+	return err
+}
+
+func (g *GithubService) GithubAppDelete(installationId int64) error {
+	err := g.db.Where("installation_id = ?", installationId).Delete(&db2.GitRepo{}).Error
+	if err != nil {
+		err = g.saveFailedData(installationId, consts.INSTALLATION_DELETED)
+	}
+	err = g.db.Where("installation_id = ?", installationId).Delete(&db2.HandlerFailedData{}).Error
+	return err
+}
+
+func (g *GithubService) RepoRemoved(installationId int64, action string) error {
+	repos, err := g.getWebHookData(installationId)
+	if err != nil {
+		err = g.saveFailedData(installationId, action)
+		if err != nil {
+			logger.Errorf("repo removed get repos failed:%s", err)
+		}
+		return err
+	}
+	for _, repo := range repos {
+		err = g.db.Where("repo_id = ?", repo.GetID()).Delete(&db2.GitRepo{}).Error
+		if err != nil {
+			err = g.saveFailedData(installationId, action)
+			if err != nil {
+				logger.Errorf("repo removed get repos failed:%s", err)
+			}
+		}
+	}
+	return nil
+}
+
+func (g *GithubService) QueryRepos(installationId int64, page, size int, query string) (db2.RepoPage, error) {
+	var total int64
+	var repoPage db2.RepoPage
+	var repos []db2.GitRepo
+	tx := g.db.Model(db2.RepoPage{}).Where("installation_id = ?", installationId)
+	if query != "" {
+		tx = tx.Where("name like ? ", "%"+query+"%")
+	}
+	err := tx.Order("create_time DESC").Offset((page - 1) * size).Limit(size).Find(&repos).Offset(-1).Limit(-1).Count(&total).Error
+	if err != nil {
+		return repoPage, err
+	}
+	repoPage.Total = total
+	repoPage.Data = repos
+	repoPage.Page = page
+	repoPage.PageSize = size
+	return repoPage, nil
 }
