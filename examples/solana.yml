@@ -16,7 +16,9 @@ stages:
       - name: code-compile
         runs-on: docker.io/hamstershare/solana-builder:1.73.0
         run: |
-          cd script & python3 regenerate.py
+          apt update && apt install -y python3-pip
+          pip3 install toml
+          cd script && python3 regenerate.py
           cd ..
           anchor build
 
