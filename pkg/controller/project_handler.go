@@ -1164,3 +1164,17 @@ func (h *HandlerServer) getChainNetworkList(gin *gin.Context) {
 	}
 	Success(list, gin)
 }
+
+func (h *HandlerServer) getChainNetworkByName(gin *gin.Context) {
+	name := gin.Param("name")
+	if name == "" {
+		Fail("name is empty", gin)
+		return
+	}
+	list, err := h.projectService.GetChainNetworkByName(name)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(list, gin)
+}
