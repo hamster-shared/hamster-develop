@@ -1,0 +1,36 @@
+version: 1.0
+name: [[ .Name ]]
+stages:
+  Initialization:
+    steps:
+      - name: Clone Code from Github
+        uses: git-checkout
+        with:
+          url: [[ .RepositoryUrl ]]
+          branch: main
+  Build Contract:
+    needs:
+      - Initialization
+    steps:
+      - name: Compile Contract
+        runs-on: docker.io/hamstershare/solana-builder:1.73.0
+        volumes:
+          - /root/.solana:/root/.solana
+        run: |
+          apt update && apt install -y python3-pip
+          pip3 install toml
+          python3 ./script/regenerate.py
+          anchor build
+  Output Results:
+    needs:
+      - Build Contract
+    steps:
+      - name: Save Files
+        uses: hamster-artifactory
+        with:
+          name: solana-meta.zip
+          compress: false
+          path: |
+            solana_nft_anchor.json
+            solana_nft_anchor.so
+
