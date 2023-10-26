@@ -18,8 +18,7 @@ stages:
         run: |
           apt update && apt install -y python3-pip
           pip3 install toml
-          cd script && python3 regenerate.py
-          cd ..
+          python3 ./script/regenerate.py
           anchor build
 
       - name: save artificate
