@@ -31,6 +31,5 @@ stages:
           name: solana-meta.zip
           compress: false
           path: |
-            solana_nft_anchor.json
-            solana_nft_anchor.so
-
+            ./target/deploy/*.so
+            ./target/idl/*.json
