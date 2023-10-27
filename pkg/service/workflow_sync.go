@@ -3,8 +3,18 @@ package service
 import (
 	"bufio"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"path"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/BurntSushi/toml"
 	jober "github.com/hamster-shared/aline-engine/job"
 	"github.com/hamster-shared/aline-engine/logger"
@@ -17,14 +27,6 @@ import (
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/mohaijiang/agent-go/candid"
 	"gorm.io/gorm"
-	"io"
-	"log"
-	"net/http"
-	"os"
-	"path"
-	"strconv"
-	"strings"
-	"time"
 )
 
 func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
@@ -252,6 +254,9 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 			return
 		case consts.InternetComputer:
 			err = w.syncInternetComputerBuild(projectId, workflowId, workflowDetail, jobDetail)
+			return
+		case consts.Solana:
+			err = w.syncContractSolana(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
 			return
 		default:
 			for _, arti := range jobDetail.Artifactorys {
@@ -547,6 +552,37 @@ func (w *WorkflowService) getStarknetAbiInfoAndByteCode(artiUrl string) (abiInfo
 	logger.Trace("starknet contract class hash: ", classHash)
 	byteCode = classHash
 	return
+}
+
+func (w *WorkflowService) syncContractSolana(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
+	var bytecode string
+
+	for _, arti := range artis {
+		if arti.Name == "solana_nft_anchor.so" {
+			data, err := os.ReadFile(arti.Url)
+			if err != nil {
+				logger.Errorf("read bytecode error : %v", err)
+			}
+			bytecode = base64.StdEncoding.EncodeToString(data)
+		}
+	}
+
+	contract := db.Contract{
+		ProjectId:        projectId,
+		WorkflowId:       workflowId,
+		WorkflowDetailId: workflowDetail.Id,
+		Name:             "solana_nft_anchor",
+		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+		BuildTime:        workflowDetail.CreateTime,
+		AbiInfo:          "",
+		ByteCode:         bytecode,
+		CreateTime:       time.Now(),
+		Type:             uint(consts.Solana),
+		Status:           consts.STATUS_SUCCESS,
+	}
+
+	return w.saveContractToDatabase(&contract)
+
 }
 
 func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, arti model.Artifactory) error {
