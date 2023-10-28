@@ -556,6 +556,7 @@ func (w *WorkflowService) getStarknetAbiInfoAndByteCode(artiUrl string) (abiInfo
 
 func (w *WorkflowService) syncContractSolana(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
 	var bytecode string
+	var idlData string
 
 	for _, arti := range artis {
 		if arti.Name == "solana_nft_anchor.so" {
@@ -564,6 +565,14 @@ func (w *WorkflowService) syncContractSolana(projectId uuid.UUID, workflowId uin
 				logger.Errorf("read bytecode error : %v", err)
 			}
 			bytecode = base64.StdEncoding.EncodeToString(data)
+		}
+
+		if arti.Name == "solana_nft_anchor.json" {
+			data, err := os.ReadFile(arti.Url)
+			if err != nil {
+				logger.Errorf("read bytecode error : %v", err)
+			}
+			idlData = string(data)
 		}
 	}
 
@@ -574,7 +583,7 @@ func (w *WorkflowService) syncContractSolana(projectId uuid.UUID, workflowId uin
 		Name:             "solana_nft_anchor",
 		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
 		BuildTime:        workflowDetail.CreateTime,
-		AbiInfo:          "",
+		AbiInfo:          idlData,
 		ByteCode:         bytecode,
 		CreateTime:       time.Now(),
 		Type:             uint(consts.Solana),
