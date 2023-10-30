@@ -34,6 +34,7 @@ type IProjectService interface {
 	//ParsingFrame(repoContents []*github.RepositoryContent, name, userName, token string) (uint, error)
 	ParsingEVMFrame(repoContents []*github.RepositoryContent) (consts.EVMFrameType, error)
 	GetChainNetworkList() ([]db2.ChainNetwork, error)
+	GetChainNetworkByName(name string) (db2.ChainNetwork, error)
 }
 
 type ProjectService struct {
@@ -292,6 +293,15 @@ func (p *ProjectService) GetChainNetworkList() ([]db2.ChainNetwork, error) {
 		return list, err
 	}
 	return list, nil
+}
+
+func (p *ProjectService) GetChainNetworkByName(name string) (db2.ChainNetwork, error) {
+	var chainNetwork db2.ChainNetwork
+	err := p.db.Model(db2.ChainNetwork{}).Where("chain_name = ?", name).First(&chainNetwork).Error
+	if err != nil {
+		return chainNetwork, err
+	}
+	return chainNetwork, nil
 }
 
 func (p *ProjectService) HandleProjectsByUserId(user db2.User, page, size int, token, filter string) (vo.RepoListPage, error) {

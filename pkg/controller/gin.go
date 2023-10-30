@@ -52,6 +52,7 @@ func (h *HttpServer) StartHttpServer() {
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
 	api.GET("/projects/chain/network/list", h.handlerServer.getChainNetworkList)
+	api.GET("/projects/chain/network/:name", h.handlerServer.getChainNetworkByName)
 	api.POST("/projects", h.handlerServer.createProject)
 	api.POST("/projects/import", h.handlerServer.importProject)
 	api.POST("/projects/code", h.handlerServer.createProjectByCode)
@@ -162,7 +163,7 @@ func (h *HttpServer) StartHttpServer() {
 	//arrange-api
 	api.GET("/projects/:id/arrange/contract/:version", h.handlerServer.getToBeArrangedContractList)         //获取待编排的合约列表
 	api.GET("/projects/:id/arrange/data/:version", h.handlerServer.getArrangedDataList)                     //获取编排参数列表
-	api.GET("/projects/:id/original/arrange/data/:version", h.handlerServer.getOriginalArrangedData)        //获取编排参数列表
+	api.GET("/projects/:id/original/arrange/data/:version", h.handlerServer.getOriginalArrangedData)        //获取原始编排参数
 	api.GET("/projects/:id/code/info/:version", h.handlerServer.getCodeInfoByVersion)                       //获取版本的codeInfo
 	api.GET("/projects/:id/arrange/execute/:executeId", h.handlerServer.getContractArrangeExecuteInfo)      //根据执行id获取执行信息
 	api.GET("/projects/:id/arrange/deploy/contract/:version", h.handlerServer.getDeployArrangeContractList) //根据项目ID和版本获取部署的合约列表

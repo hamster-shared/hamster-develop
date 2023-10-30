@@ -27,23 +27,23 @@ func NewArrangeService() *ArrangeService {
 }
 
 func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToBeArrangedContractListVo, error) {
-	var vo vo.ToBeArrangedContractListVo
+	var list vo.ToBeArrangedContractListVo
 	projectId, err := uuid.FromString(id)
 	if err != nil {
-		return vo, err
+		return list, err
 	}
 	var project db2.Project
 	err = a.db.Model(db2.Project{}).Where("id = ?", projectId).First(&project).Error
 	if err != nil {
-		return vo, err
+		return list, err
 	}
 	var contracts []db2.Contract
 	err = a.db.Model(db2.Contract{}).Where("project_id = ? and version = ?", projectId, version).Find(&contracts).Error
 	if err != nil {
-		return vo, err
+		return list, err
 	}
 	if len(contracts) < 1 {
-		return vo, errors.New("there are no contracts in this version")
+		return list, errors.New("there are no contracts in this version")
 	}
 	var contractNameArrangeParam parameter.ContractNameArrangeParam
 	contractNameArrangeParam.ProjectId = id
@@ -54,6 +54,7 @@ func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToB
 		contractNameList = append(contractNameList, contract.Name)
 		contractMap[contract.Name] = contract
 	}
+
 	//获取编排的合约名
 	var arrangeContractName string
 	err = a.db.Model(db2.ContractArrange{}).Select("arrange_contract_name").Where("project_id = ?", projectId).Order("update_time desc").Limit(1).First(&arrangeContractName).Error
@@ -62,10 +63,21 @@ func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToB
 		var contractNameArrange parameter.ContractNameArrange
 		err := json.Unmarshal([]byte(arrangeContractName), &contractNameArrange)
 		if err != nil {
-			return vo, err
+			return list, err
 		}
-		var useContract []db2.Contract
-		var noUseContract []db2.Contract
+
+		//获取该项目的最新的编排信息
+		var arrangeCacheList []db2.ContractArrangeCache
+		err = a.db.Model(db2.ContractArrangeCache{}).Distinct("contract_name").Select("contract_name", "original_arrange").Where("project_id = ?", projectId).Order("update_time desc").Find(&arrangeCacheList).Error
+		if err != nil {
+			return list, err
+		}
+		contractArrangeMap := make(map[string]string)
+		for _, cache := range arrangeCacheList {
+			contractArrangeMap[cache.ContractName] = cache.OriginalArrange
+		}
+		var useContract []vo.ToBeArrangedContractVo
+		var noUseContract []vo.ToBeArrangedContractVo
 		var usedNames []string
 		var saveUsedNames []string
 		var saveNoUsedNames []string
@@ -75,12 +87,13 @@ func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToB
 				contractName = contractName[:lastIndex]
 			}
 			if contract, exists := contractMap[contractName]; exists {
-				var contractVo db2.Contract
-				copier.Copy(&contractVo, &contract)
-				contractVo.Name = name
+				var toBeArrangedContractVo vo.ToBeArrangedContractVo
+				copier.Copy(&toBeArrangedContractVo, &contract)
+				toBeArrangedContractVo.Name = name
+				toBeArrangedContractVo.OriginalArrange = contractArrangeMap[name]
 				usedNames = append(usedNames, name)
 				saveUsedNames = append(saveUsedNames, name)
-				useContract = append(useContract, contractVo)
+				useContract = append(useContract, toBeArrangedContractVo)
 			}
 		}
 		for _, name := range contractNameArrange.NoUseContract {
@@ -89,47 +102,50 @@ func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToB
 				contractName = contractName[:lastIndex]
 			}
 			if contract, exists := contractMap[contractName]; exists {
-				var contractVo db2.Contract
-				copier.Copy(&contractVo, &contract)
-				contractVo.Name = name
+				var toBeArrangedContractVo vo.ToBeArrangedContractVo
+				copier.Copy(&toBeArrangedContractVo, &contract)
+				toBeArrangedContractVo.Name = name
 				usedNames = append(usedNames, name)
 				saveNoUsedNames = append(saveNoUsedNames, name)
-				noUseContract = append(noUseContract, contractVo)
+				noUseContract = append(noUseContract, toBeArrangedContractVo)
 			}
 		}
 		//获取没有使用的合约名
 		newContractName := utils.Difference(contractNameList, usedNames)
 		for _, name := range newContractName {
 			if contract, exists := contractMap[name]; exists {
-				var contractVo db2.Contract
-				copier.Copy(&contractVo, &contract)
-				contractVo.Name = name
+				var toBeArrangedContractVo vo.ToBeArrangedContractVo
+				copier.Copy(&toBeArrangedContractVo, &contract)
+				toBeArrangedContractVo.Name = name
+				toBeArrangedContractVo.OriginalArrange = contractArrangeMap[name]
 				saveUsedNames = append(saveUsedNames, name)
-				useContract = append(useContract, contractVo)
+				useContract = append(useContract, toBeArrangedContractVo)
 			}
 		}
 		if useContract == nil {
-			vo.UseContract = []db2.Contract{}
+			list.UseContract = []vo.ToBeArrangedContractVo{}
 		} else {
-			vo.UseContract = useContract
+			list.UseContract = useContract
 		}
 		if noUseContract == nil {
-			vo.NoUseContract = []db2.Contract{}
+			list.NoUseContract = []vo.ToBeArrangedContractVo{}
 		} else {
-			vo.NoUseContract = noUseContract
+			list.NoUseContract = noUseContract
 		}
 		contractNameArrangeParam.UseContract = saveUsedNames
 		contractNameArrangeParam.NoUseContract = saveNoUsedNames
 		a.SaveContractNameArrange(contractNameArrangeParam)
-		return vo, nil
+		return list, nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		//进行初始化
 		contractNameArrangeParam.UseContract = contractNameList
 		a.SaveContractNameArrange(contractNameArrangeParam)
-		vo.UseContract = contracts
-		return vo, nil
+		var toBeArrangedContractVoList []vo.ToBeArrangedContractVo
+		copier.Copy(&toBeArrangedContractVoList, &contracts)
+		list.UseContract = toBeArrangedContractVoList
+		return list, nil
 	} else {
-		return vo, err
+		return list, err
 	}
 }
 

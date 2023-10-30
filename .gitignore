@@ -43,3 +43,4 @@ hamster-develop
 /.env
 
 pipeline2.yml
+/pipeline3.yml
