@@ -16,13 +16,20 @@ stages:
         run: |
           npm install
           npm run build
+      - name: Compile Code
+        uses: icp-build
+        with:
+          dfx_json: ${{ param.dfxJson }}
   Output Results:
     needs:
-      - Build FrontEnd
+      - Build
     steps:
       - name: Save Package
         uses: hamster-artifactory
         with:
-          name: frontend.zip
+          name: icp-build.zip
           path: |
+            dfx.json
+            canister_ids.json
+            .dfx
             dist
