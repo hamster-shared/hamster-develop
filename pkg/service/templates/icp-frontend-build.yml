@@ -8,7 +8,7 @@ stages:
         with:
           url: [[ .RepositoryUrl ]]
           branch: ${{ param.branch }}
-  Build FrontEnd:
+  Build:
     needs:
       - Initialization
     steps:
