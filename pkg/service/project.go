@@ -298,7 +298,10 @@ func (p *ProjectService) GetChainNetworkList() ([]db2.ChainNetwork, error) {
 func (p *ProjectService) GetChainNetworkByName(name string) (db2.ChainNetwork, error) {
 	var chainNetwork db2.ChainNetwork
 	err := p.db.Model(db2.ChainNetwork{}).Where("chain_name = ?", name).First(&chainNetwork).Error
-	return chainNetwork, err
+	if err != nil {
+		return chainNetwork, err
+	}
+	return chainNetwork, nil
 }
 
 func (p *ProjectService) HandleProjectsByUserId(user db2.User, page, size int, token, filter string) (vo.RepoListPage, error) {
