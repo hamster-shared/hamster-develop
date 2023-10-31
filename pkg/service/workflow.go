@@ -124,7 +124,9 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) {
 		image := fmt.Sprintf("%s/%s-%d:%d", consts.DockerHubName, strings.ToLower(user.Username), user.Id, time.Now().Unix())
 		params["imageName"] = image
-	} else if project.FrameType == consts.InternetComputer {
+	}
+
+	if project.FrameType == consts.InternetComputer || project.DeployType == int(consts.INTERNET_COMPUTER) {
 		var icpDfx db.IcpDfxData
 		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
 		if err != nil {
@@ -133,6 +135,7 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 		}
 		params["dfxJson"] = icpDfx.DfxData
 	}
+
 	data, err := w.ExecProjectWorkflow(project, user, 2, params)
 	return data, err
 }
