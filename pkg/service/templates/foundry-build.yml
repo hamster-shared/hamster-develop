@@ -33,9 +33,22 @@ stages:
              elif [ "$length" -eq 0 ]; then
                 echo $i
              else
-               echo "ok: $i"
-               cp -R $i ../build/artifacts
-             fi
+                my_array=($(jq -r '.metadata .sources | keys | join(",")' $i))
+                all_start_with_node_modules=true
+                read -r elements <<< "$my_array"
+                for element in "${elements[@]}"; do
+                  if [[ ! "$element" == "node_modules"* ]]; then
+                    echo "element" $element
+                    all_start_with_node_modules=false
+                    break
+                  fi
+                done
+                if $all_start_with_node_modules; then
+                else
+                  echo "ok: $i"
+                  cp -R $i ../build/artifacts/
+                fi
+            fi
           done;
   Output Results:
     needs:
