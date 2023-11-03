@@ -41,6 +41,7 @@ type WorkflowDetailVo struct {
 	Type        uint      `json:"type"`
 	TriggerUser string    `json:"triggerUser"`
 	ErrorInfo   string    `json:"errorInfo"`
+	Version     string    `json:"version"`
 }
 
 type DeployResultVo struct {

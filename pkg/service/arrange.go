@@ -314,7 +314,7 @@ func (a *ArrangeService) SaveContractArrangeExecute(param parameter.ContractArra
 	}
 	arrangeExecute := db2.ContractArrangeExecute{
 		ProjectId:          projectId,
-		FkArrangeId:        strconv.Itoa(int(contractArrange.Id)),
+		FkArrangeId:        contractArrange.Id,
 		Version:            param.Version,
 		Network:            param.Network,
 		ArrangeProcessData: param.ArrangeProcessData,

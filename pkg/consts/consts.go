@@ -164,6 +164,6 @@ const (
 type EngineType string
 
 const (
-	EngineTypeWorkflow        = "workflow,"
+	EngineTypeWorkflow        = "workflow"
 	EngineTypeContractArrange = "arrange_execute"
 )

@@ -116,3 +116,16 @@ func (p *ArrangeProcessData) GetStatus() model.Status {
 
 	return toEngineStatus(status)
 }
+
+func (p *ArrangeProcessData) GetErrorInfo() string {
+	for _, ds := range p.DeployStep {
+		if ds.Status == "FAILED" {
+			for _, s := range ds.Steps {
+				if s.Status == "FAILED" {
+					return s.ErrorInfo
+				}
+			}
+		}
+	}
+	return ""
+}

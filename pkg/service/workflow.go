@@ -489,7 +489,16 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	return &data, nil
 }
 
-func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int, engine string) (*vo.WorkflowDetailVo, error) {
+func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int, engineType string) (*vo.WorkflowDetailVo, error) {
+
+	if engineType == consts.EngineTypeWorkflow {
+		return w.getWorkflowDetailWithEngine(workflowId, workflowDetailId)
+	} else {
+		return w.getWorkflowDetailWithContractArrange(workflowDetailId)
+	}
+}
+
+func (w *WorkflowService) getWorkflowDetailWithEngine(workflowId, workflowDetailId int) (*vo.WorkflowDetailVo, error) {
 	var workflowDetail db.WorkflowDetail
 	var detail vo.WorkflowDetailVo
 	res := w.db.Model(db.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
@@ -526,6 +535,30 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int, en
 	}
 
 	return &detail, nil
+}
+func (w *WorkflowService) getWorkflowDetailWithContractArrange(arrangeExecuteId int) (*vo.WorkflowDetailVo, error) {
+	var contractArrangeExecute db.ContractArrangeExecute
+	err := w.db.Model(&db.ContractArrangeExecute{}).First(&contractArrangeExecute, arrangeExecuteId).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var resData vo.WorkflowDetailVo
+	resData.Id = contractArrangeExecute.Id
+	resData.Type = uint(consts.Deploy)
+	resData.WorkflowId = contractArrangeExecute.FkArrangeId
+	processData, err := UnmarshalProcessData(contractArrangeExecute.ArrangeProcessData)
+	if err != nil {
+		return nil, err
+	}
+	resData.StageInfo = processData.toJobDetailString()
+	resData.Status = uint(processData.GetStatus())
+	resData.Version = contractArrangeExecute.Version
+	resData.StartTime = contractArrangeExecute.CreateTime
+	resData.ErrorInfo = processData.GetErrorInfo()
+	resData.Duration = contractArrangeExecute.UpdateTime.Sub(contractArrangeExecute.CreateTime).Milliseconds()
+	return &resData, nil
+
 }
 
 func (w *WorkflowService) QueryWorkflowDetail(workflowId, workflowDetailId int) (*db.WorkflowDetail, error) {
