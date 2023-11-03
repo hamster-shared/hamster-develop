@@ -335,6 +335,7 @@ func (a *ArrangeService) UpdateContractArrangeExecute(update parameter.ContractA
 		return "", err
 	}
 	arrangeExecute.ArrangeProcessData = update.ArrangeProcessData
+	arrangeExecute.UpdateTime = time.Now()
 	err = a.db.Model(db2.ContractArrangeExecute{}).Where("id = ?", update.Id).Updates(&arrangeExecute).Error
 	if err != nil {
 		return "", err

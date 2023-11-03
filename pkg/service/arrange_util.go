@@ -106,6 +106,10 @@ func toEngineStatus(status string) model.Status {
 
 func (p *ArrangeProcessData) GetStatus() model.Status {
 
+	if len(p.DeployStep) == 0 {
+		return model.STATUS_FAIL
+	}
+
 	status := p.DeployStep[0].Status
 
 	for _, ds := range p.DeployStep {

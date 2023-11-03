@@ -476,7 +476,10 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 				resData.StageInfo = processData.toJobDetailString()
 				resData.Status = uint(processData.GetStatus())
 				resData.Version = contractArrangeExecute.Version
-
+				resData.StartTime = datum.CreateTime
+				resData.Duration = contractArrangeExecute.UpdateTime.Sub(contractArrangeExecute.CreateTime).Milliseconds()
+				resData.TriggerMode = 1
+				resData.CodeInfo = ""
 				workflowData = append(workflowData, resData)
 			}
 
