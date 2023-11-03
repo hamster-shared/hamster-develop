@@ -26,6 +26,8 @@ type WorkflowVo struct {
 	Status      uint      `json:"status"`
 	StartTime   time.Time `json:"startTime"`
 	Duration    int64     `json:"duration"`
+	Engine      string    `json:"engine"` // workflow,arrange_execute
+	Version     string    `json:"version"`
 }
 
 type WorkflowDetailVo struct {

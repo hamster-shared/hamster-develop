@@ -428,22 +428,52 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	var total int64
 	var data vo.WorkflowPage
 	var workflowData []vo.WorkflowVo
-	var workflowList []db.WorkflowDetail
-	tx := w.db.Model(db.WorkflowDetail{}).Where("project_id = ?", projectId)
+	var viewList []db.ViewWorkflowDetail
+	tx := w.db.Debug().Model(db.ViewWorkflowDetail{}).Where("project_id = ?", projectId)
 	if workflowType != 0 {
 		tx = tx.Where("type = ? ", workflowType)
 	}
-	result := tx.Offset((page - 1) * size).Limit(size).Find(&workflowList).Offset(-1).Limit(-1).Count(&total)
+	result := tx.Offset((page - 1) * size).Limit(size).Find(&viewList).Offset(-1).Limit(-1).Count(&total)
 	if result.Error != nil {
 		return &data, result.Error
 	}
-	if len(workflowList) > 0 {
-		for _, datum := range workflowList {
-			var resData vo.WorkflowVo
-			_ = copier.Copy(&resData, &datum)
-			resData.DetailId = datum.Id
-			resData.Id = datum.WorkflowId
-			workflowData = append(workflowData, resData)
+	if len(viewList) > 0 {
+		for _, datum := range viewList {
+
+			if datum.Engine == "workflow" {
+				var resData vo.WorkflowVo
+				var workflowDetail db.WorkflowDetail
+				err := w.db.Model(&db.WorkflowDetail{}).First(&workflowDetail, datum.Id).Error
+				if err != nil {
+					continue
+				}
+				_ = copier.Copy(&resData, &workflowDetail)
+				resData.DetailId = datum.Id
+				resData.Id = workflowDetail.WorkflowId
+				resData.Engine = datum.Engine
+				workflowData = append(workflowData, resData)
+			} else if datum.Engine == "arrange_execute" {
+				var resData vo.WorkflowVo
+				var contractArrangeExecute db.ContractArrangeExecute
+				err := w.db.Model(&db.ContractArrangeExecute{}).First(&contractArrangeExecute, datum.Id).Error
+				if err != nil {
+					continue
+				}
+				resData.Id = datum.Id
+				resData.Type = datum.Type
+				resData.Engine = datum.Engine
+				resData.ProjectId = datum.ProjectId
+				processData, err := UnmarshalProcessData(contractArrangeExecute.ArrangeProcessData)
+				if err != nil {
+					continue
+				}
+				resData.StageInfo = processData.toJobDetailString()
+				resData.Status = uint(processData.GetStatus())
+				resData.Version = contractArrangeExecute.Version
+
+				workflowData = append(workflowData, resData)
+			}
+
 		}
 	}
 	data.Data = workflowData
