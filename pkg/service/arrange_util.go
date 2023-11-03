@@ -74,7 +74,9 @@ func (p *ArrangeProcessData) toJobDetail() []model.StageDetail {
 		stage := model.Stage{
 			Steps: steps,
 		}
-		result = append(result, model.NewStageDetail(deployStep.Contract.Name, stage))
+		stageDetail := model.NewStageDetail(deployStep.Contract.Name, stage)
+		stageDetail.Status = toEngineStatus(deployStep.Status)
+		result = append(result, stageDetail)
 	}
 	return result
 }

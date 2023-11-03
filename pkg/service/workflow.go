@@ -143,7 +143,7 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth) (vo.DeployResultVo, error) {
 	buildWorkflowKey := w.GetWorkflowKey(projectId.String(), uint(buildWorkflowId))
 
-	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId)
+	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId, consts.EngineTypeWorkflow)
 	if err != nil {
 		logger.Errorf("workflow : %s", err)
 		return vo.DeployResultVo{}, err
@@ -198,7 +198,7 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 	}
 	buildWorkflowKey := w.GetWorkflowKey(projectId.String(), uint(buildWorkflowId))
 
-	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId)
+	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId, consts.EngineTypeWorkflow)
 	if err != nil {
 		logger.Errorf("GetWorkflowDetail err: %s", err.Error())
 		return vo.DeployResultVo{}, err
@@ -429,7 +429,7 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	var data vo.WorkflowPage
 	var workflowData []vo.WorkflowVo
 	var viewList []db.ViewWorkflowDetail
-	tx := w.db.Debug().Model(db.ViewWorkflowDetail{}).Where("project_id = ?", projectId)
+	tx := w.db.Debug().Model(db.ViewWorkflowDetail{}).Where("project_id = ?", projectId).Order("create_time desc")
 	if workflowType != 0 {
 		tx = tx.Where("type = ? ", workflowType)
 	}
@@ -437,9 +437,13 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	if result.Error != nil {
 		return &data, result.Error
 	}
-	if len(viewList) > 0 {
-		for _, datum := range viewList {
 
+	if len(viewList) > 0 {
+
+		var contractArrantTotal int64
+		w.db.Model(&db.ContractArrangeExecute{}).Where("project_id = ?", projectId).Order("create_time desc").Count(&contractArrantTotal)
+
+		for _, datum := range viewList {
 			if datum.Engine == "workflow" {
 				var resData vo.WorkflowVo
 				var workflowDetail db.WorkflowDetail
@@ -463,6 +467,8 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 				resData.Type = datum.Type
 				resData.Engine = datum.Engine
 				resData.ProjectId = datum.ProjectId
+				resData.ExecNumber = uint(contractArrantTotal)
+				contractArrantTotal = contractArrantTotal - 1
 				processData, err := UnmarshalProcessData(contractArrangeExecute.ArrangeProcessData)
 				if err != nil {
 					continue
@@ -483,7 +489,7 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	return &data, nil
 }
 
-func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*vo.WorkflowDetailVo, error) {
+func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int, engine string) (*vo.WorkflowDetailVo, error) {
 	var workflowDetail db.WorkflowDetail
 	var detail vo.WorkflowDetailVo
 	res := w.db.Model(db.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)

@@ -160,3 +160,10 @@ const (
 	GitHub   = 1
 	Metamask = 2
 )
+
+type EngineType string
+
+const (
+	EngineTypeWorkflow        = "workflow,"
+	EngineTypeContractArrange = "arrange_execute"
+)
