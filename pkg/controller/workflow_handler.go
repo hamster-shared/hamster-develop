@@ -326,8 +326,9 @@ func (h *HandlerServer) deleteWorkflow(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	engineType := gin.DefaultQuery("engine", consts.EngineTypeWorkflow)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	err = workflowService.DeleteWorkflow(workflowId, detailId)
+	err = workflowService.DeleteWorkflow(workflowId, detailId, engineType)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -364,8 +365,8 @@ func (h *HandlerServer) deleteWorkflowDeploy(gin *gin.Context) {
 	data, err := frontendPackageService.QueryPackageById(packageId)
 	if err == nil {
 		data.Domain = ""
-		frontendPackageService.UpdateFrontedPackage(data)
+		_ = frontendPackageService.UpdateFrontedPackage(data)
 	}
-	frontendPackageService.DeleteFrontendDeploy(packageId)
+	_ = frontendPackageService.DeleteFrontendDeploy(packageId)
 	Success("", gin)
 }

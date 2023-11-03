@@ -633,7 +633,7 @@ func (w *WorkflowService) SettingWorkflow(settingData parameter.SaveWorkflowPara
 		workflow.ToolType = 0
 	}
 	workflow.Tool = strings.Join(settingData.Tool, ",")
-	w.UpdateWorkflow(workflow)
+	_ = w.UpdateWorkflow(workflow)
 	return nil
 }
 
@@ -864,12 +864,12 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	return input.String(), nil
 }
 
-func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int) error {
-	err := w.db.Debug().Where("id = ? and workflow_id = ?", detailId, workflowId).Delete(&db.WorkflowDetail{}).Error
-	if err != nil {
-		return err
+func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int, engineType string) error {
+	if engineType == consts.EngineTypeWorkflow {
+		return w.db.Debug().Where("id = ? and workflow_id = ?", detailId, workflowId).Delete(&db.WorkflowDetail{}).Error
+	} else {
+		return w.db.Where("id = ?", detailId).Delete(&db.ContractArrangeExecute{}).Error
 	}
-	return nil
 }
 
 func (w *WorkflowService) CheckRunningJob() {
@@ -962,7 +962,7 @@ func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 		file, err := w.TemplateParse(checkKey, project, consts.Check)
 		if err == nil {
 			workflowCheckRes.ExecFile = file
-			w.UpdateWorkflow(workflowCheckRes)
+			_ = w.UpdateWorkflow(workflowCheckRes)
 		}
 	}
 	workflowBuildData := parameter.SaveWorkflowParam{
@@ -979,7 +979,7 @@ func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 	file1, err := w.TemplateParse(buildKey, project, consts.Build)
 	if err == nil {
 		workflowBuildRes.ExecFile = file1
-		w.UpdateWorkflow(workflowBuildRes)
+		_ = w.UpdateWorkflow(workflowBuildRes)
 	}
 
 	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) || (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer) {
@@ -997,7 +997,7 @@ func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 		file1, err := w.TemplateParse(deployKey, project, consts.Deploy)
 		if err == nil {
 			workflowDeployRes.ExecFile = file1
-			w.UpdateWorkflow(workflowDeployRes)
+			_ = w.UpdateWorkflow(workflowDeployRes)
 		}
 	}
 }
