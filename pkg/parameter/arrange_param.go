@@ -45,3 +45,8 @@ type ContractNameArrange struct {
 	UseContract   []string `json:"useContract"`
 	NoUseContract []string `json:"noUseContract"`
 }
+
+type ContractInfoQuery struct {
+	Id   uint   `json:"id" form:"id"`
+	Name string `json:"name" form:"name" `
+}

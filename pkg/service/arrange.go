@@ -412,3 +412,15 @@ func (a *ArrangeService) GetContractArrangeCache(query parameter.ContractArrange
 	}
 	return contractArrangeCache.OriginalArrange, nil
 }
+
+func (a *ArrangeService) GetContractInfo(query parameter.ContractInfoQuery) (vo.ToBeArrangedContractVo, error) {
+	var contract db2.Contract
+	err := a.db.Model(db2.Contract{}).Where("id = ?", query.Id).First(&contract).Error
+	if err != nil {
+		return vo.ToBeArrangedContractVo{}, err
+	}
+	var toBeArrangedContractVo vo.ToBeArrangedContractVo
+	copier.Copy(&toBeArrangedContractVo, &contract)
+	toBeArrangedContractVo.Name = query.Name
+	return toBeArrangedContractVo, nil
+}
