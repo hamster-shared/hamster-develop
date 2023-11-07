@@ -83,7 +83,7 @@ func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToB
 		var saveNoUsedNames []string
 		for _, name := range contractNameArrange.UseContract {
 			contractName := name
-			if lastIndex := strings.LastIndex(contractName, "("); lastIndex >= 0 {
+			if lastIndex := strings.LastIndex(contractName, " copy #"); lastIndex >= 0 {
 				contractName = contractName[:lastIndex]
 			}
 			if contract, exists := contractMap[contractName]; exists {
