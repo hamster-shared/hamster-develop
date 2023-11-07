@@ -76,8 +76,8 @@ func (l *LoginService) LoginWithGithubV2(data parameter.LoginParam) (string, err
 	var token parameter.Token
 	url := "https://github.com/login/oauth/access_token"
 	res, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
-		"client_id":     data.ClientId,
-		"client_secret": data.ClientSecret,
+		"client_id":     os.Getenv("APPS_CLIENT_ID"),
+		"client_secret": os.Getenv("APPS_CLIENT_SECRETS"),
 		"code":          data.Code,
 	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
 	if res.StatusCode() != 200 {
@@ -90,6 +90,11 @@ func (l *LoginService) LoginWithGithubV2(data parameter.LoginParam) (string, err
 	if err != nil {
 		return "", err
 	}
+	email, err := l.githubService.GetUserEmail(token.AccessToken)
+	if err != nil {
+		log.Println("github install failed:get email failed", err.Error())
+		return "", err
+	}
 	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.ID).First(&userData).Error
 	if err != nil {
 		userData.Id = uint(*userInfo.ID)
@@ -98,6 +103,7 @@ func (l *LoginService) LoginWithGithubV2(data parameter.LoginParam) (string, err
 		userData.HtmlUrl = *userInfo.HTMLURL
 		userData.CreateTime = time.Now()
 		userData.LoginType = consts.GitHub
+		userData.UserEmail = email
 		l.db.Save(&userData)
 	}
 	jwtToken, err := utils.GenerateJWT(int(userData.Id), consts.GitHub)
