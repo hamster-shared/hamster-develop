@@ -354,7 +354,7 @@ func (a *ArrangeService) GetContractArrangeExecuteInfo(executeId string) (info d
 
 func (a *ArrangeService) GetDeployArrangeContractList(projectId, version string) (list []vo.DeployContractListVo, err error) {
 	var deployContractList []vo.DeployContractListVo
-	err = a.db.Raw("SELECT cd.id, c.name AS contract_name, cd.contract_id, cd.project_id, cd.version, cd.deploy_time, cd.network, cd.address, cd.type, cd.declare_tx_hash, cd.deploy_time, cd.status, cd.abi_info from t_contract_deploy cd LEFT JOIN t_contract c ON cd.contract_id = c.id WHERE cd.project_id = ? AND cd.version = ?", projectId, version).Scan(&deployContractList).Error
+	err = a.db.Raw("SELECT cd.id, c.name AS contract_name, cd.contract_id, cd.project_id, cd.version, cd.deploy_time, cd.network, cd.address, cd.type, cd.declare_tx_hash, cd.deploy_time, cd.status, cd.abi_info from t_contract_deploy cd LEFT JOIN t_contract c ON cd.contract_id = c.id WHERE cd.project_id = ? AND cd.version = ?", projectId, version).Order("deploy_time desc").Scan(&deployContractList).Error
 	if err != nil {
 		return list, err
 	}
