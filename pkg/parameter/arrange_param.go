@@ -28,10 +28,10 @@ type ContractArrangeCacheParam struct {
 }
 
 type ContractArrangeCacheQuery struct {
-	ProjectId    string `json:"projectId" form:"projectId"`
-	ContractId   uint   `json:"contractId" form:"contractId" `
-	ContractName string `json:"contractName" form:"contractName"`
-	Version      string `json:"version" form:"version"`
+	ProjectId    string `json:"projectId" form:"projectId" binding:"required"`
+	ContractId   uint   `json:"contractId" form:"contractId" binding:"required"`
+	ContractName string `json:"contractName" form:"contractName" binding:"required"`
+	Version      string `json:"version" form:"version" binding:"required"`
 }
 
 type ContractNameArrangeParam struct {

@@ -200,7 +200,7 @@ func (h *HandlerServer) saveContractArrangeCache(gin *gin.Context) {
 
 func (h *HandlerServer) getContractArrangeCache(gin *gin.Context) {
 	var contractArrangeCacheQuery parameter.ContractArrangeCacheQuery
-	err := gin.BindQuery(&contractArrangeCacheQuery)
+	err := gin.BindJSON(&contractArrangeCacheQuery)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
