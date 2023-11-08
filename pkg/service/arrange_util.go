@@ -93,7 +93,7 @@ func (p *ArrangeProcessData) toJobDetailString() string {
 func toEngineStatus(status string) model.Status {
 	if status == "SUCCESS" {
 		return model.STATUS_SUCCESS
-	} else if status == "PENDDING" {
+	} else if status == "PENDING" {
 		return model.STATUS_NOTRUN
 	} else if status == "FAILED" {
 		return model.STATUS_FAIL
