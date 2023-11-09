@@ -162,8 +162,13 @@ func (a *ArrangeService) GetArrangedDataList(id, version string) ([]string, erro
 	}
 
 	//获取编排的合约名
+	var lastVersion string
+	err = a.db.Model(db2.ContractArrange{}).Select("version").Where("project_id = ?", projectId).Order("version desc").First(&lastVersion).Error
+	if err != nil {
+		return list, nil
+	}
 	var arrangeContractName string
-	err = a.db.Model(db2.ContractArrange{}).Select("arrange_contract_name").Where("project_id = ? and version = ?", projectId, version).Order("update_time desc").Limit(1).First(&arrangeContractName).Error
+	err = a.db.Model(db2.ContractArrange{}).Select("arrange_contract_name").Where("project_id = ? and version = ?", projectId, lastVersion).Order("update_time desc").Limit(1).First(&arrangeContractName).Error
 	if err == nil {
 		//存在历史版本
 		var contractNameArrange parameter.ContractNameArrange
@@ -172,7 +177,7 @@ func (a *ArrangeService) GetArrangedDataList(id, version string) ([]string, erro
 			return list, err
 		}
 		var ContractArrangeCacheList []db2.ContractArrangeCache
-		err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and version = ?", projectId, version).Find(&ContractArrangeCacheList).Error
+		err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and version = ?", projectId, lastVersion).Find(&ContractArrangeCacheList).Error
 		if err != nil {
 			return list, err
 		}
