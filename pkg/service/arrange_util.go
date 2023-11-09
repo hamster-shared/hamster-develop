@@ -99,6 +99,8 @@ func toEngineStatus(status string) model.Status {
 		return model.STATUS_FAIL
 	} else if status == "STOP" {
 		return model.STATUS_STOP
+	} else if status == "RUNNING" {
+		return model.STATUS_RUNNING
 	}
 
 	return model.STATUS_FAIL
