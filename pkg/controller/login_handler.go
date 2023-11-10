@@ -144,6 +144,7 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 				Fail(err.Error(), gin)
 				return
 			}
+			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL)
 		}
 		if githubInstall.Action == "deleted" {
 			err = githubService.GithubAppDelete(githubInstall.Installation.GetID())
@@ -152,6 +153,8 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 				Fail(err.Error(), gin)
 				return
 			}
+			githubService.DeleteAppsInstall(githubInstall.Installation.GetID(), consts.REMOVE_INSTALL)
+			githubService.DeleteUserWallet(githubInstall.Installation.GetAccount().GetID())
 		}
 	}
 	if event == "installation_repositories" {
@@ -484,27 +487,51 @@ func (h *HandlerServer) updateFirstStateV2(gin *gin.Context) {
 }
 
 func (h *HandlerServer) githubInstallCheck(gin *gin.Context) {
-	tokenAny, _ := gin.Get("token")
-	token, _ := tokenAny.(string)
-	githubService := application.GetBean[*service.GithubService]("githubService")
-	data, err := githubService.GetUsersInstallations(token)
-	if err != nil {
-		Fail(err.Error(), gin)
+	userAny, exit := gin.Get("user")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", gin)
 		return
 	}
+	loginType, exit := gin.Get("loginType")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", gin)
+		return
+	}
+	githubService := application.GetBean[*service.GithubService]("githubService")
 	res := false
-	if len(data) > 0 {
-		res = true
+	if loginType == consts.GitHub {
+		user, _ := userAny.(db2.User)
+		data, err := githubService.GetUserInstallations(int64(user.Id))
+		if err != nil {
+			Fail(err.Error(), gin)
+			return
+		}
+		if len(data) > 0 {
+			res = true
+		}
+	} else {
+		user, _ := userAny.(db2.UserWallet)
+		data, err := githubService.GetUserInstallations(int64(user.UserId))
+		if err != nil {
+			Fail(err.Error(), gin)
+			return
+		}
+		if len(data) > 0 {
+			res = true
+		}
 	}
 	Success(res, gin)
 }
 
 func (h *HandlerServer) getUsersInstallations(gin *gin.Context) {
-	tokenAny, _ := gin.Get("token")
-	token, _ := tokenAny.(string)
-	token = "ghu_4veGLyiEsjoMaVqCO0ErKvN4mJVoG62DXoY7"
+	userAny, exit := gin.Get("user")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", gin)
+		return
+	}
+	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	data, err := githubService.GetUsersInstallations(token)
+	data, err := githubService.GetUserInstallations(int64(user.Id))
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

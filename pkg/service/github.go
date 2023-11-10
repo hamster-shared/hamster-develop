@@ -10,6 +10,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
+	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/pkg/errors"
@@ -388,6 +389,15 @@ func (g *GithubService) GetUsersInstallations(token string) ([]*github.Installat
 	return installations, nil
 }
 
+func (g *GithubService) GetUserInstallations(userId int64) ([]db2.GitAppInstall, error) {
+	var data []db2.GitAppInstall
+	err := g.db.Model(db2.GitAppInstall{}).Where("user_id = ?", userId).Find(&data).Error
+	if err != nil {
+		logger.Errorf("get user installation failed:%s", err)
+	}
+	return data, err
+}
+
 func (g *GithubService) getWebHookData(installationId int64) ([]*github.Repository, error) {
 	var repos []*github.Repository
 	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
@@ -460,6 +470,7 @@ func (g *GithubService) HandlerInstallData(installationId int64, action string) 
 		repoData.SshUrl = repo.GetSSHURL()
 		repoData.RepoId = repo.GetID()
 		repoData.CreateTime = repo.GetCreatedAt().Time
+		repoData.Private = repo.GetPrivate()
 		if err != nil {
 			err = g.db.Model(db2.GitRepo{}).Create(&repoData).Error
 			if err != nil {
@@ -471,6 +482,55 @@ func (g *GithubService) HandlerInstallData(installationId int64, action string) 
 		} else {
 			g.db.Model(db2.GitRepo{}).Save(&repoData)
 		}
+	}
+	return nil
+}
+
+func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHookInstall, action string) error {
+	var installData db2.GitAppInstall
+	installData.UserId = appInstallData.Installation.GetAccount().GetID()
+	if appInstallData.Installation.GetAccount().GetType() == "Organization" {
+		installData.UserId = appInstallData.Requester.Id
+	}
+	installData.InstallUserId = appInstallData.Installation.GetAccount().GetID()
+	installData.InstallId = appInstallData.Installation.GetID()
+	installData.Name = appInstallData.Installation.GetAccount().GetLogin()
+	installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
+	installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
+	installData.CreateTime = time.Now()
+	err := g.db.Create(&installData).Error
+	if err != nil {
+		logger.Errorf("save install info failed:%s", err)
+		err = g.saveFailedData(appInstallData.Installation.GetID(), action)
+		if err != nil {
+			logger.Errorf("save failed install info failed:%s", err)
+		}
+	}
+	return nil
+}
+
+func (g *GithubService) DeleteAppsInstall(installId int64, action string) error {
+	err := g.db.Where("install_id = ?", installId).Delete(&db2.GitAppInstall{}).Error
+	if err != nil {
+		logger.Errorf("delete install info failed:%s", err)
+		err = g.saveFailedData(installId, action)
+		if err != nil {
+			logger.Errorf("save failed delete install info failed:%s", err)
+		}
+	}
+	return err
+}
+
+func (g *GithubService) DeleteUserWallet(userId int64) error {
+	var userWallet []db2.UserWallet
+	err := g.db.Model(db2.UserWallet{}).Where("user_id = ?", userId).Find(&userWallet).Error
+	if err != nil {
+		logger.Errorf("delete user wallet association failed:%s", err)
+		return err
+	}
+	for _, wallet := range userWallet {
+		wallet.UserId = 0
+		g.db.Save(&wallet)
 	}
 	return nil
 }
@@ -521,7 +581,7 @@ func (g *GithubService) QueryRepos(installationId int64, page, size int, query s
 	var total int64
 	var repoPage db2.RepoPage
 	var repos []db2.GitRepo
-	tx := g.db.Model(db2.RepoPage{}).Where("installation_id = ?", installationId)
+	tx := g.db.Model(db2.GitRepo{}).Where("installation_id = ?", installationId)
 	if query != "" {
 		tx = tx.Where("name like ? ", "%"+query+"%")
 	}

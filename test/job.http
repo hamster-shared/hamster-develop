@@ -550,3 +550,47 @@ Access-Token: KjOkymfHU5cTOqiWlFQim1/jfTbVUx/llPle9MJh8x7ORooKyB48MyzqzWNeAJjg
 GET http://localhost:8080/api/github/users/installations
 Content-Type: application/json
 Access-Token: RVnEcjKOiPXr61IM3hTsrTGoExBRWACMP/XXenFNc0PJ8H9U4dgv+YRrHdQZSHdL
+
+
+
+### 登录
+POST http://localhost:8080/api/v2/login
+Content-Type: application/json
+
+{
+  "code": "e98703a2d5f2e4492a5e"
+}
+
+### 获取用户信息
+GET http://localhost:8080/api/v2/user
+Content-Type: application/json
+Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk2NzE3NjAsImxvZ2luVHlwZSI6MSwidXNlcklkIjo1MzA3MDM1NH0.Fl3Tum2OLjTsNXoBkmcQbkGIqIjb2u8R4cdXc7hkHDg
+
+
+### 判断是否有安装的信息
+GET http://localhost:8080/api/github/install
+Content-Type: application/json
+Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk2NzE3NjAsImxvZ2luVHlwZSI6MSwidXNlcklkIjo1MzA3MDM1NH0.Fl3Tum2OLjTsNXoBkmcQbkGIqIjb2u8R4cdXc7hkHDg
+
+
+### 保存安装信息
+POST http://localhost:8080/api/github/app/install
+Content-Type: application/json
+Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk2NzE3NjAsImxvZ2luVHlwZSI6MSwidXNlcklkIjo1MzA3MDM1NH0.Fl3Tum2OLjTsNXoBkmcQbkGIqIjb2u8R4cdXc7hkHDg
+
+{
+  "name": "hamster-template",
+  "repositorySelection": "selected",
+  "installId": 43829669,
+  "userId": 53070354,
+  "installUserId": 121993493
+}
+
+### 获取安转信息
+GET http://localhost:8080/api/github/users/installations
+Content-Type: application/json
+Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk2NzE3NjAsImxvZ2luVHlwZSI6MSwidXNlcklkIjo1MzA3MDM1NH0.Fl3Tum2OLjTsNXoBkmcQbkGIqIjb2u8R4cdXc7hkHDg
+
+####
+GET http://localhost:8080/api/github/installation/43829669/repositories?page=1&size=3&query=
+Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk2NzE3NjAsImxvZ2luVHlwZSI6MSwidXNlcklkIjo1MzA3MDM1NH0.Fl3Tum2OLjTsNXoBkmcQbkGIqIjb2u8R4cdXc7hkHDg

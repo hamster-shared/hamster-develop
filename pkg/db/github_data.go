@@ -18,6 +18,7 @@ type GitRepo struct {
 	CloneUrl       string    `json:"cloneUrl"`
 	SshUrl         string    `json:"sshUrl"`
 	DefaultBranch  string    `json:"defaultBranch"`
+	Private        bool      `json:"private"`
 	CreateTime     time.Time `json:"createTime"`
 }
 
@@ -26,4 +27,15 @@ type RepoPage struct {
 	Total    int64     `json:"total"`
 	Page     int       `json:"page"`
 	PageSize int       `json:"pageSize"`
+}
+
+type GitAppInstall struct {
+	Id                  int64     `gorm:"primaryKey" json:"id"`
+	InstallUserId       int64     `json:"installUserId"`
+	Name                string    `json:"name"`
+	RepositorySelection string    `json:"repositorySelection"`
+	InstallId           int64     `json:"installId"`
+	UserId              int64     `json:"userId"`
+	AvatarUrl           string    `json:"avatarUrl"`
+	CreateTime          time.Time `json:"createTime"`
 }

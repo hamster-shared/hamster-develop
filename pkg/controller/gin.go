@@ -65,9 +65,9 @@ func (h *HttpServer) StartHttpServer() {
 	api.PUT("/v2/user/first/state", h.handlerServer.updateFirstStateV2)
 
 	// new add
-	api.GET("/github/install", h.handlerServer.githubInstallCheck)
+	api.GET("/github/install/check", h.handlerServer.githubInstallCheck)
 	api.POST("/github/install/auth", h.handlerServer.githubInstallAuth)
-	api.POST("/v2/github/install", h.handlerServer.githubInstallV2)
+	//api.POST("/v2/github/install", h.handlerServer.githubInstallV2)
 	api.GET("/github/users/installations", h.handlerServer.getUsersInstallations)
 	api.GET("/github/installation/:id/repositories", h.handlerServer.getGithubRepos)
 	// set check pipeline

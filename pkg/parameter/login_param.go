@@ -32,8 +32,15 @@ type GithubWebHook struct {
 }
 
 type GithubWebHookInstall struct {
-	Action       string              `json:"action"`
-	Installation github.Installation `json:"installation"`
+	Action              string              `json:"action"`
+	Installation        github.Installation `json:"installation"`
+	RepositorySelection string              `json:"repository_selection"`
+	Requester           Requester           `json:"requester"`
+}
+
+type Requester struct {
+	Login string `json:"login"`
+	Id    int64  `json:"id"`
 }
 
 type SenderUser struct {
