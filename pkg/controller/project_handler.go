@@ -2,6 +2,7 @@ package controller
 
 import (
 	"embed"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -67,7 +68,11 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	tokenAny, _ := g.Get("token")
 	token, _ := tokenAny.(string)
 	userAny, _ := g.Get("user")
-	user, _ := userAny.(db2.User)
+	user, ok := userAny.(db2.User)
+	if !ok {
+		Fail("user info is not user", g)
+		return
+	}
 	importData := parameter.ImportProjectParam{}
 	err := g.BindJSON(&importData)
 	if err != nil {
@@ -75,10 +80,27 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
+
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	// parsing url
+	owner, name, err := service.ParsingGitHubURL(importData.CloneURL)
+	if err != nil {
+		log.Println(err.Error())
+		Fail(err.Error(), g)
+		return
+	}
+
+	repo, _, err := githubService.GetRepo(token, owner, name)
+	if err != nil {
+		log.Println(err.Error())
+		Fail(err.Error(), g)
+		return
+	}
+
 	data := vo.CreateProjectParam{
 		Name:        importData.Name,
 		Type:        importData.Type,
-		Branch:      "main",
+		Branch:      *repo.DefaultBranch,
 		TemplateUrl: importData.CloneURL,
 		FrameType:   consts.ProjectFrameType(importData.Ecosystem),
 		DeployType:  1,
@@ -92,19 +114,13 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	if data.Type == int(consts.BLOCKCHAIN) {
 		data.DeployType = int(consts.CONTAINER)
 	}
-	// parsing url
-	owner, name, err := service.ParsingGitHubURL(importData.CloneURL)
-	if err != nil {
-		log.Println(err.Error())
-		Fail(err.Error(), g)
-		return
-	}
+
 	var evmTemplateType consts.EVMFrameType
 	// if frame type == evm, need to choose evm template type
 	if data.Type == int(consts.CONTRACT) && data.FrameType == consts.Evm {
-		githubService := application.GetBean[*service.GithubService]("githubService")
+
 		// get all files
-		repoContents, err := githubService.GetRepoFileList(token, owner, name)
+		repoContents, err := githubService.GetRepoFileList(token, owner, name, data.Branch)
 		if err != nil {
 			log.Println(err.Error())
 			Fail(err.Error(), g)
@@ -155,6 +171,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	createData := parameter.CreateProjectParam{}
 	err := g.BindJSON(&createData)
 	if err != nil {
+		fmt.Println(err)
 		Fail(err.Error(), g)
 		return
 	}
@@ -166,7 +183,9 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	repo, res, err := githubService.GetRepo(token, user.Username, createData.Name)
 
 	if err != nil {
+		logger.Info(err)
 		if res != nil {
+			logger.Info("res.StatusCode", res.StatusCode)
 			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 				Failed(http.StatusUnauthorized, "access not authorized", g)
 				return
@@ -174,6 +193,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		}
 		repo, res, err = githubService.CreateRepository(token, createData.Name)
 		if err != nil {
+			logger.Error(err)
 			if res != nil {
 				if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 					Failed(http.StatusUnauthorized, "access not authorized", g)
@@ -188,7 +208,9 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		if flag {
 			repo, res, err = githubService.CreateRepository(token, createData.Name)
 			if err != nil {
+				logger.Error(err)
 				if res != nil {
+					logger.Error("res: ", res.StatusCode)
 					if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
 						Failed(http.StatusUnauthorized, "access not authorized", g)
 						return
@@ -199,8 +221,9 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 			}
 		}
 	}
-	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
+	branch, err := githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
 	if err != nil {
+		logger.Error(err)
 		Fail(err.Error(), g)
 		return
 	}
@@ -212,7 +235,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	if createData.Type == int(consts.CONTRACT) && createData.FrameType == uint(consts.Evm) {
 		githubService := application.GetBean[*service.GithubService]("githubService")
 		// get all files
-		repoContents, err := githubService.GetRepoFileList(token, user.Username, createData.Name)
+		repoContents, err := githubService.GetRepoFileList(token, user.Username, createData.Name, branch)
 		if err != nil {
 			log.Println(err.Error())
 			Fail(err.Error(), g)
@@ -221,6 +244,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		// get EVM contract frame: truffle\foundry\hardhat
 		frame, err := h.projectService.ParsingEVMFrame(repoContents)
 		if err != nil {
+			logger.Error(err)
 			Fail(err.Error(), g)
 			return
 		}
@@ -237,14 +261,17 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		LabelDisplay: createData.LabelDisplay,
 		GistId:       createData.GistId,
 		DefaultFile:  createData.DefaultFile,
+		Branch:       branch,
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
+		logger.Error(err)
 		Fail(err.Error(), g)
 		return
 	}
 	project, err := h.projectService.GetProject(id.String())
 	if err != nil {
+		logger.Error(err)
 		Fail(err.Error(), g)
 		return
 	}
@@ -319,6 +346,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		}
 		err = containerDeployService.UpdateContainerDeploy(project.Id, deployParam)
 		if err != nil {
+			logger.Error(err)
 			logger.Errorf("init blockchain k8s param failed: %s", err)
 		}
 
@@ -865,7 +893,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 			return
 		}
 	}
-	err = githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateUrl, consts.TemplateRepoName)
+	branch, err := githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, consts.TemplateUrl, consts.TemplateRepoName)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -889,6 +917,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 		TemplateUrl: *repo.CloneURL,
 		FrameType:   consts.ProjectFrameType(createData.FrameType),
 		UserId:      int64(user.Id),
+		Branch:      branch,
 	}
 	id, err := h.projectService.CreateProject(data)
 	if err != nil {
@@ -1096,8 +1125,13 @@ func (h *HandlerServer) repositoryType(gin *gin.Context) {
 	userAny, _ := gin.Get("user")
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
+
+	// parsing url
+	owner, name, err := service.ParsingGitHubURL(repoUrl)
+
+	repo, _, err := githubService.GetRepo(token, owner, name)
 	// get all files
-	repoContents, err := githubService.GetRepoFileList(token, user.Username, repoName)
+	repoContents, err := githubService.GetRepoFileList(token, user.Username, repoName, *repo.DefaultBranch)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -1108,4 +1142,39 @@ func (h *HandlerServer) repositoryType(gin *gin.Context) {
 		Fail(err.Error(), gin)
 	}
 	Success(repoFrameType, gin)
+}
+
+func (h *HandlerServer) getGitHubRepositorySelection(gin *gin.Context) {
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	selection, err := githubService.GetGitHubAppInstallationForUser(user.Username)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(selection, gin)
+}
+
+func (h *HandlerServer) getChainNetworkList(gin *gin.Context) {
+	list, err := h.projectService.GetChainNetworkList()
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(list, gin)
+}
+
+func (h *HandlerServer) getChainNetworkByName(gin *gin.Context) {
+	name := gin.Param("name")
+	if name == "" {
+		Fail("name is empty", gin)
+		return
+	}
+	list, err := h.projectService.GetChainNetworkByName(name)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(list, gin)
 }

@@ -58,6 +58,10 @@ spec:
               value: /certs/client
             - name: DOCKER_TLS_VERIFY
               value: "1"
+            - name: GITHUB_APP_ID
+              value: "294815"
+            - name: GITHUB_APP_PEM
+              value: "/home/ubuntu/githubApp/hamster-test-private-key.pem"
             - name: OPENAI_API_KEY
               valueFrom:
                 configMapKeyRef:
@@ -113,6 +117,16 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: ipfs_gateway
+            - name: JWT_SECRET
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: JWT_SECRET
+            - name: INSTALL_AUTH_CLIENT_SECRETS
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: INSTALL_AUTH_CLIENT_SECRETS
           ports:
             - containerPort: 8080
           volumeMounts:
@@ -134,6 +148,9 @@ spec:
               readOnly: true
             - name: ubuntu-kubeconfig
               mountPath: "/home/ubuntu/.kube"
+              readOnly: true
+            - name: hamster-test-private-key
+              mountPath: "/home/ubuntu/githubApp"
               readOnly: true
       volumes:
         - name: dfx-config
@@ -162,6 +179,12 @@ spec:
             items:
               - key: "kubeconfig"
                 path: "config"
+        - name: hamster-test-private-key
+          configMap:
+            name: hamster-test-private-key.pem
+            items:
+              - key: "hamster-test-private-key.pem"
+                path: "hamster-test-private-key.pem"
 ---
 apiVersion: v1
 kind: Service

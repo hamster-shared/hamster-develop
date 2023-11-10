@@ -7,22 +7,47 @@ stages:
         uses: git-checkout
         with:
           url: [[ .RepositoryUrl ]]
-          branch: main
+          branch: ${{ param.branch }}
   Build Contract:
     needs:
       - Initialization
     steps:
+      - name: install dependency
+        runs-on: node:18
+        run: |
+          npm install
       - name: Compile Contract
         runs-on: ghcr.io/foundry-rs/foundry:latest
         run: |
+          forge install
           forge build
       - name: Filter Info
         run: |
           mkdir -p build/artifacts
-          cd src
-          for i in `ls *.sol`;do
-            if [ -e "../out/$i/`echo $i|sed 's/\.sol//g'`.json" ]; then
-              cp -R ../out/$i/`echo $i|sed 's/\.sol//g'`.json ../build/artifacts
+          cd out
+          for i in `find . -type f -name '*.json'`;do
+             bytecode=$(jq -r '.bytecode' $i)
+             length=$(jq '.abi | length' $i)
+             if [ "$bytecode" = "0x" ]; then
+                echo $i
+             elif [ "$length" -eq 0 ]; then
+                echo $i
+             else
+                my_array=($(jq -r '.metadata .sources | keys | join(",")' $i))
+                all_start_with_node_modules=true
+                read -r elements <<< "$my_array"
+                for element in "${elements[@]}"; do
+                  if [[ ! "$element" == "node_modules"* ]]; then
+                    echo "element" $element
+                    all_start_with_node_modules=false
+                    break
+                  fi
+                done
+                if $all_start_with_node_modules; then
+                else
+                  echo "ok: $i"
+                  cp -R $i ../build/artifacts/
+                fi
             fi
           done;
   Output Results:

@@ -29,6 +29,7 @@ type WorkflowDetail struct {
 	StageInfo   string
 	TriggerUser string
 	TriggerMode uint
+	CodeBranch  string
 	CodeInfo    string
 	Status      uint
 	StartTime   time.Time
@@ -36,4 +37,16 @@ type WorkflowDetail struct {
 	CreateTime  time.Time      `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
 	UpdateTime  time.Time      `json:"update_time"`
 	DeleteTime  gorm.DeletedAt `gorm:"index;column:delete_time;" json:"delete_time"`
+}
+
+type ViewWorkflowDetail struct {
+	Id         uint `gorm:"primaryKey" json:"id"`
+	ProjectId  uuid.UUID
+	Type       uint
+	Engine     string
+	CreateTime time.Time `gorm:"column:create_time;default:current_timestamp" json:"create_time"`
+}
+
+func (v ViewWorkflowDetail) TableName() string {
+	return "v_workflow_detail"
 }

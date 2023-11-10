@@ -85,6 +85,8 @@ to quickly create a Cobra application.`,
 		templateService.Init(db)
 		projectService.Init(db)
 		application.SetBean[service.IProjectService]("projectService", projectService)
+		arrangeService := service.NewArrangeService()
+		application.SetBean[*service.ArrangeService]("arrangeService", arrangeService)
 
 		// 定时同步starknet 合约部署状态
 		ticker := time.NewTicker(time.Minute * 2)

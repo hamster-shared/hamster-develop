@@ -155,3 +155,15 @@ const Gateway = "hamster.newtouch.com"
 //const Gateway = "c.alpha.hamsternet.io"
 
 const Namespace = "hamster-container"
+
+const (
+	GitHub   = 1
+	Metamask = 2
+)
+
+type EngineType string
+
+const (
+	EngineTypeWorkflow        = "workflow"
+	EngineTypeContractArrange = "arrange_execute"
+)

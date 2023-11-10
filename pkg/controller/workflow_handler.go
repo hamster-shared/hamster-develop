@@ -5,10 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 	engine "github.com/hamster-shared/aline-engine"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
+	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	uuid "github.com/iris-contrib/go.uuid"
 	"strconv"
+	"strings"
 )
 
 func (h *HandlerServer) workflowList(gin *gin.Context) {
@@ -53,8 +55,9 @@ func (h *HandlerServer) workflowDetail(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	engineType := gin.DefaultQuery("engine", consts.EngineTypeWorkflow)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	data, err := workflowService.GetWorkflowDetail(workflowId, detailId)
+	data, err := workflowService.GetWorkflowDetail(workflowId, detailId, engineType)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -181,8 +184,10 @@ func (h *HandlerServer) contractFileContent(gin *gin.Context) {
 	tokenAny, _ := gin.Get("token")
 	token, _ := tokenAny.(string)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	//path := fmt.Sprintf("contracts%s", name)
-	path := fmt.Sprintf("%s", name)
+	path := fmt.Sprintf("contracts%s", name)
+	if strings.Contains(name, "contracts") {
+		path = fmt.Sprintf("%s", name)
+	}
 	content, err := githubService.GetFileContent(token, user.Username, data.Name, path)
 	if err != nil {
 		Fail(err.Error(), gin)
@@ -321,8 +326,9 @@ func (h *HandlerServer) deleteWorkflow(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	engineType := gin.DefaultQuery("engine", consts.EngineTypeWorkflow)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	err = workflowService.DeleteWorkflow(workflowId, detailId)
+	err = workflowService.DeleteWorkflow(workflowId, detailId, engineType)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -359,8 +365,8 @@ func (h *HandlerServer) deleteWorkflowDeploy(gin *gin.Context) {
 	data, err := frontendPackageService.QueryPackageById(packageId)
 	if err == nil {
 		data.Domain = ""
-		frontendPackageService.UpdateFrontedPackage(data)
+		_ = frontendPackageService.UpdateFrontedPackage(data)
 	}
-	frontendPackageService.DeleteFrontendDeploy(packageId)
+	_ = frontendPackageService.DeleteFrontendDeploy(packageId)
 	Success("", gin)
 }

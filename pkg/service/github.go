@@ -4,15 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v48/github"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/pkg/errors"
 	"github.com/wujiangweiphp/go-curl"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -135,14 +138,14 @@ func (g *GithubService) GetRepo(token, owner, repoName string) (*github.Reposito
 	return repo, res, err
 }
 
-func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl, templateName string) error {
+func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl, templateName string) (string, error) {
 	cloneDir := filepath.Join(utils.DefaultRepoDir(), owner)
 	_, err := os.Stat(cloneDir)
 	if err != nil && os.IsNotExist(err) {
 		err = os.MkdirAll(cloneDir, os.ModePerm)
 		if err != nil {
 			log.Println("create workdir failed", err.Error())
-			return err
+			return "", err
 		}
 	}
 	gitClone := exec.Command("git", "clone", templateUrl)
@@ -152,7 +155,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 		deleteOwnerDir(owner)
 		log.Println(string(out))
 		log.Println("git clone failed", err.Error())
-		return err
+		return "", err
 	}
 	workdir := filepath.Join(utils.DefaultRepoDir(), owner, templateName)
 	deleteGit := exec.Command("rm", "-rf", ".git")
@@ -162,16 +165,17 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 		deleteOwnerDir(owner)
 		log.Println(string(out))
 		log.Println("delete .git failed", err.Error())
-		return err
+		return "", err
 	}
-	gitInit := exec.Command("git", "init", "-b", "main")
+	branch := "main"
+	gitInit := exec.Command("git", "init", "-b", branch)
 	gitInit.Dir = workdir
 	out, err = gitInit.CombinedOutput()
 	if err != nil {
 		deleteOwnerDir(owner)
 		log.Println(string(out))
 		log.Println("git init failed", err.Error())
-		return err
+		return "", err
 	}
 	configName := exec.Command("git", "config", "user.name", owner)
 	configName.Dir = workdir
@@ -180,7 +184,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 		deleteOwnerDir(owner)
 		log.Println(string(out))
 		log.Println("config git user name failed", err.Error())
-		return err
+		return "", err
 	}
 	configEmail := exec.Command("git", "config", "user.email", email)
 	configEmail.Dir = workdir
@@ -189,7 +193,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 		deleteOwnerDir(owner)
 		log.Println(string(out))
 		log.Println("config git user email failed", err.Error())
-		return err
+		return "", err
 	}
 	first := strings.Index(repoUrl, "/")
 	index := first + 2
@@ -201,7 +205,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 		deleteOwnerDir(owner)
 		log.Println(string(out))
 		log.Println("git add origin failed", err.Error())
-		return err
+		return "", err
 	}
 	fileAdd := exec.Command("git", "add", ".")
 	fileAdd.Dir = workdir
@@ -210,7 +214,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 		deleteOwnerDir(owner)
 		log.Println(string(out))
 		log.Println("git file add failed", err.Error())
-		return err
+		return "", err
 	}
 	gitCommit := exec.Command("git", "commit", "-m", "Initial commit")
 	gitCommit.Dir = workdir
@@ -219,7 +223,7 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 		deleteOwnerDir(owner)
 		log.Println(string(out))
 		log.Println("git commit failed", err.Error())
-		return err
+		return "", err
 	}
 	gitPush := exec.Command("git", "push", "origin", "main")
 	gitPush.Dir = workdir
@@ -228,10 +232,10 @@ func (g *GithubService) CommitAndPush(token, repoUrl, owner, email, templateUrl,
 		deleteOwnerDir(owner)
 		log.Println(string(out))
 		log.Println("git push failed", err.Error())
-		return err
+		return "", err
 	}
 	deleteOwnerDir(owner)
-	return nil
+	return branch, nil
 }
 
 func (g *GithubService) GetUserEmail(token string) (string, error) {
@@ -269,6 +273,7 @@ func deleteOwnerDir(owner string) {
 	deleteCmd.Dir = utils.DefaultRepoDir()
 	deleteCmd.Start()
 }
+
 func (g *GithubService) GetFileContent(token, owner, repo, path string) (string, error) {
 	client := utils.NewGithubClient(g.ctx, token)
 	fileContent, _, _, err := client.Repositories.GetContents(g.ctx, owner, repo, path, nil)
@@ -319,11 +324,11 @@ func (g *GithubService) GetRepoList(token, owner, filter string, page, size int)
 	return repoListVo, nil
 }
 
-func (g *GithubService) GetRepoFileList(token, owner, fileName string) ([]*github.RepositoryContent, error) {
+func (g *GithubService) GetRepoFileList(token, owner, fileName string, branch string) ([]*github.RepositoryContent, error) {
 	client := utils.NewGithubClient(g.ctx, token)
 	// 设置查询选项，包含ref和message参数
 	opts := &github.RepositoryContentGetOptions{
-		Ref: "main",
+		Ref: branch,
 	}
 	_, contents, _, err := client.Repositories.GetContents(g.ctx, owner, fileName, "", opts)
 	if err != nil {
@@ -336,4 +341,30 @@ func (g *GithubService) GetRepoFileList(token, owner, fileName string) ([]*githu
 		}
 	}
 	return repoContent, nil
+}
+
+func (g *GithubService) GetGitHubAppInstallationForUser(username string) (string, error) {
+	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
+	if exist {
+		return "", errors.New("请联系管理员配置GITHUB_APP_ID")
+	}
+	appId, err := strconv.Atoi(appIdString)
+	if err != nil {
+		return "", err
+	}
+	appPemPath, exist := os.LookupEnv("GITHUB_APP_PEM")
+	if exist {
+		return "", errors.New("请联系管理员配置GITHUB_APP_ID")
+	}
+	ctx := context.Background()
+	atr, err := ghinstallation.NewAppsTransportKeyFromFile(http.DefaultTransport, int64(appId), appPemPath)
+	if err != nil {
+		return "", err
+	}
+	client := github.NewClient(&http.Client{Transport: atr})
+	installation, _, err := client.Apps.FindUserInstallation(ctx, username)
+	if err != nil {
+		return "", err
+	}
+	return *installation.RepositorySelection, nil
 }

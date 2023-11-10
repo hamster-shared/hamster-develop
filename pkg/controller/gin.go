@@ -31,6 +31,8 @@ func (h *HttpServer) StartHttpServer() {
 	api.Use(h.handlerServer.RequestLog())
 
 	api.POST("/login", h.handlerServer.loginWithGithub)
+	api.POST("/v2/login", h.handlerServer.githubLogin)
+	api.POST("/metamask/login", h.handlerServer.metamaskLogin)
 	api.POST("/github/install", h.handlerServer.githubInstall)
 	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
 	api.POST("/github/webhook", h.handlerServer.githubWebHook)
@@ -45,9 +47,12 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/templates/show", h.handlerServer.templateShow)
 	api.POST("/templates/:id/download", h.handlerServer.templateDownload)
 	api.Use(h.handlerServer.Authorize())
+	//api.Use(h.handlerServer.JwtAuthorize())
 	api.POST("/user/wallet", h.handlerServer.saveUserWallet)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
+	api.GET("/projects/chain/network/list", h.handlerServer.getChainNetworkList)
+	api.GET("/projects/chain/network/:name", h.handlerServer.getChainNetworkByName)
 	api.POST("/projects", h.handlerServer.createProject)
 	api.POST("/projects/import", h.handlerServer.importProject)
 	api.POST("/projects/code", h.handlerServer.createProjectByCode)
@@ -56,13 +61,20 @@ func (h *HttpServer) StartHttpServer() {
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)
 	api.POST("/projects/check-name", h.handlerServer.checkName)
 	api.GET("/user", h.handlerServer.getUseInfo)
-	api.PUT("/user/first/state", h.handlerServer.updateFirstState)
+	api.GET("/v2/user", h.handlerServer.getUseInfoV2)
+	api.PUT("/user/first/state", h.handlerServer.updateFirstStateV2)
+	api.PUT("/v2/user/first/state", h.handlerServer.updateFirstStateV2)
+	// new add
+	api.GET("/github/install", h.handlerServer.githubInstallCheck)
+	api.POST("/github/install/auth", h.handlerServer.githubInstallAuth)
+	api.POST("/v2/github/install", h.handlerServer.githubInstallV2)
 	// set check pipeline
 	api.POST("/project/:id/workflow/setting", h.handlerServer.workflowSetting)
 	api.GET("/project/:id/workflow/setting/check", h.handlerServer.workflowSettingCheck)
 	// repository
 	api.GET("/repositories", h.handlerServer.getRepositories)
 	api.GET("/repository/type", h.handlerServer.repositoryType)
+	api.GET("/repository/selection", h.handlerServer.getGitHubRepositorySelection)
 	/*
 		创建项目返回项目 ID
 		缺登录的接口
@@ -147,6 +159,26 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/account/info", h.handlerServer.getAccountInfo)         //查询icp信息accountId和余额
 	api.POST("/projects/:id/create/identity", h.handlerServer.createIdentity)     //创建icp身份
 	api.POST("/projects/:id/redeem/coupon", h.handlerServer.redeemFaucetCoupon)   //通过优惠卷生成钱包罐
+
+	//arrange-api
+	api.GET("/projects/:id/arrange/contract/:version", h.handlerServer.getToBeArrangedContractList)         //获取待编排的合约列表
+	api.GET("/projects/:id/arrange/data/:version", h.handlerServer.getArrangedDataList)                     //获取编排参数列表
+	api.GET("/projects/:id/original/arrange/data/:version", h.handlerServer.getOriginalArrangedData)        //获取原始编排参数
+	api.GET("/projects/:id/code/info/:version", h.handlerServer.getCodeInfoByVersion)                       //获取版本的codeInfo
+	api.GET("/projects/:id/arrange/execute/:executeId", h.handlerServer.getContractArrangeExecuteInfo)      //根据执行id获取执行信息
+	api.GET("/projects/:id/arrange/deploy/contract/:version", h.handlerServer.getDeployArrangeContractList) //根据项目ID和版本获取部署的合约列表
+	api.GET("/projects/:id/contract/info", h.handlerServer.getContractInfo)                                 //获取单个合约的构建信息
+	api.POST("/projects/:id/arrange/contract/name", h.handlerServer.getContractArrangeCache)                //获取单个合约的最新编排信息
+	api.POST("/projects/:id/arrange", h.handlerServer.saveContractArrange)                                  //保存编排信息
+	api.POST("/projects/:id/arrange/name", h.handlerServer.saveContractNameArrange)                         //保存合约名编排信息
+	api.POST("/projects/:id/arrange/cache", h.handlerServer.saveContractArrangeCache)                       //保存单个合约编排信息
+	api.PUT("/projects/:id/arrange", h.handlerServer.updateContractArrange)                                 //更新编排信息
+	api.POST("/projects/:id/arrange/execute", h.handlerServer.saveContractArrangeExecute)                   //保存编排执行信息
+	api.PUT("/projects/:id/arrange/execute", h.handlerServer.updateContractArrangeExecute)                  //更新执行信息
+	//
+	//保存部署成的合约信息
+	//
+	//查询某个那版本下已经部署的合约
 
 	// ======== old api =========//
 	// pipeline

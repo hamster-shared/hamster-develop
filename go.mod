@@ -4,18 +4,21 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.2.1
+	github.com/bradleyfalzon/ghinstallation/v2 v2.7.0
 	github.com/dontpanicdao/caigo v0.4.1
 	github.com/ethereum/go-ethereum v1.12.2
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-resty/resty/v2 v2.7.0
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-github/v48 v48.2.0
 	github.com/goperate/convert v0.0.7
 	github.com/gorilla/websocket v1.5.0
-	github.com/hamster-shared/aline-engine v1.0.4-0.20230829064736-7f28ce8ff1ef
+	github.com/hamster-shared/aline-engine v1.0.4-0.20231031022353-a066e639369e
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/mohaijiang/agent-go v0.3.1
 	github.com/pkg/errors v0.9.1
+	github.com/samber/lo v1.36.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
@@ -32,6 +35,7 @@ require (
 )
 
 require (
+	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
 	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/antonfisher/nested-logrus-formatter v1.3.1 // indirect
@@ -40,6 +44,7 @@ require (
 	github.com/aviate-labs/secp256k1 v0.0.0-5e6736a // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
+	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
@@ -66,6 +71,7 @@ require (
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-github/v55 v55.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
@@ -126,12 +132,12 @@ require (
 	github.com/xlab/treeprint v1.1.0 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad // indirect
 	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/term v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230323212658-478b75c54725 // indirect
@@ -151,3 +157,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+//replace github.com/hamster-shared/aline-engine => ../aline-engine

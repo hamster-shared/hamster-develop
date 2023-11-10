@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"github.com/hamster-shared/hamster-develop/cmd"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -13,12 +12,12 @@ import (
 
 func TestUser(t *testing.T) {
 	db, err := gorm.Open(mysql.New(mysql.Config{
-		DSN:                       cmd.DSN, // data source name
-		DefaultStringSize:         256,     // default size for string fields
-		DisableDatetimePrecision:  true,    // disable datetime precision, which not supported before MySQL 5.6
-		DontSupportRenameIndex:    true,    // drop & create when rename index, rename index not supported before MySQL 5.7, MariaDB
-		DontSupportRenameColumn:   true,    // `change` when rename column, rename column not supported before MySQL 8, MariaDB
-		SkipInitializeWithVersion: false,   // auto configure based on currently MySQL version
+		//DSN:                       cmd.DSN, // data source name
+		DefaultStringSize:         256,   // default size for string fields
+		DisableDatetimePrecision:  true,  // disable datetime precision, which not supported before MySQL 5.6
+		DontSupportRenameIndex:    true,  // drop & create when rename index, rename index not supported before MySQL 5.7, MariaDB
+		DontSupportRenameColumn:   true,  // `change` when rename column, rename column not supported before MySQL 8, MariaDB
+		SkipInitializeWithVersion: false, // auto configure based on currently MySQL version
 
 	}), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{

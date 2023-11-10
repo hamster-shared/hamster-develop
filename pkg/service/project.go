@@ -33,6 +33,8 @@ type IProjectService interface {
 	GetProjectById(id string) (*db2.Project, error)
 	//ParsingFrame(repoContents []*github.RepositoryContent, name, userName, token string) (uint, error)
 	ParsingEVMFrame(repoContents []*github.RepositoryContent) (consts.EVMFrameType, error)
+	GetChainNetworkList() ([]db2.ChainNetwork, error)
+	GetChainNetworkByName(name string) (db2.ChainNetwork, error)
 }
 
 type ProjectService struct {
@@ -143,10 +145,10 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 		project.Creator = createData.UserId
 		project.CreateTime = time.Now()
 		project.UpdateTime = time.Now()
-		project.FrameType = consts.ProjectFrameType(createData.FrameType)
+		project.FrameType = createData.FrameType
 		project.Type = uint(createData.Type)
 		project.RepositoryUrl = createData.TemplateUrl
-		project.Branch = "main"
+		project.Branch = createData.Branch
 		project.DeployType = createData.DeployType
 		project.LabelDisplay = createData.LabelDisplay
 		project.GistId = createData.GistId
@@ -284,6 +286,24 @@ func (p *ProjectService) GetProjectById(id string) (*db2.Project, error) {
 	return &data, result.Error
 }
 
+func (p *ProjectService) GetChainNetworkList() ([]db2.ChainNetwork, error) {
+	var list []db2.ChainNetwork
+	err := p.db.Model(db2.ChainNetwork{}).Find(&list).Error
+	if err != nil {
+		return list, err
+	}
+	return list, nil
+}
+
+func (p *ProjectService) GetChainNetworkByName(name string) (db2.ChainNetwork, error) {
+	var chainNetwork db2.ChainNetwork
+	err := p.db.Model(db2.ChainNetwork{}).Where("chain_name = ?", name).First(&chainNetwork).Error
+	if err != nil {
+		return chainNetwork, err
+	}
+	return chainNetwork, nil
+}
+
 func (p *ProjectService) HandleProjectsByUserId(user db2.User, page, size int, token, filter string) (vo.RepoListPage, error) {
 	var projects []db2.Project
 	err := p.db.Model(db2.Project{}).Where("user_id = ?", user.Id).Find(&projects).Error
@@ -350,33 +370,45 @@ func removeElements(arr1 []vo.RepoVo, arr2 []db2.Project) []vo.RepoVo {
 //	return 0, fmt.Errorf("parsing frame error")
 //}
 
-func (p *ProjectService) ParsingEVMFrame(repoContents []*github.RepositoryContent) (consts.EVMFrameType, error) {
-	for _, v := range repoContents {
-		fileName := v.GetName()
-		if strings.Contains(fileName, "truffle-config.js") {
-			return consts.Truffle, nil
-		} else if strings.Contains(fileName, "foundry.toml") {
-			return consts.Foundry, nil
-		} else if strings.Contains(fileName, "hardhat.config.js") {
-			return consts.Hardhat, nil
-		} else if strings.Contains(fileName, ".waffle.json") {
-			return consts.Waffle, nil
-		}
-	}
-	return 0, fmt.Errorf("parsing frame error")
+type FrameType struct {
+	isTruffle bool
+	isHardhat bool
+	isFoundry bool
+	isWaffle  bool
 }
 
-func getEvmFrameType(fileName string) consts.EVMFrameType {
-	if strings.Contains(fileName, "truffle-config.js") {
-		return consts.Truffle
+func (ft *FrameType) GetEvmFrameType() (consts.EVMFrameType, error) {
+	if ft.isTruffle {
+		return consts.Truffle, nil
+	} else if ft.isHardhat {
+		return consts.Hardhat, nil
+	} else if ft.isFoundry {
+		return consts.Foundry, nil
+	} else if ft.isWaffle {
+		return consts.Waffle, nil
+	} else {
+		return 0, fmt.Errorf("parsing frame error")
 	}
-	if strings.Contains(fileName, "foundry.toml") {
-		return consts.Foundry
+}
+
+func (p *ProjectService) ParsingEVMFrame(repoContents []*github.RepositoryContent) (consts.EVMFrameType, error) {
+
+	ft := FrameType{}
+
+	for _, v := range repoContents {
+		fileName := v.GetName()
+		if strings.Contains(fileName, "truffle-config.js") || strings.Contains(fileName, "truffle-config.ts") {
+			ft.isTruffle = true
+		} else if strings.Contains(fileName, "hardhat.config.js") || strings.Contains(fileName, "hardhat.config.ts") {
+			ft.isHardhat = true
+		} else if strings.Contains(fileName, "foundry.toml") {
+			ft.isFoundry = true
+		} else if strings.Contains(fileName, ".waffle.json") {
+			ft.isWaffle = true
+		}
 	}
-	if strings.Contains(fileName, "hardhat.config.js") {
-		return consts.Hardhat
-	}
-	return 0
+
+	return ft.GetEvmFrameType()
 }
 
 func parsingToml(fileContent *github.RepositoryContent, name, userName, token string) (consts.ProjectFrameType, error) {
