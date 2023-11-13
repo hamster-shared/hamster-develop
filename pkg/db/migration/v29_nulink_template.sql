@@ -74,7 +74,7 @@ insert into t_template (
              'Demo interact with NuLink Agent SDK.',
              1,
              '0.0.1',
-             1,
+             0,
              0,
              'https://g.alpha.hamsternet.io/ipfs/QmSEZGr1tT7hU2jzFCx2HJQobqrpPmfsxKJr8XBXSGWq9D',
              1,
