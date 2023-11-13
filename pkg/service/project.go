@@ -85,15 +85,30 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 					}
 				}
 			}
+			//recentDeploy
+			var workflowDeployData db2.WorkflowDetail
 			if projectType == int(consts.CONTRACT) {
-				var deployData db2.ContractDeploy
-				err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
-				if err == nil {
-					_ = copier.Copy(&recentDeploy, &deployData)
+				if project.FrameType == consts.InternetComputer {
+					err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
+					if err == nil {
+						recentDeploy.Id = workflowDeployData.Id
+						recentDeploy.Status = workflowDeployData.Status
+						recentDeploy.DeployTime = workflowDeployData.StartTime
+						var backendDeploy db2.BackendDeploy
+						err = p.db.Model(db2.BackendDeploy{}).Where("project_id = ? and workflow_detail_id = ? ", data.Id, workflowDeployData.Id).Order("deploy_time DESC").Limit(1).First(&backendDeploy).Error
+						if err == nil {
+							_ = copier.Copy(&recentDeploy, &backendDeploy)
+						}
+					}
+				} else {
+					var deployData db2.ContractDeploy
+					err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", project.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+					if err == nil {
+						_ = copier.Copy(&recentDeploy, &deployData)
+					}
 				}
 				data.RecentDeploy = recentDeploy
 			} else {
-				var workflowDeployData db2.WorkflowDetail
 				var packageDeploy vo.PackageDeployVo
 				var deployData db2.FrontendDeploy
 				err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", project.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
@@ -128,7 +143,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 		project.Creator = createData.UserId
 		project.CreateTime = time.Now()
 		project.UpdateTime = time.Now()
-		project.FrameType = createData.FrameType
+		project.FrameType = consts.ProjectFrameType(createData.FrameType)
 		project.Type = uint(createData.Type)
 		project.RepositoryUrl = createData.TemplateUrl
 		project.Branch = "main"
@@ -170,15 +185,29 @@ func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 			}
 		}
 	}
+	var workflowDeployData db2.WorkflowDetail
 	if data.Type == uint(consts.CONTRACT) {
-		var deployData db2.ContractDeploy
-		err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
-		if err == nil {
-			_ = copier.Copy(&recentDeploy, &deployData)
+		if data.FrameType == consts.InternetComputer {
+			err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
+			if err == nil {
+				recentDeploy.Id = workflowDeployData.Id
+				recentDeploy.Status = workflowDeployData.Status
+				recentDeploy.DeployTime = workflowDeployData.StartTime
+				var backendDeploy db2.BackendDeploy
+				err = p.db.Model(db2.BackendDeploy{}).Where("project_id = ? and workflow_detail_id = ? ", data.Id, workflowDeployData.Id).Order("deploy_time DESC").Limit(1).First(&backendDeploy).Error
+				if err == nil {
+					_ = copier.Copy(&recentDeploy, &backendDeploy)
+				}
+			}
+		} else {
+			var deployData db2.ContractDeploy
+			err = p.db.Model(db2.ContractDeploy{}).Where("project_id = ?", data.Id).Order("deploy_time DESC").Limit(1).Find(&deployData).Error
+			if err == nil {
+				_ = copier.Copy(&recentDeploy, &deployData)
+			}
 		}
 		detail.RecentDeploy = recentDeploy
 	} else {
-		var workflowDeployData db2.WorkflowDetail
 		var packageDeploy vo.PackageDeployVo
 		var deployData db2.FrontendDeploy
 		err = p.db.Model(db2.WorkflowDetail{}).Where("project_id = ? and type = ?", data.Id, consts.Deploy).Order("create_time DESC").Limit(1).Find(&workflowDeployData).Error
@@ -350,7 +379,7 @@ func getEvmFrameType(fileName string) consts.EVMFrameType {
 	return 0
 }
 
-func parsingToml(fileContent *github.RepositoryContent, name, userName, token string) (uint, error) {
+func parsingToml(fileContent *github.RepositoryContent, name, userName, token string) (consts.ProjectFrameType, error) {
 	githubService := application.GetBean[*GithubService]("githubService")
 	content, err := githubService.GetFileContent(token, userName, name, fileContent.GetPath())
 	if err != nil {
@@ -377,7 +406,7 @@ func parsingToml(fileContent *github.RepositoryContent, name, userName, token st
 	return 0, fmt.Errorf("dependencies did not have sui or aptos, it may be not sui or aptos")
 }
 
-func parsingPackageJson(fileContent *github.RepositoryContent, name, userName, token string) (uint, error) {
+func parsingPackageJson(fileContent *github.RepositoryContent, name, userName, token string) (consts.ProjectFrameType, error) {
 	githubService := application.GetBean[*GithubService]("githubService")
 	content, err := githubService.GetFileContent(token, userName, name, fileContent.GetPath())
 	if err != nil {

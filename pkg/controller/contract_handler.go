@@ -3,14 +3,9 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
-	"github.com/hamster-shared/hamster-develop/pkg/consts"
-	"github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
-	uuid "github.com/iris-contrib/go.uuid"
-	"github.com/jinzhu/copier"
 	"strconv"
-	"time"
 )
 
 func (h *HandlerServer) contractDeployDetailByVersion(gin *gin.Context) {
@@ -37,34 +32,40 @@ func (h *HandlerServer) contractInfo(gin *gin.Context) {
 	Success(data, gin)
 }
 
-func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
+func (h *HandlerServer) saveContractDeployIngInfo(g *gin.Context) {
 
-	var entity parameter.ContractDeployParam
-	var contractDeploy db.ContractDeploy
+	var entity parameter.ContractDeployIngParam
 	err := g.BindJSON(&entity)
 
 	if err != nil {
 		Fail(err.Error(), g)
 		return
 	}
-	projectId, err := uuid.FromString(entity.ProjectId)
+
+	contractService := application.GetBean[*service.ContractService]("contractService")
+	err = contractService.SaveDeployIng(entity)
 	if err != nil {
-		Fail("projectId is empty or invalid", g)
+		Fail(err.Error(), g)
 		return
 	}
 
-	project, err := h.projectService.GetProject(projectId.String())
+	Success("", g)
+}
 
-	_ = copier.Copy(&contractDeploy, &entity)
-	contractService := application.GetBean[*service.ContractService]("contractService")
-	contractDeploy.DeployTime = time.Now()
-	contractDeploy.ProjectId = projectId
+func (h *HandlerServer) saveContractDeployInfo(g *gin.Context) {
 
-	if project.FrameType == consts.Evm {
-		contractDeploy.Status = consts.STATUS_SUCCESS
+	var entity parameter.ContractDeployParam
+
+	err := g.BindJSON(&entity)
+
+	if err != nil {
+		Fail(err.Error(), g)
+		return
 	}
 
-	contractDeployId, err := contractService.SaveDeploy(contractDeploy)
+	contractService := application.GetBean[*service.ContractService]("contractService")
+
+	contractDeployId, err := contractService.SaveDeploy(entity)
 	if err != nil {
 		Fail(err.Error(), g)
 		return

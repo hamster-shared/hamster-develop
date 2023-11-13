@@ -1,12 +1,12 @@
 version: 1.0
-name: {{ .Name }}
+name: [[ .Name ]]
 stages:
   Initialization:
     steps:
       - name: Clone Code from Github
         uses: git-checkout
         with:
-          url: {{ .RepositoryUrl }}
+          url: [[ .RepositoryUrl ]]
           branch: main
   Build Contract:
     needs:
@@ -21,19 +21,17 @@ stages:
         run: |
           mkdir -p build/artifacts
           cd artifacts/contracts
-          find . -type f -name "*.json" | while read -r file
-          do
-            echo "处理文件：$file"
-            bytecode=$(jq -r '.bytecode' $file)
-            length=$(jq '.abi | length' $file)
-            if [ "$bytecode" = "0x" ]; then
-              echo $file
-            elif [ "$length" -eq 0 ]; then
-             echo $file
-            else
-              echo "ok: $file"
-              cp -R $file ../../build/artifacts
-            fi
+          for i in `find . -type f -name '*.json'`;do
+             bytecode=$(jq -r '.bytecode' $i)
+             length=$(jq '.abi | length' $i)
+             if [ "$bytecode" = "0x" ]; then
+                echo $i
+             elif [ "$length" -eq 0 ]; then
+                echo $i
+             else
+               echo "ok: $i"
+               cp -R $i ../../build/artifacts
+             fi
           done;
 
   Output Results:

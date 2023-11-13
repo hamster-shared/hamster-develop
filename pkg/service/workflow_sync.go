@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bufio"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,8 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
+	"github.com/mohaijiang/agent-go/candid"
+	"gorm.io/gorm"
 	"io"
 	"log"
 	"net/http"
@@ -121,6 +124,12 @@ func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDet
 		projectName := project.Name
 		if project.Type == uint(consts.BLOCKCHAIN) {
 			projectName = fmt.Sprintf("%s_node_polkadot", project.Name)
+		} else if project.Type == uint(consts.FRONTEND) && project.DeployType == int(consts.INTERNET_COMPUTER) {
+			if project.FrameType == 1 {
+				projectName = fmt.Sprintf("%s_%s_ic", project.Name, "vuejs")
+			} else if project.FrameType == 2 {
+				projectName = fmt.Sprintf("%s_%s_ic", project.Name, "reactjs")
+			}
 		}
 		for range detail.ActionResult.Artifactorys {
 			frontendPackage := db.FrontendPackage{
@@ -166,6 +175,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 		} else if project.Type == uint(consts.BLOCKCHAIN) {
 			image = "https://g.alpha.hamsternet.io/ipfs/QmPbUjgPNW1eBVxh1zVgF9F7porBWijYrAeMth9QDPwEXk"
 		}
+
 		for _, deploy := range detail.ActionResult.Deploys {
 			var data db.FrontendPackage
 			err := w.db.Model(db.FrontendPackage{}).Where("workflow_detail_id = ?", buildWorkflowDetailId).First(&data).Error
@@ -176,6 +186,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 					log.Println("save frontend package failed: ", err.Error())
 				}
 				var packageDeploy db.FrontendDeploy
+
 				if project.DeployType == int(consts.IPFS) {
 					packageDeploy.DeployInfo = deploy.Cid
 				}
@@ -186,7 +197,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 				packageDeploy.Domain = deploy.Url
 				packageDeploy.Version = data.Version
 				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
-				packageDeploy.Name = project.Name
+				packageDeploy.Name = data.Name
 				packageDeploy.Branch = data.Branch
 				packageDeploy.CreateTime = time.Now()
 				packageDeploy.Image = image
@@ -197,6 +208,7 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 
 			}
 		}
+
 	}
 }
 
@@ -215,10 +227,6 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		return
 	}
 
-	if len(jobDetail.Artifactorys) == 0 {
-		return
-	}
-
 	projectService := application.GetBean[IProjectService]("projectService")
 	project, err := projectService.GetProjectById(projectIdStr)
 
@@ -227,22 +235,34 @@ func (w *WorkflowService) SyncContract(message model.StatusChangeMessage, workfl
 		return
 	}
 
-	switch project.FrameType {
-	case consts.StarkWare:
-		err = w.syncContractStarknet(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
-		return
-	case consts.Aptos:
-		err = w.syncContractAptos(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
-		return
-	case consts.Ton:
-		return
-	case consts.Sui:
-		contractName := getSuiModuleName(project)
-		err = w.syncContractSui(projectId, workflowId, workflowDetail, jobDetail.Artifactorys, contractName)
-		return
-	default:
-		for _, arti := range jobDetail.Artifactorys {
-			err = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
+	// 同步构建物
+	if len(jobDetail.Artifactorys) > 0 {
+		switch project.FrameType {
+		case consts.StarkWare:
+			err = w.syncContractStarknet(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+			return
+		case consts.Aptos:
+			err = w.syncContractAptos(projectId, workflowId, workflowDetail, jobDetail.Artifactorys)
+			return
+		case consts.Ton:
+			return
+		case consts.Sui:
+			contractName := getSuiModuleName(project)
+			err = w.syncContractSui(projectId, workflowId, workflowDetail, jobDetail.Artifactorys, contractName)
+			return
+		case consts.InternetComputer:
+			err = w.syncInternetComputerBuild(projectId, workflowId, workflowDetail, jobDetail)
+			return
+		default:
+			for _, arti := range jobDetail.Artifactorys {
+				err = w.syncContractEvm(projectId, workflowId, workflowDetail, arti)
+			}
+		}
+	}
+
+	if len(jobDetail.Deploys) > 0 {
+		if project.DeployType == int(consts.INTERNET_COMPUTER) || project.FrameType == consts.InternetComputer {
+			err = w.syncInternetComputerDeploy(projectId, workflowId, workflowDetail, jobDetail)
 		}
 	}
 
@@ -361,11 +381,13 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 				reportList = append(reportList, report)
 			}
 		}
-		logger.Tracef("len(reportList): %d ", len(reportList))
-		err = begin.Save(&reportList).Error
-		if err != nil {
-			logger.Errorf("Save report fail, err is %s", err.Error())
-			// return
+		if len(reportList) > 0 {
+			logger.Tracef("len(reportList): %d ", len(reportList))
+			err = begin.Save(&reportList).Error
+			if err != nil {
+				logger.Errorf("Save report fail, err is %s", err.Error())
+				// return
+			}
 		}
 		begin.Commit()
 	}
@@ -412,24 +434,32 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 	if err != nil {
 		return err
 	}
-
-	contract := db.Contract{
-		ProjectId:        projectId,
-		WorkflowId:       workflowId,
-		WorkflowDetailId: workflowDetail.Id,
-		Name:             strings.TrimSuffix(artis[0].Name, path.Ext(artis[0].Name)),
-		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-		BuildTime:        workflowDetail.CreateTime,
-		AbiInfo:          "",
-		ByteCode:         byteCode,
-		AptosMv:          mv,
-		CreateTime:       time.Now(),
-		Type:             uint(consts.Aptos),
-		Status:           consts.STATUS_SUCCESS,
+	logger.Info(mv)
+	logger.Info(len(mv))
+	if len(mv) > 0 {
+		for _, s := range mv {
+			contract := db.Contract{
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
+				WorkflowDetailId: workflowDetail.Id,
+				Name:             strings.TrimSuffix(artis[s.Index].Name, path.Ext(artis[s.Index].Name)),
+				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+				BuildTime:        workflowDetail.CreateTime,
+				AbiInfo:          "",
+				ByteCode:         byteCode,
+				AptosMv:          s.Mv,
+				CreateTime:       time.Now(),
+				Type:             uint(consts.Aptos),
+				Status:           consts.STATUS_SUCCESS,
+			}
+			err = w.saveContractToDatabase(&contract)
+			if err != nil {
+				logger.Errorf("save contract to database failed: %s", err.Error())
+			}
+		}
 	}
-
 	// logger.Tracef("aptos contract: %+v", contract)
-	return w.saveContractToDatabase(&contract)
+	return nil
 }
 
 func getSuiModuleName(project *db.Project) string {
@@ -541,26 +571,206 @@ func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, 
 	return w.saveContractToDatabase(&contract)
 }
 
-func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (mv string, byteCode string, err error) {
-	for _, arti := range artis {
+type AptosBuildInfo struct {
+	Mv    string
+	Index int
+}
+
+func (w *WorkflowService) getAptosMvAndByteCode(artis []model.Artifactory) (arr []AptosBuildInfo, byteCode string, err error) {
+	var mvs []AptosBuildInfo
+	for i, arti := range artis {
 		// 以 .bcs 结尾，认为是 byteCode
 		if strings.HasSuffix(arti.Url, ".bcs") {
 			byteCode, err = utils.FileToHexString(arti.Url)
 			if err != nil {
 				logger.Errorf("hex string failed: %s", err.Error())
-				return "", "", err
+				return mvs, "", err
 			}
 			continue
 		}
+		var data AptosBuildInfo
 		if strings.HasSuffix(arti.Url, ".mv") {
-			mv, err = utils.FileToHexString(arti.Url)
+			mv, err := utils.FileToHexString(arti.Url)
 			if err != nil {
 				logger.Errorf("hex string failed: %s", err.Error())
-				return "", "", err
+				return mvs, "", err
 			}
+			data.Mv = mv
+			data.Index = i
+			mvs = append(mvs, data)
 			continue
 		}
 		logger.Warnf("aptos contract file name is not end with .bcs or .mv: %s", arti.Url)
 	}
-	return mv, byteCode, nil
+	return mvs, byteCode, nil
+}
+
+func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, jobDetail *model.JobDetail) error {
+
+	var abiInfo string
+	for _, arti := range jobDetail.Artifactorys {
+		if strings.HasSuffix(arti.Name, "did") {
+			// analysis did
+			didContent, err := readDid(arti.Url)
+			if err != nil {
+				return err
+			}
+
+			discription, err := candid.ParseDID([]byte(didContent))
+			if err != nil {
+				return err
+			}
+
+			bytes, err := json.Marshal(discription)
+			if err != nil {
+				return err
+			}
+			abiInfo = string(bytes)
+		}
+	}
+
+	for _, arti := range jobDetail.Artifactorys {
+		if strings.HasSuffix(arti.Name, "zip") {
+			backendPackage := db.BackendPackage{
+				ProjectId:        projectId,
+				WorkflowId:       workflowId,
+				WorkflowDetailId: workflowDetail.Id,
+				Name:             arti.Name,
+				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
+				BuildTime:        workflowDetail.CreateTime,
+				AbiInfo:          abiInfo,
+				CreateTime:       time.Now(),
+				Type:             consts.InternetComputer,
+				Status:           consts.DEPLOY_STATUS_SUCCESS,
+				Branch:           jobDetail.CodeInfo,
+			}
+			err := w.db.Save(&backendPackage).Error
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return nil
+
+}
+
+func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, jobDetail *model.JobDetail) error {
+
+	for _, deploy := range jobDetail.Deploys {
+		var deployInfo db.BackendDeploy
+		var deployPackage db.BackendPackage
+		buildWorkflowDetailId := jobDetail.Parameter["buildWorkflowDetailId"]
+		err := w.db.Model(&db.BackendPackage{}).Where("project_id = ? and workflow_detail_id = ?", projectId.String(), buildWorkflowDetailId).First(&deployPackage).Error
+		if err != nil {
+			continue
+		}
+
+		var buildWorkflowDetail db.WorkflowDetail
+		err = w.db.Model(&db.WorkflowDetail{}).Where("id = ?", buildWorkflowDetailId).First(&buildWorkflowDetail).Error
+		if err != nil {
+			continue
+		}
+
+		version := buildWorkflowDetail.ExecNumber
+
+		err = w.db.Model(&db.ContractDeploy{}).Where("contract_id = ? and project_id = ? and version = ?", deployPackage.Id, projectId.String(), version).First(&deployInfo).Error
+		if err != nil {
+			deployInfo = db.BackendDeploy{
+				ProjectId: projectId,
+				PackageId: deployPackage.Id,
+				Version:   strconv.Itoa(int(version)),
+			}
+		}
+		deployInfo.Type = consts.InternetComputer
+		deployInfo.Status = consts.DEPLOY_STATUS_SUCCESS // deployed
+		deployInfo.CreateTime = time.Now()
+
+		deployInfo.AbiInfo = deployPackage.AbiInfo
+		deployInfo.DeployTime = deployInfo.CreateTime
+		icNetwork := os.Getenv("IC_NETWORK")
+		if icNetwork == "" {
+			icNetwork = "local"
+		}
+		deployInfo.WorkflowId = workflowId
+		deployInfo.WorkflowDetailId = workflowDetail.Id
+		deployInfo.Network = icNetwork
+		//deploy.Name
+		deployInfo.Name = deploy.Name
+		canisterId := deploy.Cid
+		deployInfo.Address = canisterId
+
+		err = w.db.Save(&deployInfo).Error
+		if err != nil {
+			return err
+		}
+
+		var icpCanister db.IcpCanister
+
+		// 使用First查询满足条件的第一条数据
+		if err := w.db.Model(db.IcpCanister{}).Where("project_id = ? and canister_id = ?", projectId.String(), canisterId).First(&icpCanister).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				fmt.Println("数据不存在")
+				icpCanister.CanisterId = canisterId
+				icpCanister.CreateTime = sql.NullTime{Time: time.Now(), Valid: true}
+				icpCanister.ProjectId = projectId.String()
+			} else {
+				fmt.Println("查询数据时发生错误:", err)
+				continue
+			}
+		}
+
+		icpCanister.CanisterName = deploy.Name
+		icpCanister.Status = db.Running
+		icpCanister.Contract = strings.Join([]string{deployPackage.Name, deployPackage.Version}, "_#")
+		icpCanister.Cycles = sql.NullString{Valid: false}
+		icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+		if err := w.db.Save(&icpCanister).Error; err != nil {
+			fmt.Println("保存数据时发生错误:", err)
+			continue
+		}
+
+		deployPackage.Network = utils.RemoveDuplicatesAndJoin(deployPackage.Network+","+icNetwork, ",")
+	}
+	return nil
+}
+
+func readDid(filePath string) (string, error) {
+	// 打开输入文件进行读取
+	inputFile, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println("Error opening input file:", err)
+		return "", err
+	}
+	defer inputFile.Close()
+
+	// 打开输出文件进行写入
+	var convertedContent string
+
+	scanner := bufio.NewScanner(inputFile)
+	var currentLine string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		currentLine += line
+		// 写入当前行
+		convertedContent += currentLine
+		currentLine = ""
+	}
+
+	// 写入最后一行
+	if currentLine != "" {
+		convertedContent += currentLine
+	}
+
+	if scanner.Err() != nil {
+		fmt.Println("Error reading input file:", scanner.Err())
+		return "", err
+	}
+
+	fmt.Println("File formatting completed.")
+	fmt.Println(convertedContent)
+
+	return convertedContent, err
 }

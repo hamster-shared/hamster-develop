@@ -9,6 +9,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	uuid "github.com/iris-contrib/go.uuid"
 	"strconv"
+	"strings"
 )
 
 func (h *HandlerServer) workflowList(gin *gin.Context) {
@@ -63,9 +64,10 @@ func (h *HandlerServer) workflowDetail(gin *gin.Context) {
 }
 
 func (h *HandlerServer) workflowContract(gin *gin.Context) {
-	idStr := gin.Param("id")
+	id := gin.Param("id")
+	workflowIdStr := gin.Param("workflowId")
 	workflowDetailIdStr := gin.Param("detailId")
-	workflowId, err := strconv.Atoi(idStr)
+	workflowId, err := strconv.Atoi(workflowIdStr)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -76,7 +78,7 @@ func (h *HandlerServer) workflowContract(gin *gin.Context) {
 		return
 	}
 	contractService := application.GetBean[*service.ContractService]("contractService")
-	data, err := contractService.QueryContractByWorkflow(workflowId, workflowDetailId)
+	data, err := contractService.QueryContractByWorkflow(id, workflowId, workflowDetailId)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -180,8 +182,10 @@ func (h *HandlerServer) contractFileContent(gin *gin.Context) {
 	tokenAny, _ := gin.Get("token")
 	token, _ := tokenAny.(string)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	//path := fmt.Sprintf("contracts%s", name)
-	path := fmt.Sprintf("%s", name)
+	path := fmt.Sprintf("contracts%s", name)
+	if strings.Contains(name, "contracts") {
+		path = fmt.Sprintf("%s", name)
+	}
 	content, err := githubService.GetFileContent(token, user.Username, data.Name, path)
 	if err != nil {
 		Fail(err.Error(), gin)

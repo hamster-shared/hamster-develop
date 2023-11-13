@@ -1,0 +1,30 @@
+version: 1.0
+name: [[ .Name ]]
+stages:
+  Initialization:
+    steps:
+      - name: Clone Code from Github
+        uses: git-checkout
+        with:
+          url: [[ .RepositoryUrl ]]
+          branch: main
+  Build:
+    needs:
+      - Initialization
+    steps:
+      - name: Compile Code
+        uses: icp-build
+        with:
+          dfx_json: ${{ param.dfxJson }}
+  Output Results:
+    needs:
+      - Build
+    steps:
+      - name: Save Package
+        uses: hamster-artifactory
+        with:
+          name: icp-build.zip
+          path: |
+            dfx.json
+            canister_ids.json
+            .dfx

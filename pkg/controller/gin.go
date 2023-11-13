@@ -41,6 +41,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)
 	api.GET("/templates/:id", h.handlerServer.templateDetail)
 	api.GET("/frontend-templates/:id", h.handlerServer.frontendTemplateDetail)
+	api.GET("/chain-templates/:id", h.handlerServer.chainTemplateDetail)
 	api.GET("/templates/show", h.handlerServer.templateShow)
 	api.POST("/templates/:id/download", h.handlerServer.templateDownload)
 	api.Use(h.handlerServer.Authorize())
@@ -96,6 +97,7 @@ func (h *HttpServer) StartHttpServer() {
 
 	api.GET("/projects/:id/frontend/reports", h.handlerServer.projectFrontendReports)
 	api.GET("/projects/:id/packages", h.handlerServer.projectPackages)
+	api.POST("/projects/:id/contract/deploying", h.handlerServer.saveContractDeployIngInfo)
 	api.POST("/projects/:id/contract/deploy", h.handlerServer.saveContractDeployInfo)
 	api.GET("/projects/:id/contract/deploy/:contractDeployId", h.handlerServer.contractDeployInfo)
 
@@ -103,7 +105,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/:id/workflows", h.handlerServer.workflowList)
 	api.DELETE("/workflows/:workflowId/detail/:detailId", h.handlerServer.deleteWorkflow)
 	api.GET("/workflows/:id/detail/:detailId", h.handlerServer.workflowDetail)
-	api.GET("/workflows/:id/detail/:detailId/contract", h.handlerServer.workflowContract)
+	api.GET("/projects/:id/workflows/:workflowId/detail/:detailId/contract", h.handlerServer.workflowContract)
 	//delete frontend deploy
 	api.DELETE("/package/:id/deploy-info", h.handlerServer.deleteWorkflowDeploy)
 	api.GET("/workflows/:id/detail/:detailId/report", h.handlerServer.workflowReport)
@@ -130,6 +132,21 @@ func (h *HttpServer) StartHttpServer() {
 	//logs
 	api.GET("/workflows/:id/detail/:detailId/logs", h.handlerServer.getWorkflowLog)
 	api.GET("/workflows/:id/detail/:detailId/logs/:stageName", h.handlerServer.getWorkflowStageLog)
+
+	//ICP-api
+	api.GET("/projects/:id/dfx-json", h.handlerServer.getDfxJsonData)
+	api.GET("/projects/:id/dfx-json/check", h.handlerServer.isConfigJsonData)
+	api.PUT("/projects/:id/dfx-json/:dfxId", h.handlerServer.updateDfxJsonData)
+	api.POST("/projects/:id/dfx-json", h.handlerServer.saveDfxJsonData)
+	api.GET("/projects/:id/canister", h.handlerServer.getCanisterInfo)
+	api.GET("/projects/:id/canister/list", h.handlerServer.getCanisterList)       //罐列表
+	api.GET("/projects/:id/icp/account", h.handlerServer.getIcpAccount)           //获取icp的账户信息
+	api.POST("/projects/:id/recharge/canister", h.handlerServer.rechargeCanister) //给应用罐罐充值cycles
+	api.POST("/projects/:id/recharge/wallet", h.handlerServer.rechargeWallet)     //充值钱包
+	api.GET("/projects/:id/wallet/info", h.handlerServer.getWalletInfo)           //查询钱包罐信息
+	api.GET("/projects/:id/account/info", h.handlerServer.getAccountInfo)         //查询icp信息accountId和余额
+	api.POST("/projects/:id/create/identity", h.handlerServer.createIdentity)     //创建icp身份
+	api.POST("/projects/:id/redeem/coupon", h.handlerServer.redeemFaucetCoupon)   //通过优惠卷生成钱包罐
 
 	// ======== old api =========//
 	// pipeline

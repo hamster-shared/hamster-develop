@@ -6,6 +6,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"log"
 )
 
 type ITemplateService interface {
@@ -16,6 +17,7 @@ type ITemplateService interface {
 	//GetTemplateDetail get template detail by template id
 	GetTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
 	GetFrontendTemplateDetail(templateId int) (*vo.TemplateDetailVo, error)
+	GetChainTemplateDetail(templateId int) (*vo.ChainTemplateVo, error)
 	TemplateShow(templateType, languageType, deploymentType int) (*[]vo.TemplateVo, error)
 	TemplateDownload(id int, repoName string) string
 }
@@ -48,8 +50,16 @@ func (t *TemplateService) GetTemplateTypeList(templateType int) (*[]vo.TemplateT
 func (t *TemplateService) GetTemplatesByTypeId(templateTypeId, languageType, deployType int) (*[]vo.TemplateVo, error) {
 	var list []db2.Template
 	var listVo []vo.TemplateVo
-	if deployType == 1 {
+	if deployType == 1 || deployType == 3 {
 		result := t.db.Model(db2.Template{}).Where("template_type_id = ? and language_type = ? and deploy_type = ? ", templateTypeId, languageType, deployType).Find(&list)
+		if result.Error != nil {
+			return &listVo, result.Error
+		}
+		if len(list) > 0 {
+			copier.Copy(&listVo, &list)
+		}
+	} else if deployType == 2 {
+		result := t.db.Model(db2.Template{}).Where("template_type_id = ? and language_type = ? and (deploy_type is null or deploy_type != 3) ", templateTypeId, languageType).Find(&list)
 		if result.Error != nil {
 			return &listVo, result.Error
 		}
@@ -90,13 +100,31 @@ func (t *TemplateService) GetFrontendTemplateDetail(templateId int) (*vo.Templat
 	return &dataVo, nil
 }
 
+func (t *TemplateService) GetChainTemplateDetail(templateId int) (*vo.ChainTemplateVo, error) {
+	var data db2.ChainTemplateDetail
+	var dataVo vo.ChainTemplateVo
+	result := t.db.Table("t_chain_template_detail").Where("template_id = ? ", templateId).First(&data)
+	if result.Error != nil {
+		return &dataVo, result.Error
+	}
+	copier.Copy(&dataVo, &data)
+	return &dataVo, nil
+}
+
 func (t *TemplateService) TemplateShow(templateType, languageType, deploymentType int) (*[]vo.TemplateVo, error) {
 	var list []db2.Template
 	var listVo []vo.TemplateVo
 	sql := ""
-	if deploymentType == 1 {
+	if deploymentType == 1 || deploymentType == 3 {
 		sql = "select  t.*  from t_template t left join t_template_type ttt on t.template_type_id = ttt.id where ttt.type = ? and t.whether_display = 1 and t.language_type = ? and t.deploy_type = ?"
 		res := t.db.Raw(sql, templateType, languageType, deploymentType).Scan(&list)
+		if res.Error != nil {
+			return &listVo, res.Error
+		}
+	} else if deploymentType == 2 {
+		log.Println(languageType)
+		sql = "select  t.*  from t_template t left join t_template_type ttt on t.template_type_id = ttt.id where ttt.type = ? and t.whether_display = 1 and t.deploy_type is null or t.deploy_type != 3 and t.language_type = ?"
+		res := t.db.Raw(sql, templateType, languageType).Scan(&list)
 		if res.Error != nil {
 			return &listVo, res.Error
 		}
@@ -108,6 +136,9 @@ func (t *TemplateService) TemplateShow(templateType, languageType, deploymentTyp
 		}
 	}
 	copier.Copy(&listVo, &list)
+	if len(listVo) > 4 {
+		listVo = listVo[0:4]
+	}
 	return &listVo, nil
 }
 

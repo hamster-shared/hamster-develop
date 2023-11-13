@@ -114,6 +114,14 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) {
 		image := fmt.Sprintf("%s/%s-%d:%d", consts.DockerHubName, strings.ToLower(user.Username), user.Id, time.Now().Unix())
 		params["imageName"] = image
+	} else if project.FrameType == consts.InternetComputer {
+		var icpDfx db.IcpDfxData
+		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
+		if err != nil {
+			logger.Errorf("db error : %s", err.Error())
+			return vo.DeployResultVo{}, fmt.Errorf("dfx.json not configuration")
+		}
+		params["dfxJson"] = icpDfx.DfxData
 	} else {
 		params = nil
 	}
@@ -138,12 +146,36 @@ func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWo
 		return vo.DeployResultVo{}, errors.New("No Artifacts")
 	}
 
+	var project db.Project
+	err = w.db.Model(db.Project{}).Where("id = ?", projectId.String()).First(&project).Error
+	if err != nil {
+		return vo.DeployResultVo{}, err
+	}
+
 	params := make(map[string]string)
+
 	params["baseDir"] = "dist"
 	params["ArtifactUrl"] = "file://" + buildJobDetail.Artifactorys[0].Url
 	params["buildWorkflowDetailId"] = strconv.Itoa(buildWorkflowDetailId)
 	params["ipfsGateway"] = os.Getenv("ipfs_gateway")
-	return w.ExecProjectWorkflow(projectId, user, 3, params)
+
+	// if icp deploy frontend or deploy contract
+	if int(consts.INTERNET_COMPUTER) == project.DeployType || consts.InternetComputer == project.FrameType {
+		var icpDfx db.IcpDfxData
+		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
+		if err != nil {
+			logger.Errorf("db error : %s", err.Error())
+			return vo.DeployResultVo{}, fmt.Errorf("dfx.json not configuration")
+		}
+		params["dfxJson"] = icpDfx.DfxData
+		for _, arti := range buildJobDetail.Artifactorys {
+			if strings.HasSuffix(arti.Url, "zip") {
+				params["ArtifactUrl"] = "file://" + arti.Url
+			}
+		}
+	}
+
+	return w.ExecProjectWorkflow(projectId, user, uint(consts.Deploy), params)
 }
 
 func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth, deployParam parameter.K8sDeployParam) (vo.DeployResultVo, error) {
@@ -368,11 +400,15 @@ func (w *WorkflowService) ExecProjectWorkflow(projectId uuid.UUID, user vo.UserA
 	}
 	deployResult.WorkflowId = workflow.Id
 	deployResult.DetailId = dbDetail.Id
-	err = w.engine.ExecuteJobDetail(workflowKey, detail.Id)
-	if err != nil {
+	if err = w.engine.SaveJobUserId(workflowKey, strconv.Itoa(int(user.Id))); err != nil {
 		logger.Errorf("execute job detail fail, err is %s", err.Error())
 		return deployResult, err
 	}
+	if err = w.engine.ExecuteJobDetail(workflowKey, detail.Id); err != nil {
+		logger.Errorf("execute job detail fail, err is %s", err.Error())
+		return deployResult, err
+	}
+
 	return deployResult, nil
 }
 
@@ -414,7 +450,7 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	}
 
 	_ = copier.Copy(&detail, &workflowDetail)
-	if workflowDetail.Status == vo.WORKFLOW_STATUS_RUNNING {
+	if workflowDetail.Status == uint(model.STATUS_RUNNING) {
 		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.WorkflowId)
 		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
 		if err != nil {
@@ -426,7 +462,21 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 			detail.StageInfo = string(data)
 			detail.Duration = jobDetail.Duration
 		}
+
 	}
+
+	// if workflow status is error , need get error from jobDetail
+
+	if detail.Status == uint(model.STATUS_FAIL) {
+		workflowKey := w.GetWorkflowKey(workflowDetail.ProjectId.String(), workflowDetail.WorkflowId)
+		jobDetail, err := w.engine.GetJobHistory(workflowKey, int(workflowDetail.ExecNumber))
+		if err != nil {
+			logger.Warnf("get job history fail, err is %s", err.Error())
+			return &detail, err
+		}
+		detail.ErrorInfo = jobDetail.Error
+	}
+
 	return &detail, nil
 }
 
@@ -568,6 +618,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 				filePath = "templates/aptos-build.yml"
 			} else if project.FrameType == consts.Sui {
 				filePath = "templates/sui-build.yml"
+			} else if project.FrameType == consts.InternetComputer {
+				filePath = "templates/icp-contract-build.yml"
 			} else {
 				if project.EvmTemplateType == uint(consts.Truffle) {
 					filePath = "templates/truffle-build.yml"
@@ -577,6 +629,10 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 					filePath = "templates/hardhat-build.yml"
 				}
 			}
+		} else if workflowType == consts.Deploy {
+			if project.FrameType == consts.InternetComputer {
+				filePath = "templates/icp-contract-deploy.yml"
+			}
 		}
 	} else if project.Type == uint(consts.FRONTEND) {
 		if workflowType == consts.Check {
@@ -584,8 +640,10 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 		} else if workflowType == consts.Build {
 			if project.DeployType == int(consts.IPFS) {
 				filePath = "templates/frontend-build.yml"
+			} else if project.DeployType == int(consts.INTERNET_COMPUTER) {
+				filePath = "templates/icp-build.yml"
 			} else {
-				if project.FrameType == 1 || project.FrameType == 2 {
+				if project.FrameType == 1 || project.FrameType == 2 || project.FrameType == 5 {
 					filePath = "templates/frontend-image-build.yml"
 				} else {
 					filePath = "templates/frontend-node-image-build.yml"
@@ -594,6 +652,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 		} else if workflowType == consts.Deploy {
 			if project.DeployType == int(consts.IPFS) {
 				filePath = "templates/frontend-deploy.yml"
+			} else if project.DeployType == int(consts.INTERNET_COMPUTER) {
+				filePath = "templates/icp-deploy.yml"
 			} else {
 				filePath = "templates/frontend-k8s-deploy.yml"
 			}
@@ -680,6 +740,15 @@ func (w *WorkflowService) TemplateParseV2(name string, tool []string, project *v
 	return input.String(), nil
 }
 
+func (w *WorkflowService) GetDfxJsonData() (string, error) {
+	filePath := "templates/icp-dfx.json"
+	content, err := temp.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
+
 func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo, workflowType consts.WorkflowType) (string, error) {
 	if project == nil {
 		return "", errors.New("project is nil")
@@ -692,18 +761,7 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	}
 	fileContent := string(content)
 
-	tmpl := template.New("test")
-	if workflowType == consts.Deploy {
-		tmpl = tmpl.Delims("[[", "]]")
-	}
-	if project.Type == uint(consts.CONTRACT) {
-		if workflowType == consts.Build && (project.FrameType == consts.Aptos || project.FrameType == consts.Sui) {
-			tmpl = tmpl.Delims("[[", "]]")
-		}
-	}
-	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) && workflowType == consts.Build {
-		tmpl = tmpl.Delims("[[", "]]")
-	}
+	tmpl := template.New("test").Delims("[[", "]]")
 
 	tmpl, err = tmpl.Parse(fileContent)
 
@@ -736,7 +794,7 @@ func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int) error {
 func (w *WorkflowService) CheckRunningJob() {
 
 	var workflowList []db.WorkflowDetail
-	err := w.db.Model(db.WorkflowDetail{}).Where("status = ?", vo.WORKFLOW_STATUS_RUNNING).Find(&workflowList).Error
+	err := w.db.Model(db.WorkflowDetail{}).Where("status = ?", uint(model.STATUS_RUNNING)).Find(&workflowList).Error
 	if err != nil {
 		return
 	}
@@ -764,7 +822,7 @@ func (w *WorkflowService) CheckRunningJob() {
 	for _, flow := range stopList {
 		workflowKey := w.GetWorkflowKey(flow.ProjectId.String(), flow.WorkflowId)
 		jobDetail, _ := w.engine.GetJobHistory(workflowKey, int(flow.ExecNumber))
-		flow.Status = vo.WORKFLOW_STATUS_CANCEL
+		flow.Status = uint(model.STATUS_STOP)
 		if jobDetail != nil {
 			stageInfo, err := json.Marshal(jobDetail.Stages)
 			if err == nil {
@@ -808,7 +866,7 @@ func hasCommonElements(arr1, arr2 []string) bool {
 }
 
 func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
-	if !(project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm) && project.Type != uint(consts.BLOCKCHAIN) {
+	if !(project.Type == uint(consts.CONTRACT) && (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer)) && project.Type != uint(consts.BLOCKCHAIN) {
 		workflowCheckData := parameter.SaveWorkflowParam{
 			ProjectId:  project.Id,
 			Type:       consts.Check,
@@ -843,7 +901,7 @@ func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 		w.UpdateWorkflow(workflowBuildRes)
 	}
 
-	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) {
+	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) || (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer) {
 		workflowDeployData := parameter.SaveWorkflowParam{
 			ProjectId:  project.Id,
 			Type:       consts.Deploy,
