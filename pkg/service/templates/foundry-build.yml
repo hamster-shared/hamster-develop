@@ -25,30 +25,30 @@ stages:
         run: |
           mkdir -p build/artifacts
           cd out
-          for i in `find . -type f -name '*.json'`;do
-             bytecode=$(jq -r '.bytecode' $i)
-             length=$(jq '.abi | length' $i)
-             if [ "$bytecode" = "0x" ]; then
-                echo $i
-             elif [ "$length" -eq 0 ]; then
-                echo $i
-             else
-                my_array=($(jq -r '.metadata .sources | keys | join(",")' $i))
-                all_start_with_node_modules=true
-                read -r elements <<< "$my_array"
-                for element in "${elements[@]}"; do
-                  if [[ ! "$element" == "node_modules"* ]]; then
-                    echo "element" $element
-                    all_start_with_node_modules=false
-                    break
+          find . -type f -name '*.json' | while read -r i; do
+              bytecode=$(jq -r '.bytecode .object' "$i")
+              length=$(jq '.abi | length' "$i")
+
+              if [ "$bytecode" = "0x" ] || [ "$length" -eq 0 ]; then
+                  echo "$i"
+              else
+                  my_string=$(jq -r '.metadata .sources | keys | join(" ")' "$i")
+                  all_start_with_node_modules=true
+
+                  for element in $my_string; do
+                      if [ ! "$(echo "$element" | grep '^node_modules')" ]; then
+                          echo "element" "$element"
+                          all_start_with_node_modules=false
+                          break
+                      fi
+                  done
+                  if $all_start_with_node_modules; then
+                      echo "no ok: $i"
+                  else
+                      echo "ok: $i"
+                      cp -R "$i" ../build/artifacts/
                   fi
-                done
-                if $all_start_with_node_modules; then
-                else
-                  echo "ok: $i"
-                  cp -R $i ../build/artifacts/
-                fi
-            fi
+              fi
           done;
   Output Results:
     needs:
