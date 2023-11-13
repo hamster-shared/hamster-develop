@@ -13,13 +13,15 @@ stages:
       - Initialization
     steps:
       - name: Compile Contract
-        runs-on: docker.io/hamstershare/solana-builder:1.73.0
+        runs-on: docker.io/hamstershare/solana-builder:1.73.0-20231113
         volumes:
           - /root/.solana:/root/.solana
         run: |
-          apt update && apt install -y python3-pip
-          pip3 install toml
+          node -v
+          npm -v
+          npm install bs58
           python3 ./script/regenerate.py
+          node ./script/wallet.js
           anchor build
   Output Results:
     needs:
@@ -31,5 +33,6 @@ stages:
           name: solana-meta.zip
           compress: false
           path: |
+            ./script/base58format.txt
             ./target/deploy/*.so
             ./target/idl/*.json

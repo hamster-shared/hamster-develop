@@ -557,6 +557,7 @@ func (w *WorkflowService) getStarknetAbiInfoAndByteCode(artiUrl string) (abiInfo
 func (w *WorkflowService) syncContractSolana(projectId uuid.UUID, workflowId uint, workflowDetail db.WorkflowDetail, artis []model.Artifactory) error {
 	var bytecode string
 	var idlData string
+	var base58Format string
 
 	for _, arti := range artis {
 		if arti.Name == "solana_nft_anchor.so" {
@@ -574,20 +575,28 @@ func (w *WorkflowService) syncContractSolana(projectId uuid.UUID, workflowId uin
 			}
 			idlData = string(data)
 		}
+		if arti.Name == "base58format.txt" {
+			data, err := os.ReadFile(arti.Url)
+			if err != nil {
+				logger.Errorf("read bytecode error : %v", err)
+			}
+			base58Format = string(data)
+		}
 	}
 
 	contract := db.Contract{
-		ProjectId:        projectId,
-		WorkflowId:       workflowId,
-		WorkflowDetailId: workflowDetail.Id,
-		Name:             "solana_nft_anchor",
-		Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-		BuildTime:        workflowDetail.CreateTime,
-		AbiInfo:          idlData,
-		ByteCode:         bytecode,
-		CreateTime:       time.Now(),
-		Type:             uint(consts.Solana),
-		Status:           consts.STATUS_SUCCESS,
+		ProjectId:             projectId,
+		WorkflowId:            workflowId,
+		WorkflowDetailId:      workflowDetail.Id,
+		Name:                  "solana_nft_anchor",
+		Version:               fmt.Sprintf("%d", workflowDetail.ExecNumber),
+		BuildTime:             workflowDetail.CreateTime,
+		AbiInfo:               idlData,
+		ByteCode:              bytecode,
+		SolanaContractPrivkey: base58Format,
+		CreateTime:            time.Now(),
+		Type:                  uint(consts.Solana),
+		Status:                consts.STATUS_SUCCESS,
 	}
 
 	return w.saveContractToDatabase(&contract)
