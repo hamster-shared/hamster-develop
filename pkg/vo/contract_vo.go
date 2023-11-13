@@ -23,15 +23,16 @@ type DeployInfVo struct {
 }
 
 type ContractVo struct {
-	Id               uint      `json:"id"`
-	ProjectId        uuid.UUID `json:"projectId"`
-	WorkflowId       uint      `json:"workflowId"`
-	WorkflowDetailId uint      `json:"workflowDetailId"`
-	Name             string    `json:"name"`
-	Version          string    `json:"version"`
-	AbiInfo          string    `json:"abiInfo"`
-	ByteCode         string    `json:"byteCode"`
-	Type             uint      `json:"type"` // see #consts.ProjectFrameType
-	AptosMv          string    `json:"aptosMv"`
-	Branch           string    `json:"branch"`
+	Id                    uint      `json:"id"`
+	ProjectId             uuid.UUID `json:"projectId"`
+	WorkflowId            uint      `json:"workflowId"`
+	WorkflowDetailId      uint      `json:"workflowDetailId"`
+	Name                  string    `json:"name"`
+	Version               string    `json:"version"`
+	AbiInfo               string    `json:"abiInfo"`
+	ByteCode              string    `json:"byteCode"`
+	Type                  uint      `json:"type"` // see #consts.ProjectFrameType
+	AptosMv               string    `json:"aptosMv"`
+	SolanaContractPrivkey string    `json:"solanaContractPrivkey"`
+	Branch                string    `json:"branch"`
 }
