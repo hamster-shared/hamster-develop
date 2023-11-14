@@ -263,7 +263,7 @@ func (c *ContractService) SaveDeploy(deployParam parameter.ContractDeployParam) 
 	return entity.Id, err
 }
 
-func (c *ContractService) QueryContracts(projectId string, query, version, network string, page int, size int) (vo.Page[db2.Contract], error) {
+func (c *ContractService) QueryContracts(projectId string, query, version, network string, page int, size int) (vo.Page[vo.ContractArtifactsVo], error) {
 	var contracts []db2.Contract
 	var afterData []db2.Contract
 	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,byte_code,create_time from t_contract where project_id = ? ")
@@ -296,7 +296,27 @@ func (c *ContractService) QueryContracts(projectId string, query, version, netwo
 		start, end := utils.SlicePage(int64(page), int64(size), int64(len(contracts)))
 		afterData = contracts[start:end]
 	}
-	return vo.NewPage[db2.Contract](afterData, len(contracts), page, size), nil
+	var contractIdList []uint
+	for _, contract := range afterData {
+		contractIdList = append(contractIdList, contract.Id)
+	}
+	var contractDeployList []db2.ContractDeploy
+	err := c.db.Table("(?) as u", c.db.Model(db2.ContractDeploy{}).Where("contract_id in ?", contractIdList).Order("deploy_time desc").Limit(1000)).Group("contract_id").Find(&contractDeployList).Error
+	if err != nil {
+		return vo.Page[vo.ContractArtifactsVo]{}, err
+	}
+	contractIdContractDeployIdyMap := make(map[uint]uint)
+	for _, contractDeploy := range contractDeployList {
+		contractIdContractDeployIdyMap[contractDeploy.ContractId] = contractDeploy.Id
+	}
+	var contractArtifactsVoList []vo.ContractArtifactsVo
+	for _, contract := range afterData {
+		var contractArtifactsVo vo.ContractArtifactsVo
+		copier.Copy(&contractArtifactsVo, &contract)
+		contractArtifactsVo.LastContractDeployId = contractIdContractDeployIdyMap[contract.Id]
+		contractArtifactsVoList = append(contractArtifactsVoList, contractArtifactsVo)
+	}
+	return vo.NewPage[vo.ContractArtifactsVo](contractArtifactsVoList, len(contracts), page, size), nil
 }
 
 func (c *ContractService) QueryContractByWorkflow(id string, workflowId, workflowDetailId int) ([]db2.Contract, error) {
