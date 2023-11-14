@@ -1,6 +1,7 @@
 package vo
 
 import (
+	"database/sql"
 	uuid "github.com/iris-contrib/go.uuid"
 	"time"
 )
@@ -64,4 +65,24 @@ type ContractDeployVo struct {
 	AbiInfo       string    `json:"abiInfo"`
 	Url           string    `json:"url"`
 	CodeInfo      string    `json:"codeInfo"`
+}
+
+type ContractArtifactsVo struct {
+	Id                   uint           `json:"id"`
+	ProjectId            uuid.UUID      `json:"projectId"`
+	WorkflowId           uint           `json:"workflowId"`
+	WorkflowDetailId     uint           `json:"workflowDetailId"`
+	Name                 string         `json:"name"`
+	Version              string         `json:"version"`
+	Network              sql.NullString `json:"network"`
+	BuildTime            time.Time      `json:"buildTime"`
+	AbiInfo              string         `json:"abiInfo"`
+	ByteCode             string         `json:"byteCode"`
+	AptosMv              string         `json:"aptosMv"`
+	CreateTime           time.Time      `json:"createTime"`
+	Type                 uint           `json:"type"`   // see #consts.ProjectFrameType
+	Status               uint           `json:"status"` // 1: deploying, 2: success , 3: fail
+	Branch               string         `json:"branch"`
+	CodeInfo             string         `json:"codeInfo"`
+	LastContractDeployId uint           `json:"lastContractDeployId"`
 }

@@ -135,6 +135,7 @@ func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToB
 		contractNameArrangeParam.UseContract = saveUsedNames
 		contractNameArrangeParam.NoUseContract = saveNoUsedNames
 		a.SaveContractNameArrange(contractNameArrangeParam)
+		a.SaveContractArrangeCacheInit(contractNameArrangeParam.ProjectId, version)
 		return list, nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		//进行初始化
@@ -278,6 +279,40 @@ func (a *ArrangeService) SaveContractNameArrange(param parameter.ContractNameArr
 		return "", err
 	}
 	return strconv.Itoa(int(contractArrange.Id)), nil
+}
+
+func (a *ArrangeService) SaveContractArrangeCacheInit(projectId, version string) {
+	var list []db2.ContractArrangeCache
+	err := a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and version = ?", projectId, version).Find(&list).Error
+	if err != nil {
+		return
+	}
+	if len(list) > 1 {
+		return
+	}
+	var lastVersion string
+	err = a.db.Model(db2.ContractArrangeCache{}).Select("version").Where("project_id = ?", projectId).Order("version desc").First(&lastVersion).Error
+	if err != nil {
+		return
+	}
+	err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and version = ?", projectId, lastVersion).Find(&list).Error
+	if err != nil {
+		return
+	}
+	var saveList []db2.ContractArrangeCache
+	for _, cache := range list {
+		contractArrangeCache := db2.ContractArrangeCache{
+			ProjectId:       cache.ProjectId,
+			ContractId:      cache.ContractId,
+			ContractName:    cache.ContractName,
+			Version:         version,
+			OriginalArrange: cache.OriginalArrange,
+			CreateTime:      time.Now(),
+			UpdateTime:      time.Now(),
+		}
+		saveList = append(saveList, contractArrangeCache)
+	}
+	a.db.Model(db2.ContractArrangeCache{}).Save(&saveList)
 }
 
 func (a *ArrangeService) UpdateContractArrange(param parameter.ContractArrangeParam) (string, error) {
