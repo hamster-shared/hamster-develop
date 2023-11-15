@@ -561,10 +561,19 @@ Content-Type: application/json
   "code": "e98703a2d5f2e4492a5e"
 }
 
+
+### metamask
+POST http://172.16.10.43:8080/api/metamask/login
+Content-Type: application/json
+
+{
+  "address": "0x6e0E46881c6Dcf5D2C74938397306c604BC47240"
+}
+
 ### 获取用户信息
 GET http://localhost:8080/api/v2/user
 Content-Type: application/json
-Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk2NzE3NjAsImxvZ2luVHlwZSI6MSwidXNlcklkIjo1MzA3MDM1NH0.Fl3Tum2OLjTsNXoBkmcQbkGIqIjb2u8R4cdXc7hkHDg
+Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk5MjkzMDEsImxvZ2luVHlwZSI6MiwidXNlcklkIjoxMn0.6s-g6ByianSCC3LpP0MLcx17F-oWvt2zKW3UJCIfD20
 
 
 ### 判断是否有安装的信息

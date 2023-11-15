@@ -36,7 +36,7 @@ spec:
     spec:
       containers:
         - name: hamster-aline-master
-          image: hamstershare/hamster-develop:${PIPELINE_ID}
+          image: hamstershare/hamster-develop:11151537
           imagePullPolicy: Always
           env:
             - name: IC_NETWORK

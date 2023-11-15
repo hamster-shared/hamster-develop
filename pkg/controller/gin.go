@@ -47,8 +47,8 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/chain-templates/:id", h.handlerServer.chainTemplateDetail)
 	api.GET("/templates/show", h.handlerServer.templateShow)
 	api.POST("/templates/:id/download", h.handlerServer.templateDownload)
-	api.Use(h.handlerServer.Authorize())
-	//api.Use(h.handlerServer.JwtAuthorize())
+	//api.Use(h.handlerServer.Authorize())
+	api.Use(h.handlerServer.JwtAuthorize())
 	api.POST("/user/wallet", h.handlerServer.saveUserWallet)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)

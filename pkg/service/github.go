@@ -401,16 +401,19 @@ func (g *GithubService) GetUserInstallations(userId int64) ([]db2.GitAppInstall,
 func (g *GithubService) getWebHookData(installationId int64) ([]*github.Repository, error) {
 	var repos []*github.Repository
 	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
-	if exist {
+	if !exist {
+		logger.Errorf("please contact the administrator to configure 'GITHUB_APP_ID'")
 		return repos, errors.New("please contact the administrator to configure 'GITHUB_APP_ID'")
 	}
 	appId, err := strconv.Atoi(appIdString)
 	if err != nil {
+		logger.Errorf("app id format failed:%s", err)
 		return repos, err
 	}
 	appPemPath, exist := os.LookupEnv("GITHUB_APP_PEM")
-	if exist {
-		return repos, errors.New("please contact the administrator to configure 'GITHUB_APP_ID'")
+	if !exist {
+		logger.Errorf("please contact the administrator to configure 'GITHUB_APP_PEM'")
+		return repos, errors.New("please contact the administrator to configure 'GITHUB_APP_PEM'")
 	}
 	atr, err := ghinstallation.NewAppsTransportKeyFromFile(http.DefaultTransport, int64(appId), appPemPath)
 	if err != nil {
@@ -556,19 +559,12 @@ func (g *GithubService) GithubAppDelete(installationId int64) error {
 	return err
 }
 
-func (g *GithubService) RepoRemoved(installationId int64, action string) error {
-	repos, err := g.getWebHookData(installationId)
-	if err != nil {
-		err = g.saveFailedData(installationId, action)
+func (g *GithubService) RepoRemoved(installData parameter.GithubWebHookInstall, action string) error {
+	removeRepos := installData.RepositoriesRemoved
+	for _, repo := range removeRepos {
+		err := g.db.Where("repo_id = ?", repo.Id).Delete(&db2.GitRepo{}).Error
 		if err != nil {
-			logger.Errorf("repo removed get repos failed:%s", err)
-		}
-		return err
-	}
-	for _, repo := range repos {
-		err = g.db.Where("repo_id = ?", repo.GetID()).Delete(&db2.GitRepo{}).Error
-		if err != nil {
-			err = g.saveFailedData(installationId, action)
+			err = g.saveFailedData(installData.Installation.GetID(), action)
 			if err != nil {
 				logger.Errorf("repo removed get repos failed:%s", err)
 			}
