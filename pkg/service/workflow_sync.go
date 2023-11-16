@@ -579,6 +579,8 @@ func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, 
 		CreateTime:       time.Now(),
 		Type:             uint(consts.Evm),
 		Status:           consts.STATUS_SUCCESS,
+		Branch:           workflowDetail.CodeBranch,
+		CodeInfo:         workflowDetail.CodeInfo,
 	}
 	return w.saveContractToDatabase(&contract)
 }

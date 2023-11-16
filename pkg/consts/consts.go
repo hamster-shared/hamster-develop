@@ -161,6 +161,13 @@ const (
 	Metamask = 2
 )
 
+type EngineType string
+
+const (
+	EngineTypeWorkflow        = "workflow"
+	EngineTypeContractArrange = "arrange_execute"
+)
+
 const (
 	INSTALLATION_CREATED = "created"
 	INSTALLATION_DELETED = "deleted"

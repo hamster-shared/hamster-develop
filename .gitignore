@@ -43,3 +43,5 @@ hamster-develop
 /.env
 
 pipeline2.yml
+/pipeline3.yml
+/pkg/service/arrange_test.go

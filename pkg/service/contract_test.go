@@ -21,7 +21,7 @@ import (
 )
 
 func NewTestContractService() *ContractService {
-	DSN := fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/aline?charset=utf8&parseTime=True&loc=Local", "123456")
+	DSN := fmt.Sprintf("root:%s@tcp(61.172.179.6:30303)/aline?charset=utf8&parseTime=True&loc=Local", "Aline123456")
 	db, _ := gorm.Open(mysql.New(mysql.Config{
 		DSN:                       DSN,   // data source name
 		DefaultStringSize:         256,   // default size for string fields

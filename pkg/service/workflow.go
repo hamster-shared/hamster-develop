@@ -124,7 +124,9 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 	if (project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN)) && project.DeployType == int(consts.CONTAINER) {
 		image := fmt.Sprintf("%s/%s-%d:%d", consts.DockerHubName, strings.ToLower(user.Username), user.Id, time.Now().Unix())
 		params["imageName"] = image
-	} else if project.FrameType == consts.InternetComputer {
+	}
+
+	if project.FrameType == consts.InternetComputer || project.DeployType == int(consts.INTERNET_COMPUTER) {
 		var icpDfx db.IcpDfxData
 		err = w.db.Model(db.IcpDfxData{}).Where("project_id = ?", projectId.String()).First(&icpDfx).Error
 		if err != nil {
@@ -133,6 +135,7 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 		}
 		params["dfxJson"] = icpDfx.DfxData
 	}
+
 	data, err := w.ExecProjectWorkflow(project, user, 2, params)
 	return data, err
 }
@@ -140,7 +143,7 @@ func (w *WorkflowService) ExecProjectBuildWorkflow(projectId uuid.UUID, user vo.
 func (w *WorkflowService) ExecProjectDeployWorkflow(projectId uuid.UUID, buildWorkflowId, buildWorkflowDetailId int, user vo.UserAuth) (vo.DeployResultVo, error) {
 	buildWorkflowKey := w.GetWorkflowKey(projectId.String(), uint(buildWorkflowId))
 
-	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId)
+	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId, consts.EngineTypeWorkflow)
 	if err != nil {
 		logger.Errorf("workflow : %s", err)
 		return vo.DeployResultVo{}, err
@@ -195,7 +198,7 @@ func (w *WorkflowService) ExecContainerDeploy(projectId uuid.UUID, buildWorkflow
 	}
 	buildWorkflowKey := w.GetWorkflowKey(projectId.String(), uint(buildWorkflowId))
 
-	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId)
+	workflowDetail, err := w.GetWorkflowDetail(buildWorkflowId, buildWorkflowDetailId, consts.EngineTypeWorkflow)
 	if err != nil {
 		logger.Errorf("GetWorkflowDetail err: %s", err.Error())
 		return vo.DeployResultVo{}, err
@@ -425,22 +428,61 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	var total int64
 	var data vo.WorkflowPage
 	var workflowData []vo.WorkflowVo
-	var workflowList []db.WorkflowDetail
-	tx := w.db.Model(db.WorkflowDetail{}).Where("project_id = ?", projectId)
+	var viewList []db.ViewWorkflowDetail
+	tx := w.db.Debug().Model(db.ViewWorkflowDetail{}).Where("project_id = ?", projectId).Order("create_time desc")
 	if workflowType != 0 {
 		tx = tx.Where("type = ? ", workflowType)
 	}
-	result := tx.Offset((page - 1) * size).Limit(size).Find(&workflowList).Offset(-1).Limit(-1).Count(&total)
+	result := tx.Offset((page - 1) * size).Limit(size).Find(&viewList).Offset(-1).Limit(-1).Count(&total)
 	if result.Error != nil {
 		return &data, result.Error
 	}
-	if len(workflowList) > 0 {
-		for _, datum := range workflowList {
-			var resData vo.WorkflowVo
-			_ = copier.Copy(&resData, &datum)
-			resData.DetailId = datum.Id
-			resData.Id = datum.WorkflowId
-			workflowData = append(workflowData, resData)
+
+	if len(viewList) > 0 {
+
+		var contractArrantTotal int64
+		w.db.Model(&db.ContractArrangeExecute{}).Where("project_id = ?", projectId).Order("create_time desc").Count(&contractArrantTotal)
+
+		for _, datum := range viewList {
+			if datum.Engine == "workflow" {
+				var resData vo.WorkflowVo
+				var workflowDetail db.WorkflowDetail
+				err := w.db.Model(&db.WorkflowDetail{}).First(&workflowDetail, datum.Id).Error
+				if err != nil {
+					continue
+				}
+				_ = copier.Copy(&resData, &workflowDetail)
+				resData.DetailId = datum.Id
+				resData.Id = workflowDetail.WorkflowId
+				resData.Engine = datum.Engine
+				workflowData = append(workflowData, resData)
+			} else if datum.Engine == "arrange_execute" {
+				var resData vo.WorkflowVo
+				var contractArrangeExecute db.ContractArrangeExecute
+				err := w.db.Model(&db.ContractArrangeExecute{}).First(&contractArrangeExecute, datum.Id).Error
+				if err != nil {
+					continue
+				}
+				resData.Id = datum.Id
+				resData.Type = datum.Type
+				resData.Engine = datum.Engine
+				resData.ProjectId = datum.ProjectId
+				resData.ExecNumber = uint(contractArrantTotal)
+				contractArrantTotal = contractArrantTotal - 1
+				processData, err := UnmarshalProcessData(contractArrangeExecute.ArrangeProcessData)
+				if err != nil {
+					continue
+				}
+				resData.StageInfo = processData.toJobDetailString()
+				resData.Status = uint(processData.GetStatus())
+				resData.Version = contractArrangeExecute.Version
+				resData.StartTime = datum.CreateTime
+				resData.Duration = contractArrangeExecute.UpdateTime.Sub(contractArrangeExecute.CreateTime).Milliseconds()
+				resData.TriggerMode = 1
+				resData.CodeInfo = ""
+				workflowData = append(workflowData, resData)
+			}
+
 		}
 	}
 	data.Data = workflowData
@@ -450,7 +492,16 @@ func (w *WorkflowService) GetWorkflowList(projectId string, workflowType, page, 
 	return &data, nil
 }
 
-func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*vo.WorkflowDetailVo, error) {
+func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int, engineType string) (*vo.WorkflowDetailVo, error) {
+
+	if engineType == consts.EngineTypeWorkflow {
+		return w.getWorkflowDetailWithEngine(workflowId, workflowDetailId)
+	} else {
+		return w.getWorkflowDetailWithContractArrange(workflowDetailId)
+	}
+}
+
+func (w *WorkflowService) getWorkflowDetailWithEngine(workflowId, workflowDetailId int) (*vo.WorkflowDetailVo, error) {
 	var workflowDetail db.WorkflowDetail
 	var detail vo.WorkflowDetailVo
 	res := w.db.Model(db.WorkflowDetail{}).Where("workflow_id = ? and id = ?", workflowId, workflowDetailId).First(&workflowDetail)
@@ -487,6 +538,30 @@ func (w *WorkflowService) GetWorkflowDetail(workflowId, workflowDetailId int) (*
 	}
 
 	return &detail, nil
+}
+func (w *WorkflowService) getWorkflowDetailWithContractArrange(arrangeExecuteId int) (*vo.WorkflowDetailVo, error) {
+	var contractArrangeExecute db.ContractArrangeExecute
+	err := w.db.Model(&db.ContractArrangeExecute{}).First(&contractArrangeExecute, arrangeExecuteId).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var resData vo.WorkflowDetailVo
+	resData.Id = contractArrangeExecute.Id
+	resData.Type = uint(consts.Deploy)
+	resData.WorkflowId = contractArrangeExecute.FkArrangeId
+	processData, err := UnmarshalProcessData(contractArrangeExecute.ArrangeProcessData)
+	if err != nil {
+		return nil, err
+	}
+	resData.StageInfo = processData.toJobDetailString()
+	resData.Status = uint(processData.GetStatus())
+	resData.Version = contractArrangeExecute.Version
+	resData.StartTime = contractArrangeExecute.CreateTime
+	resData.ErrorInfo = processData.GetErrorInfo()
+	resData.Duration = contractArrangeExecute.UpdateTime.Sub(contractArrangeExecute.CreateTime).Milliseconds()
+	return &resData, nil
+
 }
 
 func (w *WorkflowService) QueryWorkflowDetail(workflowId, workflowDetailId int) (*db.WorkflowDetail, error) {
@@ -561,7 +636,7 @@ func (w *WorkflowService) SettingWorkflow(settingData parameter.SaveWorkflowPara
 		workflow.ToolType = 0
 	}
 	workflow.Tool = strings.Join(settingData.Tool, ",")
-	w.UpdateWorkflow(workflow)
+	_ = w.UpdateWorkflow(workflow)
 	return nil
 }
 
@@ -650,7 +725,7 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 			if project.DeployType == int(consts.IPFS) {
 				filePath = "templates/frontend-build.yml"
 			} else if project.DeployType == int(consts.INTERNET_COMPUTER) {
-				filePath = "templates/icp-build.yml"
+				filePath = "templates/icp-frontend-build.yml"
 			} else {
 				if project.FrameType == 1 || project.FrameType == 2 || project.FrameType == 5 {
 					filePath = "templates/frontend-image-build.yml"
@@ -792,12 +867,12 @@ func (w *WorkflowService) TemplateParse(name string, project *vo.ProjectDetailVo
 	return input.String(), nil
 }
 
-func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int) error {
-	err := w.db.Debug().Where("id = ? and workflow_id = ?", detailId, workflowId).Delete(&db.WorkflowDetail{}).Error
-	if err != nil {
-		return err
+func (w *WorkflowService) DeleteWorkflow(workflowId, detailId int, engineType string) error {
+	if engineType == consts.EngineTypeWorkflow {
+		return w.db.Debug().Where("id = ? and workflow_id = ?", detailId, workflowId).Delete(&db.WorkflowDetail{}).Error
+	} else {
+		return w.db.Where("id = ?", detailId).Delete(&db.ContractArrangeExecute{}).Error
 	}
-	return nil
 }
 
 func (w *WorkflowService) CheckRunningJob() {
@@ -890,7 +965,7 @@ func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 		file, err := w.TemplateParse(checkKey, project, consts.Check)
 		if err == nil {
 			workflowCheckRes.ExecFile = file
-			w.UpdateWorkflow(workflowCheckRes)
+			_ = w.UpdateWorkflow(workflowCheckRes)
 		}
 	}
 	workflowBuildData := parameter.SaveWorkflowParam{
@@ -907,7 +982,7 @@ func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 	file1, err := w.TemplateParse(buildKey, project, consts.Build)
 	if err == nil {
 		workflowBuildRes.ExecFile = file1
-		w.UpdateWorkflow(workflowBuildRes)
+		_ = w.UpdateWorkflow(workflowBuildRes)
 	}
 
 	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) || (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer) {
@@ -925,7 +1000,7 @@ func (w *WorkflowService) InitWorkflow(project *vo.ProjectDetailVo) {
 		file1, err := w.TemplateParse(deployKey, project, consts.Deploy)
 		if err == nil {
 			workflowDeployRes.ExecFile = file1
-			w.UpdateWorkflow(workflowDeployRes)
+			_ = w.UpdateWorkflow(workflowDeployRes)
 		}
 	}
 }

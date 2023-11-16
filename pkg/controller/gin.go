@@ -52,6 +52,8 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/user/wallet", h.handlerServer.saveUserWallet)
 	// project
 	api.GET("/projects", h.handlerServer.projectList)
+	api.GET("/projects/chain/network/list", h.handlerServer.getChainNetworkList)
+	api.GET("/projects/chain/network/:name", h.handlerServer.getChainNetworkByName)
 	api.POST("/projects", h.handlerServer.createProject)
 	api.POST("/projects/import", h.handlerServer.importProject)
 	api.POST("/projects/code", h.handlerServer.createProjectByCode)
@@ -163,13 +165,20 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/:id/redeem/coupon", h.handlerServer.redeemFaucetCoupon)   //通过优惠卷生成钱包罐
 
 	//arrange-api
-	api.GET("/projects/:id/version/info", h.handlerServer.getVersionAndCodeInfoList)                   //获取版本列表和codeInfo
-	api.POST("/projects/:id/arrange", h.handlerServer.saveContractArrange)                             //保存编排信息
-	api.PUT("/projects/:id/arrange", h.handlerServer.updateContractArrange)                            //更新编排信息
-	api.POST("/projects/:id/arrange/execute", h.handlerServer.saveContractArrangeExecute)              //保存编排执行信息
-	api.PUT("/projects/:id/arrange/execute", h.handlerServer.updateContractArrangeExecute)             //更新执行信息
-	api.GET("/projects/:id/arrange/execute/:executeId", h.handlerServer.getContractArrangeExecuteInfo) //根据执行id获取执行信息
-	api.GET("/projects/:id/arrange/contract/:version", h.handlerServer.getDeployArrangeContractList)   //根据项目ID和版本获取部署的合约列表
+	api.GET("/projects/:id/arrange/contract/:version", h.handlerServer.getToBeArrangedContractList)         //获取待编排的合约列表
+	api.GET("/projects/:id/arrange/data/:version", h.handlerServer.getArrangedDataList)                     //获取编排参数列表
+	api.GET("/projects/:id/original/arrange/data/:version", h.handlerServer.getOriginalArrangedData)        //获取原始编排参数
+	api.GET("/projects/:id/code/info/:version", h.handlerServer.getCodeInfoByVersion)                       //获取版本的codeInfo
+	api.GET("/projects/:id/arrange/execute/:executeId", h.handlerServer.getContractArrangeExecuteInfo)      //根据执行id获取执行信息
+	api.GET("/projects/:id/arrange/deploy/contract/:version", h.handlerServer.getDeployArrangeContractList) //根据项目ID和版本获取部署的合约列表
+	api.GET("/projects/:id/contract/info", h.handlerServer.getContractInfo)                                 //获取单个合约的构建信息
+	api.POST("/projects/:id/arrange/contract/name", h.handlerServer.getContractArrangeCache)                //获取单个合约的最新编排信息
+	api.POST("/projects/:id/arrange", h.handlerServer.saveContractArrange)                                  //保存编排信息
+	api.POST("/projects/:id/arrange/name", h.handlerServer.saveContractNameArrange)                         //保存合约名编排信息
+	api.POST("/projects/:id/arrange/cache", h.handlerServer.saveContractArrangeCache)                       //保存单个合约编排信息
+	api.PUT("/projects/:id/arrange", h.handlerServer.updateContractArrange)                                 //更新编排信息
+	api.POST("/projects/:id/arrange/execute", h.handlerServer.saveContractArrangeExecute)                   //保存编排执行信息
+	api.PUT("/projects/:id/arrange/execute", h.handlerServer.updateContractArrangeExecute)                  //更新执行信息
 	//
 	//保存部署成的合约信息
 	//
