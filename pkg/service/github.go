@@ -356,7 +356,7 @@ func (g *GithubService) GetRepoFileList(token, owner, fileName string, branch st
 
 func (g *GithubService) GetGitHubAppInstallationForUser(username string) (string, error) {
 	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
-	if exist {
+	if !exist {
 		return "", errors.New("请联系管理员配置GITHUB_APP_ID")
 	}
 	appId, err := strconv.Atoi(appIdString)
@@ -364,7 +364,7 @@ func (g *GithubService) GetGitHubAppInstallationForUser(username string) (string
 		return "", err
 	}
 	appPemPath, exist := os.LookupEnv("GITHUB_APP_PEM")
-	if exist {
+	if !exist {
 		return "", errors.New("请联系管理员配置GITHUB_APP_ID")
 	}
 	ctx := context.Background()
@@ -378,6 +378,80 @@ func (g *GithubService) GetGitHubAppInstallationForUser(username string) (string
 		return "", err
 	}
 	return *installation.RepositorySelection, nil
+}
+
+func (g *GithubService) UpdateGitHubAppInstallationForUser() (string, error) {
+	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
+	if !exist {
+		return "", errors.New("请联系管理员配置GITHUB_APP_ID")
+	}
+	appId, err := strconv.Atoi(appIdString)
+	if err != nil {
+		return "", err
+	}
+	appPemPath, exist := os.LookupEnv("GITHUB_APP_PEM")
+	if !exist {
+		return "", errors.New("请联系管理员配置GITHUB_APP_ID")
+	}
+	ctx := context.Background()
+	atr, err := ghinstallation.NewAppsTransportKeyFromFile(http.DefaultTransport, int64(appId), appPemPath)
+	if err != nil {
+		return "", err
+	}
+	client := github.NewClient(&http.Client{Transport: atr})
+	//获取所有的user
+	var userList []db2.User
+	err = g.db.Model(&db2.User{}).Find(&userList).Error
+	if err != nil {
+		return "获取用户列表失败", err
+	}
+
+	var gitAppInstallList []db2.GitAppInstall
+	for _, user := range userList {
+		installation, _, err := client.Apps.FindUserInstallation(ctx, user.Username)
+		if err != nil {
+			fmt.Printf("用户 %s 获取AppId失败，err is %s \n", user.Username, err.Error())
+			continue
+		}
+		var installData db2.GitAppInstall
+		installData.UserId = installation.GetAccount().GetID()
+		installData.InstallUserId = installation.GetAccount().GetID()
+		installData.InstallId = installation.GetID()
+		installData.Name = installation.GetAccount().GetLogin()
+		installData.RepositorySelection = installation.GetRepositorySelection()
+		installData.AvatarUrl = installation.GetAccount().GetAvatarURL()
+		installData.CreateTime = time.Now()
+		gitAppInstallList = append(gitAppInstallList, installData)
+
+		token, _, err := client.Apps.CreateInstallationToken(ctx, installation.GetID(), nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token.GetToken()}))
+		tokenClient := github.NewClient(tc)
+		listRepos, _, err := tokenClient.Apps.ListRepos(ctx, nil)
+		var repoDataList []db2.GitRepo
+		for _, repo := range listRepos.Repositories {
+			var repoData db2.GitRepo
+			err = g.db.Model(db2.GitRepo{}).Where("repo_id = ?", repo.GetID()).First(&repoData).Error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				repoData.InstallationId = installation.GetID()
+				repoData.DefaultBranch = repo.GetDefaultBranch()
+				repoData.Name = repo.GetName()
+				repoData.UserId = repo.GetOwner().GetID()
+				repoData.CloneUrl = repo.GetCloneURL()
+				repoData.SshUrl = repo.GetSSHURL()
+				repoData.RepoId = repo.GetID()
+				repoData.CreateTime = repo.GetCreatedAt().Time
+				repoData.Private = repo.GetPrivate()
+				repoDataList = append(repoDataList, repoData)
+			}
+		}
+		g.db.Model(db2.GitRepo{}).Save(&repoDataList)
+		client.Apps.RevokeInstallationToken(ctx)
+	}
+	g.db.Model(&db2.GitAppInstall{}).Save(&gitAppInstallList)
+	return "数据更新成功", nil
 }
 
 func (g *GithubService) GetUsersInstallations(token string) ([]*github.Installation, error) {

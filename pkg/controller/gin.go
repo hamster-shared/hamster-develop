@@ -39,6 +39,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/v2/github/webhook", h.handlerServer.githubWebHookV2)
 	api.GET("/projects/:id/:username/frontend/logs", h.handlerServer.getDeployFrontendLog)
 	api.GET("/user/count", h.handlerServer.getUserCount)
+	api.GET("/github/user/installation/update", h.handlerServer.updateGitHubAppInstallationForUser)
 	// project_template
 	api.GET("/templates-category", h.handlerServer.templatesCategory)
 	api.GET("/templates-category/:id/templates", h.handlerServer.templates)

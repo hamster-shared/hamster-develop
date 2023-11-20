@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/hamster-shared/aline-engine/logger"
@@ -68,6 +69,7 @@ func (h *HandlerServer) githubInstallAuth(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	fmt.Printf("获取的LoginParam是 %v \n", loginParam)
 	loginService := application.GetBean[*service.LoginService]("loginService")
 	data, err := loginService.GithubInstallAuth(loginParam, user)
 	if err != nil {

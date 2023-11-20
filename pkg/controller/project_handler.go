@@ -1156,6 +1156,16 @@ func (h *HandlerServer) getGitHubRepositorySelection(gin *gin.Context) {
 	Success(selection, gin)
 }
 
+func (h *HandlerServer) updateGitHubAppInstallationForUser(gin *gin.Context) {
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	selection, err := githubService.UpdateGitHubAppInstallationForUser()
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(selection, gin)
+}
+
 func (h *HandlerServer) getChainNetworkList(gin *gin.Context) {
 	list, err := h.projectService.GetChainNetworkList()
 	if err != nil {
