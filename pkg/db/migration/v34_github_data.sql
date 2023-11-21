@@ -15,6 +15,7 @@ create table t_git_repo (
     ssh_url     varchar(200) comment 'repo ssh url',
     default_branch  varchar(50) comment 'default branch',
     private     bool    comment 'private or public',
+    language    varchar(50),
     create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment 'create time'
 ) comment 'github repo';
 

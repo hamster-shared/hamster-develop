@@ -65,12 +65,9 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 }
 
 func (h *HandlerServer) importProject(g *gin.Context) {
-	tokenAny, _ := g.Get("token")
-	token, _ := tokenAny.(string)
-	userAny, _ := g.Get("user")
-	user, ok := userAny.(db2.User)
-	if !ok {
-		Fail("user info is not user", g)
+	loginType, exit := g.Get("loginType")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", g)
 		return
 	}
 	importData := parameter.ImportProjectParam{}
@@ -82,6 +79,12 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	}
 
 	githubService := application.GetBean[*service.GithubService]("githubService")
+	tokenData, err := githubService.GetToken(importData.InstallId)
+	if err != nil {
+		Fail("get install token failed", g)
+		return
+	}
+	token := tokenData.GetToken()
 	// parsing url
 	owner, name, err := service.ParsingGitHubURL(importData.CloneURL)
 	if err != nil {
@@ -104,7 +107,21 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		TemplateUrl: importData.CloneURL,
 		FrameType:   consts.ProjectFrameType(importData.Ecosystem),
 		DeployType:  1,
-		UserId:      int64(user.Id),
+	}
+	userAny, _ := g.Get("user")
+	if loginType == consts.Metamask {
+		var userData db2.UserWallet
+		userData, _ = userAny.(db2.UserWallet)
+		if userData.UserId == 0 {
+			Fail("Please associate GitHub", g)
+			return
+		}
+		data.UserId = int64(userData.UserId)
+	}
+	if loginType == consts.GitHub {
+		var userData db2.User
+		userData, _ = userAny.(db2.User)
+		data.UserId = int64(userData.Id)
 	}
 	// check the project frame
 	// if type = frontend, use ecosystem for frame type direct

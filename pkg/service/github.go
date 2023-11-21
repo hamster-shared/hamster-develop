@@ -335,6 +335,41 @@ func (g *GithubService) GetRepoList(token, owner, filter string, page, size int)
 	return repoListVo, nil
 }
 
+func (g *GithubService) GetToken(installId int64) (*github.InstallationToken, error) {
+	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
+	if !exist {
+		logger.Errorf("please contact the administrator to configure 'GITHUB_APP_ID'")
+		return nil, errors.New("please contact the administrator to configure 'GITHUB_APP_ID'")
+	}
+	appId, err := strconv.Atoi(appIdString)
+	if err != nil {
+		logger.Errorf("app id format failed:%s", err)
+		return nil, err
+	}
+	appPemPath, exist := os.LookupEnv("GITHUB_APP_PEM")
+	if !exist {
+		logger.Errorf("please contact the administrator to configure 'GITHUB_APP_PEM'")
+		return nil, errors.New("please contact the administrator to configure 'GITHUB_APP_PEM'")
+	}
+	atr, err := ghinstallation.NewAppsTransportKeyFromFile(http.DefaultTransport, int64(appId), appPemPath)
+	if err != nil {
+		logger.Errorf("get github client by private key failed:%s", err)
+		return nil, err
+	}
+	client := github.NewClient(&http.Client{Transport: atr})
+	token, _, err := client.Apps.CreateInstallationToken(g.ctx, installId, nil)
+	if err != nil {
+		logger.Errorf("create installation failed:%s", err)
+		return nil, err
+	}
+	return token, nil
+}
+
+func (g *GithubService) DestroyToken(token string) {
+	client := utils.NewGithubClient(g.ctx, token)
+	client.Apps.RevokeInstallationToken(g.ctx)
+}
+
 func (g *GithubService) GetRepoFileList(token, owner, fileName string, branch string) ([]*github.RepositoryContent, error) {
 	client := utils.NewGithubClient(g.ctx, token)
 	// 设置查询选项，包含ref和message参数
@@ -619,6 +654,7 @@ func (g *GithubService) HandlerInstallData(installationId int64, action string) 
 		repoData.RepoId = repo.GetID()
 		repoData.CreateTime = repo.GetCreatedAt().Time
 		repoData.Private = repo.GetPrivate()
+		repoData.Language = repo.GetLanguage()
 		if err != nil {
 			err = g.db.Model(db2.GitRepo{}).Create(&repoData).Error
 			if err != nil {
