@@ -557,6 +557,10 @@ func (g *GithubService) getWebHookData(installationId int64) ([]*github.Reposito
 		return repos, err
 	}
 	repos = append(repos, data.Repositories...)
+	logger.Info("**********************")
+	logger.Info(len(repos))
+	logger.Info(data.GetTotalCount())
+	logger.Info("**********************")
 	if data.GetTotalCount() > opt.PerPage {
 		totalPages := int(math.Ceil(float64(data.GetTotalCount()) / float64(opt.PerPage)))
 		for i := 2; i <= totalPages; i++ {
@@ -569,6 +573,9 @@ func (g *GithubService) getWebHookData(installationId int64) ([]*github.Reposito
 		}
 	}
 	client.Apps.RevokeInstallationToken(g.ctx)
+	logger.Info("**********************")
+	logger.Info(len(repos))
+	logger.Info("**********************")
 	return repos, nil
 }
 

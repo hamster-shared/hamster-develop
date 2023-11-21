@@ -388,6 +388,22 @@ func (h *HandlerServer) getUseInfoV2(gin *gin.Context) {
 	Success(user, gin)
 }
 
+func (h *HandlerServer) getGithubUser(gin *gin.Context) {
+	idStr := gin.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	userService := application.GetBean[*service.UserService]("userService")
+	data, err := userService.GetGithubUser(int64(id))
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
+}
+
 func (h *HandlerServer) getUserCount(gin *gin.Context) {
 	userService := application.GetBean[*service.UserService]("userService")
 	data, err := userService.GetUserCount()
