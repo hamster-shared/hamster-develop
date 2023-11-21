@@ -572,6 +572,24 @@ func (g *GithubService) getWebHookData(installationId int64) ([]*github.Reposito
 	return repos, nil
 }
 
+func (g *GithubService) UpdateRepositorySelection(installId int64, repoSelection string) error {
+	var list []db2.GitAppInstall
+	err := g.db.Model(db2.GitAppInstall{}).Where("install_id = ?", installId).Find(&list).Error
+	if err != nil {
+		logger.Errorf("get git app install info failed:%s", err)
+		return err
+	}
+	if len(list) > 0 {
+		if list[0].RepositorySelection != repoSelection {
+			for _, install := range list {
+				install.RepositorySelection = repoSelection
+				g.db.Save(&install)
+			}
+		}
+	}
+	return nil
+}
+
 func (g *GithubService) HandlerInstallData(installationId int64, action string) error {
 	repos, err := g.getWebHookData(installationId)
 	if err != nil {
