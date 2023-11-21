@@ -600,6 +600,7 @@ func (g *GithubService) UpdateRepositorySelection(installId int64, repoSelection
 func (g *GithubService) HandlerInstallData(installationId int64, action string) error {
 	repos, err := g.getWebHookData(installationId)
 	if err != nil {
+		logger.Errorf("get github webhook data failed: %s", err)
 		err = g.saveFailedData(installationId, action)
 		if err != nil {
 			logger.Errorf("save handler failed:%s", err)

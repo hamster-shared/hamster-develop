@@ -140,13 +140,13 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 	}
 	if event == "installation" {
 		if githubInstall.Action == "created" {
+			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL)
 			err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), consts.INSTALLATION_CREATED)
 			if err != nil {
 				logger.Errorf("installation.created failed:%s", err)
 				Fail(err.Error(), gin)
 				return
 			}
-			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL)
 		}
 		if githubInstall.Action == "deleted" {
 			err = githubService.GithubAppDelete(githubInstall.Installation.GetID())
