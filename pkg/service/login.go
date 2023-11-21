@@ -115,7 +115,7 @@ func (l *LoginService) LoginWithGithubV2(data parameter.LoginParam) (string, err
 
 // true:need install false: not need install
 func (l *LoginService) GithubInstallAuth(data parameter.LoginParam, userWallet db2.UserWallet) (bool, error) {
-	data.ClientSecret = os.Getenv("INSTALL_AUTH_CLIENT_SECRETS")
+	data.ClientSecret = os.Getenv("APPS_CLIENT_SECRETS")
 	var userData db2.User
 	var token parameter.Token
 	result := false
@@ -125,18 +125,18 @@ func (l *LoginService) GithubInstallAuth(data parameter.LoginParam, userWallet d
 		"client_secret": data.ClientSecret,
 		"code":          data.Code,
 	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
-	if res.StatusCode() != 200 {
-		return result, err
-	}
 	if err != nil {
 		return result, err
+	}
+	if res.IsError() {
+		return result, errors.New(res.String())
 	}
 	userInfo, err := l.githubService.GetUserInfo(token.AccessToken)
 	if err != nil {
 		return result, err
 	}
 	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.ID).First(&userData).Error
-	if err != nil {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		result = true
 		userData.Id = uint(userInfo.GetID())
 		userData.Username = userInfo.GetLogin()
@@ -149,11 +149,6 @@ func (l *LoginService) GithubInstallAuth(data parameter.LoginParam, userWallet d
 	}
 	userWallet.UserId = userData.Id
 	l.db.Save(&userWallet)
-	var installData []db2.GitAppInstall
-	l.db.Model(db2.GitAppInstall{}).Where("user_id = ?", userInfo.ID).Find(&installData)
-	if len(installData) > 0 {
-		return result, nil
-	}
 	result = true
 	return result, nil
 }

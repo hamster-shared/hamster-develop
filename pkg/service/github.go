@@ -570,6 +570,7 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 	if appInstallData.Installation.GetAccount().GetType() == "Organization" {
 		installData.UserId = appInstallData.Requester.Id
 	}
+	//userId
 	installData.InstallUserId = appInstallData.Installation.GetAccount().GetID()
 	installData.InstallId = appInstallData.Installation.GetID()
 	installData.Name = appInstallData.Installation.GetAccount().GetLogin()

@@ -551,7 +551,7 @@ func (h *HandlerServer) getUsersInstallations(gin *gin.Context) {
 		dataRes = data
 	} else {
 		user, _ := userAny.(db2.UserWallet)
-		data, err := githubService.GetUserInstallations(int64(user.Id))
+		data, err := githubService.GetUserInstallations(int64(user.UserId))
 		if err != nil {
 			Fail(err.Error(), gin)
 			return
