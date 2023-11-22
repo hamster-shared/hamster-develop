@@ -151,7 +151,6 @@ func (l *LoginService) GithubInstallAuth(data parameter.LoginParam, userWallet d
 	}
 	userWallet.UserId = userData.Id
 	l.db.Save(&userWallet)
-	result = true
 	return result, nil
 }
 
