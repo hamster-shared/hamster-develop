@@ -338,19 +338,17 @@ func (h *HandlerServer) JwtAuthorize() gin.HandlerFunc {
 				return
 			}
 			gin.Set("user", userWallet)
-			//if userWallet.UserId != 0 {
-			//	user, err := userService.GetUserById(int64(userWallet.UserId))
-			//	if err != nil {
-			//		logger.Errorf("wallet user id is error: %s", err)
-			//		Failed(http.StatusUnauthorized, err.Error(), gin)
-			//		gin.Abort()
-			//		return
-			//	}
-			//	githubToken = user.Token
-			//	gin.Set("user", user)
-			//} else {
-			//	gin.Set("user", userWallet)
-			//}
+			if userWallet.UserId != 0 {
+				user, err := userService.GetUserById(int64(userWallet.UserId))
+				if err != nil {
+					logger.Errorf("wallet user id is error: %s", err)
+					Failed(http.StatusUnauthorized, err.Error(), gin)
+					gin.Abort()
+					return
+				}
+				githubToken = user.Token
+				gin.Set("githubUser", user)
+			}
 		}
 		gin.Set("token", githubToken)
 		gin.Next()
