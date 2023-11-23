@@ -441,23 +441,26 @@ func (g *GithubService) UpdateGitHubAppInstallationForUser() (string, error) {
 		return "获取用户列表失败", err
 	}
 
-	var gitAppInstallList []db2.GitAppInstall
+	//var gitAppInstallList []db2.GitAppInstall
 	for _, user := range userList {
 		installation, _, err := client.Apps.FindUserInstallation(ctx, user.Username)
 		if err != nil {
 			fmt.Printf("用户 %s 获取AppId失败，err is %s \n", user.Username, err.Error())
 			continue
 		}
-
 		var installData db2.GitAppInstall
-		installData.UserId = installation.GetAccount().GetID()
-		installData.InstallUserId = installation.GetAccount().GetID()
-		installData.InstallId = installation.GetID()
-		installData.Name = installation.GetAccount().GetLogin()
-		installData.RepositorySelection = installation.GetRepositorySelection()
-		installData.AvatarUrl = installation.GetAccount().GetAvatarURL()
-		installData.CreateTime = time.Now()
-		gitAppInstallList = append(gitAppInstallList, installData)
+		err = g.db.Model(db2.GitAppInstall{}).Where("name = ? and install_id = ?", installation.GetAccount().GetLogin(), installation.GetID()).First(&installData).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			installData.UserId = installation.GetAccount().GetID()
+			installData.InstallUserId = installation.GetAccount().GetID()
+			installData.InstallId = installation.GetID()
+			installData.Name = installation.GetAccount().GetLogin()
+			installData.RepositorySelection = installation.GetRepositorySelection()
+			installData.AvatarUrl = installation.GetAccount().GetAvatarURL()
+			installData.CreateTime = time.Now()
+			g.db.Model(db2.GitAppInstall{}).Create(&installData)
+		}
+		//gitAppInstallList = append(gitAppInstallList, installData)
 
 		token, _, err := client.Apps.CreateInstallationToken(ctx, installation.GetID(), nil)
 		if err != nil {
@@ -465,9 +468,26 @@ func (g *GithubService) UpdateGitHubAppInstallationForUser() (string, error) {
 		}
 		tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token.GetToken()}))
 		tokenClient := github.NewClient(tc)
-		listRepos, _, err := tokenClient.Apps.ListRepos(ctx, nil)
-		var repoDataList []db2.GitRepo
-		for _, repo := range listRepos.Repositories {
+		var repos []*github.Repository
+		opt := github.ListOptions{
+			Page:    1,
+			PerPage: 100,
+		}
+		listRepos, _, err := tokenClient.Apps.ListRepos(ctx, &opt)
+		repos = append(repos, listRepos.Repositories...)
+		if listRepos.GetTotalCount() > opt.PerPage {
+			totalPages := int(math.Ceil(float64(listRepos.GetTotalCount()) / float64(opt.PerPage)))
+			for i := 2; i <= totalPages; i++ {
+				opt.Page = i
+				list, _, err := tokenClient.Apps.ListRepos(ctx, &opt)
+				if err != nil {
+					fmt.Sprintf("get app repos failed:%s", err)
+					return "", err
+				}
+				repos = append(repos, list.Repositories...)
+			}
+		}
+		for _, repo := range repos {
 			var repoData db2.GitRepo
 			err = g.db.Model(db2.GitRepo{}).Where("repo_id = ?", repo.GetID()).First(&repoData).Error
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -480,13 +500,37 @@ func (g *GithubService) UpdateGitHubAppInstallationForUser() (string, error) {
 				repoData.RepoId = repo.GetID()
 				repoData.CreateTime = repo.GetCreatedAt().Time
 				repoData.Private = repo.GetPrivate()
-				repoDataList = append(repoDataList, repoData)
+				repoData.UpdateAt = repo.GetUpdatedAt().Time
+				repoData.Language = repo.GetLanguage()
+				g.db.Model(db2.GitRepo{}).Create(&repoData)
+			}
+			if err == nil {
+				repoData.UpdateAt = repo.GetUpdatedAt().Time
+				repoData.Language = repo.GetLanguage()
+				g.db.Save(&repoData)
 			}
 		}
-		g.db.Model(db2.GitRepo{}).Save(&repoDataList)
-		client.Apps.RevokeInstallationToken(ctx)
+		//var repoDataList []db2.GitRepo
+		//for _, repo := range listRepos.Repositories {
+		//	var repoData db2.GitRepo
+		//	err = g.db.Model(db2.GitRepo{}).Where("repo_id = ?", repo.GetID()).First(&repoData).Error
+		//	if errors.Is(err, gorm.ErrRecordNotFound) {
+		//		repoData.InstallationId = installation.GetID()
+		//		repoData.DefaultBranch = repo.GetDefaultBranch()
+		//		repoData.Name = repo.GetName()
+		//		repoData.UserId = repo.GetOwner().GetID()
+		//		repoData.CloneUrl = repo.GetCloneURL()
+		//		repoData.SshUrl = repo.GetSSHURL()
+		//		repoData.RepoId = repo.GetID()
+		//		repoData.CreateTime = repo.GetCreatedAt().Time
+		//		repoData.Private = repo.GetPrivate()
+		//		repoDataList = append(repoDataList, repoData)
+		//	}
+		//}
+		//g.db.Model(db2.GitRepo{}).Save(&repoDataList)
+		//client.Apps.RevokeInstallationToken(ctx)
 	}
-	g.db.Model(&db2.GitAppInstall{}).Save(&gitAppInstallList)
+	//g.db.Model(&db2.GitAppInstall{}).Save(&gitAppInstallList)
 	return "数据更新成功", nil
 }
 
@@ -669,6 +713,44 @@ func (g *GithubService) HandlerInstallData(installationId int64, action string) 
 		} else {
 			g.db.Model(db2.GitRepo{}).Save(&repoData)
 		}
+	}
+	return nil
+}
+func (g *GithubService) AddRepo(appInstallData parameter.GithubWebHookInstall, action string) error {
+	if len(appInstallData.RepositoriesAdded) > 0 {
+		token, err := g.GetToken(appInstallData.Installation.GetID())
+		if err != nil {
+			return err
+		}
+		client := utils.NewGithubClient(g.ctx, token.GetToken())
+		for _, added := range appInstallData.RepositoriesAdded {
+			var repoData db2.GitRepo
+			err := g.db.Model(db2.GitRepo{}).Where("repo_id = ?", added.Id).First(&repoData).Error
+			repo, _, err := client.Repositories.GetByID(g.ctx, added.Id)
+			if err != nil {
+				logger.Errorf("save install info failed:%s", err)
+				err = g.saveFailedData(appInstallData.Installation.GetID(), action)
+				if err != nil {
+					logger.Errorf("save failed install info failed:%s", err)
+				}
+				continue
+			}
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				repoData.InstallationId = appInstallData.Installation.GetID()
+				repoData.DefaultBranch = repo.GetDefaultBranch()
+				repoData.Name = repo.GetName()
+				repoData.UserId = repo.GetOwner().GetID()
+				repoData.CloneUrl = repo.GetCloneURL()
+				repoData.SshUrl = repo.GetSSHURL()
+				repoData.RepoId = repo.GetID()
+				repoData.CreateTime = repo.GetCreatedAt().Time
+				repoData.Private = repo.GetPrivate()
+				repoData.Language = repo.GetLanguage()
+				repoData.UpdateAt = repo.GetUpdatedAt().Time
+				g.db.Model(db2.GitRepo{}).Create(&repoData)
+			}
+		}
+		client.Apps.RevokeInstallationToken(g.ctx)
 	}
 	return nil
 }

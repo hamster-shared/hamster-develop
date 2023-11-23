@@ -162,7 +162,8 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 	if event == "installation_repositories" {
 		githubService.UpdateRepositorySelection(githubInstall.Installation.GetID(), githubInstall.Installation.GetRepositorySelection())
 		if githubInstall.Action == "added" {
-			err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), consts.REPO_ADDED)
+			//err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), consts.REPO_ADDED)
+			err = githubService.AddRepo(githubInstall, consts.REPO_ADDED)
 			if err != nil {
 				logger.Errorf("repo.added failed:%s", err)
 				Fail(err.Error(), gin)

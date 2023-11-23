@@ -37,6 +37,15 @@ type GithubWebHookInstall struct {
 	RepositorySelection string                `json:"repository_selection"`
 	Requester           Requester             `json:"requester"`
 	RepositoriesRemoved []RepositoriesRemoved `json:"repositories_removed"`
+	RepositoriesAdded   []RepositoriesAdded   `json:"repositories_added"`
+}
+
+type RepositoriesAdded struct {
+	Id       int64  `json:"id"`
+	NodeId   string `json:"node_id"`
+	Name     string `json:"name"`
+	FullName string `json:"full_name"`
+	Private  bool   `json:"private"`
 }
 
 type RepositoriesRemoved struct {
