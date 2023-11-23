@@ -724,18 +724,18 @@ func (g *GithubService) AddRepo(appInstallData parameter.GithubWebHookInstall, a
 		}
 		client := utils.NewGithubClient(g.ctx, token.GetToken())
 		for _, added := range appInstallData.RepositoriesAdded {
-			var repoData db2.GitRepo
-			err := g.db.Model(db2.GitRepo{}).Where("repo_id = ?", added.Id).First(&repoData).Error
 			repo, _, err := client.Repositories.GetByID(g.ctx, added.Id)
 			if err != nil {
-				logger.Errorf("save install info failed:%s", err)
+				logger.Errorf("add repo get repo info failed:%s", err)
 				err = g.saveFailedData(appInstallData.Installation.GetID(), action)
 				if err != nil {
 					logger.Errorf("save failed install info failed:%s", err)
 				}
 				continue
 			}
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+			var repoData db2.GitRepo
+			err = g.db.Model(db2.GitRepo{}).Where("repo_id = ?", added.Id).First(&repoData).Error
+			if err != nil {
 				repoData.InstallationId = appInstallData.Installation.GetID()
 				repoData.DefaultBranch = repo.GetDefaultBranch()
 				repoData.Name = repo.GetName()
@@ -747,6 +747,9 @@ func (g *GithubService) AddRepo(appInstallData parameter.GithubWebHookInstall, a
 				repoData.Private = repo.GetPrivate()
 				repoData.Language = repo.GetLanguage()
 				repoData.UpdateAt = repo.GetUpdatedAt().Time
+				logger.Info("create data")
+				logger.Info(repoData)
+				logger.Info("***************")
 				g.db.Model(db2.GitRepo{}).Create(&repoData)
 			}
 		}
