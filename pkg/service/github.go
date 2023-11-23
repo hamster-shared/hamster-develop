@@ -448,6 +448,7 @@ func (g *GithubService) UpdateGitHubAppInstallationForUser() (string, error) {
 			fmt.Printf("用户 %s 获取AppId失败，err is %s \n", user.Username, err.Error())
 			continue
 		}
+
 		var installData db2.GitAppInstall
 		installData.UserId = installation.GetAccount().GetID()
 		installData.InstallUserId = installation.GetAccount().GetID()
@@ -599,6 +600,7 @@ func (g *GithubService) getWebHookData(installationId int64) ([]*github.Reposito
 	if data.GetTotalCount() > opt.PerPage {
 		totalPages := int(math.Ceil(float64(data.GetTotalCount()) / float64(opt.PerPage)))
 		for i := 2; i <= totalPages; i++ {
+			opt.Page = i
 			list, _, err := tokenClient.Apps.ListRepos(g.ctx, &opt)
 			if err != nil {
 				logger.Errorf("get app repos failed:%s", err)
