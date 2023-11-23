@@ -655,6 +655,7 @@ func (g *GithubService) HandlerInstallData(installationId int64, action string) 
 		repoData.CreateTime = repo.GetCreatedAt().Time
 		repoData.Private = repo.GetPrivate()
 		repoData.Language = repo.GetLanguage()
+		repoData.UpdateAt = repo.GetUpdatedAt().Time
 		if err != nil {
 			err = g.db.Model(db2.GitRepo{}).Create(&repoData).Error
 			if err != nil {

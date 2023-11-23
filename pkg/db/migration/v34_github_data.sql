@@ -16,6 +16,7 @@ create table t_git_repo (
     default_branch  varchar(50) comment 'default branch',
     private     bool    comment 'private or public',
     language    varchar(50),
+    update_at   timestamp NULL DEFAULT CURRENT_TIMESTAMP comment 'update time',
     create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP comment 'create time'
 ) comment 'github repo';
 
