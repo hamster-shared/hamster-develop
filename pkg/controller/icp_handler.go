@@ -123,7 +123,11 @@ func (h *HandlerServer) getCanisterInfo(gin *gin.Context) {
 
 func (h *HandlerServer) getIcpAccount(gin *gin.Context) {
 	icpService := application.GetBean[*service.IcpService]("icpService")
-	userId, _ := gin.Get("userId")
+	userId, exist := gin.Get("userId")
+	if !exist {
+		Fail("no login", gin)
+		return
+	}
 	icpAccount, err := icpService.GetIcpAccount(userId.(uint))
 	if err != nil {
 		Fail(err.Error(), gin)
