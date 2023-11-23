@@ -148,9 +148,17 @@ func (l *LoginService) GithubInstallAuth(data parameter.LoginParam, userWallet d
 		userData.HtmlUrl = userInfo.GetHTMLURL()
 		userData.CreateTime = time.Now()
 		l.db.Model(db2.User{}).Create(&userData)
+	} else {
+		var installData db2.GitAppInstall
+		err = l.db.Model(db2.GitAppInstall{}).Where("user_id = ?", userInfo.ID).First(&installData).Error
+		if err != nil {
+			result = true
+		}
 	}
-	userWallet.UserId = userData.Id
-	l.db.Save(&userWallet)
+	if userWallet.UserId == 0 {
+		userWallet.UserId = userData.Id
+		l.db.Save(&userWallet)
+	}
 	return result, nil
 }
 
