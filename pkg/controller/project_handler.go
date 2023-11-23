@@ -45,10 +45,33 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	userAny, exit := gin.Get("user")
-	if exit {
+	loginType, exit := gin.Get("loginType")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", gin)
+		return
+	}
+	var userId int
+	var userAny any
+	if loginType == consts.GitHub {
+		userAny, exit = gin.Get("user")
+		if !exit {
+			Fail("github user not exit", gin)
+			return
+		}
 		user, _ := userAny.(db2.User)
-		data, err := h.projectService.GetProjects(int(user.Id), query, page, size, projectType)
+		userId = int(user.Id)
+	}
+	if loginType == consts.Metamask {
+		userAny, exit = gin.Get("githubUser")
+		if !exit {
+			Fail("metamask login github user not exit", gin)
+			return
+		}
+	}
+	user, _ := userAny.(db2.User)
+	userId = int(user.Id)
+	if userId != 0 {
+		data, err := h.projectService.GetProjects(userId, query, page, size, projectType)
 		if err != nil {
 			Fail(err.Error(), gin)
 			return
@@ -65,12 +88,9 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 }
 
 func (h *HandlerServer) importProject(g *gin.Context) {
-	tokenAny, _ := g.Get("token")
-	token, _ := tokenAny.(string)
-	userAny, _ := g.Get("user")
-	user, ok := userAny.(db2.User)
-	if !ok {
-		Fail("user info is not user", g)
+	loginType, exit := g.Get("loginType")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", g)
 		return
 	}
 	importData := parameter.ImportProjectParam{}
@@ -82,6 +102,12 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 	}
 
 	githubService := application.GetBean[*service.GithubService]("githubService")
+	tokenData, err := githubService.GetToken(importData.InstallId)
+	if err != nil {
+		Fail("get install token failed", g)
+		return
+	}
+	token := tokenData.GetToken()
 	// parsing url
 	owner, name, err := service.ParsingGitHubURL(importData.CloneURL)
 	if err != nil {
@@ -104,7 +130,21 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		TemplateUrl: importData.CloneURL,
 		FrameType:   consts.ProjectFrameType(importData.Ecosystem),
 		DeployType:  1,
-		UserId:      int64(user.Id),
+	}
+	userAny, _ := g.Get("user")
+	if loginType == consts.Metamask {
+		var userData db2.UserWallet
+		userData, _ = userAny.(db2.UserWallet)
+		if userData.UserId == 0 {
+			Fail("Please associate GitHub", g)
+			return
+		}
+		data.UserId = int64(userData.UserId)
+	}
+	if loginType == consts.GitHub {
+		var userData db2.User
+		userData, _ = userAny.(db2.User)
+		data.UserId = int64(userData.Id)
 	}
 	// check the project frame
 	// if type = frontend, use ecosystem for frame type direct
@@ -374,9 +414,28 @@ func (h *HandlerServer) projectWorkflowCheck(g *gin.Context) {
 		Fail(err.Error(), g)
 		return
 	}
-	userAny, _ := g.Get("user")
-	user, _ := userAny.(db2.User)
+	loginType, exit := g.Get("loginType")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", g)
+		return
+	}
 	var userVo vo.UserAuth
+	var userAny any
+	if loginType == consts.GitHub {
+		userAny, exit = g.Get("user")
+		if !exit {
+			Fail("github user not exit", g)
+			return
+		}
+	}
+	if loginType == consts.Metamask {
+		userAny, exit = g.Get("githubUser")
+		if !exit {
+			Fail("metamask login github user not exit", g)
+			return
+		}
+	}
+	user, _ := userAny.(db2.User)
 	copier.Copy(&userVo, &user)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	checkData, err := workflowService.ExecProjectCheckWorkflow(projectId, userVo)
@@ -399,7 +458,26 @@ func (h *HandlerServer) projectWorkflowBuild(g *gin.Context) {
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	var userVo vo.UserAuth
-	userAny, _ := g.Get("user")
+	loginType, exit := g.Get("loginType")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", g)
+		return
+	}
+	var userAny any
+	if loginType == consts.GitHub {
+		userAny, exit = g.Get("user")
+		if !exit {
+			Fail("github user not exit", g)
+			return
+		}
+	}
+	if loginType == consts.Metamask {
+		userAny, exit = g.Get("githubUser")
+		if !exit {
+			Fail("metamask login github user not exit", g)
+			return
+		}
+	}
 	user, _ := userAny.(db2.User)
 	copier.Copy(&userVo, &user)
 	data, err := workflowService.ExecProjectBuildWorkflow(projectId, userVo)
@@ -430,7 +508,26 @@ func (h *HandlerServer) projectWorkflowDeploy(g *gin.Context) {
 		return
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	userAny, _ := g.Get("user")
+	loginType, exit := g.Get("loginType")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", g)
+		return
+	}
+	var userAny any
+	if loginType == consts.GitHub {
+		userAny, exit = g.Get("user")
+		if !exit {
+			Fail("github user not exit", g)
+			return
+		}
+	}
+	if loginType == consts.Metamask {
+		userAny, exit = g.Get("githubUser")
+		if !exit {
+			Fail("metamask login github user not exit", g)
+			return
+		}
+	}
 	user, _ := userAny.(db2.User)
 	var userVo vo.UserAuth
 	copier.Copy(&userVo, &user)
@@ -519,7 +616,26 @@ func (h *HandlerServer) containerDeploy(g *gin.Context) {
 	}
 	copier.Copy(&deployParam, &deployData)
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
-	userAny, _ := g.Get("user")
+	loginType, exit := g.Get("loginType")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", g)
+		return
+	}
+	var userAny any
+	if loginType == consts.GitHub {
+		userAny, exit = g.Get("user")
+		if !exit {
+			Fail("github user not exit", g)
+			return
+		}
+	}
+	if loginType == consts.Metamask {
+		userAny, exit = g.Get("githubUser")
+		if !exit {
+			Fail("metamask login github user not exit", g)
+			return
+		}
+	}
 	user, _ := userAny.(db2.User)
 	var userVo vo.UserAuth
 	copier.Copy(&userVo, &user)
@@ -741,7 +857,26 @@ func (h *HandlerServer) projectWorkflowAptosBuild(g *gin.Context) {
 	}
 	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
 	var userVo vo.UserAuth
-	userAny, _ := g.Get("user")
+	loginType, exit := g.Get("loginType")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", g)
+		return
+	}
+	var userAny any
+	if loginType == consts.GitHub {
+		userAny, exit = g.Get("user")
+		if !exit {
+			Fail("github user not exit", g)
+			return
+		}
+	}
+	if loginType == consts.Metamask {
+		userAny, exit = g.Get("githubUser")
+		if !exit {
+			Fail("metamask login github user not exit", g)
+			return
+		}
+	}
 	user, _ := userAny.(db2.User)
 	copier.Copy(&userVo, &user)
 	data, err := workflowService.ExecProjectBuildWorkflowAptos(projectId, userVo)
@@ -805,9 +940,26 @@ func (h *HandlerServer) updateProject(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	tokenAny, _ := gin.Get("token")
-	token, _ := tokenAny.(string)
-	userAny, _ := gin.Get("user")
+	loginType, exit := gin.Get("loginType")
+	if !exit {
+		Failed(http.StatusUnauthorized, "access not authorized", gin)
+		return
+	}
+	var userAny any
+	if loginType == consts.GitHub {
+		userAny, exit = gin.Get("user")
+		if !exit {
+			Fail("github user not exit", gin)
+			return
+		}
+	}
+	if loginType == consts.Metamask {
+		userAny, exit = gin.Get("githubUser")
+		if !exit {
+			Fail("metamask login github user not exit", gin)
+			return
+		}
+	}
 	user, _ := userAny.(db2.User)
 	updateData.UserId = int(user.Id)
 	project, err := h.projectService.GetProject(id)
@@ -815,19 +967,19 @@ func (h *HandlerServer) updateProject(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	githubService := application.GetBean[*service.GithubService]("githubService")
-	repo, res, err := githubService.UpdateRepo(token, user.Username, project.Name, updateData.Name)
-	if err != nil {
-		if res != nil {
-			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
-				Failed(http.StatusUnauthorized, "access not authorized", gin)
-				return
-			}
-		}
-		Fail(err.Error(), gin)
-		return
-	}
-	updateData.RepositoryUrl = *repo.CloneURL
+	//githubService := application.GetBean[*service.GithubService]("githubService")
+	//repo, res, err := githubService.UpdateRepo(token, user.Username, project.Name, updateData.Name)
+	//if err != nil {
+	//	if res != nil {
+	//		if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+	//			Failed(http.StatusUnauthorized, "access not authorized", gin)
+	//			return
+	//		}
+	//	}
+	//	Fail(err.Error(), gin)
+	//	return
+	//}
+	updateData.RepositoryUrl = project.RepositoryUrl
 	err = h.projectService.UpdateProject(id, updateData)
 	if err != nil {
 		Fail(err.Error(), gin)

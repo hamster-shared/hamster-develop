@@ -19,6 +19,8 @@ type GitRepo struct {
 	SshUrl         string    `json:"sshUrl"`
 	DefaultBranch  string    `json:"defaultBranch"`
 	Private        bool      `json:"private"`
+	Language       string    `json:"language"`
+	UpdateAt       time.Time `json:"updateAt"`
 	CreateTime     time.Time `json:"createTime"`
 }
 

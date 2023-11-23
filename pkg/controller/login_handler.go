@@ -140,13 +140,13 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 	}
 	if event == "installation" {
 		if githubInstall.Action == "created" {
+			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL)
 			err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), consts.INSTALLATION_CREATED)
 			if err != nil {
 				logger.Errorf("installation.created failed:%s", err)
 				Fail(err.Error(), gin)
 				return
 			}
-			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL)
 		}
 		if githubInstall.Action == "deleted" {
 			err = githubService.GithubAppDelete(githubInstall.Installation.GetID())
@@ -160,8 +160,10 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 		}
 	}
 	if event == "installation_repositories" {
+		githubService.UpdateRepositorySelection(githubInstall.Installation.GetID(), githubInstall.Installation.GetRepositorySelection())
 		if githubInstall.Action == "added" {
-			err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), consts.REPO_ADDED)
+			//err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), consts.REPO_ADDED)
+			err = githubService.AddRepo(githubInstall, consts.REPO_ADDED)
 			if err != nil {
 				logger.Errorf("repo.added failed:%s", err)
 				Fail(err.Error(), gin)
@@ -339,19 +341,17 @@ func (h *HandlerServer) JwtAuthorize() gin.HandlerFunc {
 			}
 			gin.Set("user", userWallet)
 			gin.Set("userId", userWallet.UserId)
-			//if userWallet.UserId != 0 {
-			//	user, err := userService.GetUserById(int64(userWallet.UserId))
-			//	if err != nil {
-			//		logger.Errorf("wallet user id is error: %s", err)
-			//		Failed(http.StatusUnauthorized, err.Error(), gin)
-			//		gin.Abort()
-			//		return
-			//	}
-			//	githubToken = user.Token
-			//	gin.Set("user", user)
-			//} else {
-			//	gin.Set("user", userWallet)
-			//}
+			if userWallet.UserId != 0 {
+				user, err := userService.GetUserById(int64(userWallet.UserId))
+				if err != nil {
+					logger.Errorf("wallet user id is error: %s", err)
+					Failed(http.StatusUnauthorized, err.Error(), gin)
+					gin.Abort()
+					return
+				}
+				githubToken = user.Token
+				gin.Set("githubUser", user)
+			}
 		}
 		gin.Set("token", githubToken)
 		gin.Next()
@@ -387,6 +387,22 @@ func (h *HandlerServer) getUseInfoV2(gin *gin.Context) {
 		user, _ = userAny.(db2.UserWallet)
 	}
 	Success(user, gin)
+}
+
+func (h *HandlerServer) getGithubUser(gin *gin.Context) {
+	idStr := gin.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	userService := application.GetBean[*service.UserService]("userService")
+	data, err := userService.GetGithubUser(int64(id))
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(data, gin)
 }
 
 func (h *HandlerServer) getUserCount(gin *gin.Context) {

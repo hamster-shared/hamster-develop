@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
@@ -126,6 +127,7 @@ func (l *LoginService) GithubInstallAuth(data parameter.LoginParam, userWallet d
 		"code":          data.Code,
 	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
 	if err != nil {
+		logger.Errorf("auth token failed:%s", err)
 		return result, err
 	}
 	if res.IsError() {
@@ -146,10 +148,17 @@ func (l *LoginService) GithubInstallAuth(data parameter.LoginParam, userWallet d
 		userData.HtmlUrl = userInfo.GetHTMLURL()
 		userData.CreateTime = time.Now()
 		l.db.Model(db2.User{}).Create(&userData)
+	} else {
+		var installData db2.GitAppInstall
+		err = l.db.Model(db2.GitAppInstall{}).Where("user_id = ?", userInfo.ID).First(&installData).Error
+		if err != nil {
+			result = true
+		}
 	}
-	userWallet.UserId = userData.Id
-	l.db.Save(&userWallet)
-	result = true
+	if userWallet.UserId == 0 {
+		userWallet.UserId = userData.Id
+		l.db.Save(&userWallet)
+	}
 	return result, nil
 }
 
