@@ -123,9 +123,8 @@ func (h *HandlerServer) getCanisterInfo(gin *gin.Context) {
 
 func (h *HandlerServer) getIcpAccount(gin *gin.Context) {
 	icpService := application.GetBean[*service.IcpService]("icpService")
-	userAny, _ := gin.Get("user")
-	user, _ := userAny.(db2.User)
-	icpAccount, err := icpService.GetIcpAccount(user.Id)
+	userId, _ := gin.Get("userId")
+	icpAccount, err := icpService.GetIcpAccount(userId.(uint))
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

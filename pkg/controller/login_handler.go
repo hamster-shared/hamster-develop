@@ -326,6 +326,7 @@ func (h *HandlerServer) JwtAuthorize() gin.HandlerFunc {
 			}
 			githubToken = user.Token
 			gin.Set("user", user)
+			gin.Set("userId", user.Id)
 		}
 		if loginType == consts.Metamask {
 			log.Println(userId)
@@ -337,6 +338,7 @@ func (h *HandlerServer) JwtAuthorize() gin.HandlerFunc {
 				return
 			}
 			gin.Set("user", userWallet)
+			gin.Set("userId", userWallet.UserId)
 			//if userWallet.UserId != 0 {
 			//	user, err := userService.GetUserById(int64(userWallet.UserId))
 			//	if err != nil {
