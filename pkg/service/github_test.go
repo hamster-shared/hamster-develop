@@ -8,6 +8,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 	"io"
 	"log"
 	"net/http"
@@ -143,25 +144,35 @@ func TestGetGitHubAppInfo(t *testing.T) {
 	//}
 	ctx := context.Background()
 	//opt := &github.ListOptions{}
-	githubClient := utils.NewGithubClient(ctx, "ghu_CTh3pu2XMAQNF0Rm3rfWUuG3pCm8PF0WlA81")
-	userInstallations, _, err := githubClient.Apps.ListUserInstallations(ctx, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for i, installation := range userInstallations {
-		fmt.Println(i, "用户安装的app有--> ", installation)
-		fmt.Println(fmt.Sprintf("用户是 %s, installationID是 %d, appId是%d,  选择的仓库权限是 %s \n", *installation.Account.Login, *installation.ID, *installation.AppID, *installation.RepositorySelection))
-	}
-
-	installation, _, err := client.Apps.FindUserInstallation(ctx, "abing258")
-	if err != nil {
-		log.Fatal(err)
-	}
+	//githubClient := utils.NewGithubClient(ctx, "ghu_CTh3pu2XMAQNF0Rm3rfWUuG3pCm8PF0WlA81")
+	//userInstallations, _, err := githubClient.Apps.ListUserInstallations(ctx, nil)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 	//for i, installation := range userInstallations {
 	//	fmt.Println(i, "用户安装的app有--> ", installation)
 	//	fmt.Println(fmt.Sprintf("用户是 %s, installationID是 %d, appId是%d,  选择的仓库权限是 %s \n", *installation.Account.Login, *installation.ID, *installation.AppID, *installation.RepositorySelection))
 	//}
+
+	//for i, installation := range userInstallations {
+	//	fmt.Println(i, "用户安装的app有--> ", installation)
+	//	fmt.Println(fmt.Sprintf("用户是 %s, installationID是 %d, appId是%d,  选择的仓库权限是 %s \n", *installation.Account.Login, *installation.ID, *installation.AppID, *installation.RepositorySelection))
+	//}
+	installation, _, err := client.Apps.FindUserInstallation(ctx, "abing258")
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println(installation)
+	fmt.Println("-----------")
+
+	token, _, err := client.Apps.CreateInstallationToken(ctx, 35220258, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token.GetToken()}))
+	tokenClient := github.NewClient(tc)
+	data, _, err := tokenClient.Apps.ListRepos(ctx, nil)
+	fmt.Println(data)
 }
 
 func TestGetRepo(t *testing.T) {

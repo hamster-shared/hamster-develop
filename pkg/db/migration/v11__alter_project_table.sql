@@ -20,7 +20,7 @@ INSERT INTO t_template (
         '1.0.0',
         1,
         'https://develop-images.api.hamsternet.io/nuxt.png',
-        'https://nuxt.com/assets/design-kit/logo/icon-green.png',
+        'https://avatars.githubusercontent.com/u/23360933?s=48&v=4',
         0
     ),
     (

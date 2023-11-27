@@ -14,7 +14,7 @@ stages:
       - Initialization
     steps:
       - name: Compile Contract
-        runs-on: jlvihv/cairo-anaconda-env:0.1.4
+        runs-on: hamstershare/cairo-anaconda-env:0.1.4
         run: |
           cd cairo-project
           for f in *.cairo; do

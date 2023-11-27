@@ -21,6 +21,7 @@ type ImportProjectParam struct {
 	Ecosystem int    `json:"ecosystem"`
 	CloneURL  string `json:"cloneUrl"`
 	Type      int    `json:"type"`
+	InstallId int64  `json:"installId"`
 	// only used for frontend
 	DeployType int `json:"deployType"`
 }

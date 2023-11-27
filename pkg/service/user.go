@@ -50,6 +50,12 @@ func (u *UserService) GetUserCount() (int64, error) {
 	return count, nil
 }
 
+func (u *UserService) GetGithubUser(id int64) (db2.User, error) {
+	var user db2.User
+	err := u.db.Model(db2.User{}).Where("id = ?", id).First(&user).Error
+	return user, err
+}
+
 func (u *UserService) SaveUserWallet(userId uint, address string) int64 {
 
 	var count int64
