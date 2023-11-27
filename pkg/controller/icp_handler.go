@@ -167,10 +167,13 @@ func (h *HandlerServer) rechargeWallet(gin *gin.Context) {
 }
 
 func (h *HandlerServer) getWalletInfo(gin *gin.Context) {
-	userAny, _ := gin.Get("user")
-	user, _ := userAny.(db2.User)
+	userId, exists := gin.Get("userId")
+	if !exists {
+		Fail("no login", gin)
+		return
+	}
 	icpService := application.GetBean[*service.IcpService]("icpService")
-	walletInfoVo, err := icpService.GetWalletInfo(user.Id)
+	walletInfoVo, err := icpService.GetWalletInfo(userId.(uint))
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
