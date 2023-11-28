@@ -1,0 +1,31 @@
+
+version: 1.0
+name: solana
+stages:
+  git-clone:
+    steps:
+      - name: git-clone
+        uses: git-checkout
+        with:
+          url: https://github.com/666pulse/solana-nft-anchor.git
+          branch: main
+  code-compile:
+    needs:
+      - git-clone
+    steps:
+      - name: code-compile
+        runs-on: docker.io/hamstershare/solana-builder:1.73.0
+        run: |
+          apt update && apt install -y python3-pip
+          pip3 install toml
+          python3 ./script/regenerate.py
+          anchor build
+
+      - name: save artificate
+        uses: hamster-artifactory
+        with:
+          name: meta.zip
+          compress: false
+          path: |
+            target/idl/solana_nft_anchor.json
+            target/deploy/solana_nft_anchor.so

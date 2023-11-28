@@ -102,6 +102,7 @@ const (
 	Sui
 	FileCoin
 	InternetComputer
+	Solana
 )
 
 type EVMFrameType int
