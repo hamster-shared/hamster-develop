@@ -711,7 +711,7 @@ func (g *GithubService) HandlerInstallData(installationId int64, action string) 
 				}
 			}
 		} else {
-			g.db.Model(db2.GitRepo{}).Save(&repoData)
+			g.db.Save(&repoData)
 		}
 	}
 	return nil
