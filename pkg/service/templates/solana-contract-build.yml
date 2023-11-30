@@ -1,0 +1,38 @@
+version: 1.0
+name: [[ .Name ]]
+stages:
+  Initialization:
+    steps:
+      - name: Clone Code from Github
+        uses: git-checkout
+        with:
+          url: [[ .RepositoryUrl ]]
+          branch: main
+  Build Contract:
+    needs:
+      - Initialization
+    steps:
+      - name: Compile Contract
+        runs-on: docker.io/hamstershare/solana-builder:1.73.0-20231113
+        volumes:
+          - /root/.solana:/root/.solana
+        run: |
+          node -v
+          npm -v
+          npm install bs58
+          python3 ./script/regenerate.py
+          node ./script/wallet.js
+          anchor build
+  Output Results:
+    needs:
+      - Build Contract
+    steps:
+      - name: Save Files
+        uses: hamster-artifactory
+        with:
+          name: solana-meta.zip
+          compress: false
+          path: |
+            ./script/base58format.txt
+            ./target/deploy/*.so
+            ./target/idl/*.json

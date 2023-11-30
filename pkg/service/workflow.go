@@ -704,6 +704,8 @@ func getTemplate(project *vo.ProjectDetailVo, workflowType consts.WorkflowType) 
 				filePath = "templates/sui-build.yml"
 			} else if project.FrameType == consts.InternetComputer {
 				filePath = "templates/icp-contract-build.yml"
+			} else if project.FrameType == consts.Solana {
+				filePath = "templates/solana-contract-build.yml"
 			} else {
 				if project.EvmTemplateType == uint(consts.Truffle) {
 					filePath = "templates/truffle-build.yml"
