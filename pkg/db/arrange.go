@@ -18,7 +18,7 @@ type ContractArrange struct {
 type ContractArrangeExecute struct {
 	Id                 uint      `gorm:"primaryKey" json:"id"`
 	ProjectId          uuid.UUID `json:"projectId"`
-	FkArrangeId        string    `json:"fkArrangeId"`
+	FkArrangeId        uint      `json:"fkArrangeId"`
 	Version            string    `json:"version"`
 	Network            string    `json:"network"`
 	ArrangeProcessData string    `json:"arrangeProcessData"`

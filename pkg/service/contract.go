@@ -263,9 +263,18 @@ func (c *ContractService) SaveDeploy(deployParam parameter.ContractDeployParam) 
 	return entity.Id, err
 }
 
-func (c *ContractService) QueryContracts(projectId string, query, version, network string, page int, size int) (vo.Page[db2.Contract], error) {
+func (c *ContractService) QueryContracts(projectId string, query, version, network string, page int, size int) (vo.Page[vo.ContractArtifactsVo], error) {
 	var contracts []db2.Contract
 	var afterData []db2.Contract
+	var project db2.Project
+	err := c.db.Model(&db2.Project{}).Where("id = ?", projectId).First(&project).Error
+	if err != nil {
+		return vo.Page[vo.ContractArtifactsVo]{}, err
+	}
+	if project.FrameType == consts.InternetComputer {
+		return c.QueryContractsForICP(projectId, query, version, network, page, size)
+	}
+
 	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,byte_code,create_time from t_contract where project_id = ? ")
 	if query != "" && version != "" && network != "" {
 		sql = sql + "and name like CONCAT('%',?,'%') and version = ? and network like CONCAT('%',?,'%') group by id order by create_time desc"
@@ -296,7 +305,83 @@ func (c *ContractService) QueryContracts(projectId string, query, version, netwo
 		start, end := utils.SlicePage(int64(page), int64(size), int64(len(contracts)))
 		afterData = contracts[start:end]
 	}
-	return vo.NewPage[db2.Contract](afterData, len(contracts), page, size), nil
+	var contractIdList []uint
+	for _, contract := range afterData {
+		contractIdList = append(contractIdList, contract.Id)
+	}
+	var contractDeployList []db2.ContractDeploy
+	err = c.db.Table("(?) as u", c.db.Model(db2.ContractDeploy{}).Where("contract_id in ?", contractIdList).Order("deploy_time desc").Limit(1000)).Group("contract_id").Find(&contractDeployList).Error
+	if err != nil {
+		return vo.Page[vo.ContractArtifactsVo]{}, err
+	}
+	contractIdContractDeployIdyMap := make(map[uint]uint)
+	for _, contractDeploy := range contractDeployList {
+		contractIdContractDeployIdyMap[contractDeploy.ContractId] = contractDeploy.Id
+	}
+	var contractArtifactsVoList []vo.ContractArtifactsVo
+	for _, contract := range afterData {
+		var contractArtifactsVo vo.ContractArtifactsVo
+		copier.Copy(&contractArtifactsVo, &contract)
+		contractArtifactsVo.LastContractDeployId = contractIdContractDeployIdyMap[contract.Id]
+		contractArtifactsVoList = append(contractArtifactsVoList, contractArtifactsVo)
+	}
+	return vo.NewPage[vo.ContractArtifactsVo](contractArtifactsVoList, len(contracts), page, size), nil
+}
+
+func (c *ContractService) QueryContractsForICP(projectId string, query, version, network string, page int, size int) (vo.Page[vo.ContractArtifactsVo], error) {
+	var backendPackages []db2.BackendPackage
+	var afterData []db2.BackendPackage
+	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,create_time from t_backend_package where project_id = ? ")
+	if query != "" && version != "" && network != "" {
+		sql = sql + "and name like CONCAT('%',?,'%') and version = ? and network like CONCAT('%',?,'%') group by id order by create_time desc"
+		c.db.Raw(sql, projectId, query, version, network).Scan(&backendPackages)
+	} else if query != "" && version != "" {
+		sql = sql + "and name like CONCAT('%',?,'%') and version = ? group by id order by create_time desc"
+		c.db.Raw(sql, projectId, query, version).Scan(&backendPackages)
+	} else if query != "" && network != "" {
+		sql = sql + "and name like CONCAT('%',?,'%') and network like CONCAT('%',?,'%') group by id order by create_time desc"
+		c.db.Raw(sql, projectId, query, network).Scan(&backendPackages)
+	} else if version != "" && network != "" {
+		sql = sql + "and version = ? and network like CONCAT('%',?,'%') group by id order by create_time desc"
+		c.db.Raw(sql, projectId, version, network).Scan(&backendPackages)
+	} else if query != "" {
+		sql = sql + "and name like CONCAT('%',?,'%') group by id order by create_time desc"
+		c.db.Raw(sql, projectId, query).Scan(&backendPackages)
+	} else if network != "" {
+		sql = sql + "and network like CONCAT('%',?,'%') group by id order by create_time desc"
+		c.db.Raw(sql, projectId, network).Scan(&backendPackages)
+	} else if version != "" {
+		sql = sql + "and version = ? group by id order by create_time desc"
+		c.db.Raw(sql, projectId, version).Scan(&backendPackages)
+	} else {
+		sql = sql + "group by id order by create_time desc"
+		c.db.Raw(sql, projectId).Scan(&backendPackages)
+	}
+	if len(backendPackages) > 0 {
+		start, end := utils.SlicePage(int64(page), int64(size), int64(len(backendPackages)))
+		afterData = backendPackages[start:end]
+	}
+	var packageIdList []uint
+	for _, backendPackage := range afterData {
+		packageIdList = append(packageIdList, backendPackage.Id)
+	}
+	var backendDeployList []db2.BackendDeploy
+	err := c.db.Table("(?) as u", c.db.Model(db2.BackendDeploy{}).Where("package_id in ?", packageIdList).Order("deploy_time desc").Limit(1000)).Group("package_id").Find(&backendDeployList).Error
+	if err != nil {
+		return vo.Page[vo.ContractArtifactsVo]{}, err
+	}
+	contractIdContractDeployIdyMap := make(map[uint]uint)
+	for _, backendDeploy := range backendDeployList {
+		contractIdContractDeployIdyMap[backendDeploy.PackageId] = backendDeploy.Id
+	}
+	var contractArtifactsVoList []vo.ContractArtifactsVo
+	for _, backendPackage := range afterData {
+		var contractArtifactsVo vo.ContractArtifactsVo
+		copier.Copy(&contractArtifactsVo, &backendPackage)
+		contractArtifactsVo.LastContractDeployId = contractIdContractDeployIdyMap[backendPackage.Id]
+		contractArtifactsVoList = append(contractArtifactsVoList, contractArtifactsVo)
+	}
+	return vo.NewPage[vo.ContractArtifactsVo](contractArtifactsVoList, len(backendPackages), page, size), nil
 }
 
 func (c *ContractService) QueryContractByWorkflow(id string, workflowId, workflowDetailId int) ([]db2.Contract, error) {

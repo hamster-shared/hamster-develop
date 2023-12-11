@@ -83,7 +83,7 @@ func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToB
 		var saveNoUsedNames []string
 		for _, name := range contractNameArrange.UseContract {
 			contractName := name
-			if lastIndex := strings.LastIndex(contractName, "("); lastIndex >= 0 {
+			if lastIndex := strings.LastIndex(contractName, " copy #"); lastIndex >= 0 {
 				contractName = contractName[:lastIndex]
 			}
 			if contract, exists := contractMap[contractName]; exists {
@@ -135,6 +135,7 @@ func (a *ArrangeService) GetToBeArrangedContractList(id, version string) (vo.ToB
 		contractNameArrangeParam.UseContract = saveUsedNames
 		contractNameArrangeParam.NoUseContract = saveNoUsedNames
 		a.SaveContractNameArrange(contractNameArrangeParam)
+		a.SaveContractArrangeCacheInit(contractNameArrangeParam.ProjectId, version)
 		return list, nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		//进行初始化
@@ -162,8 +163,13 @@ func (a *ArrangeService) GetArrangedDataList(id, version string) ([]string, erro
 	}
 
 	//获取编排的合约名
+	var lastVersion string
+	err = a.db.Model(db2.ContractArrange{}).Select("version").Where("project_id = ?", projectId).Order("version desc").First(&lastVersion).Error
+	if err != nil {
+		return list, nil
+	}
 	var arrangeContractName string
-	err = a.db.Model(db2.ContractArrange{}).Select("arrange_contract_name").Where("project_id = ? and version = ?", projectId, version).Order("update_time desc").Limit(1).First(&arrangeContractName).Error
+	err = a.db.Model(db2.ContractArrange{}).Select("arrange_contract_name").Where("project_id = ? and version = ?", projectId, lastVersion).Order("update_time desc").Limit(1).First(&arrangeContractName).Error
 	if err == nil {
 		//存在历史版本
 		var contractNameArrange parameter.ContractNameArrange
@@ -172,7 +178,7 @@ func (a *ArrangeService) GetArrangedDataList(id, version string) ([]string, erro
 			return list, err
 		}
 		var ContractArrangeCacheList []db2.ContractArrangeCache
-		err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and version = ?", projectId, version).Find(&ContractArrangeCacheList).Error
+		err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and version = ?", projectId, lastVersion).Find(&ContractArrangeCacheList).Error
 		if err != nil {
 			return list, err
 		}
@@ -275,6 +281,40 @@ func (a *ArrangeService) SaveContractNameArrange(param parameter.ContractNameArr
 	return strconv.Itoa(int(contractArrange.Id)), nil
 }
 
+func (a *ArrangeService) SaveContractArrangeCacheInit(projectId, version string) {
+	var list []db2.ContractArrangeCache
+	err := a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and version = ?", projectId, version).Find(&list).Error
+	if err != nil {
+		return
+	}
+	if len(list) > 1 {
+		return
+	}
+	var lastVersion string
+	err = a.db.Model(db2.ContractArrangeCache{}).Select("version").Where("project_id = ?", projectId).Order("version desc").First(&lastVersion).Error
+	if err != nil {
+		return
+	}
+	err = a.db.Model(db2.ContractArrangeCache{}).Where("project_id = ? and version = ?", projectId, lastVersion).Find(&list).Error
+	if err != nil {
+		return
+	}
+	var saveList []db2.ContractArrangeCache
+	for _, cache := range list {
+		contractArrangeCache := db2.ContractArrangeCache{
+			ProjectId:       cache.ProjectId,
+			ContractId:      cache.ContractId,
+			ContractName:    cache.ContractName,
+			Version:         version,
+			OriginalArrange: cache.OriginalArrange,
+			CreateTime:      time.Now(),
+			UpdateTime:      time.Now(),
+		}
+		saveList = append(saveList, contractArrangeCache)
+	}
+	a.db.Model(db2.ContractArrangeCache{}).Save(&saveList)
+}
+
 func (a *ArrangeService) UpdateContractArrange(param parameter.ContractArrangeParam) (string, error) {
 	projectId, err := uuid.FromString(param.ProjectId)
 	if err != nil {
@@ -314,7 +354,7 @@ func (a *ArrangeService) SaveContractArrangeExecute(param parameter.ContractArra
 	}
 	arrangeExecute := db2.ContractArrangeExecute{
 		ProjectId:          projectId,
-		FkArrangeId:        strconv.Itoa(int(contractArrange.Id)),
+		FkArrangeId:        contractArrange.Id,
 		Version:            param.Version,
 		Network:            param.Network,
 		ArrangeProcessData: param.ArrangeProcessData,
@@ -335,6 +375,7 @@ func (a *ArrangeService) UpdateContractArrangeExecute(update parameter.ContractA
 		return "", err
 	}
 	arrangeExecute.ArrangeProcessData = update.ArrangeProcessData
+	arrangeExecute.UpdateTime = time.Now()
 	err = a.db.Model(db2.ContractArrangeExecute{}).Where("id = ?", update.Id).Updates(&arrangeExecute).Error
 	if err != nil {
 		return "", err
@@ -353,7 +394,7 @@ func (a *ArrangeService) GetContractArrangeExecuteInfo(executeId string) (info d
 
 func (a *ArrangeService) GetDeployArrangeContractList(projectId, version string) (list []vo.DeployContractListVo, err error) {
 	var deployContractList []vo.DeployContractListVo
-	err = a.db.Raw("SELECT cd.id, c.name AS contract_name, cd.contract_id, cd.project_id, cd.version, cd.deploy_time, cd.network, cd.address, cd.type, cd.declare_tx_hash, cd.deploy_time, cd.status, cd.abi_info from t_contract_deploy cd LEFT JOIN t_contract c ON cd.contract_id = c.id WHERE cd.project_id = ? AND cd.version = ?", projectId, version).Scan(&deployContractList).Error
+	err = a.db.Raw("SELECT cd.id, c.name AS contract_name, cd.contract_id, cd.project_id, cd.version, cd.deploy_time, cd.network, cd.address, cd.type, cd.declare_tx_hash, cd.deploy_time, cd.status, cd.abi_info from t_contract_deploy cd LEFT JOIN t_contract c ON cd.contract_id = c.id WHERE cd.project_id = ? AND cd.version = ?", projectId, version).Order("deploy_time desc").Scan(&deployContractList).Error
 	if err != nil {
 		return list, err
 	}
@@ -410,4 +451,16 @@ func (a *ArrangeService) GetContractArrangeCache(query parameter.ContractArrange
 		return "", err
 	}
 	return contractArrangeCache.OriginalArrange, nil
+}
+
+func (a *ArrangeService) GetContractInfo(query parameter.ContractInfoQuery) (vo.ToBeArrangedContractVo, error) {
+	var contract db2.Contract
+	err := a.db.Model(db2.Contract{}).Where("id = ?", query.Id).First(&contract).Error
+	if err != nil {
+		return vo.ToBeArrangedContractVo{}, err
+	}
+	var toBeArrangedContractVo vo.ToBeArrangedContractVo
+	copier.Copy(&toBeArrangedContractVo, &contract)
+	toBeArrangedContractVo.Name = query.Name
+	return toBeArrangedContractVo, nil
 }

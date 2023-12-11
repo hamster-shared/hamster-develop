@@ -102,6 +102,7 @@ const (
 	Sui
 	FileCoin
 	InternetComputer
+	Solana
 )
 
 type EVMFrameType int
@@ -159,4 +160,20 @@ const Namespace = "hamster-container"
 const (
 	GitHub   = 1
 	Metamask = 2
+)
+
+type EngineType string
+
+const (
+	EngineTypeWorkflow        = "workflow"
+	EngineTypeContractArrange = "arrange_execute"
+)
+
+const (
+	INSTALLATION_CREATED = "created"
+	INSTALLATION_DELETED = "deleted"
+	REPO_ADDED           = "added"
+	REPO_REMOVED         = "removed"
+	SAVE_INSTALL         = "saveInstall"
+	REMOVE_INSTALL       = "removeInstall"
 )

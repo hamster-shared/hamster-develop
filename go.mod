@@ -11,6 +11,7 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-github/v48 v48.2.0
+	github.com/google/go-github/v55 v55.0.0
 	github.com/goperate/convert v0.0.7
 	github.com/gorilla/websocket v1.5.0
 	github.com/hamster-shared/aline-engine v1.0.4-0.20231109060824-8a0848e331eb
@@ -18,6 +19,7 @@ require (
 	github.com/jinzhu/copier v0.3.5
 	github.com/mohaijiang/agent-go v0.3.1
 	github.com/pkg/errors v0.9.1
+	github.com/samber/lo v1.36.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
@@ -70,7 +72,6 @@ require (
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/google/go-github/v55 v55.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect

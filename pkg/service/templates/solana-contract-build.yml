@@ -7,20 +7,22 @@ stages:
         uses: git-checkout
         with:
           url: [[ .RepositoryUrl ]]
-          branch: ${{ param.branch }}
-
+          branch: main
   Build Contract:
     needs:
       - Initialization
     steps:
       - name: Compile Contract
-        runs-on: hamstershare/cairo-anaconda-env:0.1.4
+        runs-on: docker.io/hamstershare/solana-builder:1.73.0-20231113
+        volumes:
+          - /root/.solana:/root/.solana
         run: |
-          cd cairo-project
-          for f in *.cairo; do
-            echo "Compiling $f..."
-            starknet-compile $f > $f.starknet.output.json
-          done
+          node -v
+          npm -v
+          npm install bs58
+          python3 ./script/regenerate.py
+          node ./script/wallet.js
+          anchor build
   Output Results:
     needs:
       - Build Contract
@@ -28,7 +30,9 @@ stages:
       - name: Save Files
         uses: hamster-artifactory
         with:
-          name: some.zip
+          name: solana-meta.zip
           compress: false
           path: |
-            /cairo-project/*.output.json
+            ./script/base58format.txt
+            ./target/deploy/*.so
+            ./target/idl/*.json

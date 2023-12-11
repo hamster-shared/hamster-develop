@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
@@ -71,14 +72,15 @@ func (l *LoginService) LoginWithGithub(data parameter.LoginParam) (vo.UserVo, er
 }
 
 func (l *LoginService) LoginWithGithubV2(data parameter.LoginParam) (string, error) {
-	data.ClientSecret = os.Getenv("CLIENT_SECRETS")
 	var userData db2.User
 	var token parameter.Token
 	url := "https://github.com/login/oauth/access_token"
 	res, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
-		"client_id":     data.ClientId,
-		"client_secret": data.ClientSecret,
-		"code":          data.Code,
+		"client_id":     os.Getenv("APPS_CLIENT_ID"),
+		"client_secret": os.Getenv("APPS_CLIENT_SECRETS"),
+		//"client_id":     "Iv1.c41a1e51c5ebcf42",
+		//"client_secret": "419540e126f38890c3974d9b082de63324fa0be8",
+		"code": data.Code,
 	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
 	if res.StatusCode() != 200 {
 		return "", err
@@ -90,7 +92,13 @@ func (l *LoginService) LoginWithGithubV2(data parameter.LoginParam) (string, err
 	if err != nil {
 		return "", err
 	}
+	email, err := l.githubService.GetUserEmail(token.AccessToken)
+	if err != nil {
+		log.Println("github install failed:get email failed", err.Error())
+		return "", err
+	}
 	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.ID).First(&userData).Error
+	userData.UserEmail = email
 	if err != nil {
 		userData.Id = uint(*userInfo.ID)
 		userData.Username = *userInfo.Login
@@ -98,6 +106,8 @@ func (l *LoginService) LoginWithGithubV2(data parameter.LoginParam) (string, err
 		userData.HtmlUrl = *userInfo.HTMLURL
 		userData.CreateTime = time.Now()
 		userData.LoginType = consts.GitHub
+		l.db.Create(&userData)
+	} else {
 		l.db.Save(&userData)
 	}
 	jwtToken, err := utils.GenerateJWT(int(userData.Id), consts.GitHub)
@@ -106,7 +116,7 @@ func (l *LoginService) LoginWithGithubV2(data parameter.LoginParam) (string, err
 
 // true:need install false: not need install
 func (l *LoginService) GithubInstallAuth(data parameter.LoginParam, userWallet db2.UserWallet) (bool, error) {
-	data.ClientSecret = os.Getenv("INSTALL_AUTH_CLIENT_SECRETS")
+	data.ClientSecret = os.Getenv("APPS_CLIENT_SECRETS")
 	var userData db2.User
 	var token parameter.Token
 	result := false
@@ -116,26 +126,39 @@ func (l *LoginService) GithubInstallAuth(data parameter.LoginParam, userWallet d
 		"client_secret": data.ClientSecret,
 		"code":          data.Code,
 	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
-	if res.StatusCode() != 200 {
+	if err != nil {
+		logger.Errorf("auth token failed:%s", err)
 		return result, err
 	}
-	if err != nil {
-		return result, err
+	if res.IsError() {
+		return result, errors.New(res.String())
 	}
 	userInfo, err := l.githubService.GetUserInfo(token.AccessToken)
 	if err != nil {
 		return result, err
 	}
 	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.ID).First(&userData).Error
-	if err != nil {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		result = true
+		userData.Id = uint(userInfo.GetID())
+		userData.Username = userInfo.GetLogin()
+		userData.LoginType = consts.Metamask
+		userData.AvatarUrl = userInfo.GetAvatarURL()
+		userData.FirstState = 0
+		userData.HtmlUrl = userInfo.GetHTMLURL()
+		userData.CreateTime = time.Now()
+		l.db.Model(db2.User{}).Create(&userData)
+	} else {
+		var installData db2.GitAppInstall
+		err = l.db.Model(db2.GitAppInstall{}).Where("user_id = ?", userInfo.ID).First(&installData).Error
+		if err != nil {
+			result = true
+		}
 	}
-	if userData.Token == "" {
+	if userWallet.UserId == 0 {
 		userWallet.UserId = userData.Id
 		l.db.Save(&userWallet)
-		return result, nil
 	}
-	result = true
 	return result, nil
 }
 

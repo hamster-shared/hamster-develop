@@ -200,13 +200,29 @@ func (h *HandlerServer) saveContractArrangeCache(gin *gin.Context) {
 
 func (h *HandlerServer) getContractArrangeCache(gin *gin.Context) {
 	var contractArrangeCacheQuery parameter.ContractArrangeCacheQuery
-	err := gin.BindQuery(&contractArrangeCacheQuery)
+	err := gin.BindJSON(&contractArrangeCacheQuery)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
 	arrangeService := application.GetBean[*service.ArrangeService]("arrangeService")
 	arrangeId, err := arrangeService.GetContractArrangeCache(contractArrangeCacheQuery)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(arrangeId, gin)
+}
+
+func (h *HandlerServer) getContractInfo(gin *gin.Context) {
+	var contractInfoQuery parameter.ContractInfoQuery
+	err := gin.BindQuery(&contractInfoQuery)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	arrangeService := application.GetBean[*service.ArrangeService]("arrangeService")
+	arrangeId, err := arrangeService.GetContractInfo(contractInfoQuery)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

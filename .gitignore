@@ -44,3 +44,5 @@ hamster-develop
 
 pipeline2.yml
 /pipeline3.yml
+/pkg/service/arrange_test.go
+/pkg/service/bnb_test.go

@@ -2,27 +2,29 @@ package db
 
 import (
 	"database/sql"
-	uuid "github.com/iris-contrib/go.uuid"
 	"time"
+
+	uuid "github.com/iris-contrib/go.uuid"
 )
 
 type Contract struct {
-	Id               uint           `gorm:"primaryKey" json:"id"`
-	ProjectId        uuid.UUID      `json:"projectId"`
-	WorkflowId       uint           `json:"workflowId"`
-	WorkflowDetailId uint           `json:"workflowDetailId"`
-	Name             string         `json:"name"`
-	Version          string         `json:"version"`
-	Network          sql.NullString `json:"network"`
-	BuildTime        time.Time      `json:"buildTime"`
-	AbiInfo          string         `json:"abiInfo"`
-	ByteCode         string         `json:"byteCode"`
-	AptosMv          string         `json:"aptosMv" gorm:"column:aptos_mv"`
-	CreateTime       time.Time      `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
-	Type             uint           `json:"type"`   // see #consts.ProjectFrameType
-	Status           uint           `json:"status"` // 1: deploying, 2: success , 3: fail
-	Branch           string         `json:"branch"`
-	CodeInfo         string         `json:"codeInfo"`
+	Id                    uint           `gorm:"primaryKey" json:"id"`
+	ProjectId             uuid.UUID      `json:"projectId"`
+	WorkflowId            uint           `json:"workflowId"`
+	WorkflowDetailId      uint           `json:"workflowDetailId"`
+	Name                  string         `json:"name"`
+	Version               string         `json:"version"`
+	Network               sql.NullString `json:"network"`
+	BuildTime             time.Time      `json:"buildTime"`
+	AbiInfo               string         `json:"abiInfo"`
+	ByteCode              string         `json:"byteCode"`
+	AptosMv               string         `json:"aptosMv" gorm:"column:aptos_mv"`
+	SolanaContractPrivkey string         `json:"solanaContractPrivkey" gorm:"column:solana_contract_privkey"`
+	CreateTime            time.Time      `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
+	Type                  uint           `json:"type"`   // see #consts.ProjectFrameType
+	Status                uint           `json:"status"` // 1: deploying, 2: success , 3: fail
+	Branch                string         `json:"branch"`
+	CodeInfo              string         `json:"codeInfo"`
 }
 
 type ContractDeploy struct {
