@@ -395,7 +395,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 }
 
 func (h *HandlerServer) createProjectV2(g *gin.Context) {
-	createData := parameter.CreateProjectParamV2{}
+	createData := parameter.CreateProjectParam{}
 	err := g.BindJSON(&createData)
 	if err != nil {
 		fmt.Println(err)
@@ -415,7 +415,7 @@ func (h *HandlerServer) createProjectV2(g *gin.Context) {
 	}
 	user, _ := userAny.(db2.User)
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	repo, res, err := githubService.GetRepo(token, createData.GithubName, createData.Name)
+	repo, res, err := githubService.GetRepo(token, createData.RepoOwner, createData.Name)
 	if err != nil {
 		if res != nil {
 			logger.Info("res.StatusCode", res.StatusCode)
@@ -424,7 +424,7 @@ func (h *HandlerServer) createProjectV2(g *gin.Context) {
 				return
 			}
 		}
-		repo, res, err = githubService.CreateRepository(token, createData.GithubName, createData.Name)
+		repo, res, err = githubService.CreateRepository(token, createData.RepoOwner, createData.Name)
 		if err != nil {
 			logger.Error(err)
 			if res != nil {
@@ -437,9 +437,9 @@ func (h *HandlerServer) createProjectV2(g *gin.Context) {
 			return
 		}
 	} else {
-		flag := githubService.CheckName(token, createData.GithubName, createData.Name)
+		flag := githubService.CheckName(token, createData.RepoOwner, createData.Name)
 		if flag {
-			repo, res, err = githubService.CreateRepository(token, createData.GithubName, createData.Name)
+			repo, res, err = githubService.CreateRepository(token, createData.RepoOwner, createData.Name)
 			if err != nil {
 				logger.Error(err)
 				if res != nil {
@@ -453,7 +453,7 @@ func (h *HandlerServer) createProjectV2(g *gin.Context) {
 				return
 			}
 		} else {
-			emptyFlag, err := githubService.EmptyRepo(token, createData.GithubName, createData.Name, "")
+			emptyFlag, err := githubService.EmptyRepo(token, createData.RepoOwner, createData.Name, "")
 			if err != nil {
 				Fail(err.Error(), g)
 				return
@@ -478,7 +478,7 @@ func (h *HandlerServer) createProjectV2(g *gin.Context) {
 	if createData.Type == int(consts.CONTRACT) && createData.FrameType == uint(consts.Evm) {
 		githubService := application.GetBean[*service.GithubService]("githubService")
 		// get all files
-		repoContents, err := githubService.GetRepoFileList(token, createData.GithubName, createData.Name, branch)
+		repoContents, err := githubService.GetRepoFileList(token, createData.RepoOwner, createData.Name, branch)
 		if err != nil {
 			log.Println(err.Error())
 			Fail(err.Error(), g)

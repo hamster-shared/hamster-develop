@@ -16,23 +16,6 @@ type CreateProjectParam struct {
 	EvmTemplateType uint   `json:"evmTemplateType"`
 }
 
-type CreateProjectParamV2 struct {
-	Name            string `json:"name"`
-	Type            int    `json:"type"`
-	DeployType      int    `json:"deployType"`
-	LabelDisplay    string `json:"labelDisplay"`
-	TemplateOwner   string `json:"templateOwner"`
-	TemplateUrl     string `json:"templateUrl"`
-	TemplateRepo    string `json:"templateRepo"`
-	FrameType       uint   `json:"frameType"`
-	RepoOwner       string `json:"repoOwner"`
-	GistId          string `json:"gistId"`
-	DefaultFile     string `json:"defaultFile"`
-	Branch          string `json:"branch"`
-	EvmTemplateType uint   `json:"evmTemplateType"`
-	GithubName      string `json:"githubName"`
-}
-
 type ImportProjectParam struct {
 	Name      string `json:"name"`
 	Ecosystem int    `json:"ecosystem"`
