@@ -231,7 +231,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 				return
 			}
 		}
-		repo, res, err = githubService.CreateRepository(token, createData.Name)
+		repo, res, err = githubService.CreateRepository(token, "", createData.Name)
 		if err != nil {
 			logger.Error(err)
 			if res != nil {
@@ -246,7 +246,7 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 	} else {
 		flag := githubService.CheckName(token, user.Username, createData.Name)
 		if flag {
-			repo, res, err = githubService.CreateRepository(token, createData.Name)
+			repo, res, err = githubService.CreateRepository(token, "", createData.Name)
 			if err != nil {
 				logger.Error(err)
 				if res != nil {
@@ -276,6 +276,209 @@ func (h *HandlerServer) createProject(g *gin.Context) {
 		githubService := application.GetBean[*service.GithubService]("githubService")
 		// get all files
 		repoContents, err := githubService.GetRepoFileList(token, user.Username, createData.Name, branch)
+		if err != nil {
+			log.Println(err.Error())
+			Fail(err.Error(), g)
+			return
+		}
+		// get EVM contract frame: truffle\foundry\hardhat
+		frame, err := h.projectService.ParsingEVMFrame(repoContents)
+		if err != nil {
+			logger.Error(err)
+			Fail(err.Error(), g)
+			return
+		}
+		evmTemplateType = frame
+	}
+
+	data := vo.CreateProjectParam{
+		Name:         createData.Name,
+		Type:         createData.Type,
+		TemplateUrl:  *repo.CloneURL,
+		FrameType:    consts.ProjectFrameType(createData.FrameType),
+		DeployType:   createData.DeployType,
+		UserId:       int64(user.Id),
+		LabelDisplay: createData.LabelDisplay,
+		GistId:       createData.GistId,
+		DefaultFile:  createData.DefaultFile,
+		Branch:       branch,
+	}
+	id, err := h.projectService.CreateProject(data)
+	if err != nil {
+		logger.Error(err)
+		Fail(err.Error(), g)
+		return
+	}
+	project, err := h.projectService.GetProject(id.String())
+	if err != nil {
+		logger.Error(err)
+		Fail(err.Error(), g)
+		return
+	}
+	if project.Type == uint(consts.CONTRACT) && project.FrameType == consts.Evm {
+		//project.EvmTemplateType = createData.EvmTemplateType
+		project.EvmTemplateType = uint(evmTemplateType)
+	}
+	workflowService := application.GetBean[*service.WorkflowService]("workflowService")
+	if !(project.Type == uint(consts.CONTRACT) && (project.FrameType == consts.Evm || project.FrameType == consts.InternetComputer || project.FrameType == consts.Solana)) && project.Type != uint(consts.BLOCKCHAIN) {
+		workflowCheckData := parameter.SaveWorkflowParam{
+			ProjectId:  id,
+			Type:       consts.Check,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowCheckRes, err := workflowService.SaveWorkflow(workflowCheckData)
+		if err != nil {
+			Success(id, g)
+			return
+		}
+		checkKey := workflowService.GetWorkflowKey(id.String(), workflowCheckRes.Id)
+		file, err := workflowService.TemplateParse(checkKey, project, consts.Check)
+		if err == nil {
+			workflowCheckRes.ExecFile = file
+			workflowService.UpdateWorkflow(workflowCheckRes)
+		}
+	}
+	workflowBuildData := parameter.SaveWorkflowParam{
+		ProjectId:  id,
+		Type:       consts.Build,
+		ExecFile:   "",
+		LastExecId: 0,
+	}
+	workflowBuildRes, err := workflowService.SaveWorkflow(workflowBuildData)
+	if err != nil {
+		Success(id, g)
+		return
+	}
+	buildKey := workflowService.GetWorkflowKey(id.String(), workflowBuildRes.Id)
+	file1, err := workflowService.TemplateParse(buildKey, project, consts.Build)
+	if err == nil {
+		workflowBuildRes.ExecFile = file1
+		workflowService.UpdateWorkflow(workflowBuildRes)
+	}
+
+	if project.Type == uint(consts.FRONTEND) || project.Type == uint(consts.BLOCKCHAIN) || (project.Type == uint(consts.CONTRACT) && project.FrameType == consts.InternetComputer) {
+		workflowDeployData := parameter.SaveWorkflowParam{
+			ProjectId:  id,
+			Type:       consts.Deploy,
+			ExecFile:   "",
+			LastExecId: 0,
+		}
+		workflowDeployRes, err := workflowService.SaveWorkflow(workflowDeployData)
+		if err != nil {
+			Success(id, g)
+			return
+		}
+		deployKey := workflowService.GetWorkflowKey(id.String(), workflowDeployRes.Id)
+		file1, err := workflowService.TemplateParse(deployKey, project, consts.Deploy)
+		if err == nil {
+			workflowDeployRes.ExecFile = file1
+			workflowService.UpdateWorkflow(workflowDeployRes)
+		}
+	}
+	if project.Type == uint(consts.BLOCKCHAIN) {
+		containerDeployService := application.GetBean[*service.ContainerDeployService]("containerDeployService")
+		deployParam := parameter.K8sDeployParam{
+			ContainerPort:     9944,
+			ServiceProtocol:   "TCP",
+			ServicePort:       9944,
+			ServiceTargetPort: 9944,
+		}
+		err = containerDeployService.UpdateContainerDeploy(project.Id, deployParam)
+		if err != nil {
+			logger.Error(err)
+			logger.Errorf("init blockchain k8s param failed: %s", err)
+		}
+
+	}
+	Success(id, g)
+}
+
+func (h *HandlerServer) createProjectV2(g *gin.Context) {
+	createData := parameter.CreateProjectParamV2{}
+	err := g.BindJSON(&createData)
+	if err != nil {
+		fmt.Println(err)
+		Fail(err.Error(), g)
+		return
+	}
+	tokenAny, _ := g.Get("token")
+	token, _ := tokenAny.(string)
+	if token == "" {
+		Fail("Please install the read-write app first", g)
+		return
+	}
+	userAny, exit := g.Get("githubUser")
+	if !exit {
+		Fail("github account does not exist", g)
+		return
+	}
+	user, _ := userAny.(db2.User)
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	repo, res, err := githubService.GetRepo(token, createData.GithubName, createData.Name)
+	if err != nil {
+		if res != nil {
+			logger.Info("res.StatusCode", res.StatusCode)
+			if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+				Failed(http.StatusUnauthorized, "access not authorized", g)
+				return
+			}
+		}
+		repo, res, err = githubService.CreateRepository(token, createData.GithubName, createData.Name)
+		if err != nil {
+			logger.Error(err)
+			if res != nil {
+				if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+					Failed(http.StatusUnauthorized, "access not authorized", g)
+					return
+				}
+			}
+			Fail(err.Error(), g)
+			return
+		}
+	} else {
+		flag := githubService.CheckName(token, createData.GithubName, createData.Name)
+		if flag {
+			repo, res, err = githubService.CreateRepository(token, createData.GithubName, createData.Name)
+			if err != nil {
+				logger.Error(err)
+				if res != nil {
+					logger.Error("res: ", res.StatusCode)
+					if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+						Failed(http.StatusUnauthorized, "access not authorized", g)
+						return
+					}
+				}
+				Fail(err.Error(), g)
+				return
+			}
+		} else {
+			emptyFlag, err := githubService.EmptyRepo(token, createData.GithubName, createData.Name, "")
+			if err != nil {
+				Fail(err.Error(), g)
+				return
+			}
+			if !emptyFlag {
+				Fail("The git repo already exists and is not empty", g)
+				return
+			}
+		}
+	}
+	branch, err := githubService.CommitAndPush(token, *repo.CloneURL, user.Username, user.UserEmail, createData.TemplateUrl, createData.TemplateRepo)
+	if err != nil {
+		logger.Error(err)
+		Fail(err.Error(), g)
+		return
+	}
+	if createData.Type == int(consts.BLOCKCHAIN) {
+		createData.DeployType = 2
+	}
+
+	var evmTemplateType consts.EVMFrameType
+	if createData.Type == int(consts.CONTRACT) && createData.FrameType == uint(consts.Evm) {
+		githubService := application.GetBean[*service.GithubService]("githubService")
+		// get all files
+		repoContents, err := githubService.GetRepoFileList(token, createData.GithubName, createData.Name, branch)
 		if err != nil {
 			log.Println(err.Error())
 			Fail(err.Error(), g)
@@ -1033,7 +1236,7 @@ func (h *HandlerServer) createProjectByCode(gin *gin.Context) {
 				return
 			}
 		}
-		repo, res, err = githubService.CreateRepository(token, createData.Name)
+		repo, res, err = githubService.CreateRepository(token, "", createData.Name)
 		if err != nil {
 			if res != nil {
 				if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {

@@ -36,6 +36,7 @@ type GithubWebHookInstall struct {
 	Installation        github.Installation   `json:"installation"`
 	RepositorySelection string                `json:"repository_selection"`
 	Requester           Requester             `json:"requester"`
+	AppId               int64                 `json:"app_id"`
 	RepositoriesRemoved []RepositoriesRemoved `json:"repositories_removed"`
 	RepositoriesAdded   []RepositoriesAdded   `json:"repositories_added"`
 }

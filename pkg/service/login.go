@@ -212,6 +212,56 @@ func (l *LoginService) GithubInstall(code string) (string, error) {
 	return accessToken, nil
 }
 
+func (l *LoginService) GithubRwInstall(code string, loginType int, userAny any) error {
+	var userData db2.User
+	var token parameter.Token
+	url := "https://github.com/login/oauth/access_token"
+	_, err := utils.NewHttp().NewRequest().SetQueryParams(map[string]string{
+		//"client_id":     consts.AppsClientId,
+		"client_id": os.Getenv("APPS_RW_CLIENT_ID"),
+		//"client_secret": consts.AppsClientSecrets,
+		"client_secret": os.Getenv("APPS_RW_CLIENT_SECRETS"),
+		"code":          code,
+	}).SetResult(&token).SetHeader("Accept", "application/json").Post(url)
+	if err != nil {
+		return err
+	}
+	userInfo, err := l.githubService.GetUserInfo(token.AccessToken)
+	if err != nil {
+		log.Println("github rw install failed:user not found", err.Error())
+		return err
+	}
+	if loginType == consts.GitHub {
+		githubUser, _ := userAny.(db2.User)
+		if int64(githubUser.Id) != userInfo.GetID() {
+			return errors.New("The current login account is inconsistent with the installed account")
+		}
+	} else {
+		githubUser, _ := userAny.(db2.UserWallet)
+		if githubUser.UserId == 0 {
+			return errors.New("The current wallet is not associated with a GitHub account. Please first associate it with a GitHub account")
+		}
+		if int64(githubUser.UserId) != userInfo.GetID() {
+			return errors.New("The associated account is inconsistent with the installed account")
+		}
+	}
+	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.GetID()).First(&userData).Error
+	if err != nil {
+		return err
+	}
+	if userData.UserEmail == "" {
+		email, err := l.githubService.GetUserEmail(token.AccessToken)
+		if err != nil {
+			log.Println("rw github install failed:get email failed", err.Error())
+			return err
+		}
+		userData.UserEmail = email
+	}
+	userData.Token = token.AccessToken
+	l.db.Save(&userData)
+	return nil
+}
+
 func (l *LoginService) GithubInstallV2(code string, loginType int, userWallet db2.UserWallet) error {
 	var userData db2.User
 	var token parameter.Token

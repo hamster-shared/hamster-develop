@@ -127,6 +127,21 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: INSTALL_AUTH_CLIENT_SECRETS
+            - name: GITHUB_RW_APP_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: GITHUB_RW_APP_ID
+            - name: APPS_RW_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: APPS_RW_CLIENT_ID
+            - name: APPS_RW_CLIENT_SECRETS
+              valueFrom:
+                configMapKeyRef:
+                  name: hamster-aline
+                  key: APPS_RW_CLIENT_SECRETS
           ports:
             - containerPort: 8080
           volumeMounts:
