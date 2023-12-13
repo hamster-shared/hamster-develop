@@ -16,9 +16,15 @@ stages:
       - name: Check by Move Lint
         uses: sui-check
         with:
-          path
+          path:
       - name: Check by AI
         uses: openai
         with:
           dir: sources
           suffix: .move
+  Output Results:
+    needs:
+      - Check Contract
+    steps:
+      - name: Integration Report
+        uses: check-aggregation
