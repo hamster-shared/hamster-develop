@@ -140,3 +140,8 @@ func TestReadContract(t *testing.T) {
 		fmt.Println(abiInfo, byteCode)
 	}
 }
+
+func TestLength(t *testing.T) {
+	str := "9d2878f2b07947e7b27392383184c6cf"
+	fmt.Println(len(str))
+}

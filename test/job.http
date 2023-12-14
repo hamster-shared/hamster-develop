@@ -603,3 +603,8 @@ Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk2NzE3Nj
 ####
 GET http://localhost:8080/api/github/installation/43829669/repositories?page=1&size=3&query=
 Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk2NzE3NjAsImxvZ2luVHlwZSI6MSwidXNlcklkIjo1MzA3MDM1NH0.Fl3Tum2OLjTsNXoBkmcQbkGIqIjb2u8R4cdXc7hkHDg
+
+
+### 合约检查
+POST http://127.0.0.1:8080/api/projects/a28934fe-1f2c-47ab-a336-1c5a99fd42c8/check
+Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDI2MTgzNTcsImxvZ2luVHlwZSI6MSwidXNlcklkIjozMzY2NzA5fQ.DxGR6dXSoSWNdlR5suifDm2wfRhNcKOgiRfpLpM7avs
