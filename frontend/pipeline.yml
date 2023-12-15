@@ -6,7 +6,7 @@ stages:
       - name: git clone
         uses: git-checkout
         with:
-          url: https://github.com/hamster-shared/hamster-frontend.git
+          url: git@github.com:hamster-shared/hamster-frontend.git
           branch: develop
   build:
     needs:
@@ -15,7 +15,8 @@ stages:
       - name: build
         run: |
           yarn install
-          yarn run build:staging 
+          ## yarn run build:staging 
+          node --max_old_space_size=16384 ./node_modules/vite/bin/vite.js build --mode staging
           docker buildx build -t hamstershare/hamster-frontend:${PIPELINE_ID} --platform=linux/amd64 --push .
 #          docker push hamstershare/hamster-frontend:${PIPELINE_ID}
 
