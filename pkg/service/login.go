@@ -99,13 +99,13 @@ func (l *LoginService) LoginWithGithubV2(data parameter.LoginParam) (string, err
 	}
 	err = l.db.Model(db2.User{}).Where("id = ?", userInfo.ID).First(&userData).Error
 	userData.UserEmail = email
+	userData.LoginType = consts.GitHub
 	if err != nil {
 		userData.Id = uint(*userInfo.ID)
 		userData.Username = *userInfo.Login
 		userData.AvatarUrl = *userInfo.AvatarURL
 		userData.HtmlUrl = *userInfo.HTMLURL
 		userData.CreateTime = time.Now()
-		userData.LoginType = consts.GitHub
 		l.db.Create(&userData)
 	} else {
 		l.db.Save(&userData)

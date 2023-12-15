@@ -298,7 +298,7 @@ func (g *GithubService) GetUserEmail(token string) (string, error) {
 func deleteOwnerDir(owner string) {
 	deleteCmd := exec.Command("rm", "-rf", owner)
 	deleteCmd.Dir = utils.DefaultRepoDir()
-	deleteCmd.Start()
+	deleteCmd.CombinedOutput()
 }
 
 func (g *GithubService) GetFileContent(token, owner, repo, path string) (string, error) {
@@ -836,17 +836,48 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 				logger.Errorf("save failed install info failed:%s", err)
 			}
 		} else {
+			requestUserId := appInstallData.Requester.Id
+			var requestUser db2.User
+			err = g.db.Model(db2.User{}).Where("id = ?", requestUserId).First(&requestUser).Error
+			if err != nil {
+				logger.Errorf("get request user failed:%s", err)
+				g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.AppId, action)
+				return err
+			}
 			for _, user := range users {
-				var installData db2.GitAppInstall
-				installData.UserId = user.GetID()
-				installData.InstallUserId = appInstallData.Installation.GetAccount().GetID()
-				installData.InstallId = appInstallData.Installation.GetID()
-				installData.Name = appInstallData.Installation.GetAccount().GetLogin()
-				installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
-				installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
-				installData.CreateTime = time.Now()
-				installData.AppId = appInstallData.AppId
-				g.db.Create(&installData)
+				err = g.db.Transaction(func(tx *gorm.DB) error {
+					var installData db2.GitAppInstall
+					installData.UserId = user.GetID()
+					installData.InstallUserId = appInstallData.Installation.GetAccount().GetID()
+					installData.InstallId = appInstallData.Installation.GetID()
+					installData.Name = appInstallData.Installation.GetAccount().GetLogin()
+					installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
+					installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
+					installData.CreateTime = time.Now()
+					installData.AppId = appInstallData.AppId
+					err = g.db.Create(&installData).Error
+					if err != nil {
+						return err
+					}
+					var userData db2.User
+					err = g.db.Model(db2.User{}).Where("id = ?", user.GetID()).First(&userData).Error
+					if err != nil {
+						userData.Id = uint(user.GetID())
+						userData.Username = user.GetLogin()
+						userData.HtmlUrl = user.GetHTMLURL()
+						userData.AvatarUrl = user.GetAvatarURL()
+						userData.Token = requestUser.Token
+						err = g.db.Model(db2.User{}).Create(&userData).Error
+						if err != nil {
+							return err
+						}
+					}
+					return nil
+				})
+				if err != nil {
+					logger.Errorf("save install user failed,user is: ", user.GetLogin())
+					continue
+				}
 			}
 		}
 	}
