@@ -59,7 +59,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects", h.handlerServer.createProject)
 	api.POST("/v2/projects", h.handlerServer.createProjectV2)
 	api.POST("/projects/import", h.handlerServer.importProject)
-	api.POST("/projects/code", h.handlerServer.createProjectByCode)
+	api.POST("/projects/code", h.handlerServer.createProjectByCodeV2)
 	api.GET("/projects/:id", h.handlerServer.projectDetail)
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)

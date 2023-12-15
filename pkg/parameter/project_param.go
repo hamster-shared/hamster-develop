@@ -32,6 +32,7 @@ type CreateByCodeParam struct {
 	FrameType uint   `json:"frameType"`
 	FileName  string `json:"fileName"`
 	Content   string `json:"content"`
+	RepoOwner string `json:"repoOwner"`
 }
 
 type CheckNameParam struct {
