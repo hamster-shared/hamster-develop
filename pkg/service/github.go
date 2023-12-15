@@ -776,7 +776,7 @@ func (g *GithubService) AddRepo(appInstallData parameter.GithubWebHookInstall, a
 			repo, _, err := client.Repositories.GetByID(g.ctx, added.Id)
 			if err != nil {
 				logger.Errorf("add repo get repo info failed:%s", err)
-				err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.AppId, action)
+				err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
 				if err != nil {
 					logger.Errorf("save failed install info failed:%s", err)
 				}
@@ -808,7 +808,6 @@ func (g *GithubService) AddRepo(appInstallData parameter.GithubWebHookInstall, a
 }
 
 func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHookInstall, action string) error {
-
 	if appInstallData.Installation.GetAccount().GetType() != "Organization" {
 		var installData db2.GitAppInstall
 		installData.UserId = appInstallData.Installation.GetAccount().GetID()
@@ -818,11 +817,11 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 		installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
 		installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
 		installData.CreateTime = time.Now()
-		installData.AppId = appInstallData.AppId
+		installData.AppId = appInstallData.Installation.GetAppID()
 		err := g.db.Create(&installData).Error
 		if err != nil {
 			logger.Errorf("save install info failed:%s", err)
-			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.AppId, action)
+			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
 			if err != nil {
 				logger.Errorf("save failed install info failed:%s", err)
 			}
@@ -831,7 +830,7 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 		users, err := g.GetOrganMembers(appInstallData.Installation.GetID(), appInstallData.Installation.GetAccount().GetLogin())
 		if err != nil {
 			logger.Errorf("get org members failed:%s", err)
-			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.AppId, action)
+			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
 			if err != nil {
 				logger.Errorf("save failed install info failed:%s", err)
 			}
@@ -841,7 +840,7 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 			err = g.db.Model(db2.User{}).Where("id = ?", requestUserId).First(&requestUser).Error
 			if err != nil {
 				logger.Errorf("get request user failed:%s", err)
-				g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.AppId, action)
+				g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
 				return err
 			}
 			for _, user := range users {
@@ -854,7 +853,7 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 					installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
 					installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
 					installData.CreateTime = time.Now()
-					installData.AppId = appInstallData.AppId
+					installData.AppId = appInstallData.Installation.GetAppID()
 					err = g.db.Create(&installData).Error
 					if err != nil {
 						return err
@@ -937,7 +936,7 @@ func (g *GithubService) RepoRemoved(installData parameter.GithubWebHookInstall, 
 	for _, repo := range removeRepos {
 		err := g.db.Where("repo_id = ?", repo.Id).Delete(&db2.GitRepo{}).Error
 		if err != nil {
-			err = g.saveFailedData(installData.Installation.GetID(), installData.AppId, action)
+			err = g.saveFailedData(installData.Installation.GetID(), installData.Installation.GetAppID(), action)
 			if err != nil {
 				logger.Errorf("repo removed get repos failed:%s", err)
 			}

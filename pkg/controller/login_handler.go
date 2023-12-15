@@ -141,7 +141,7 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 	if event == "installation" {
 		if githubInstall.Action == "created" {
 			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL)
-			err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), githubInstall.AppId, consts.INSTALLATION_CREATED)
+			err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), githubInstall.Installation.GetAppID(), consts.INSTALLATION_CREATED)
 			if err != nil {
 				logger.Errorf("installation.created failed:%s", err)
 				Fail(err.Error(), gin)
@@ -149,13 +149,13 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 			}
 		}
 		if githubInstall.Action == "deleted" {
-			err = githubService.GithubAppDelete(githubInstall.Installation.GetID(), githubInstall.AppId)
+			err = githubService.GithubAppDelete(githubInstall.Installation.GetID(), githubInstall.Installation.GetAppID())
 			if err != nil {
 				logger.Errorf("handler installation.deleted failed: %s", err)
 				Fail(err.Error(), gin)
 				return
 			}
-			githubService.DeleteAppsInstall(githubInstall.Installation.GetID(), githubInstall.AppId, consts.REMOVE_INSTALL)
+			githubService.DeleteAppsInstall(githubInstall.Installation.GetID(), githubInstall.Installation.GetAppID(), consts.REMOVE_INSTALL)
 			githubService.DeleteUserWallet(githubInstall.Installation.GetAccount().GetID())
 		}
 	}
@@ -195,7 +195,7 @@ func (h *HandlerServer) githubWebHookRw(gin *gin.Context) {
 			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL)
 		}
 		if githubInstall.Action == "deleted" {
-			githubService.DeleteAppsInstall(githubInstall.Installation.GetID(), githubInstall.AppId, consts.REMOVE_INSTALL)
+			githubService.DeleteAppsInstall(githubInstall.Installation.GetID(), githubInstall.Installation.GetAppID(), consts.REMOVE_INSTALL)
 		}
 	}
 }
