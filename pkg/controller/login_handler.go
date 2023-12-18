@@ -190,6 +190,10 @@ func (h *HandlerServer) githubWebHookRw(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	log.Println("*****************DD")
+	log.Println(githubInstall.Action)
+	log.Println(githubInstall.Installation.GetID())
+	log.Println("*****************DD")
 	if event == "installation" {
 		if githubInstall.Action == "created" {
 			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL)
@@ -217,6 +221,7 @@ func (h *HandlerServer) githubInstall(gin *gin.Context) {
 }
 
 func (h *HandlerServer) githubRwInstall(gin *gin.Context) {
+	log.Println("11111111111222222")
 	loginType, exit := gin.Get("loginType")
 	if !exit {
 		Failed(http.StatusUnauthorized, "access not authorized", gin)
@@ -234,6 +239,9 @@ func (h *HandlerServer) githubRwInstall(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
+	log.Println("----------------------D")
+	log.Println(installData.Code)
+	log.Println("----------------------D")
 	loginService := application.GetBean[*service.LoginService]("loginService")
 	err = loginService.GithubRwInstall(installData.Code, loginMethod, userAny)
 	if err != nil {
