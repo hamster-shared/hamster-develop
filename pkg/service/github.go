@@ -602,9 +602,9 @@ func (g *GithubService) GetUserRwInstallations(userId int64) ([]db2.GitAppInstal
 	return data, err
 }
 
-func (g *GithubService) GetOrganMembers(installId int64, orgName string) ([]*github.User, error) {
+func (g *GithubService) GetOrganMembers(installId int64, orgName string, appIdEnvName, appPEMEnvName string) ([]*github.User, error) {
 	var users []*github.User
-	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
+	appIdString, exist := os.LookupEnv(appIdEnvName)
 	if !exist {
 		logger.Errorf("please contact the administrator to configure 'GITHUB_APP_ID'")
 		return users, errors.New("please contact the administrator to configure 'GITHUB_APP_ID'")
@@ -614,7 +614,7 @@ func (g *GithubService) GetOrganMembers(installId int64, orgName string) ([]*git
 		logger.Errorf("app id format failed:%s", err)
 		return users, err
 	}
-	appPemPath, exist := os.LookupEnv("GITHUB_APP_PEM")
+	appPemPath, exist := os.LookupEnv(appPEMEnvName)
 	if !exist {
 		logger.Errorf("please contact the administrator to configure 'GITHUB_APP_PEM'")
 		return users, errors.New("please contact the administrator to configure 'GITHUB_APP_PEM'")
@@ -807,7 +807,7 @@ func (g *GithubService) AddRepo(appInstallData parameter.GithubWebHookInstall, a
 	return nil
 }
 
-func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHookInstall, action string) error {
+func (g *GithubService) HandleAppsInstallRw(appInstallData parameter.GithubWebHookInstall, action string, appIdEnvName, appPEMEnvName string) error {
 	if appInstallData.Installation.GetAccount().GetType() != "Organization" {
 		var installData db2.GitAppInstall
 		installData.UserId = appInstallData.Installation.GetAccount().GetID()
@@ -827,7 +827,7 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 			}
 		}
 	} else {
-		users, err := g.GetOrganMembers(appInstallData.Installation.GetID(), appInstallData.Installation.GetAccount().GetLogin())
+		users, err := g.GetOrganMembers(appInstallData.Installation.GetID(), appInstallData.Installation.GetAccount().GetLogin(), appIdEnvName, appPEMEnvName)
 		if err != nil {
 			logger.Errorf("get org members failed:%s", err)
 			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
@@ -836,6 +836,9 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 			}
 		} else {
 			requestUserId := appInstallData.Requester.Id
+			if appInstallData.Requester.Id == 0 {
+				requestUserId = appInstallData.Sender.Id
+			}
 			var requestUser db2.User
 			err = g.db.Model(db2.User{}).Where("id = ?", requestUserId).First(&requestUser).Error
 			if err != nil {
@@ -877,6 +880,51 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 					logger.Errorf("save install user failed,user is: ", user.GetLogin())
 					continue
 				}
+			}
+		}
+	}
+	return nil
+}
+
+func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHookInstall, action string, appIdEnvName, appPEMEnvName string) error {
+	if appInstallData.Installation.GetAccount().GetType() != "Organization" {
+		var installData db2.GitAppInstall
+		installData.UserId = appInstallData.Installation.GetAccount().GetID()
+		installData.InstallUserId = appInstallData.Installation.GetAccount().GetID()
+		installData.InstallId = appInstallData.Installation.GetID()
+		installData.Name = appInstallData.Installation.GetAccount().GetLogin()
+		installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
+		installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
+		installData.CreateTime = time.Now()
+		installData.AppId = appInstallData.Installation.GetAppID()
+		err := g.db.Create(&installData).Error
+		if err != nil {
+			logger.Errorf("save install info failed:%s", err)
+			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
+			if err != nil {
+				logger.Errorf("save failed install info failed:%s", err)
+			}
+		}
+	} else {
+		users, err := g.GetOrganMembers(appInstallData.Installation.GetID(), appInstallData.Installation.GetAccount().GetLogin(), appIdEnvName, appPEMEnvName)
+		if err != nil {
+			logger.Errorf("get org members failed:%s", err)
+			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
+			if err != nil {
+				logger.Errorf("save failed install info failed:%s", err)
+			}
+		} else {
+			for _, user := range users {
+				var installData db2.GitAppInstall
+				installData.UserId = user.GetID()
+				installData.InstallUserId = appInstallData.Installation.GetAccount().GetID()
+				installData.InstallId = appInstallData.Installation.GetID()
+				installData.Name = appInstallData.Installation.GetAccount().GetLogin()
+				installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
+				installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
+				installData.CreateTime = time.Now()
+				installData.AppId = appInstallData.Installation.GetAppID()
+				g.db.Create(&installData)
 			}
 		}
 	}

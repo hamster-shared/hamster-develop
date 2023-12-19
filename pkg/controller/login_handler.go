@@ -140,7 +140,7 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 	}
 	if event == "installation" {
 		if githubInstall.Action == "created" {
-			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL)
+			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL, "GITHUB_APP_ID", "GITHUB_APP_PEM")
 			err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), githubInstall.Installation.GetAppID(), consts.INSTALLATION_CREATED)
 			if err != nil {
 				logger.Errorf("installation.created failed:%s", err)
@@ -182,12 +182,16 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 }
 
 func (h *HandlerServer) githubWebHookRw(gin *gin.Context) {
+	log.Println("start rw webhook")
 	event := gin.GetHeader("X-GitHub-Event")
 	githubService := application.GetBean[*service.GithubService]("githubService")
 	var githubInstall parameter.GithubWebHookInstall
 	err := gin.BindJSON(&githubInstall)
 	if err != nil {
 		Fail(err.Error(), gin)
+		log.Println("xxxxxxxxxx")
+		log.Println(err)
+		log.Println("xxxxxxxxxx")
 		return
 	}
 	log.Println("*****************DD")
@@ -196,7 +200,7 @@ func (h *HandlerServer) githubWebHookRw(gin *gin.Context) {
 	log.Println("*****************DD")
 	if event == "installation" {
 		if githubInstall.Action == "created" {
-			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL)
+			githubService.HandleAppsInstallRw(githubInstall, consts.SAVE_INSTALL, "GITHUB_RW_APP_ID", "GITHUB_APP_RW_PEM")
 		}
 		if githubInstall.Action == "deleted" {
 			githubService.DeleteAppsInstall(githubInstall.Installation.GetID(), githubInstall.Installation.GetAppID(), consts.REMOVE_INSTALL)

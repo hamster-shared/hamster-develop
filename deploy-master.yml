@@ -142,6 +142,8 @@ spec:
                 configMapKeyRef:
                   name: hamster-aline
                   key: APPS_RW_CLIENT_SECRETS
+            - name: GITHUB_APP_RW_PEM
+              value: "/home/ubuntu/rwGithubApp/hamster-rw-private-key.pem"
           ports:
             - containerPort: 8080
           volumeMounts:
@@ -166,6 +168,9 @@ spec:
               readOnly: true
             - name: hamster-test-private-key
               mountPath: "/home/ubuntu/githubApp"
+              readOnly: true
+            - name: rw-key
+              mountPath: "/home/ubuntu/rwGithubApp"
               readOnly: true
       volumes:
         - name: dfx-config
@@ -200,6 +205,12 @@ spec:
             items:
               - key: "hamster-test-private-key.pem"
                 path: "hamster-test-private-key.pem"
+        - name: rw-key
+          configMap:
+            name: hamster-test-private-key.pem
+            items:
+              - key: "hamster-rw-private-key.pem"
+                path: "hamster-rw-private-key.pem"
 ---
 apiVersion: v1
 kind: Service

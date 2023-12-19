@@ -36,6 +36,7 @@ type GithubWebHookInstall struct {
 	Installation        github.Installation   `json:"installation"`
 	RepositorySelection string                `json:"repository_selection"`
 	Requester           Requester             `json:"requester"`
+	Sender              Sender                `json:"sender"`
 	RepositoriesRemoved []RepositoriesRemoved `json:"repositories_removed"`
 	RepositoriesAdded   []RepositoriesAdded   `json:"repositories_added"`
 }
@@ -57,6 +58,11 @@ type RepositoriesRemoved struct {
 }
 
 type Requester struct {
+	Login string `json:"login"`
+	Id    int64  `json:"id"`
+}
+
+type Sender struct {
 	Login string `json:"login"`
 	Id    int64  `json:"id"`
 }
