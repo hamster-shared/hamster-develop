@@ -177,3 +177,8 @@ const (
 	SAVE_INSTALL         = "saveInstall"
 	REMOVE_INSTALL       = "removeInstall"
 )
+
+const (
+	INSTALL_ORG  = "Organization"
+	INSTALL_USER = "User"
+)

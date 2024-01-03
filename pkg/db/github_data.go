@@ -6,6 +6,7 @@ type HandlerFailedData struct {
 	Id             int       `gorm:"primaryKey" json:"id"`
 	InstallationId int64     `json:"installationId"`
 	Action         string    `json:"action"`
+	AppId          int64     `json:"appId"`
 	CreateTime     time.Time `json:"createTime"`
 }
 
@@ -39,5 +40,6 @@ type GitAppInstall struct {
 	InstallId           int64     `json:"installId"`
 	UserId              int64     `json:"userId"`
 	AvatarUrl           string    `json:"avatarUrl"`
+	AppId               int64     `json:"appId"`
 	CreateTime          time.Time `json:"createTime"`
 }
