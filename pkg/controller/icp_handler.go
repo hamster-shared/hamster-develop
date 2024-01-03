@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/hamster-shared/hamster-develop/pkg/application"
-	db2 "github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	"strconv"
@@ -143,10 +142,13 @@ func (h *HandlerServer) rechargeCanister(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	userAny, _ := gin.Get("user")
-	user, _ := userAny.(db2.User)
+	userId, exists := gin.Get("userId")
+	if !exists {
+		Fail("no login", gin)
+		return
+	}
 	icpService := application.GetBean[*service.IcpService]("icpService")
-	canisterBalanceVo, err := icpService.RechargeCanister(user.Id, rechargeCanisterParam)
+	canisterBalanceVo, err := icpService.RechargeCanister(userId.(uint), rechargeCanisterParam)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -155,10 +157,13 @@ func (h *HandlerServer) rechargeCanister(gin *gin.Context) {
 }
 
 func (h *HandlerServer) rechargeWallet(gin *gin.Context) {
-	userAny, _ := gin.Get("user")
-	user, _ := userAny.(db2.User)
+	userId, exists := gin.Get("userId")
+	if !exists {
+		Fail("no login", gin)
+		return
+	}
 	icpService := application.GetBean[*service.IcpService]("icpService")
-	walletInfoVo, err := icpService.RechargeWallet(user.Id)
+	walletInfoVo, err := icpService.RechargeWallet(userId.(uint))
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -183,9 +188,12 @@ func (h *HandlerServer) getWalletInfo(gin *gin.Context) {
 
 func (h *HandlerServer) getAccountInfo(gin *gin.Context) {
 	icpService := application.GetBean[*service.IcpService]("icpService")
-	userAny, _ := gin.Get("user")
-	user, _ := userAny.(db2.User)
-	icpInfoVo, err := icpService.GetAccountInfo(user.Id)
+	userId, exists := gin.Get("userId")
+	if !exists {
+		Fail("no login", gin)
+		return
+	}
+	icpInfoVo, err := icpService.GetAccountInfo(userId.(uint))
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -195,9 +203,12 @@ func (h *HandlerServer) getAccountInfo(gin *gin.Context) {
 
 func (h *HandlerServer) createIdentity(gin *gin.Context) {
 	icpService := application.GetBean[*service.IcpService]("icpService")
-	userAny, _ := gin.Get("user")
-	user, _ := userAny.(db2.User)
-	icpInfoVo, err := icpService.CreateIdentity(user.Id)
+	userId, exists := gin.Get("userId")
+	if !exists {
+		Fail("no login", gin)
+		return
+	}
+	icpInfoVo, err := icpService.CreateIdentity(userId.(uint))
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
@@ -212,10 +223,13 @@ func (h *HandlerServer) redeemFaucetCoupon(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	userAny, _ := gin.Get("user")
-	user, _ := userAny.(db2.User)
+	userId, exists := gin.Get("userId")
+	if !exists {
+		Fail("no login", gin)
+		return
+	}
 	icpService := application.GetBean[*service.IcpService]("icpService")
-	walletInfoVo, err := icpService.RedeemFaucetCoupon(user.Id, redeemFaucetCouponParam)
+	walletInfoVo, err := icpService.RedeemFaucetCoupon(userId.(uint), redeemFaucetCouponParam)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
