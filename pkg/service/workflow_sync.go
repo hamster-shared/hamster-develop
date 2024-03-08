@@ -802,13 +802,14 @@ func (w *WorkflowService) syncInternetComputerDeploy(projectId uuid.UUID, workfl
 				fmt.Println("查询数据时发生错误：", err)
 				continue
 			}
+		} else {
+			icpCanister.FkUserId = uint(project.UserId)
 		}
 
 		icpCanister.CanisterName = deploy.Name
 		icpCanister.Status = db.Running
 		icpCanister.Contract = strings.Join([]string{deployPackage.Name, deployPackage.Version}, "_#")
 		icpCanister.Cycles = sql.NullString{Valid: false}
-		icpCanister.FkUserId = uint(project.UserId)
 		icpCanister.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
 		if err := w.db.Save(&icpCanister).Error; err != nil {
 			fmt.Println("保存数据时发生错误：", err)
