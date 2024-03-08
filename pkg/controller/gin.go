@@ -37,6 +37,7 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/repo/authorization", h.handlerServer.githubRepoAuth)
 	api.POST("/github/webhook", h.handlerServer.githubWebHook)
 	api.POST("/v2/github/webhook", h.handlerServer.githubWebHookV2)
+	api.POST("/github/rw/webhook", h.handlerServer.githubWebHookRw)
 	api.GET("/projects/:id/:username/frontend/logs", h.handlerServer.getDeployFrontendLog)
 	api.GET("/user/count", h.handlerServer.getUserCount)
 	api.GET("/github/user/installation/update", h.handlerServer.updateGitHubAppInstallationForUser)
@@ -56,10 +57,13 @@ func (h *HttpServer) StartHttpServer() {
 	api.GET("/projects/chain/network/list", h.handlerServer.getChainNetworkList)
 	api.GET("/projects/chain/network/:name", h.handlerServer.getChainNetworkByName)
 	api.POST("/projects", h.handlerServer.createProject)
+	api.POST("/v2/projects", h.handlerServer.createProjectV2)
 	api.POST("/projects/import", h.handlerServer.importProject)
-	api.POST("/projects/code", h.handlerServer.createProjectByCode)
+	api.POST("/projects/code", h.handlerServer.createProjectByCodeV2)
 	api.GET("/projects/:id", h.handlerServer.projectDetail)
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
+	api.GET("/projects/:id/branch", h.handlerServer.getProjectRepositoryBranch) // 查询项目分支信息
+	api.PUT("/projects/:id/branch", h.handlerServer.setProjectRepositoryBranch) // 查询项目分支信息
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)
 	api.POST("/projects/check-name", h.handlerServer.checkName)
 	api.GET("/user", h.handlerServer.getUseInfo)
@@ -70,9 +74,12 @@ func (h *HttpServer) StartHttpServer() {
 
 	// new add
 	api.GET("/github/install/check", h.handlerServer.githubInstallCheck)
+	api.GET("/github/rw/install/check", h.handlerServer.githubInstallRwCheck)
 	api.POST("/github/install/auth", h.handlerServer.githubInstallAuth)
 	//api.POST("/v2/github/install", h.handlerServer.githubInstallV2)
+	api.POST("/github/rw/install", h.handlerServer.githubRwInstall)
 	api.GET("/github/users/installations", h.handlerServer.getUsersInstallations)
+	api.GET("/github/rw/users/installations", h.handlerServer.getUsersRwInstallations)
 	api.GET("/github/installation/:id/repositories", h.handlerServer.getGithubRepos)
 	// set check pipeline
 	api.POST("/project/:id/workflow/setting", h.handlerServer.workflowSetting)

@@ -14,6 +14,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/wujiangweiphp/go-curl"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
@@ -136,11 +137,27 @@ func (g *GithubService) GetCommitInfo(token, owner, repo, ref string) (string, *
 	return hash, res, err
 }
 
-func (g *GithubService) CreateRepository(token, repoName string) (*github.Repository, *github.Response, error) {
+func (g *GithubService) CreateRepository(token, orgName, repoName string) (*github.Repository, *github.Response, error) {
 	client := utils.NewGithubClient(g.ctx, token)
 	var data github.Repository
 	data.Name = &repoName
-	return client.Repositories.Create(g.ctx, "", &data)
+	return client.Repositories.Create(g.ctx, orgName, &data)
+}
+
+func (g *GithubService) EmptyRepo(token, owner, repo, path string) (bool, error) {
+	result := true
+	client := utils.NewGithubClient(g.ctx, token)
+	_, directoryContent, _, err := client.Repositories.GetContents(g.ctx, owner, repo, path, nil)
+	if err != nil {
+		if !strings.Contains(err.Error(), "404 This repository is empty") {
+			result = false
+			return result, err
+		}
+	}
+	if len(directoryContent) > 0 {
+		result = false
+	}
+	return result, nil
 }
 
 func (g *GithubService) GetRepo(token, owner, repoName string) (*github.Repository, *github.Response, error) {
@@ -282,7 +299,7 @@ func (g *GithubService) GetUserEmail(token string) (string, error) {
 func deleteOwnerDir(owner string) {
 	deleteCmd := exec.Command("rm", "-rf", owner)
 	deleteCmd.Dir = utils.DefaultRepoDir()
-	deleteCmd.Start()
+	deleteCmd.CombinedOutput()
 }
 
 func (g *GithubService) GetFileContent(token, owner, repo, path string) (string, error) {
@@ -460,6 +477,10 @@ func (g *GithubService) UpdateGitHubAppInstallationForUser() (string, error) {
 			installData.CreateTime = time.Now()
 			g.db.Model(db2.GitAppInstall{}).Create(&installData)
 		}
+		if err == nil {
+			installData.AppId = installation.GetAppID()
+			g.db.Save(&installData)
+		}
 		//gitAppInstallList = append(gitAppInstallList, installData)
 
 		token, _, err := client.Apps.CreateInstallationToken(ctx, installation.GetID(), nil)
@@ -546,16 +567,45 @@ func (g *GithubService) GetUsersInstallations(token string) ([]*github.Installat
 
 func (g *GithubService) GetUserInstallations(userId int64) ([]db2.GitAppInstall, error) {
 	var data []db2.GitAppInstall
-	err := g.db.Model(db2.GitAppInstall{}).Where("user_id = ?", userId).Find(&data).Error
+	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
+	if !exist {
+		logger.Errorf("please contact the administrator to configure 'GITHUB_APP_ID'")
+		return data, errors.New("please contact the administrator to configure 'GITHUB_APP_ID'")
+	}
+	appId, err := strconv.Atoi(appIdString)
+	if err != nil {
+		logger.Errorf("app id format failed:%s", err)
+		return data, err
+	}
+	err = g.db.Model(db2.GitAppInstall{}).Where("user_id = ? and app_id = ?", userId, appId).Find(&data).Error
 	if err != nil {
 		logger.Errorf("get user installation failed:%s", err)
 	}
 	return data, err
 }
 
-func (g *GithubService) GetOrganMembers(installId int64, orgName string) ([]*github.User, error) {
+func (g *GithubService) GetUserRwInstallations(userId int64) ([]db2.GitAppInstall, error) {
+	var data []db2.GitAppInstall
+	appIdString, exist := os.LookupEnv("GITHUB_RW_APP_ID")
+	if !exist {
+		logger.Errorf("please contact the administrator to configure 'GITHUB_APP_ID'")
+		return data, errors.New("please contact the administrator to configure 'GITHUB_APP_ID'")
+	}
+	appId, err := strconv.Atoi(appIdString)
+	if err != nil {
+		logger.Errorf("app id format failed:%s", err)
+		return data, err
+	}
+	err = g.db.Model(db2.GitAppInstall{}).Where("user_id = ? and app_id = ?", userId, appId).Find(&data).Error
+	if err != nil {
+		logger.Errorf("get user installation failed:%s", err)
+	}
+	return data, err
+}
+
+func (g *GithubService) GetOrganMembers(installId int64, orgName string, appIdEnvName, appPEMEnvName string) ([]*github.User, error) {
 	var users []*github.User
-	appIdString, exist := os.LookupEnv("GITHUB_APP_ID")
+	appIdString, exist := os.LookupEnv(appIdEnvName)
 	if !exist {
 		logger.Errorf("please contact the administrator to configure 'GITHUB_APP_ID'")
 		return users, errors.New("please contact the administrator to configure 'GITHUB_APP_ID'")
@@ -565,7 +615,7 @@ func (g *GithubService) GetOrganMembers(installId int64, orgName string) ([]*git
 		logger.Errorf("app id format failed:%s", err)
 		return users, err
 	}
-	appPemPath, exist := os.LookupEnv("GITHUB_APP_PEM")
+	appPemPath, exist := os.LookupEnv(appPEMEnvName)
 	if !exist {
 		logger.Errorf("please contact the administrator to configure 'GITHUB_APP_PEM'")
 		return users, errors.New("please contact the administrator to configure 'GITHUB_APP_PEM'")
@@ -678,11 +728,11 @@ func (g *GithubService) UpdateRepositorySelection(installId int64, repoSelection
 	return nil
 }
 
-func (g *GithubService) HandlerInstallData(installationId int64, action string) error {
+func (g *GithubService) HandlerInstallData(installationId, appId int64, action string) error {
 	repos, err := g.getWebHookData(installationId)
 	if err != nil {
 		logger.Errorf("get github webhook data failed: %s", err)
-		err = g.saveFailedData(installationId, action)
+		err = g.saveFailedData(installationId, appId, action)
 		if err != nil {
 			logger.Errorf("save handler failed:%s", err)
 		}
@@ -705,7 +755,7 @@ func (g *GithubService) HandlerInstallData(installationId int64, action string) 
 		if err != nil {
 			err = g.db.Model(db2.GitRepo{}).Create(&repoData).Error
 			if err != nil {
-				err = g.saveFailedData(installationId, action)
+				err = g.saveFailedData(installationId, appId, action)
 				if err != nil {
 					logger.Errorf("save git hub repo failed:%s", err)
 				}
@@ -727,7 +777,7 @@ func (g *GithubService) AddRepo(appInstallData parameter.GithubWebHookInstall, a
 			repo, _, err := client.Repositories.GetByID(g.ctx, added.Id)
 			if err != nil {
 				logger.Errorf("add repo get repo info failed:%s", err)
-				err = g.saveFailedData(appInstallData.Installation.GetID(), action)
+				err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
 				if err != nil {
 					logger.Errorf("save failed install info failed:%s", err)
 				}
@@ -758,8 +808,7 @@ func (g *GithubService) AddRepo(appInstallData parameter.GithubWebHookInstall, a
 	return nil
 }
 
-func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHookInstall, action string) error {
-
+func (g *GithubService) HandleAppsInstallRw(appInstallData parameter.GithubWebHookInstall, action string, appIdEnvName, appPEMEnvName string) error {
 	if appInstallData.Installation.GetAccount().GetType() != "Organization" {
 		var installData db2.GitAppInstall
 		installData.UserId = appInstallData.Installation.GetAccount().GetID()
@@ -769,19 +818,99 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 		installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
 		installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
 		installData.CreateTime = time.Now()
+		installData.AppId = appInstallData.Installation.GetAppID()
 		err := g.db.Create(&installData).Error
 		if err != nil {
 			logger.Errorf("save install info failed:%s", err)
-			err = g.saveFailedData(appInstallData.Installation.GetID(), action)
+			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
 			if err != nil {
 				logger.Errorf("save failed install info failed:%s", err)
 			}
 		}
 	} else {
-		users, err := g.GetOrganMembers(appInstallData.Installation.GetID(), appInstallData.Installation.GetAccount().GetLogin())
+		users, err := g.GetOrganMembers(appInstallData.Installation.GetID(), appInstallData.Installation.GetAccount().GetLogin(), appIdEnvName, appPEMEnvName)
 		if err != nil {
 			logger.Errorf("get org members failed:%s", err)
-			err = g.saveFailedData(appInstallData.Installation.GetID(), action)
+			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
+			if err != nil {
+				logger.Errorf("save failed install info failed:%s", err)
+			}
+		} else {
+			requestUserId := appInstallData.Requester.Id
+			if appInstallData.Requester.Id == 0 {
+				requestUserId = appInstallData.Sender.Id
+			}
+			var requestUser db2.User
+			err = g.db.Model(db2.User{}).Where("id = ?", requestUserId).First(&requestUser).Error
+			if err != nil {
+				logger.Errorf("get request user failed:%s", err)
+				g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
+				return err
+			}
+			for _, user := range users {
+				err = g.db.Transaction(func(tx *gorm.DB) error {
+					var installData db2.GitAppInstall
+					installData.UserId = user.GetID()
+					installData.InstallUserId = appInstallData.Installation.GetAccount().GetID()
+					installData.InstallId = appInstallData.Installation.GetID()
+					installData.Name = appInstallData.Installation.GetAccount().GetLogin()
+					installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
+					installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
+					installData.CreateTime = time.Now()
+					installData.AppId = appInstallData.Installation.GetAppID()
+					err = g.db.Create(&installData).Error
+					if err != nil {
+						return err
+					}
+					var userData db2.User
+					err = g.db.Model(db2.User{}).Where("id = ?", user.GetID()).First(&userData).Error
+					if err != nil {
+						userData.Id = uint(user.GetID())
+						userData.Username = user.GetLogin()
+						userData.HtmlUrl = user.GetHTMLURL()
+						userData.AvatarUrl = user.GetAvatarURL()
+						userData.Token = requestUser.Token
+						err = g.db.Model(db2.User{}).Create(&userData).Error
+						if err != nil {
+							return err
+						}
+					}
+					return nil
+				})
+				if err != nil {
+					logger.Errorf("save install user failed,user is: ", user.GetLogin())
+					continue
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHookInstall, action string, appIdEnvName, appPEMEnvName string) error {
+	if appInstallData.Installation.GetAccount().GetType() != "Organization" {
+		var installData db2.GitAppInstall
+		installData.UserId = appInstallData.Installation.GetAccount().GetID()
+		installData.InstallUserId = appInstallData.Installation.GetAccount().GetID()
+		installData.InstallId = appInstallData.Installation.GetID()
+		installData.Name = appInstallData.Installation.GetAccount().GetLogin()
+		installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
+		installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
+		installData.CreateTime = time.Now()
+		installData.AppId = appInstallData.Installation.GetAppID()
+		err := g.db.Create(&installData).Error
+		if err != nil {
+			logger.Errorf("save install info failed:%s", err)
+			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
+			if err != nil {
+				logger.Errorf("save failed install info failed:%s", err)
+			}
+		}
+	} else {
+		users, err := g.GetOrganMembers(appInstallData.Installation.GetID(), appInstallData.Installation.GetAccount().GetLogin(), appIdEnvName, appPEMEnvName)
+		if err != nil {
+			logger.Errorf("get org members failed:%s", err)
+			err = g.saveFailedData(appInstallData.Installation.GetID(), appInstallData.Installation.GetAppID(), action)
 			if err != nil {
 				logger.Errorf("save failed install info failed:%s", err)
 			}
@@ -795,6 +924,7 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 				installData.RepositorySelection = appInstallData.Installation.GetRepositorySelection()
 				installData.AvatarUrl = appInstallData.Installation.GetAccount().GetAvatarURL()
 				installData.CreateTime = time.Now()
+				installData.AppId = appInstallData.Installation.GetAppID()
 				g.db.Create(&installData)
 			}
 		}
@@ -802,11 +932,11 @@ func (g *GithubService) HandleAppsInstall(appInstallData parameter.GithubWebHook
 	return nil
 }
 
-func (g *GithubService) DeleteAppsInstall(installId int64, action string) error {
+func (g *GithubService) DeleteAppsInstall(installId, appId int64, action string) error {
 	err := g.db.Where("install_id = ?", installId).Delete(&db2.GitAppInstall{}).Error
 	if err != nil {
 		logger.Errorf("delete install info failed:%s", err)
-		err = g.saveFailedData(installId, action)
+		err = g.saveFailedData(installId, appId, action)
 		if err != nil {
 			logger.Errorf("save failed delete install info failed:%s", err)
 		}
@@ -828,22 +958,23 @@ func (g *GithubService) DeleteUserWallet(userId int64) error {
 	return nil
 }
 
-func (g *GithubService) saveFailedData(installationId int64, action string) error {
+func (g *GithubService) saveFailedData(installationId, appId int64, action string) error {
 	var failedData db2.HandlerFailedData
 	err := g.db.Model(db2.HandlerFailedData{}).Where("installation_id = ? and action = ?", installationId, action).First(&failedData).Error
 	if err != nil {
 		failedData.InstallationId = installationId
 		failedData.CreateTime = time.Now()
 		failedData.Action = action
+		failedData.AppId = appId
 		err = g.db.Model(db2.HandlerFailedData{}).Create(&failedData).Error
 	}
 	return err
 }
 
-func (g *GithubService) GithubAppDelete(installationId int64) error {
+func (g *GithubService) GithubAppDelete(installationId, appId int64) error {
 	err := g.db.Where("installation_id = ?", installationId).Delete(&db2.GitRepo{}).Error
 	if err != nil {
-		err = g.saveFailedData(installationId, consts.INSTALLATION_DELETED)
+		err = g.saveFailedData(installationId, appId, consts.INSTALLATION_DELETED)
 	}
 	err = g.db.Where("installation_id = ?", installationId).Delete(&db2.HandlerFailedData{}).Error
 	return err
@@ -854,7 +985,7 @@ func (g *GithubService) RepoRemoved(installData parameter.GithubWebHookInstall, 
 	for _, repo := range removeRepos {
 		err := g.db.Where("repo_id = ?", repo.Id).Delete(&db2.GitRepo{}).Error
 		if err != nil {
-			err = g.saveFailedData(installData.Installation.GetID(), action)
+			err = g.saveFailedData(installData.Installation.GetID(), installData.Installation.GetAppID(), action)
 			if err != nil {
 				logger.Errorf("repo removed get repos failed:%s", err)
 			}
@@ -880,4 +1011,16 @@ func (g *GithubService) QueryRepos(installationId int64, page, size int, query s
 	repoPage.Page = page
 	repoPage.PageSize = size
 	return repoPage, nil
+}
+
+func (g *GithubService) ListRepositoryBranch(ctx context.Context, owner, repoName string) ([]string, error) {
+	client := utils.NewGithubClient(g.ctx, "")
+	branches, _, err := client.Repositories.ListBranches(ctx, owner, repoName, &github.BranchListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return lo.Map(branches, func(item *github.Branch, index int) string {
+		return item.GetName()
+	}), err
 }

@@ -35,6 +35,7 @@ type IProjectService interface {
 	ParsingEVMFrame(repoContents []*github.RepositoryContent) (consts.EVMFrameType, error)
 	GetChainNetworkList() ([]db2.ChainNetwork, error)
 	GetChainNetworkByName(name string) (db2.ChainNetwork, error)
+	UpdateProjectBranch(id string, userId int64, branch string) error
 }
 
 type ProjectService struct {
@@ -458,4 +459,17 @@ func parsingPackageJson(fileContent *github.RepositoryContent, name, userName, t
 		return 4, nil
 	}
 	return 0, fmt.Errorf("canot ensure the frontend frame type")
+}
+
+func (p *ProjectService) UpdateProjectBranch(id string, userId int64, branch string) error {
+	project, err := p.GetProjectById(id)
+	if err != nil {
+		return err
+	}
+
+	if project.UserId != userId {
+		return errors.New("permission error")
+	}
+
+	return p.db.Model(&db2.Project{}).Where("id", id).Update("branch", branch).Error
 }

@@ -566,9 +566,12 @@ func (w *WorkflowService) syncContractSolana(projectId uuid.UUID, workflowId uin
 	var bytecode string
 	var idlData string
 	var base58Format string
+	var contractName string
 
 	for _, arti := range artis {
-		if arti.Name == "solana_nft_anchor.so" {
+		if strings.HasSuffix(arti.Name, "so") {
+			contractName = strings.TrimSuffix(arti.Name, path.Ext(arti.Name))
+
 			data, err := os.ReadFile(arti.Url)
 			if err != nil {
 				logger.Errorf("read bytecode error : %v", err)
@@ -576,7 +579,8 @@ func (w *WorkflowService) syncContractSolana(projectId uuid.UUID, workflowId uin
 			bytecode = base64.StdEncoding.EncodeToString(data)
 		}
 
-		if arti.Name == "solana_nft_anchor.json" {
+		if strings.HasSuffix(arti.Name, "json") {
+
 			data, err := os.ReadFile(arti.Url)
 			if err != nil {
 				logger.Errorf("read bytecode error : %v", err)
@@ -596,7 +600,7 @@ func (w *WorkflowService) syncContractSolana(projectId uuid.UUID, workflowId uin
 		ProjectId:             projectId,
 		WorkflowId:            workflowId,
 		WorkflowDetailId:      workflowDetail.Id,
-		Name:                  "solana_nft_anchor",
+		Name:                  contractName,
 		Version:               fmt.Sprintf("%d", workflowDetail.ExecNumber),
 		BuildTime:             workflowDetail.CreateTime,
 		AbiInfo:               idlData,

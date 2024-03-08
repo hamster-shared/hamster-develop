@@ -9,7 +9,6 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/db"
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
-	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
@@ -24,17 +23,17 @@ import (
 
 var (
 	NewIdentity    = "dfx identity new %s --storage-mode plaintext"
-	LedgerBalance  = "dfx ledger balance --network %s"
+	LedgerBalance  = "dfx ledger balance --network %s --identity %s"
 	RedeemCoupon   = "dfx wallet redeem-faucet-coupon %s --network %s"
-	WalletBalance  = "dfx wallet balance --network %s"
+	WalletBalance  = "dfx wallet balance --network %s --identity %s"
 	UseIdentity    = "dfx identity use %s"
-	DepositCycles  = "dfx canister deposit-cycles %s %s --network %s"
-	CreateCanister = "dfx ledger create-canister %s --amount %s --network %s "
-	DeployWallet   = "dfx identity deploy-wallet %s --network %s"
-	GetWallet      = "dfx identity get-wallet --network %s"
-	WalletTopUp    = "dfx ledger top-up %s --amount %s --network %s"
-	AccountId      = "dfx ledger account-id"
-	GetPrincipal   = "dfx identity get-principal"
+	DepositCycles  = "dfx canister deposit-cycles %s %s --network %s --identity %s"
+	CreateCanister = "dfx ledger create-canister %s --amount %s --network %s --identity %s"
+	DeployWallet   = "dfx identity deploy-wallet %s --network %s --identity %s"
+	GetWallet      = "dfx identity get-wallet --network %s --identity %s"
+	WalletTopUp    = "dfx ledger top-up %s --amount %s --network %s --identity %s"
+	AccountId      = "dfx ledger account-id --identity %s"
+	GetPrincipal   = "dfx identity get-principal--identity %s"
 	CanisterStatus = "dfx canister status %s --network %s"
 )
 
@@ -98,19 +97,8 @@ func (i *IcpService) GetAccountInfo(userId uint) (vo vo.UserIcpInfoVo, error err
 	if err != nil {
 		return vo, err
 	}
-	lock, err := utils.Lock()
-	if err != nil {
-		return vo, err
-	}
-	defer utils.Unlock(lock)
-	useIdentitySprintf := UseIdentity
-	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, userIcp.IdentityName)
-	_, err = i.execDfxCommand(useIdentityCmd)
-	if err != nil {
-		return vo, err
-	}
 	ledgerBalanceSprintf := LedgerBalance
-	ledgerBalanceCmd := fmt.Sprintf(ledgerBalanceSprintf, i.network)
+	ledgerBalanceCmd := fmt.Sprintf(ledgerBalanceSprintf, i.network, userIcp.IdentityName)
 	balance, err := i.execDfxCommand(ledgerBalanceCmd)
 	if err != nil {
 		return vo, err
@@ -206,19 +194,8 @@ func (i *IcpService) GetWalletInfo(userId uint) (vo vo.IcpCanisterBalanceVo, err
 		vo.CyclesBalance = "0.0000000 TC (trillion cycles)"
 		return vo, nil
 	}
-	lock, err := utils.Lock()
-	if err != nil {
-		return vo, err
-	}
-	defer utils.Unlock(lock)
-	useIdentitySprintf := UseIdentity
-	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, userIcp.IdentityName)
-	_, err = i.execDfxCommand(useIdentityCmd)
-	if err != nil {
-		return vo, err
-	}
 	walletBalanceSprintf := WalletBalance
-	walletBalanceCmd := fmt.Sprintf(walletBalanceSprintf, i.network)
+	walletBalanceCmd := fmt.Sprintf(walletBalanceSprintf, i.network, userIcp.IdentityName)
 	balance, err := i.execDfxCommand(walletBalanceCmd)
 	if err != nil {
 		return vo, err
@@ -230,19 +207,8 @@ func (i *IcpService) GetWalletInfo(userId uint) (vo vo.IcpCanisterBalanceVo, err
 }
 
 func (i *IcpService) GetWalletIdByDfx(identityName string) (walletId string, err error) {
-	lock, err := utils.Lock()
-	if err != nil {
-		return "", err
-	}
-	defer utils.Unlock(lock)
-	useIdentitySprintf := UseIdentity
-	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
-	_, err = i.execDfxCommand(useIdentityCmd)
-	if err != nil {
-		return "", err
-	}
 	getWalletSprintf := GetWallet
-	getWalletCmd := fmt.Sprintf(getWalletSprintf, i.network)
+	getWalletCmd := fmt.Sprintf(getWalletSprintf, i.network, identityName)
 	output, err := i.execDfxCommand(getWalletCmd)
 	if err != nil {
 		return "", err
@@ -338,19 +304,8 @@ func (i *IcpService) RechargeCanister(userId uint, rechargeCanisterParam paramet
 }
 
 func (i *IcpService) canisterRechargeCycles(identityName string, cycles string, canisterId string) (error error) {
-	lock, err := utils.Lock()
-	if err != nil {
-		return err
-	}
-	defer utils.Unlock(lock)
-	useIdentitySprintf := UseIdentity
-	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
-	_, err = i.execDfxCommand(useIdentityCmd)
-	if err != nil {
-		return err
-	}
 	depositCyclesSprintf := DepositCycles
-	depositCyclesCmd := fmt.Sprintf(depositCyclesSprintf, cycles, canisterId, i.network)
+	depositCyclesCmd := fmt.Sprintf(depositCyclesSprintf, cycles, canisterId, i.network, identityName)
 	output, err := i.execDfxCommand(depositCyclesCmd)
 	if err != nil {
 		return err
@@ -360,23 +315,12 @@ func (i *IcpService) canisterRechargeCycles(identityName string, cycles string, 
 }
 
 func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error error) {
-	lock, err := utils.Lock()
-	if err != nil {
-		return "", err
-	}
-	defer utils.Unlock(lock)
-	useIdentitySprintf := UseIdentity
-	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, userIcp.IdentityName)
-	_, err = i.execDfxCommand(useIdentityCmd)
-	if err != nil {
-		return "", err
-	}
-	balance, err := i.getLedgerIcpBalance()
+	balance, err := i.getLedgerIcpBalance(userIcp.IdentityName)
 	if err != nil {
 		return "", err
 	}
 	createCanisterSprintf := CreateCanister
-	createCanisterCmd := fmt.Sprintf(createCanisterSprintf, userIcp.PrincipalId, balance, i.network)
+	createCanisterCmd := fmt.Sprintf(createCanisterSprintf, userIcp.PrincipalId, balance, i.network, userIcp.IdentityName)
 	output, err := i.execDfxCommand(createCanisterCmd)
 	logger.Infof("userid-> %s create-canister result is: %s \n", userIcp.IdentityName, output)
 	if err != nil {
@@ -394,7 +338,7 @@ func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error erro
 		}
 	}
 	deployWalletSprintf := DeployWallet
-	deployWalletCmd := fmt.Sprintf(deployWalletSprintf, walletId, i.network)
+	deployWalletCmd := fmt.Sprintf(deployWalletSprintf, walletId, i.network, userIcp.IdentityName)
 	output, err = i.execDfxCommand(deployWalletCmd)
 	logger.Infof("userid-> %s walletId-> %s deploy-wallet result is: %s \n", userIcp.IdentityName, walletId, output)
 	if err != nil {
@@ -404,23 +348,12 @@ func (i *IcpService) InitWallet(userIcp db.UserIcp) (walletId string, error erro
 }
 
 func (i *IcpService) WalletTopUp(identityName string, walletId string) (error error) {
-	lock, err := utils.Lock()
-	if err != nil {
-		return err
-	}
-	defer utils.Unlock(lock)
-	useIdentitySprintf := UseIdentity
-	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
-	_, err = i.execDfxCommand(useIdentityCmd)
-	if err != nil {
-		return err
-	}
-	balance, err := i.getLedgerIcpBalance()
+	balance, err := i.getLedgerIcpBalance(identityName)
 	if err != nil {
 		return err
 	}
 	walletTopUpSprintf := WalletTopUp
-	walletTopUpCmd := fmt.Sprintf(walletTopUpSprintf, walletId, balance, i.network)
+	walletTopUpCmd := fmt.Sprintf(walletTopUpSprintf, walletId, balance, i.network, identityName)
 	output, err := i.execDfxCommand(walletTopUpCmd)
 	if err != nil {
 		return err
@@ -429,9 +362,9 @@ func (i *IcpService) WalletTopUp(identityName string, walletId string) (error er
 	return nil
 }
 
-func (i *IcpService) getLedgerIcpBalance() (string, error) {
+func (i *IcpService) getLedgerIcpBalance(identityName string) (string, error) {
 	ledgerBalanceSprintf := LedgerBalance
-	ledgerBalanceCmd := fmt.Sprintf(ledgerBalanceSprintf, i.network)
+	ledgerBalanceCmd := fmt.Sprintf(ledgerBalanceSprintf, i.network, identityName)
 	balance, err := i.execDfxCommand(ledgerBalanceCmd)
 	if err != nil {
 		return "", err
@@ -454,24 +387,15 @@ func (i *IcpService) getLedgerIcpBalance() (string, error) {
 }
 
 func (i *IcpService) getLedgerInfo(identityName string) (string, string, error) {
-	lock, err := utils.Lock()
-	if err != nil {
-		return "", "", err
-	}
-	defer utils.Unlock(lock)
-	useIdentitySprintf := UseIdentity
-	useIdentityCmd := fmt.Sprintf(useIdentitySprintf, identityName)
-	_, err = i.execDfxCommand(useIdentityCmd)
-	if err != nil {
-		return "", "", err
-	}
-	accountIdCmd := AccountId
+	accountIdSprintf := AccountId
+	accountIdCmd := fmt.Sprintf(accountIdSprintf, identityName)
 	accountId, err := i.execDfxCommand(accountIdCmd)
 	if err != nil {
 		return "", "", err
 	}
-	pIdCmd := GetPrincipal
-	pId, err := i.execDfxCommand(pIdCmd)
+	pIdSprintf := GetPrincipal
+	pidCmd := fmt.Sprintf(pIdSprintf, identityName)
+	pId, err := i.execDfxCommand(pidCmd)
 	if err != nil {
 		return "", "", err
 	}

@@ -32,6 +32,7 @@ type CreateByCodeParam struct {
 	FrameType uint   `json:"frameType"`
 	FileName  string `json:"fileName"`
 	Content   string `json:"content"`
+	RepoOwner string `json:"repoOwner"`
 }
 
 type CheckNameParam struct {
@@ -44,4 +45,8 @@ type K8sDeployParam struct {
 	ServiceProtocol   string `json:"serviceProtocol"`
 	ServicePort       int32  `json:"servicePort"`
 	ServiceTargetPort int32  `json:"serviceTargetPort"`
+}
+
+type UpdateProjectBranch struct {
+	Branch string `json:"branch"`
 }
