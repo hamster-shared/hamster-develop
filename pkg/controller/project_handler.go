@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"io/ioutil"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hamster-shared/aline-engine/logger"
@@ -1689,4 +1691,46 @@ func (h *HandlerServer) getChainNetworkByName(gin *gin.Context) {
 		return
 	}
 	Success(list, gin)
+}
+
+func (h *HandlerServer) getProjectRepositoryBranch(gin *gin.Context) {
+	id := gin.Param("id")
+	project, err := h.projectService.GetProjectById(id)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+
+	githubService := application.GetBean[*service.GithubService]("githubService")
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
+	owner, repo, err := service.ParsingGitHubURL(project.RepositoryUrl)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	branches, err := githubService.ListRepositoryBranch(ctx, owner, repo)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	Success(branches, gin)
+}
+
+func (h *HandlerServer) setProjectRepositoryBranch(gin *gin.Context) {
+	id := gin.Param("id")
+	userAny, _ := gin.Get("user")
+	user, _ := userAny.(db2.User)
+	var updateProjectBranch parameter.UpdateProjectBranch
+	err := gin.BindJSON(&updateProjectBranch)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+	err = h.projectService.UpdateProjectBranch(id, int64(user.Id), updateProjectBranch.Branch)
+	if err != nil {
+		Fail(err.Error(), gin)
+		return
+	}
+
+	Success(nil, gin)
 }
