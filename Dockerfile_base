@@ -33,3 +33,5 @@ RUN "$HOME/.cargo/bin/rustup" default stable && \
     "$HOME/.cargo/bin/rustup" update nightly && \
     "$HOME/.cargo/bin/rustup" target add wasm32-unknown-unknown --toolchain nightly
 
+
+RUN npm install -g truffle
