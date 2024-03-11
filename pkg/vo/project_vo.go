@@ -29,6 +29,7 @@ type ProjectListVo struct {
 	RecentCheck   RecentCheckVo `json:"recentCheck"`
 	RecentBuild   RecentBuildVo `json:"recentBuild"`
 	RecentDeploy  interface{}   `json:"recentDeploy"`
+	AllBranch     []string      `json:"allBranch"`
 }
 
 type ProjectDetailVo struct {
