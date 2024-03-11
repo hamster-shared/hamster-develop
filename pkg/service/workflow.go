@@ -391,6 +391,7 @@ func (w *WorkflowService) ExecProjectWorkflow(project db.Project, user vo.UserAu
 			//Status:      uint(detail.Status),
 			Status:     1,
 			StartTime:  detail.StartTime,
+			Branch:     project.Branch,
 			CreateTime: time.Now(),
 			UpdateTime: time.Now(),
 		}

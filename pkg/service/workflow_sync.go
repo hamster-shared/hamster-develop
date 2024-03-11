@@ -70,6 +70,9 @@ func (w *WorkflowService) SyncStatus(message model.StatusChangeMessage) {
 	workflowDetail.CodeBranch = codeInfo.Branch
 	workflowDetail.CodeInfo = fmt.Sprintf("%s | commit on %s | %s", codeInfo.CommitId, codeInfo.CommitDate, codeInfo.CommitMessage)
 	workflowDetail.Duration = jobDetail.Duration
+	workflowDetail.CommitInfo = codeInfo.CommitMessage
+	workflowDetail.CommitId = codeInfo.CommitId
+	workflowDetail.Branch = codeInfo.Branch
 
 	if workflowDetail.Status != uint(message.Status) {
 		// 如果 detail 的状态和 message 的状态不一致，可能是因为 detail 是从文件读取的，读取时还没有保存最新的状态，以 message 的状态为准
