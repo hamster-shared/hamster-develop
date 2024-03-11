@@ -91,18 +91,17 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 			}
 
 			// branches
-
 			githubService := application.GetBean[*GithubService]("githubService")
 			ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
 			owner, repo, err := ParsingGitHubURL(data.RepositoryUrl)
 			if err != nil {
+				data.AllBranch = []string{data.Branch}
+			} else {
 				branches, err2 := githubService.ListRepositoryBranch(ctx, owner, repo)
 				if err2 != nil {
 					data.AllBranch = []string{data.Branch}
 				}
 				data.AllBranch = branches
-			} else {
-				data.AllBranch = []string{data.Branch}
 			}
 
 			//recentDeploy
