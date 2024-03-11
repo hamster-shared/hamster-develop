@@ -14,6 +14,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/wujiangweiphp/go-curl"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
@@ -1010,4 +1011,16 @@ func (g *GithubService) QueryRepos(installationId int64, page, size int, query s
 	repoPage.Page = page
 	repoPage.PageSize = size
 	return repoPage, nil
+}
+
+func (g *GithubService) ListRepositoryBranch(ctx context.Context, owner, repoName string) ([]string, error) {
+	client := utils.NewGithubClient(g.ctx, "")
+	branches, _, err := client.Repositories.ListBranches(ctx, owner, repoName, &github.BranchListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return lo.Map(branches, func(item *github.Branch, index int) string {
+		return item.GetName()
+	}), err
 }

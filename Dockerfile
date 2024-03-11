@@ -1,7 +1,17 @@
-FROM docker.io/hamstershare/debian_docker_cli:20231010
-RUN npm install -g truffle
+FROM golang:1.20.2 as builder
 
-COPY ./aline-test /usr/local/bin/aline-test
+WORKDIR  /app
+
+ENV GO111MODULE on
+ENV GOPROXY https://goproxy.cn
+
+COPY . .
+
+RUN   make linux-test
+
+FROM docker.io/hamstershare/debian_docker_cli:20240308
+
+COPY  --from=builder  /app/aline-test /usr/local/bin/aline-test
 
 ENV PORT=8080
 ENV GRPC_PORT=50001

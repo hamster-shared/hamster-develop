@@ -46,3 +46,7 @@ type K8sDeployParam struct {
 	ServicePort       int32  `json:"servicePort"`
 	ServiceTargetPort int32  `json:"serviceTargetPort"`
 }
+
+type UpdateProjectBranch struct {
+	Branch string `json:"branch"`
+}
