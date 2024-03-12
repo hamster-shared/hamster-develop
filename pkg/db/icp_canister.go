@@ -12,6 +12,7 @@ const (
 
 type IcpCanister struct {
 	Id           int            `json:"id"`
+	FkUserId     uint           `json:"fkUserId"`
 	ProjectId    string         `json:"projectId"`
 	CanisterId   string         `json:"canisterId"`
 	CanisterName string         `json:"canisterName"`
