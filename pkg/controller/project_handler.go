@@ -72,8 +72,10 @@ func (h *HandlerServer) projectList(gin *gin.Context) {
 	}
 	user, _ := userAny.(db2.User)
 	userId = int(user.Id)
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
 	if userId != 0 {
-		data, err := h.projectService.GetProjects(userId, query, page, size, projectType)
+		data, err := h.projectService.GetProjects(userId, token, query, page, size, projectType)
 		if err != nil {
 			Fail(err.Error(), gin)
 			return
@@ -1708,7 +1710,9 @@ func (h *HandlerServer) getProjectRepositoryBranch(gin *gin.Context) {
 		Fail(err.Error(), gin)
 		return
 	}
-	branches, err := githubService.ListRepositoryBranch(ctx, owner, repo)
+	tokenAny, _ := gin.Get("token")
+	token, _ := tokenAny.(string)
+	branches, err := githubService.ListRepositoryBranch(ctx, token, owner, repo)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

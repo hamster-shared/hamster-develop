@@ -1013,8 +1013,8 @@ func (g *GithubService) QueryRepos(installationId int64, page, size int, query s
 	return repoPage, nil
 }
 
-func (g *GithubService) ListRepositoryBranch(ctx context.Context, owner, repoName string) ([]string, error) {
-	client := utils.NewGithubClient(g.ctx, "")
+func (g *GithubService) ListRepositoryBranch(ctx context.Context, token string, owner, repoName string) ([]string, error) {
+	client := utils.NewGithubClient(g.ctx, token)
 	branches, _, err := client.Repositories.ListBranches(ctx, owner, repoName, &github.BranchListOptions{})
 	if err != nil {
 		return nil, err

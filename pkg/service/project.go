@@ -23,7 +23,7 @@ import (
 )
 
 type IProjectService interface {
-	GetProjects(userId int, keyword string, page, size, projectType int) (*vo.ProjectPage, error)
+	GetProjects(userId int, token string, keyword string, page, size, projectType int) (*vo.ProjectPage, error)
 	HandleProjectsByUserId(user db2.User, page, size int, token, filter string) (vo.RepoListPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error)
 	GetProject(id string) (*vo.ProjectDetailVo, error)
@@ -51,7 +51,7 @@ func (p *ProjectService) Init(db *gorm.DB) {
 	p.db = db
 }
 
-func (p *ProjectService) GetProjects(userId int, keyword string, page, size, projectType int) (*vo.ProjectPage, error) {
+func (p *ProjectService) GetProjects(userId int, token string, keyword string, page, size, projectType int) (*vo.ProjectPage, error) {
 	var total int64
 	var projectPage vo.ProjectPage
 	var projects []db2.Project
@@ -97,7 +97,7 @@ func (p *ProjectService) GetProjects(userId int, keyword string, page, size, pro
 			if err != nil {
 				data.AllBranch = []string{data.Branch}
 			} else {
-				branches, err2 := githubService.ListRepositoryBranch(ctx, owner, repo)
+				branches, err2 := githubService.ListRepositoryBranch(ctx, token, owner, repo)
 				if err2 != nil {
 					data.AllBranch = []string{data.Branch}
 				}
