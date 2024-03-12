@@ -17,6 +17,8 @@ type FrontendDeploy struct {
 	Image            string         `json:"image"`
 	Version          string         `json:"version"`
 	Branch           string         `json:"branch"`
+	CommitId         string         `json:"commitId"`
+	CommitInfo       string         `json:"commitInfo"`
 	Domain           string         `json:"domain"`
 	DeployInfo       string         `json:"deployInfo"`
 	DeployTime       sql.NullTime   `json:"deployTime"`

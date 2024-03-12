@@ -26,7 +26,7 @@ type IProjectService interface {
 	GetProjects(userId int, token string, keyword string, page, size, projectType int) (*vo.ProjectPage, error)
 	HandleProjectsByUserId(user db2.User, page, size int, token, filter string) (vo.RepoListPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error)
-	GetProject(id string) (*vo.ProjectDetailVo, error)
+	GetProject(id string, token string) (*vo.ProjectDetailVo, error)
 	UpdateProject(id string, updateData vo.UpdateProjectParam) error
 	DeleteProject(id string) error
 	UpdateProjectParams(id string, updateData vo.UpdateProjectParams) error
@@ -177,7 +177,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 	return project.Id, errors.New(fmt.Sprintf("application:%s already exists", createData.Name))
 }
 
-func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
+func (p *ProjectService) GetProject(id string, token string) (*vo.ProjectDetailVo, error) {
 	var data db2.Project
 	var detail vo.ProjectDetailVo
 	result := p.db.Where("id = ? ", id).First(&data)
@@ -243,6 +243,23 @@ func (p *ProjectService) GetProject(id string) (*vo.ProjectDetailVo, error) {
 	}
 	detail.RecentBuild = recentBuild
 	detail.RecentCheck = recentCheck
+
+	if token != "" {
+		// branches
+		githubService := application.GetBean[*GithubService]("githubService")
+		ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
+		owner, repo, err := ParsingGitHubURL(data.RepositoryUrl)
+		if err != nil {
+			detail.AllBranch = []string{data.Branch}
+		} else {
+			branches, err2 := githubService.ListRepositoryBranch(ctx, token, owner, repo)
+			if err2 != nil {
+				detail.AllBranch = []string{data.Branch}
+			}
+			detail.AllBranch = branches
+		}
+	}
+
 	return &detail, nil
 }
 

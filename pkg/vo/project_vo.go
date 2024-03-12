@@ -47,6 +47,7 @@ type ProjectDetailVo struct {
 	RecentBuild     RecentBuildVo           `json:"recentBuild"`
 	RecentDeploy    interface{}             `json:"recentDeploy"`
 	EvmTemplateType uint                    `json:"evmTemplateType"`
+	AllBranch       []string                `json:"allBranch"`
 }
 
 type RecentCheckVo struct {
