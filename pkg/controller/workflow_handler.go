@@ -176,7 +176,7 @@ func (h *HandlerServer) contractFileContent(gin *gin.Context) {
 	}
 	userAny, _ := gin.Get("user")
 	user, _ := userAny.(db2.User)
-	data, err := h.projectService.GetProject(idStr)
+	data, err := h.projectService.GetProject(idStr, "")
 	if err != nil {
 		Fail(err.Error(), gin)
 		return

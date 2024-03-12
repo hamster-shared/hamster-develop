@@ -8,6 +8,7 @@ import (
 
 type IUserService interface {
 	GetUserByToken(token string) (db2.User, error)
+	GetGithubInstallId(userId uint) (int64, error)
 }
 
 type UserService struct {
@@ -40,6 +41,15 @@ func (u *UserService) GetUserById(id int64) (db2.User, error) {
 		return user, res.Error
 	}
 	return user, nil
+}
+
+func (u *UserService) GetGithubInstallId(userId uint) (int64, error) {
+	var gitAppInstall db2.GitAppInstall
+	err := u.db.Model(db2.GitAppInstall{}).Where("user_id = ?", userId).First(&gitAppInstall).Error
+	if err != nil {
+		return 0, err
+	}
+	return gitAppInstall.InstallId, nil
 }
 
 func (u *UserService) GetUserCount() (int64, error) {
@@ -81,4 +91,8 @@ func (u *UserService) GetUserWalletById(id int) (db2.UserWallet, error) {
 
 func (u *UserService) UpdateUserWallet(userWallet db2.UserWallet) error {
 	return u.db.Save(&userWallet).Error
+}
+
+func (u *UserService) SaveUserToken(id uint, token string) error {
+	return u.db.Model(db2.User{}).Where("id = ?", id).Update("token", token).Error
 }

@@ -7,13 +7,10 @@ import (
 )
 
 func NewGithubClient(ctx context.Context, token string) *github.Client {
-	if token != "" {
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: token},
-		)
-		tc := oauth2.NewClient(ctx, ts)
-		return github.NewClient(tc)
-	} else {
-		return github.NewClient(nil)
-	}
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	return github.NewClient(tc)
+
 }

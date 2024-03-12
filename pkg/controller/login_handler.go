@@ -384,6 +384,19 @@ func (h *HandlerServer) JwtAuthorize() gin.HandlerFunc {
 				gin.Abort()
 				return
 			}
+
+			if user.Token == "" {
+				githubService := application.GetBean[*service.GithubService]("githubService")
+				installId, err := userService.GetGithubInstallId(user.Id)
+				if err != nil {
+					installToken, err := githubService.GetToken(installId)
+					if err != nil {
+						user.Token = installToken.GetToken()
+						_ = userService.SaveUserToken(user.Id, user.Token)
+					}
+				}
+			}
+
 			githubToken = user.Token
 			gin.Set("user", user)
 			gin.Set("userId", user.Id)

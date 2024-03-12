@@ -169,7 +169,7 @@ func (h *HandlerServer) getDeployFrontendLog(gin *gin.Context) {
 	//userAny, _ := gin.Get("user")
 	//user, _ := userAny.(db2.User)
 
-	project, err := h.projectService.GetProject(projectIdStr)
+	project, err := h.projectService.GetProject(projectIdStr, "")
 	if err != nil {
 		log.Println("get project failed", err.Error())
 		Fail(err.Error(), gin)

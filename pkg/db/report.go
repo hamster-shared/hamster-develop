@@ -21,4 +21,7 @@ type Report struct {
 	Issues           int       `json:"issues"`
 	MetaScanOverview string    `json:"metaScanOverview"`
 	CreateTime       time.Time `gorm:"column:create_time;default:current_timestamp" json:"createTime"`
+	Branch           string    `json:"branch"`
+	CommitId         string    `json:"commitId"`
+	CommitInfo       string    `json:"commitInfo"`
 }

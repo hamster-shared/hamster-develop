@@ -28,6 +28,8 @@ type WorkflowVo struct {
 	Duration    int64     `json:"duration"`
 	Engine      string    `json:"engine"` // workflow,arrange_execute
 	Version     string    `json:"version"`
+	Branch      string    `json:"branch"`
+	CommitId    string    `json:"commitId"`
 }
 
 type WorkflowDetailVo struct {

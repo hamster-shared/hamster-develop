@@ -145,7 +145,9 @@ func (w *WorkflowService) syncFrontendBuild(detail *model.JobDetail, workflowDet
 				WorkflowDetailId: workflowDetail.Id,
 				Name:             projectName,
 				Version:          fmt.Sprintf("%d", workflowDetail.ExecNumber),
-				Branch:           workflowDetail.CodeInfo,
+				Branch:           workflowDetail.Branch,
+				CommitId:         workflowDetail.CommitId,
+				CommitInfo:       workflowDetail.CommitInfo,
 				BuildTime:        workflowDetail.CreateTime,
 				CreateTime:       time.Now(),
 			}
@@ -206,6 +208,9 @@ func (w *WorkflowService) syncFrontendDeploy(detail *model.JobDetail, workflowDe
 				packageDeploy.DeployTime = sql.NullTime{Time: time.Now(), Valid: true}
 				packageDeploy.Name = data.Name
 				packageDeploy.Branch = data.Branch
+				packageDeploy.CommitId = data.CommitId
+				packageDeploy.CommitInfo = data.CommitInfo
+
 				packageDeploy.CreateTime = time.Now()
 				packageDeploy.Image = image
 				err = w.db.Save(&packageDeploy).Error
@@ -322,6 +327,9 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 						Issues:           int(datum.Total),
 						ToolType:         consts.CheckToolTypeMap[datum.Tool],
 						MetaScanOverview: datum.ResultOverview,
+						Branch:           workflowDetail.Branch,
+						CommitId:         workflowDetail.CommitId,
+						CommitInfo:       workflowDetail.CommitInfo,
 					}
 					w.db.Create(&report)
 				}
@@ -369,6 +377,9 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 						CreateTime: time.Now(),
 						Issues:     contractCheckResult.Total,
 						ToolType:   consts.CheckToolTypeMap[contractCheckResult.Tool],
+						Branch:     workflowDetail.Branch,
+						CommitId:   workflowDetail.CommitId,
+						CommitInfo: workflowDetail.CommitInfo,
 					}
 					reportList = append(reportList, report)
 				}
@@ -387,6 +398,9 @@ func (w *WorkflowService) SyncReport(message model.StatusChangeMessage, workflow
 					ReportFile:       string(report.Content),
 					CreateTime:       time.Now(),
 					ToolType:         5,
+					Branch:           workflowDetail.Branch,
+					CommitId:         workflowDetail.CommitId,
+					CommitInfo:       workflowDetail.CommitInfo,
 				}
 				reportList = append(reportList, report)
 			}
@@ -434,8 +448,10 @@ func (w *WorkflowService) syncContractStarknet(projectId uuid.UUID, workflowId u
 		CreateTime:       time.Now(),
 		Type:             uint(consts.StarkWare),
 		Status:           consts.STATUS_SUCCESS,
-		Branch:           workflowDetail.CodeBranch,
 		CodeInfo:         workflowDetail.CodeInfo,
+		Branch:           workflowDetail.Branch,
+		CommitId:         workflowDetail.CommitId,
+		CommitInfo:       workflowDetail.CommitInfo,
 	}
 
 	return w.saveContractToDatabase(&contract)

@@ -209,7 +209,7 @@ func (c *ContractService) SaveDeploy(deployParam parameter.ContractDeployParam) 
 	}
 
 	projectService := application.GetBean[*ProjectService]("projectService")
-	project, err := projectService.GetProject(projectId.String())
+	project, err := projectService.GetProject(projectId.String(), "")
 	_ = copier.Copy(&entity, &deployParam)
 	entity.DeployTime = time.Now()
 	entity.ProjectId = projectId

@@ -13,6 +13,8 @@ type FrontendPackage struct {
 	Name             string    `json:"name"`
 	Version          string    `json:"version"`
 	Branch           string    `json:"branch"`
+	CommitId         string    `json:"commitId"`
+	CommitInfo       string    `json:"commitInfo"`
 	Domain           string    `json:"domain"`
 	BuildTime        time.Time `json:"buildTime"`
 	PackageIdentity  string    `json:"packageIdentity"`
