@@ -501,12 +501,17 @@ func (p *ProjectService) UpdateProjectBranch(id string, userId int64, branch str
 
 func (p *ProjectService) getProjectBranches(repositoryUrl string, token string) ([]string, error) {
 
+	fmt.Println("getProjectBranches")
 	key := fmt.Sprintf("PROJECT_BRANCH:%s", repositoryUrl)
 
 	ctx := context.Background()
 	exists, err := p.rdb.Exists(ctx, key).Result()
 
-	if exists == 0 || err != nil {
+	fmt.Println("exists:", exists)
+	fmt.Println("exists err : ", err)
+
+	if exists == 0 {
+		fmt.Println("api query github repo branch")
 		// branches
 		githubService := application.GetBean[*GithubService]("githubService")
 		ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
@@ -529,6 +534,7 @@ func (p *ProjectService) getProjectBranches(repositoryUrl string, token string) 
 		}
 
 	} else {
+		fmt.Println("redis query github repo branch")
 		branches, err := p.rdb.LRange(ctx, key, 0, -1).Result()
 		if err != nil {
 			return nil, err
