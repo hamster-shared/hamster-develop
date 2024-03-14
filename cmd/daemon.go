@@ -70,8 +70,12 @@ to quickly create a Cobra application.`,
 			redisPort = "6379"
 		}
 
+		redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
+
+		fmt.Println("redis addr : ", redisAddr)
+
 		rdb := redis.NewClient(&redis.Options{
-			Addr:     fmt.Sprintf("%s:%s", redisHost, redisPort),
+			Addr:     redisAddr,
 			Password: "", // no password set
 			DB:       0,  // use default DB
 		})
