@@ -70,6 +70,7 @@ to quickly create a Cobra application.`,
 			redisPort = "6379"
 		}
 
+		fmt.Println(redisHost)
 		redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
 
 		fmt.Println("redis addr : ", redisAddr)
