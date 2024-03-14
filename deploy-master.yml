@@ -144,6 +144,8 @@ spec:
                   key: APPS_RW_CLIENT_SECRETS
             - name: GITHUB_APP_RW_PEM
               value: "/home/ubuntu/rwGithubApp/hamster-rw-private-key.pem"
+            - name: REDIS_HOST
+              value: redis
           ports:
             - containerPort: 8080
           volumeMounts:

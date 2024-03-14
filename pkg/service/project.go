@@ -516,7 +516,8 @@ func (p *ProjectService) getProjectBranches(repositoryUrl string, token string) 
 		} else {
 			branches, err2 := githubService.ListRepositoryBranch(ctx, token, owner, repo)
 			if err2 != nil {
-				return nil, err
+				fmt.Println(err2)
+				return nil, err2
 			}
 
 			for _, branch := range branches {
