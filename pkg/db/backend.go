@@ -21,6 +21,8 @@ type BackendPackage struct {
 	Status           consts.DeployStatus     `json:"status"` // see #consts.
 	Branch           string                  `json:"branch"`
 	CodeInfo         string                  `json:"codeInfo"`
+	CommitId         string                  `json:"commitId"`
+	CommitInfo       string                  `json:"commitInfo"`
 }
 
 type BackendDeploy struct {
@@ -39,4 +41,7 @@ type BackendDeploy struct {
 	Status           consts.DeployStatus     `json:"status"` // 1: deploying, 2: success , 3: fail
 	AbiInfo          string                  `json:"abiInfo"`
 	Name             string                  `json:"name"`
+	Branch           string                  `json:"branch"`
+	CommitId         string                  `json:"commitId"`
+	CommitInfo       string                  `json:"commitInfo"`
 }

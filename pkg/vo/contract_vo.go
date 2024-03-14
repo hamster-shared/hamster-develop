@@ -42,11 +42,13 @@ type ContractVo struct {
 }
 
 type ContractVersionAndCodeInfoVo struct {
-	Version  string `json:"version"`
-	Type     int    `json:"type"`
-	Branch   string `json:"branch"`
-	CodeInfo string `json:"codeInfo"`
-	Url      string `json:"url"`
+	Version    string `json:"version"`
+	Type       int    `json:"type"`
+	Branch     string `json:"branch"`
+	CommitId   string `json:"commitId"`
+	CommitInfo string `json:"commitInfo"`
+	CodeInfo   string `json:"codeInfo"`
+	Url        string `json:"url"`
 }
 
 type ContractDeployVo struct {
@@ -66,6 +68,9 @@ type ContractDeployVo struct {
 	AbiInfo       string    `json:"abiInfo"`
 	Url           string    `json:"url"`
 	CodeInfo      string    `json:"codeInfo"`
+	Branch        string    `json:"branch"`
+	CommitId      string    `json:"commitId"`
+	CommitInfo    string    `json:"commitInfo"`
 }
 
 type ContractArtifactsVo struct {
@@ -84,6 +89,8 @@ type ContractArtifactsVo struct {
 	Type                 uint           `json:"type"`   // see #consts.ProjectFrameType
 	Status               uint           `json:"status"` // 1: deploying, 2: success , 3: fail
 	Branch               string         `json:"branch"`
+	CommitId             string         `json:"commitId"`
+	CommitInfo           string         `json:"commitInfo"`
 	CodeInfo             string         `json:"codeInfo"`
 	LastContractDeployId uint           `json:"lastContractDeployId"`
 }

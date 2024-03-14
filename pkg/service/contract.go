@@ -275,7 +275,7 @@ func (c *ContractService) QueryContracts(projectId string, query, version, netwo
 		return c.QueryContractsForICP(projectId, query, version, network, page, size)
 	}
 
-	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,byte_code,create_time from t_contract where project_id = ? ")
+	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,byte_code,create_time,branch,commit_id,commit_info from t_contract where project_id = ? ")
 	if query != "" && version != "" && network != "" {
 		sql = sql + "and name like CONCAT('%',?,'%') and version = ? and network like CONCAT('%',?,'%') group by id order by create_time desc"
 		c.db.Raw(sql, projectId, query, version, network).Scan(&contracts)
@@ -532,18 +532,18 @@ func (c *ContractService) GetCodeInfoByVersion(projectId, version string) (vo.Co
 	}
 
 	if project.FrameType == consts.InternetComputer {
-		res := c.db.Model(db2.BackendPackage{}).Select("version", "branch", "code_info").Where("project_id = ? and version = ?", projectId, version).Order("create_time desc").Limit(1).First(&contractVersionAndCodeInfoVo)
+		res := c.db.Model(db2.BackendPackage{}).Select("version", "branch", "commit_id", "commit_info").Where("project_id = ? and version = ?", projectId, version).Order("create_time desc").Limit(1).First(&contractVersionAndCodeInfoVo)
 		if res.Error != nil {
 			return contractVersionAndCodeInfoVo, res.Error
 		}
 	} else {
-		res := c.db.Model(db2.Contract{}).Select("version", "branch", "code_info").Where("project_id = ? and version = ?", projectId, version).Order("create_time desc").Limit(1).First(&contractVersionAndCodeInfoVo)
+		res := c.db.Model(db2.Contract{}).Select("version", "branch", "commit_id", "commit_info").Where("project_id = ? and version = ?", projectId, version).Order("create_time desc").Limit(1).First(&contractVersionAndCodeInfoVo)
 		if res.Error != nil {
 			return contractVersionAndCodeInfoVo, res.Error
 		}
 	}
 	contractVersionAndCodeInfoVo.Type = int(project.Type)
-	contractVersionAndCodeInfoVo.Url = project.RepositoryUrl + "/" + contractVersionAndCodeInfoVo.Branch
+	contractVersionAndCodeInfoVo.Url = project.RepositoryUrl
 	return contractVersionAndCodeInfoVo, nil
 }
 
@@ -645,8 +645,10 @@ func (c *ContractService) GetContractDeployInfo(id int) (vo.ContractDeployVo, er
 	}
 	copier.Copy(&result, &contractDeploy)
 	result.ContractName = contract.Name
-	result.Url = project.RepositoryUrl + "/" + contract.Branch
-	result.CodeInfo = contract.CodeInfo
+	result.Url = project.RepositoryUrl
+	result.Branch = contract.Branch
+	result.CommitId = contract.CommitId
+	result.CommitInfo = contract.CommitInfo
 	return result, err
 }
 

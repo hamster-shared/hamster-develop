@@ -481,6 +481,8 @@ func (w *WorkflowService) syncContractAptos(projectId uuid.UUID, workflowId uint
 				Status:           consts.STATUS_SUCCESS,
 				Branch:           workflowDetail.CodeBranch,
 				CodeInfo:         workflowDetail.CodeInfo,
+				CommitId:         workflowDetail.CommitId,
+				CommitInfo:       workflowDetail.CommitInfo,
 			}
 			err = w.saveContractToDatabase(&contract)
 			if err != nil {
@@ -550,6 +552,8 @@ func (w *WorkflowService) syncContractSui(projectId uuid.UUID, workflowId uint, 
 		Status:           consts.STATUS_SUCCESS,
 		Branch:           workflowDetail.CodeBranch,
 		CodeInfo:         workflowDetail.CodeInfo,
+		CommitId:         workflowDetail.CommitId,
+		CommitInfo:       workflowDetail.CommitInfo,
 	}
 
 	// logger.Tracef("aptos contract: %+v", contract)
@@ -628,6 +632,9 @@ func (w *WorkflowService) syncContractSolana(projectId uuid.UUID, workflowId uin
 		CreateTime:            time.Now(),
 		Type:                  uint(consts.Solana),
 		Status:                consts.STATUS_SUCCESS,
+		Branch:                workflowDetail.Branch,
+		CommitId:              workflowDetail.CommitId,
+		CommitInfo:            workflowDetail.CommitInfo,
 	}
 
 	return w.saveContractToDatabase(&contract)
@@ -658,6 +665,8 @@ func (w *WorkflowService) syncContractEvm(projectId uuid.UUID, workflowId uint, 
 		Status:           consts.STATUS_SUCCESS,
 		Branch:           workflowDetail.CodeBranch,
 		CodeInfo:         workflowDetail.CodeInfo,
+		CommitId:         workflowDetail.CommitId,
+		CommitInfo:       workflowDetail.CommitInfo,
 	}
 	return w.saveContractToDatabase(&contract)
 }
@@ -735,6 +744,8 @@ func (w *WorkflowService) syncInternetComputerBuild(projectId uuid.UUID, workflo
 				Status:           consts.DEPLOY_STATUS_SUCCESS,
 				Branch:           workflowDetail.CodeBranch,
 				CodeInfo:         workflowDetail.CodeInfo,
+				CommitId:         workflowDetail.CommitId,
+				CommitInfo:       workflowDetail.CommitInfo,
 			}
 			err := w.db.Save(&backendPackage).Error
 			if err != nil {

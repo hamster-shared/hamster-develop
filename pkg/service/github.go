@@ -1014,7 +1014,7 @@ func (g *GithubService) QueryRepos(installationId int64, page, size int, query s
 }
 
 func (g *GithubService) ListRepositoryBranch(ctx context.Context, token string, owner, repoName string) ([]string, error) {
-	client := utils.NewGithubClient(g.ctx, token)
+	client := utils.NewGithubClientWithEmpty()
 	branches, _, err := client.Repositories.ListBranches(ctx, owner, repoName, &github.BranchListOptions{})
 	if err != nil {
 		return nil, err

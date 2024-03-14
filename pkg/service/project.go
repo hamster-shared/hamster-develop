@@ -14,6 +14,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/vo"
 	uuid "github.com/iris-contrib/go.uuid"
 	"github.com/jinzhu/copier"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"log"
 	"os/exec"
@@ -40,15 +41,17 @@ type IProjectService interface {
 }
 
 type ProjectService struct {
-	db *gorm.DB
+	db  *gorm.DB
+	rdb *redis.Client
 }
 
 func NewProjectService() *ProjectService {
 	return &ProjectService{}
 }
 
-func (p *ProjectService) Init(db *gorm.DB) {
+func (p *ProjectService) Init(db *gorm.DB, rdb *redis.Client) {
 	p.db = db
+	p.rdb = rdb
 }
 
 func (p *ProjectService) GetProjects(userId int, token string, keyword string, page, size, projectType int) (*vo.ProjectPage, error) {
@@ -91,16 +94,10 @@ func (p *ProjectService) GetProjects(userId int, token string, keyword string, p
 			}
 
 			// branches
-			githubService := application.GetBean[*GithubService]("githubService")
-			ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
-			owner, repo, err := ParsingGitHubURL(data.RepositoryUrl)
+			branches, err := p.getProjectBranches(data.RepositoryUrl, token)
 			if err != nil {
 				data.AllBranch = []string{data.Branch}
 			} else {
-				branches, err2 := githubService.ListRepositoryBranch(ctx, token, owner, repo)
-				if err2 != nil {
-					data.AllBranch = []string{data.Branch}
-				}
 				data.AllBranch = branches
 			}
 
@@ -246,16 +243,10 @@ func (p *ProjectService) GetProject(id string, token string) (*vo.ProjectDetailV
 
 	if token != "" {
 		// branches
-		githubService := application.GetBean[*GithubService]("githubService")
-		ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
-		owner, repo, err := ParsingGitHubURL(data.RepositoryUrl)
+		branches, err := p.getProjectBranches(data.RepositoryUrl, token)
 		if err != nil {
 			detail.AllBranch = []string{data.Branch}
 		} else {
-			branches, err2 := githubService.ListRepositoryBranch(ctx, token, owner, repo)
-			if err2 != nil {
-				detail.AllBranch = []string{data.Branch}
-			}
 			detail.AllBranch = branches
 		}
 	}
@@ -506,4 +497,42 @@ func (p *ProjectService) UpdateProjectBranch(id string, userId int64, branch str
 	}
 
 	return p.db.Model(&db2.Project{}).Where("id", id).Update("branch", branch).Error
+}
+
+func (p *ProjectService) getProjectBranches(repositoryUrl string, token string) ([]string, error) {
+
+	key := fmt.Sprintf("PROJECT_BRANCH:%s", repositoryUrl)
+
+	ctx := context.Background()
+	exists, err := p.rdb.Exists(ctx, key).Result()
+
+	if exists == 0 || err != nil {
+		// branches
+		githubService := application.GetBean[*GithubService]("githubService")
+		ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
+		owner, repo, err := ParsingGitHubURL(repositoryUrl)
+		if err != nil {
+			return nil, err
+		} else {
+			branches, err2 := githubService.ListRepositoryBranch(ctx, token, owner, repo)
+			if err2 != nil {
+				return nil, err
+			}
+
+			for _, branch := range branches {
+				_, err = p.rdb.RPush(ctx, key, branch).Result()
+				_, err = p.rdb.Expire(ctx, key, time.Hour*12).Result()
+			}
+
+			return branches, err
+		}
+
+	} else {
+		branches, err := p.rdb.LRange(ctx, key, 0, -1).Result()
+		if err != nil {
+			return nil, err
+		} else {
+			return branches, nil
+		}
+	}
 }

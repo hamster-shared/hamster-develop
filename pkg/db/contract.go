@@ -43,4 +43,7 @@ type ContractDeploy struct {
 	DeployTxHash  string    `json:"deployTxHash"`
 	Status        uint      `json:"status"` // 1: deploying, 2: success , 3: fail
 	AbiInfo       string    `json:"abiInfo"`
+	Branch        string    `json:"branch"`
+	CommitId      string    `json:"commitId"`
+	CommitInfo    string    `json:"commitInfo"`
 }
