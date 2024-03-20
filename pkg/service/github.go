@@ -1014,7 +1014,11 @@ func (g *GithubService) QueryRepos(installationId int64, page, size int, query s
 }
 
 func (g *GithubService) ListRepositoryBranch(ctx context.Context, token string, owner, repoName string) ([]string, error) {
-	client := utils.NewGithubClient(ctx, token)
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(tc)
 	branches, _, err := client.Repositories.ListBranches(ctx, owner, repoName, &github.BranchListOptions{})
 	if err != nil {
 		return nil, err
@@ -1046,7 +1050,7 @@ func (g *GithubService) CreateRepoBranchWebhook(ctx context.Context, token strin
 	}
 
 	for _, hook := range hooks {
-		if hook.GetName() == webhookName {
+		if hook.Config["url"] == webhookUrl {
 			if utils.ContainsString(hook.Events, "create") && utils.ContainsString(hook.Events, "delete") {
 				return
 			} else {
@@ -1075,6 +1079,6 @@ func (g *GithubService) CreateRepoBranchWebhook(ctx context.Context, token strin
 	// 添加 webhook
 	_, _, err = client.Repositories.CreateHook(ctx, owner, repo, hook)
 	if err != nil {
-		log.Fatal("Error creating webhook:", err)
+		logger.Error("Error creating webhook:", err.Error())
 	}
 }

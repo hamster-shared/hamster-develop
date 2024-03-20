@@ -24,10 +24,10 @@ import (
 )
 
 type IProjectService interface {
-	GetProjects(userId int, token string, keyword string, page, size, projectType int) (*vo.ProjectPage, error)
+	GetProjects(userId int, keyword string, page, size, projectType int) (*vo.ProjectPage, error)
 	HandleProjectsByUserId(user db2.User, page, size int, token, filter string) (vo.RepoListPage, error)
 	CreateProject(createData vo.CreateProjectParam) (uuid.UUID, error)
-	GetProject(id string, token string) (*vo.ProjectDetailVo, error)
+	GetProject(id string, userId int) (*vo.ProjectDetailVo, error)
 	UpdateProject(id string, updateData vo.UpdateProjectParam) error
 	DeleteProject(id string) error
 	UpdateProjectParams(id string, updateData vo.UpdateProjectParams) error
@@ -54,7 +54,7 @@ func (p *ProjectService) Init(db *gorm.DB, rdb *redis.Client) {
 	p.rdb = rdb
 }
 
-func (p *ProjectService) GetProjects(userId int, token string, keyword string, page, size, projectType int) (*vo.ProjectPage, error) {
+func (p *ProjectService) GetProjects(userId int, keyword string, page, size, projectType int) (*vo.ProjectPage, error) {
 	var total int64
 	var projectPage vo.ProjectPage
 	var projects []db2.Project
@@ -94,7 +94,7 @@ func (p *ProjectService) GetProjects(userId int, token string, keyword string, p
 			}
 
 			// branches
-			branches, err := p.getProjectBranches(data.RepositoryUrl, token)
+			branches, err := p.getProjectBranches(data.RepositoryUrl, userId)
 			if err != nil {
 				data.AllBranch = []string{data.Branch}
 			} else {
@@ -174,7 +174,7 @@ func (p *ProjectService) CreateProject(createData vo.CreateProjectParam) (uuid.U
 	return project.Id, errors.New(fmt.Sprintf("application:%s already exists", createData.Name))
 }
 
-func (p *ProjectService) GetProject(id string, token string) (*vo.ProjectDetailVo, error) {
+func (p *ProjectService) GetProject(id string, userId int) (*vo.ProjectDetailVo, error) {
 	var data db2.Project
 	var detail vo.ProjectDetailVo
 	result := p.db.Where("id = ? ", id).First(&data)
@@ -241,9 +241,9 @@ func (p *ProjectService) GetProject(id string, token string) (*vo.ProjectDetailV
 	detail.RecentBuild = recentBuild
 	detail.RecentCheck = recentCheck
 
-	if token != "" {
+	if userId != 0 {
 		// branches
-		branches, err := p.getProjectBranches(data.RepositoryUrl, token)
+		branches, err := p.getProjectBranches(data.RepositoryUrl, userId)
 		if err != nil {
 			detail.AllBranch = []string{data.Branch}
 		} else {
@@ -499,9 +499,10 @@ func (p *ProjectService) UpdateProjectBranch(id string, userId int64, branch str
 	return p.db.Model(&db2.Project{}).Where("id", id).Update("branch", branch).Error
 }
 
-func (p *ProjectService) getProjectBranches(repositoryUrl string, token string) ([]string, error) {
+func (p *ProjectService) getProjectBranches(repositoryUrl string, userId int) ([]string, error) {
 
 	fmt.Println("getProjectBranches")
+	fmt.Println("userId: ", userId)
 	key := fmt.Sprintf("PROJECT_BRANCH:%s", repositoryUrl)
 
 	ctx := context.Background()
@@ -516,6 +517,16 @@ func (p *ProjectService) getProjectBranches(repositoryUrl string, token string) 
 		githubService := application.GetBean[*GithubService]("githubService")
 		ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
 		owner, repo, err := ParsingGitHubURL(repositoryUrl)
+
+		var gitAppInstall db2.GitAppInstall
+		err = p.db.Model(&db2.GitAppInstall{}).Where("user_id", userId).Where("name", owner).First(&gitAppInstall).Error
+
+		tokenData, err := githubService.GetToken(gitAppInstall.InstallId)
+		if err != nil {
+			return nil, err
+		}
+		token := tokenData.GetToken()
+
 		if err != nil {
 			return nil, err
 		} else {
@@ -524,6 +535,8 @@ func (p *ProjectService) getProjectBranches(repositoryUrl string, token string) 
 				fmt.Println(err2)
 				return nil, err2
 			}
+
+			fmt.Println("query branch result: ", branches)
 
 			for _, branch := range branches {
 				_, err = p.rdb.RPush(ctx, key, branch).Result()

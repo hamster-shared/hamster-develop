@@ -209,7 +209,7 @@ func (c *ContractService) SaveDeploy(deployParam parameter.ContractDeployParam) 
 	}
 
 	projectService := application.GetBean[*ProjectService]("projectService")
-	project, err := projectService.GetProject(projectId.String(), "")
+	project, err := projectService.GetProject(projectId.String(), 0)
 	_ = copier.Copy(&entity, &deployParam)
 	entity.DeployTime = time.Now()
 	entity.ProjectId = projectId
@@ -331,7 +331,7 @@ func (c *ContractService) QueryContracts(projectId string, query, version, netwo
 func (c *ContractService) QueryContractsForICP(projectId string, query, version, network string, page int, size int) (vo.Page[vo.ContractArtifactsVo], error) {
 	var backendPackages []db2.BackendPackage
 	var afterData []db2.BackendPackage
-	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,create_time from t_backend_package where project_id = ? ")
+	sql := fmt.Sprintf("select id, project_id,workflow_id,workflow_detail_id,name,version,group_concat( DISTINCT `network` SEPARATOR ',' ) as network,build_time,abi_info,create_time,branch,commit_id,commit_info from t_backend_package where project_id = ? ")
 	if query != "" && version != "" && network != "" {
 		sql = sql + "and name like CONCAT('%',?,'%') and version = ? and network like CONCAT('%',?,'%') group by id order by create_time desc"
 		c.db.Raw(sql, projectId, query, version, network).Scan(&backendPackages)

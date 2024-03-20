@@ -151,7 +151,7 @@ spec:
             - name: GITHUB_BRANCH_WEBHOOK_NAME
               value: hamster_test_webhook
             - name: GITHUB_BRANCH_WEBHOOK_URL
-              value: https://develop.hamster.newtouch.com/api/v2/github/branch-webhook
+              value: https://develop.hamster.newtouch.com/api/v2/github/webhook
           ports:
             - containerPort: 8080
           volumeMounts:
