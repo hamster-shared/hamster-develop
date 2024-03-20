@@ -26,3 +26,13 @@ func RemoveDuplicatesAndJoin(input string, split string) string {
 	// 将切片重新合并为字符串，以逗号分隔
 	return strings.Join(result, split)
 }
+
+// 判断字符串数组是否包含特定字符串
+func ContainsString(arr []string, target string) bool {
+	for _, str := range arr {
+		if str == target {
+			return true
+		}
+	}
+	return false
+}

@@ -527,7 +527,6 @@ func (p *ProjectService) getProjectBranches(repositoryUrl string, token string) 
 
 			for _, branch := range branches {
 				_, err = p.rdb.RPush(ctx, key, branch).Result()
-				_, err = p.rdb.Expire(ctx, key, time.Hour*12).Result()
 			}
 
 			return branches, err

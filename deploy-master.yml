@@ -146,6 +146,12 @@ spec:
               value: "/home/ubuntu/rwGithubApp/hamster-rw-private-key.pem"
             - name: REDIS_HOST
               value: redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: GITHUB_BRANCH_WEBHOOK_NAME
+              value: hamster_test_webhook
+            - name: GITHUB_BRANCH_WEBHOOK_URL
+              value: https://develop.hamster.newtouch.com/api/v2/github/branch-webhook
           ports:
             - containerPort: 8080
           volumeMounts:

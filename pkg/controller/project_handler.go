@@ -127,6 +127,9 @@ func (h *HandlerServer) importProject(g *gin.Context) {
 		return
 	}
 
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	githubService.CreateRepoBranchWebhook(ctx, token, owner, name)
+
 	data := vo.CreateProjectParam{
 		Name:        importData.Name,
 		Type:        importData.Type,
@@ -1683,31 +1686,6 @@ func (h *HandlerServer) getChainNetworkByName(gin *gin.Context) {
 		return
 	}
 	Success(list, gin)
-}
-
-func (h *HandlerServer) getProjectRepositoryBranch(gin *gin.Context) {
-	id := gin.Param("id")
-	project, err := h.projectService.GetProjectById(id)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
-
-	githubService := application.GetBean[*service.GithubService]("githubService")
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
-	owner, repo, err := service.ParsingGitHubURL(project.RepositoryUrl)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
-	tokenAny, _ := gin.Get("token")
-	token, _ := tokenAny.(string)
-	branches, err := githubService.ListRepositoryBranch(ctx, token, owner, repo)
-	if err != nil {
-		Fail(err.Error(), gin)
-		return
-	}
-	Success(branches, gin)
 }
 
 func (h *HandlerServer) setProjectRepositoryBranch(gin *gin.Context) {

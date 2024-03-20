@@ -62,7 +62,6 @@ func (h *HttpServer) StartHttpServer() {
 	api.POST("/projects/code", h.handlerServer.createProjectByCodeV2)
 	api.GET("/projects/:id", h.handlerServer.projectDetail)
 	api.PUT("/projects/:id", h.handlerServer.updateProject)
-	api.GET("/projects/:id/branch", h.handlerServer.getProjectRepositoryBranch) // 查询项目分支信息
 	api.PUT("/projects/:id/branch", h.handlerServer.setProjectRepositoryBranch) // 查询项目分支信息
 	api.DELETE("projects/:id", h.handlerServer.deleteProject)
 	api.POST("/projects/check-name", h.handlerServer.checkName)

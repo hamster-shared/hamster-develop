@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/go-github/v48/github"
 	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/application"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
@@ -11,6 +14,7 @@ import (
 	"github.com/hamster-shared/hamster-develop/pkg/parameter"
 	"github.com/hamster-shared/hamster-develop/pkg/service"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"log"
 	"net/http"
@@ -132,13 +136,25 @@ func (h *HandlerServer) githubWebHook(gin *gin.Context) {
 func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 	event := gin.GetHeader("X-GitHub-Event")
 	githubService := application.GetBean[*service.GithubService]("githubService")
-	var githubInstall parameter.GithubWebHookInstall
-	err := gin.BindJSON(&githubInstall)
+	rdb := application.GetBean[*redis.Client]("rdb")
+
+	bytes, err := gin.GetRawData()
+
+	logger.Info("event name: ", event)
+	logger.Info("github webhook: ", string(bytes))
+
+	//err := gin.BindJSON(&githubInstall)
 	if err != nil {
 		Fail(err.Error(), gin)
 		return
 	}
 	if event == "installation" {
+		var githubInstall parameter.GithubWebHookInstall
+		err = json.Unmarshal(bytes, &githubInstall)
+		if err != nil {
+			Fail(err.Error(), gin)
+			return
+		}
 		if githubInstall.Action == "created" {
 			githubService.HandleAppsInstall(githubInstall, consts.SAVE_INSTALL, "GITHUB_APP_ID", "GITHUB_APP_PEM")
 			err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), githubInstall.Installation.GetAppID(), consts.INSTALLATION_CREATED)
@@ -160,6 +176,12 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 		}
 	}
 	if event == "installation_repositories" {
+		var githubInstall parameter.GithubWebHookInstall
+		err = json.Unmarshal(bytes, &githubInstall)
+		if err != nil {
+			Fail(err.Error(), gin)
+			return
+		}
 		githubService.UpdateRepositorySelection(githubInstall.Installation.GetID(), githubInstall.Installation.GetRepositorySelection())
 		if githubInstall.Action == "added" {
 			//err = githubService.HandlerInstallData(githubInstall.Installation.GetID(), consts.REPO_ADDED)
@@ -179,6 +201,33 @@ func (h *HandlerServer) githubWebHookV2(gin *gin.Context) {
 			}
 		}
 	}
+	if event == "create" {
+		var createEvent github.CreateEvent
+		err = json.Unmarshal(bytes, &createEvent)
+		if err != nil {
+			Fail(err.Error(), gin)
+			return
+		}
+		if createEvent.GetRefType() == "branch" {
+			key := fmt.Sprintf("PROJECT_BRANCH:https://github.com/%s.git", createEvent.GetRepo().GetFullName())
+			ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+			_, err = rdb.RPush(ctx, key, createEvent.GetRef()).Result()
+		}
+	}
+	if event == "delete" {
+		var deleteEvent github.DeleteEvent
+		err = json.Unmarshal(bytes, &deleteEvent)
+		if err != nil {
+			Fail(err.Error(), gin)
+			return
+		}
+		if deleteEvent.GetRefType() == "branch" {
+			key := fmt.Sprintf("PROJECT_BRANCH:https://github.com/%s.git", deleteEvent.GetRepo().GetFullName())
+			ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+			_, err = rdb.LRem(ctx, key, 0, deleteEvent.GetRef()).Result()
+		}
+	}
+
 }
 
 func (h *HandlerServer) githubWebHookRw(gin *gin.Context) {

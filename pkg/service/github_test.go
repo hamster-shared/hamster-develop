@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v48/github"
+	"github.com/hamster-shared/aline-engine/logger"
 	"github.com/hamster-shared/hamster-develop/pkg/consts"
 	"github.com/hamster-shared/hamster-develop/pkg/utils"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2"
 	"io"
@@ -196,4 +198,46 @@ func TestGetRepo(t *testing.T) {
 		sha := *commit.SHA
 		fmt.Println(fmt.Sprintf("SHA信息 %s, 提交时间是 %s, Message是 %s \n", sha, time, message))
 	}
+}
+
+func TestCreateWebhook(t *testing.T) {
+	logger.Init().ToStdoutAndFile().SetLevel(logrus.DebugLevel)
+
+	token := "ghs_grsdp6pxRyGBU9Kk0DjP6xKulQFV0X19O19r"
+	// 创建一个 GitHub 客户端
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(tc)
+
+	// 设置要添加 webhook 的仓库信息
+	owner := "mohaijiang"
+	repo := "my-vue-branch-test"
+
+	// 创建 webhook 配置
+	hook := &github.Hook{
+		Name:   github.String("hamster"),
+		Events: []string{"create", "delete"},
+		Config: map[string]interface{}{
+			"url":          "https://develop.hamster.newtouch.com/api/v2/github/branch-webhook",
+			"content_type": "json",
+		},
+		Active: github.Bool(true),
+	}
+
+	// 添加 webhook
+	_, _, err := client.Repositories.CreateHook(ctx, owner, repo, hook)
+	if err != nil {
+		log.Fatal("Error creating webhook:", err)
+	}
+
+	hooks, _, err := client.Repositories.ListHooks(ctx, owner, repo, &github.ListOptions{})
+	if err != nil {
+		return
+	}
+	fmt.Println(hooks)
+
+	log.Println("Webhook created successfully")
 }

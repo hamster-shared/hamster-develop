@@ -878,7 +878,7 @@ func (g *GithubService) HandleAppsInstallRw(appInstallData parameter.GithubWebHo
 					return nil
 				})
 				if err != nil {
-					logger.Errorf("save install user failed,user is: ", user.GetLogin())
+					//logger.Errorf("save install user failed,user is: ", user.GetLogin())
 					continue
 				}
 			}
@@ -1014,13 +1014,67 @@ func (g *GithubService) QueryRepos(installationId int64, page, size int, query s
 }
 
 func (g *GithubService) ListRepositoryBranch(ctx context.Context, token string, owner, repoName string) ([]string, error) {
-	client := utils.NewGithubClientWithEmpty()
+	client := utils.NewGithubClient(ctx, token)
 	branches, _, err := client.Repositories.ListBranches(ctx, owner, repoName, &github.BranchListOptions{})
 	if err != nil {
 		return nil, err
 	}
-
 	return lo.Map(branches, func(item *github.Branch, index int) string {
 		return item.GetName()
 	}), err
+}
+
+func (g *GithubService) CreateRepoBranchWebhook(ctx context.Context, token string, owner, repo string) {
+
+	webhookName := os.Getenv("GITHUB_BRANCH_WEBHOOK_NAME")
+	if webhookName == "" {
+		webhookName = "hamster_webhook"
+	}
+
+	webhookUrl := os.Getenv("GITHUB_BRANCH_WEBHOOK_URL")
+
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(tc)
+
+	hooks, _, err := client.Repositories.ListHooks(ctx, owner, repo, &github.ListOptions{})
+	if err != nil {
+		logger.Error("webhook query fail: ", err.Error())
+		return
+	}
+
+	for _, hook := range hooks {
+		if hook.GetName() == webhookName {
+			if utils.ContainsString(hook.Events, "create") && utils.ContainsString(hook.Events, "delete") {
+				return
+			} else {
+				hook.Events = append(hook.Events, "create")
+				hook.Events = append(hook.Events, "delete")
+				_, _, err := client.Repositories.EditHook(ctx, owner, repo, hook.GetID(), hook)
+				if err != nil {
+					logger.Error("edit hook fail: ", err.Error())
+					return
+				}
+			}
+		}
+	}
+
+	// 创建 webhook 配置
+	hook := &github.Hook{
+		Name:   github.String(webhookName),
+		Events: []string{"create", "delete"},
+		Config: map[string]interface{}{
+			"url":          webhookUrl,
+			"content_type": "json",
+		},
+		Active: github.Bool(true),
+	}
+
+	// 添加 webhook
+	_, _, err = client.Repositories.CreateHook(ctx, owner, repo, hook)
+	if err != nil {
+		log.Fatal("Error creating webhook:", err)
+	}
 }
